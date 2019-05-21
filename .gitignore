@@ -1,0 +1,17 @@
+*.egg-info
+*.pyc
+*.swp
+*.zip
+*.local
+__pycache__/
+.*/
+.*
+build
+dist
+!.pylintrc
+!.flake8
+!.gitignore
+!.gitlab-ci.yml
+!.bumpversion.cfg
+!.pre-commit-config.yaml
+
