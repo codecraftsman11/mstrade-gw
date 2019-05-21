@@ -9,6 +9,10 @@ class Connector(object):
         self._logger = logger
         self._handler = None
 
+    @property
+    def handler(self):
+        return self._handler
+
     @abstractmethod
     def _connect(self, **kwargs):
         pass
@@ -20,6 +24,11 @@ class Connector(object):
     def close(self):
         pass
 
-    @property
-    def handler(self):
-        return self._handler
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
+    def __del__(self):
+        self.close()

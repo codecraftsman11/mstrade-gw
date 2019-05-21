@@ -1,4 +1,26 @@
+from os import getenv
+
+
 BITMEX_URL = "https://testnet.bitmex.com/api/v1"
-BITMEX_API_KEY = "ORqVaoVf1TJrVnKexpWjHfjk"
-BITMEX_API_SECRET = "mvK7p-zYF5He2eistXxXUvASoJWRGvp6eOO5TF2gn4BHI2iB"
 BITMEX_SYMBOL = "XBTUSD"
+BITMEX_API_KEY = getenv('BITMEX_API_KEY')
+BITMEX_API_SECRET = getenv('BITMEX_API_SECRET')
+BITMEX_USERNAME = "belka158@gmail.com"
+BITMEX_EMAIL = "belka158@gmail.com"
+BITMEX_LOCALE = "en-US"
+
+
+SYMBOL_FIELDS = (
+    'timestamp',
+    'symbol',
+    'state',
+    'price'
+)
+
+QUOTE_FIELDS = (
+    "timestamp",
+    "symbol",
+    "volume",
+    "price",
+    "side",
+)

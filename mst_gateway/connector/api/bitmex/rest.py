@@ -3,7 +3,7 @@ from bravado.exception import HTTPError
 from ..base import StockApi
 from ....exceptions import ConnectorError
 from ....connector import api
-from ....utils import j_q
+from ....utils import _j
 
 
 ORDER_TYPE_WRITE_MAP = {
@@ -14,15 +14,17 @@ ORDER_TYPE_WRITE_MAP = {
 
 
 ORDER_TYPE_READ_MAP = {
-    v: k for k, v in ORDER_TYPE_WRITE_MAP
+    v: k for k, v in ORDER_TYPE_WRITE_MAP.items()
 }
 
 
 def _bitmex_api(method: callable, **kwargs):
     try:
-        return method(**kwargs).result()
+        resp = method(**kwargs).response()
+        return resp.result, resp.metadata
     except HTTPError as exc:
-        raise ConnectorError("Bitmex api error. Details: " + exc)
+        raise ConnectorError("Bitmex api error. Details: "
+                             "{}, {}".format(exc.status_code, exc.message))
 
 
 def store_order_type(order_type: int) -> str:
@@ -31,6 +33,63 @@ def store_order_type(order_type: int) -> str:
 
 def load_order_type(order_type: str) -> int:
     return ORDER_TYPE_READ_MAP.get(order_type)
+
+
+def store_order_side(order_side: int) -> str:
+    if order_side == api.SELL:
+        return 'Sell'
+    return 'Buy'
+
+
+def load_order_side(order_side: str) -> int:
+    if order_side == 'Sell':
+        return api.SELL
+    return api.BUY
+
+
+def load_order_data(raw_data: dict) -> dict:
+    return {
+        'symbol': raw_data['symbol'],
+        'value': raw_data['orderQty'],
+        'stop': raw_data['stopPx'],
+        'type': load_order_type(raw_data['ordType']),
+        'side': load_order_side(raw_data['side']),
+        'price': raw_data['price'],
+        'timestamp': raw_data['timestamp']
+    }
+
+
+def load_symbol_data(raw_data: dict) -> dict:
+    return {
+        'timestamp': raw_data.get('timestamp'),
+        'symbol': raw_data.get('symbol'),
+        'state': raw_data.get('state'),
+        'price': raw_data.get('midPrice'),
+    }
+
+
+def load_quote_data(raw_data: dict) -> dict:
+    return {
+        'timestamp': raw_data.get('timestamp'),
+        'symbol': raw_data.get('symbol'),
+        'price': raw_data.get('price'),
+        'volume': raw_data.get('grossValue'),
+        'side': load_order_side(raw_data.get('side'))
+    }
+
+
+def _make_create_order_args(args, options):
+    if not isinstance(options, dict):
+        return False
+    if 'display_value' in options:
+        args['dispalyQty'] = options['display_value']
+    if 'stop_price' in options:
+        args['stopPx'] = options['stop_price']
+    if 'ttl_type' in options:
+        args['timeInForce'] = options['ttl_type']
+    if 'comment' in options:
+        args['text'] = options['comment']
+    return True
 
 
 class BitmexRestApi(StockApi):
@@ -45,28 +104,86 @@ class BitmexRestApi(StockApi):
     def list_quotes(self, symbol, timeframe=None, **kwargs) -> list:
         if timeframe is not None:
             symbol = symbol + ":" + timeframe
-        body, _ = _bitmex_api(self._handler.Trade.Trade_get,
-                              symbol=symbol,
-                              reverse=True,
-                              **kwargs)[0]
-        return body
+        quotes, _ = _bitmex_api(self._handler.Trade.Trade_get,
+                                symbol=symbol,
+                                reverse=True,
+                                **kwargs)
+        return [load_quote_data(data) for data in quotes]
 
     def get_user(self, **kwargs) -> dict:
-        return _bitmex_api(self._handler.User.User_get, **kwargs)
+        data, _ = _bitmex_api(self._handler.User.User_get, **kwargs)
+        return data
 
-    def list_symbols(self, **kwargs) -> dict:
-        body, _ = _bitmex_api(self._handler.Instrument.Instrument_getActive,
-                              **kwargs)
-        return [{
-            'symbol': data.get('symbol'),
-            'type': data.get('typ'),
-            'state': data.get('stat')
-        } for data in j_q(body)]
+    def list_symbols(self, **kwargs) -> list:
+        instruments, _ = _bitmex_api(self._handler.Instrument.Instrument_getActive,
+                                     **kwargs)
+        return [load_symbol_data(data) for data in instruments]
 
-    def create_order(self, symbol: str, order_type: int, rate: float,
-                     quantity: float, options: dict = None) -> bool:
-        _bitmex_api(self._handler.Order.Order_post,
-                    symbol=symbol,
-                    ordType=store_order_type(order_type),
-                    ordQty=quantity,
-                    price=rate)
+    def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
+        quotes, _ = _bitmex_api(self._handler.Trade.Trade_get,
+                                symbol=symbol,
+                                reverse=True,
+                                count=1)
+        return load_quote_data(quotes[0])
+
+    def create_order(self, symbol: str,
+                     side: int,
+                     value: float = 1,
+                     order_type: int = api.MARKET,
+                     price: float = None,
+                     order_id: str = None,
+                     options: dict = None) -> bool:
+        args = dict(
+            symbol=symbol,
+            side=store_order_side(side),
+            orderQty=value,
+            ordType=store_order_type(order_type)
+        )
+        if price is None:
+            args['ordType'] = 'Market'
+        else:
+            args['price'] = price
+        if order_id is not None:
+            args['clOrdID'] = order_id
+        _make_create_order_args(args, options)
+        data, _ = _bitmex_api(self._handler.Order.Order_new, **args)
+        return bool(data)
+
+    def cancel_all_orders(self):
+        data, _ = _bitmex_api(self._handler.Order.Order_cancelAll)
+        return bool(data)
+
+    def cancel_order(self, order_id):
+        data, _ = _bitmex_api(self._handler.Order.Order_cancel,
+                              orderID=order_id)
+        return bool(data)
+
+    def get_order(self, order_id: str) -> dict:
+        data, _ = _bitmex_api(self._handler.Order.Order_getOrders, filter=_j({
+            'clOrdID': order_id
+        }))
+        if not data:
+            return None
+        return load_order_data(data[0])
+
+    def list_orders(self, symbol: str, active_only: bool = True, options: dict = None) -> list:
+        if options is None:
+            options = {}
+        if 'filter' not in options:
+            options['filter'] = {}
+        if active_only:
+            options['filter']['open'] = True
+        options['filter'] = _j(options['filter'])
+        orders, _ = _bitmex_api(self._handler.Order.Order_getOrders,
+                                symbol=symbol,
+                                **options)
+        return [load_order_data(data) for data in orders]
+
+    def close_order(self, order_id) -> bool:
+        order = self.get_order(order_id)
+        return self.close_all_orders(order['symbol'])
+
+    def close_all_orders(self, symbol: str) -> bool:
+        data, _ = _bitmex_api(self._handler.Order.Order_closePosition,
+                              symbol=symbol)
+        return bool(data)

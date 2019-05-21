@@ -1,5 +1,9 @@
 from importlib import import_module
 
+# Sides
+BUY = 0
+SELL = 1
+
 # Orders
 MARKET = 0
 LIMIT = 1
