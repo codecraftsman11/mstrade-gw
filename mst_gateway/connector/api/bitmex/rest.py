@@ -104,7 +104,7 @@ class BitmexRestApi(StockApi):
         if timeframe is not None:
             symbol = symbol + ":" + timeframe
         quotes, _ = _bitmex_api(self._handler.Trade.Trade_get,
-                                symbol=symbol,
+                                symbol=symbol.upper(),
                                 reverse=True,
                                 **kwargs)
         return [load_quote_data(data) for data in quotes]
@@ -120,7 +120,7 @@ class BitmexRestApi(StockApi):
 
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
         quotes, _ = _bitmex_api(self._handler.Trade.Trade_get,
-                                symbol=symbol,
+                                symbol=symbol.upper(),
                                 reverse=True,
                                 count=1)
         return load_quote_data(quotes[0])
@@ -133,7 +133,7 @@ class BitmexRestApi(StockApi):
                      order_id: str = None,
                      options: dict = None) -> bool:
         args = dict(
-            symbol=symbol,
+            symbol=symbol.upper(),
             side=store_order_side(side),
             orderQty=value,
             ordType=store_order_type(order_type)
@@ -174,7 +174,7 @@ class BitmexRestApi(StockApi):
             options['filter']['open'] = True
             options['filter'] = _j(options['filter'])
         orders, _ = _bitmex_api(self._handler.Order.Order_getOrders,
-                                symbol=symbol,
+                                symbol=symbol.upper(),
                                 **options)
         return [load_order_data(data) for data in orders]
 
@@ -184,5 +184,5 @@ class BitmexRestApi(StockApi):
 
     def close_all_orders(self, symbol: str) -> bool:
         data, _ = _bitmex_api(self._handler.Order.Order_closePosition,
-                              symbol=symbol)
+                              symbol=symbol.upper())
         return bool(data)
