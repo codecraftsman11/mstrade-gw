@@ -13,7 +13,6 @@ BITMEX_LOCALE = "en-US"
 SYMBOL_FIELDS = (
     'timestamp',
     'symbol',
-    'state',
     'price'
 )
 

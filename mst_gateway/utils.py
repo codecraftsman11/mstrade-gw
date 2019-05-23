@@ -1,4 +1,6 @@
 import json
+import random
+import sys
 
 
 def _j(struct) -> str:
@@ -19,3 +21,8 @@ def fetch_data(data, path=None, default=None):
     if path[0] != '.':
         return data.get(path, default)
     return None
+
+
+def generate_order_id():
+    random.seed()  # nosec
+    return "test.{}".format(random.randint(0, sys.maxsize))  # nosec

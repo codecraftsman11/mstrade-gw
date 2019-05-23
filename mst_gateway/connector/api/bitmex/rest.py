@@ -55,7 +55,7 @@ def load_order_data(raw_data: dict) -> dict:
         'type': load_order_type(raw_data['ordType']),
         'side': load_order_side(raw_data['side']),
         'price': raw_data['price'],
-        'timestamp': raw_data['timestamp']
+        'created': raw_data['timestamp']
     }
 
 
@@ -63,7 +63,6 @@ def load_symbol_data(raw_data: dict) -> dict:
     return {
         'timestamp': raw_data.get('timestamp'),
         'symbol': raw_data.get('symbol'),
-        'state': raw_data.get('state'),
         'price': raw_data.get('midPrice'),
     }
 
@@ -169,11 +168,11 @@ class BitmexRestApi(StockApi):
     def list_orders(self, symbol: str, active_only: bool = True, options: dict = None) -> list:
         if options is None:
             options = {}
-        if 'filter' not in options:
-            options['filter'] = {}
         if active_only:
+            if 'filter' not in options:
+                options['filter'] = {}
             options['filter']['open'] = True
-        options['filter'] = _j(options['filter'])
+            options['filter'] = _j(options['filter'])
         orders, _ = _bitmex_api(self._handler.Order.Order_getOrders,
                                 symbol=symbol,
                                 **options)

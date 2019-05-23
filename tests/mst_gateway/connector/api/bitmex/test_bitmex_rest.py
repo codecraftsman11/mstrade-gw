@@ -1,12 +1,11 @@
 # pylint: disable=no-self-use
-import random
-import sys
 import logging
 import pytest
 from mst_gateway.connector.api.bitmex.rest import BitmexRestApi
 from mst_gateway.exceptions import ConnectorError
 from mst_gateway.logging import init_logger
 from mst_gateway.connector import api
+from mst_gateway.utils import generate_order_id
 import tests.config as cfg
 
 
@@ -65,6 +64,16 @@ class TestBitmexRestApi:
                                     side=api.BUY,
                                     order_type=api.MARKET)
 
+    def test_list_orders(self, _bitmex: BitmexRestApi):
+        _bitmex.create_order(symbol=cfg.BITMEX_SYMBOL,
+                             side=api.BUY,
+                             order_type=api.MARKET)
+        _bitmex.create_order(symbol=cfg.BITMEX_SYMBOL,
+                             side=api.BUY,
+                             order_type=api.MARKET)
+        assert _bitmex.list_orders(symbol=cfg.BITMEX_SYMBOL, active_only=False,
+                                   options={'count': 1})
+
     def test_get_order(self, _bitmex: BitmexRestApi, _debug: logging.Logger):
         order_id = generate_order_id()
         _bitmex.create_order(symbol=cfg.BITMEX_SYMBOL,
@@ -97,8 +106,3 @@ class TestBitmexRestApi:
     def test_unauth_get_user_exception(self, _bitmex_unauth: BitmexRestApi):
         with pytest.raises(ConnectorError):
             _bitmex_unauth.get_user()
-
-
-def generate_order_id():
-    random.seed()
-    return "test.{}".format(random.randint(0, sys.maxsize))
