@@ -23,3 +23,24 @@ QUOTE_FIELDS = (
     "price",
     "side",
 )
+
+QUOTE_BIN_FIELDS = (
+    "timestamp",
+    "symbol",
+    "volume",
+    "open",
+    "high",
+    "low",
+    "close",
+)
+
+ORDER_FIELDS = (
+    'symbol',
+    'value',
+    'stop',
+    'type',
+    'side',
+    'price',
+    'created',
+    'active'
+)

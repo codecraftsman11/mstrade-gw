@@ -59,6 +59,14 @@ class TestBitmexRestApi:
         assert set(_bitmex.list_quotes(symbol=cfg.BITMEX_SYMBOL).pop().keys()) == set(cfg.QUOTE_FIELDS)
         assert set(_bitmex_unauth.list_quotes(symbol=cfg.BITMEX_SYMBOL).pop().keys()) == set(cfg.QUOTE_FIELDS)
 
+    def test_list_quote_bins(self, _bitmex: BitmexRestApi):
+        quote_bins = _bitmex.list_quote_bins(symbol=cfg.BITMEX_SYMBOL,
+                                             binsize='1m', count=1000)
+        assert quote_bins
+        assert isinstance(quote_bins, list)
+        assert len(quote_bins) == 1000
+        assert set(quote_bins[0]) == set(cfg.QUOTE_BIN_FIELDS)
+
     def test_create_order(self, _bitmex: BitmexRestApi):
         assert _bitmex.create_order(symbol=cfg.BITMEX_SYMBOL,
                                     side=api.BUY,

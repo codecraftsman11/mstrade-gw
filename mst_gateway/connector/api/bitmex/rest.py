@@ -6,6 +6,9 @@ from ....connector import api
 from ....utils import _j
 
 
+BITMEX_MAX_QUOTE_BINS_COUNT = 750
+
+
 ORDER_TYPE_WRITE_MAP = {
     api.MARKET: 'Market',
     api.LIMIT: 'Limit',
@@ -55,7 +58,8 @@ def load_order_data(raw_data: dict) -> dict:
         'type': load_order_type(raw_data['ordType']),
         'side': load_order_side(raw_data['side']),
         'price': raw_data['price'],
-        'created': raw_data['timestamp']
+        'created': raw_data['timestamp'],
+        'active': raw_data['ordStatus'] != "New"
     }
 
 
@@ -74,6 +78,18 @@ def load_quote_data(raw_data: dict) -> dict:
         'price': raw_data.get('price'),
         'volume': raw_data.get('grossValue'),
         'side': load_order_side(raw_data.get('side'))
+    }
+
+
+def load_quote_bin_data(raw_data: dict) -> dict:
+    return {
+        'timestamp': raw_data.get('timestamp'),
+        'symbol': raw_data.get('symbol'),
+        'open': raw_data.get("open"),
+        'close': raw_data.get("close"),
+        'high': raw_data.get("high"),
+        'low': raw_data.get('low'),
+        'volume': raw_data.get('volume'),
     }
 
 
@@ -108,6 +124,34 @@ class BitmexRestApi(StockApi):
                                 reverse=True,
                                 **kwargs)
         return [load_quote_data(data) for data in quotes]
+
+    def _list_quote_bins_page(self, symbol, binsize='1m', count=100, offset=0,
+                              **kwargs):
+        quote_bins, _ = _bitmex_api(self._handler.Trade.Trade_getBucketed,
+                                    symbol=symbol.upper(),
+                                    binSize=binsize,
+                                    reverse=True,
+                                    count=count,
+                                    start=offset,
+                                    **kwargs)
+        return [load_quote_bin_data(data) for data in quote_bins]
+
+    def list_quote_bins(self, symbol, binsize='1m', count=100, **kwargs) -> list:
+        pages = int((count - 1) / BITMEX_MAX_QUOTE_BINS_COUNT) + 1
+        rest = count % BITMEX_MAX_QUOTE_BINS_COUNT
+        quote_bins = []
+        for i in range(pages):
+            if i == pages - 1:
+                items_count = rest
+            else:
+                items_count = BITMEX_MAX_QUOTE_BINS_COUNT
+            quotes = self._list_quote_bins_page(symbol=symbol,
+                                                binsize=binsize,
+                                                offset=i * BITMEX_MAX_QUOTE_BINS_COUNT,
+                                                count=items_count,
+                                                **kwargs)
+            quote_bins += quotes
+        return quote_bins
 
     def get_user(self, **kwargs) -> dict:
         data, _ = _bitmex_api(self._handler.User.User_get, **kwargs)
