@@ -8,6 +8,9 @@ SELL = 1
 MARKET = 0
 LIMIT = 1
 STOP = 2
+STOPLIMIT = 3  # stop with discount to stock
+MARKETIFTOUCHED = 4  # aka TakeProfit
+LIMITIFTOUCHED = 5  # aka limit TakeProfit
 
 # Stop-loss
 SL_MARKET = 0
