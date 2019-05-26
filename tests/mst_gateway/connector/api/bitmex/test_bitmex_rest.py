@@ -1,7 +1,7 @@
 # pylint: disable=no-self-use
 import logging
 import pytest
-from mst_gateway.connector.api.bitmex.rest import BitmexRestApi
+from mst_gateway.connector.api.stocks.bitmex.rest import BitmexRestApi
 from mst_gateway.exceptions import ConnectorError
 from mst_gateway.logging import init_logger
 from mst_gateway.connector import api

@@ -22,7 +22,7 @@ ERROR_OK = (0, 'OK')
 
 
 def init(params: dict, auth=None, cls=None, logger=None):
-    cls = cls or import_module('.bitmex.rest',
+    cls = cls or import_module('.stocks.bitmex.rest',
                                package=__package__).BitmexRestApi
     return cls(url=params.get('url', None), auth=auth, logger=logger)
 
