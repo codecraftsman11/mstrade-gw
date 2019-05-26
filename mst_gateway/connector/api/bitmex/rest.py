@@ -1,27 +1,10 @@
 import bitmex
 from bravado.exception import HTTPError
-from ..base import StockApi
+from . import var
+from ... import api
+from ..rest import StockRestApi
 from ....exceptions import ConnectorError
-from ....connector import api
 from ....utils import _j
-
-
-BITMEX_MAX_QUOTE_BINS_COUNT = 750
-
-
-ORDER_TYPE_WRITE_MAP = {
-    api.MARKET: 'Market',
-    api.LIMIT: 'Limit',
-    api.STOP: 'Stop',
-    api.STOPLIMIT: 'StopLimit',
-    api.MARKETIFTOUCHED: 'MarketIfTouched',
-    api.LIMITIFTOUCHED: 'LimitIfTouched'
-}
-
-
-ORDER_TYPE_READ_MAP = {
-    v: k for k, v in ORDER_TYPE_WRITE_MAP.items()
-}
 
 
 def _bitmex_api(method: callable, **kwargs):
@@ -34,11 +17,11 @@ def _bitmex_api(method: callable, **kwargs):
 
 
 def store_order_type(order_type: int) -> str:
-    return ORDER_TYPE_WRITE_MAP.get(order_type)
+    return var.ORDER_TYPE_WRITE_MAP.get(order_type)
 
 
 def load_order_type(order_type: str) -> int:
-    return ORDER_TYPE_READ_MAP.get(order_type)
+    return var.ORDER_TYPE_READ_MAP.get(order_type)
 
 
 def store_order_side(order_side: int) -> str:
@@ -110,7 +93,7 @@ def _make_create_order_args(args, options):
     return True
 
 
-class BitmexRestApi(StockApi):
+class BitmexRestApi(StockRestApi):
     BASE_URL = "https://www.bitmex.com/api/v1"
     TEST_URL = "https://testnet.bitmex.com/api/v1"
 
@@ -140,17 +123,17 @@ class BitmexRestApi(StockApi):
         return [load_quote_bin_data(data) for data in quote_bins]
 
     def list_quote_bins(self, symbol, binsize='1m', count=100, **kwargs) -> list:
-        pages = int((count - 1) / BITMEX_MAX_QUOTE_BINS_COUNT) + 1
-        rest = count % BITMEX_MAX_QUOTE_BINS_COUNT
+        pages = int((count - 1) / var.BITMEX_MAX_QUOTE_BINS_COUNT) + 1
+        rest = count % var.BITMEX_MAX_QUOTE_BINS_COUNT
         quote_bins = []
         for i in range(pages):
             if i == pages - 1:
                 items_count = rest
             else:
-                items_count = BITMEX_MAX_QUOTE_BINS_COUNT
+                items_count = var.BITMEX_MAX_QUOTE_BINS_COUNT
             quotes = self._list_quote_bins_page(symbol=symbol,
                                                 binsize=binsize,
-                                                offset=i * BITMEX_MAX_QUOTE_BINS_COUNT,
+                                                offset=i * var.BITMEX_MAX_QUOTE_BINS_COUNT,
                                                 count=items_count,
                                                 **kwargs)
             quote_bins += quotes

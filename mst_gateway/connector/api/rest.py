@@ -4,7 +4,7 @@ from ..base import Connector
 from . import ERROR_OK, MARKET
 
 
-class StockApi(Connector):
+class StockRestApi(Connector):
     __metaclass__ = ABCMeta
     BASE_URL = None
 

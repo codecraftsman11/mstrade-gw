@@ -1,3 +1,4 @@
+# pylint: disable=broad-except
 from importlib import import_module
 
 # Sides
@@ -9,8 +10,8 @@ MARKET = 0
 LIMIT = 1
 STOP = 2
 STOPLIMIT = 3  # stop with discount to stock
-MARKETIFTOUCHED = 4  # aka TakeProfit
-LIMITIFTOUCHED = 5  # aka limit TakeProfit
+TP = 4  # aka TakeProfit
+TPLIMIT = 5  # aka limit TakeProfit
 
 # Stop-loss
 SL_MARKET = 0
@@ -31,3 +32,18 @@ def connect(params, auth, cls=None, logger=None):
     if auth:
         return connector.connect()
     return connector
+
+
+def side_valid(value):
+    try:
+        return isinstance(value, int) and value in [SELL, BUY]
+    except Exception:
+        return False
+
+
+def type_valid(value):
+    try:
+        return isinstance(value, int) and value in [MARKET, LIMIT, STOP,
+                                                    STOPLIMIT, TP, TPLIMIT]
+    except Exception:
+        return False

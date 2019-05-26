@@ -7,6 +7,7 @@ from mst_gateway.logging import init_logger
 from mst_gateway.connector import api
 from mst_gateway.utils import generate_order_id
 import tests.config as cfg
+from tests.utils import data_valid
 
 
 @pytest.fixture
@@ -51,13 +52,13 @@ class TestBitmexRestApi:
 
     def test_list_symbols(self, _bitmex: BitmexRestApi,
                           _bitmex_unauth: BitmexRestApi):
-        assert set(_bitmex.list_symbols().pop().keys()) == set(cfg.SYMBOL_FIELDS)
-        assert set(_bitmex_unauth.list_symbols().pop().keys()) == set(cfg.SYMBOL_FIELDS)
+        assert data_valid(_bitmex.list_symbols().pop(), cfg.SYMBOL_FIELDS)
+        assert data_valid(_bitmex_unauth.list_symbols().pop(), cfg.SYMBOL_FIELDS)
 
     def test_list_quotes(self, _bitmex: BitmexRestApi,
                          _bitmex_unauth: BitmexRestApi):
-        assert set(_bitmex.list_quotes(symbol=cfg.BITMEX_SYMBOL).pop().keys()) == set(cfg.QUOTE_FIELDS)
-        assert set(_bitmex_unauth.list_quotes(symbol=cfg.BITMEX_SYMBOL).pop().keys()) == set(cfg.QUOTE_FIELDS)
+        assert data_valid(_bitmex.list_quotes(symbol=cfg.BITMEX_SYMBOL).pop(), cfg.QUOTE_FIELDS)
+        assert data_valid(_bitmex_unauth.list_quotes(symbol=cfg.BITMEX_SYMBOL).pop(), cfg.QUOTE_FIELDS)
 
     def test_list_quote_bins(self, _bitmex: BitmexRestApi):
         quote_bins = _bitmex.list_quote_bins(symbol=cfg.BITMEX_SYMBOL,
@@ -65,7 +66,7 @@ class TestBitmexRestApi:
         assert quote_bins
         assert isinstance(quote_bins, list)
         assert len(quote_bins) == 1000
-        assert set(quote_bins[0]) == set(cfg.QUOTE_BIN_FIELDS)
+        assert data_valid(quote_bins[0], cfg.QUOTE_BIN_FIELDS)
 
     def test_create_order(self, _bitmex: BitmexRestApi):
         assert _bitmex.create_order(symbol=cfg.BITMEX_SYMBOL,
