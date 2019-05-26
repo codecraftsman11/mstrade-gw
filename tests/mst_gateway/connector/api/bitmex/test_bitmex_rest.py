@@ -90,8 +90,8 @@ class TestBitmexRestApi:
                              order_type=api.MARKET,
                              order_id=order_id)
         order = _bitmex.get_order(order_id=order_id)
-        _debug['logger'].info("Order data: %s", order)
-        assert order and order['symbol'] == cfg.BITMEX_SYMBOL
+        assert data_valid(order, cfg.ORDER_FIELDS)
+        assert order['symbol'] == cfg.BITMEX_SYMBOL
 
     def test_close_order(self, _bitmex: BitmexRestApi):
         order_id = generate_order_id()
