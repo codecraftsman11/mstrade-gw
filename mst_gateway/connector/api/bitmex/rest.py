@@ -38,6 +38,7 @@ def load_order_side(order_side: str) -> int:
 
 def load_order_data(raw_data: dict) -> dict:
     return {
+        'order_id': raw_data['clOrdID'],
         'symbol': raw_data['symbol'],
         'value': raw_data['orderQty'],
         'stop': raw_data['stopPx'],

@@ -41,6 +41,13 @@ def side_valid(value):
         return False
 
 
+def order_id_valid(value):
+    try:
+        return isinstance(value, str) and value
+    except Exception:
+        return False
+
+
 def type_valid(value):
     try:
         return isinstance(value, int) and value in [MARKET, LIMIT, STOP,
