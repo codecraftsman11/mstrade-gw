@@ -54,7 +54,7 @@ def load_symbol_data(raw_data: dict) -> dict:
     return {
         'timestamp': raw_data.get('timestamp'),
         'symbol': raw_data.get('symbol'),
-        'price': raw_data.get('midPrice'),
+        'price': raw_data.get('lastPrice'),
     }
 
 
