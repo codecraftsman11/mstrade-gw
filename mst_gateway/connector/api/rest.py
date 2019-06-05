@@ -9,6 +9,8 @@ class StockRestApi(Connector):
     BASE_URL = None
 
     def __init__(self, url: str = None, auth: dict = None, logger: Logger = None):
+        self._keepalive: bool = None
+        self._compress: bool = None
         self._url: str = url if url is not None else self.__class__.BASE_URL
         self._error: tuple = ERROR_OK
         super().__init__(auth, logger)
