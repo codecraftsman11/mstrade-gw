@@ -4,9 +4,7 @@ repos:
       hooks:
           - id: bandit
             name: bandit
-            entry: bandit -x tests -r mst_gateway
-            language: system
-            types: [python]
+            exclude: tests
     - repo: https://github.com/pre-commit/pre-commit-hooks
       rev: d4b887a69e6c8ae4666acc848f3dbba595a2bdf9
       hooks:
