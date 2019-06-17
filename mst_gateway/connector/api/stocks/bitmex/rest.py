@@ -7,15 +7,6 @@ from .....exceptions import ConnectorError
 from .....utils import _j
 
 
-def _bitmex_api(method: callable, **kwargs):
-    try:
-        resp = method(**kwargs).response()
-        return resp.result, resp.metadata
-    except HTTPError as exc:
-        raise ConnectorError("Bitmex api error. Details: "
-                             "{}, {}".format(exc.status_code, exc.message))
-
-
 def store_order_type(order_type: int) -> str:
     return var.ORDER_TYPE_WRITE_MAP.get(order_type)
 
@@ -38,6 +29,7 @@ def load_order_side(order_side: str) -> int:
 
 def load_order_data(raw_data: dict) -> dict:
     return {
+        'order_id': raw_data['clOrdID'],
         'symbol': raw_data['symbol'],
         'value': raw_data['orderQty'],
         'stop': raw_data['stopPx'],
@@ -53,7 +45,7 @@ def load_symbol_data(raw_data: dict) -> dict:
     return {
         'timestamp': raw_data.get('timestamp'),
         'symbol': raw_data.get('symbol'),
-        'price': raw_data.get('midPrice'),
+        'price': raw_data.get('lastPrice'),
     }
 
 
@@ -98,6 +90,8 @@ class BitmexRestApi(StockRestApi):
     TEST_URL = "https://testnet.bitmex.com/api/v1"
 
     def _connect(self, **kwargs):
+        self._keepalive = bool(kwargs.get('keepalive', False))
+        self._compress = bool(kwargs.get('compress', False))
         return bitmex.bitmex(test=self._url == self.__class__.TEST_URL,
                              api_key=self._auth['api_key'],
                              api_secret=self._auth['api_secret'])
@@ -105,21 +99,21 @@ class BitmexRestApi(StockRestApi):
     def list_quotes(self, symbol, timeframe=None, **kwargs) -> list:
         if timeframe is not None:
             symbol = symbol + ":" + timeframe
-        quotes, _ = _bitmex_api(self._handler.Trade.Trade_get,
-                                symbol=symbol.upper(),
-                                reverse=True,
-                                **kwargs)
+        quotes, _ = self._bitmex_api(self._handler.Trade.Trade_get,
+                                     symbol=symbol.upper(),
+                                     reverse=True,
+                                     **kwargs)
         return [load_quote_data(data) for data in quotes]
 
     def _list_quote_bins_page(self, symbol, binsize='1m', count=100, offset=0,
                               **kwargs):
-        quote_bins, _ = _bitmex_api(self._handler.Trade.Trade_getBucketed,
-                                    symbol=symbol.upper(),
-                                    binSize=binsize,
-                                    reverse=True,
-                                    count=count,
-                                    start=offset,
-                                    **kwargs)
+        quote_bins, _ = self._bitmex_api(self._handler.Trade.Trade_getBucketed,
+                                         symbol=symbol.upper(),
+                                         binSize=binsize,
+                                         reverse=True,
+                                         count=count,
+                                         start=offset,
+                                         **kwargs)
         return [load_quote_bin_data(data) for data in quote_bins]
 
     def list_quote_bins(self, symbol, binsize='1m', count=100, **kwargs) -> list:
@@ -140,19 +134,19 @@ class BitmexRestApi(StockRestApi):
         return quote_bins
 
     def get_user(self, **kwargs) -> dict:
-        data, _ = _bitmex_api(self._handler.User.User_get, **kwargs)
+        data, _ = self._bitmex_api(self._handler.User.User_get, **kwargs)
         return data
 
     def list_symbols(self, **kwargs) -> list:
-        instruments, _ = _bitmex_api(self._handler.Instrument.Instrument_getActive,
-                                     **kwargs)
+        instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive,
+                                          **kwargs)
         return [load_symbol_data(data) for data in instruments]
 
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
-        quotes, _ = _bitmex_api(self._handler.Trade.Trade_get,
-                                symbol=symbol.upper(),
-                                reverse=True,
-                                count=1)
+        quotes, _ = self._bitmex_api(self._handler.Trade.Trade_get,
+                                     symbol=symbol.upper(),
+                                     reverse=True,
+                                     count=1)
         return load_quote_data(quotes[0])
 
     def create_order(self, symbol: str,
@@ -175,20 +169,20 @@ class BitmexRestApi(StockRestApi):
         if order_id is not None:
             args['clOrdID'] = order_id
         _make_create_order_args(args, options)
-        data, _ = _bitmex_api(self._handler.Order.Order_new, **args)
+        data, _ = self._bitmex_api(self._handler.Order.Order_new, **args)
         return bool(data)
 
     def cancel_all_orders(self):
-        data, _ = _bitmex_api(self._handler.Order.Order_cancelAll)
+        data, _ = self._bitmex_api(self._handler.Order.Order_cancelAll)
         return bool(data)
 
     def cancel_order(self, order_id):
-        data, _ = _bitmex_api(self._handler.Order.Order_cancel,
-                              orderID=order_id)
+        data, _ = self._bitmex_api(self._handler.Order.Order_cancel,
+                                   orderID=order_id)
         return bool(data)
 
     def get_order(self, order_id: str) -> dict:
-        data, _ = _bitmex_api(self._handler.Order.Order_getOrders, filter=_j({
+        data, _ = self._bitmex_api(self._handler.Order.Order_getOrders, filter=_j({
             'clOrdID': order_id
         }))
         if not data:
@@ -203,9 +197,9 @@ class BitmexRestApi(StockRestApi):
                 options['filter'] = {}
             options['filter']['open'] = True
             options['filter'] = _j(options['filter'])
-        orders, _ = _bitmex_api(self._handler.Order.Order_getOrders,
-                                symbol=symbol.upper(),
-                                **options)
+        orders, _ = self._bitmex_api(self._handler.Order.Order_getOrders,
+                                     symbol=symbol.upper(),
+                                     **options)
         return [load_order_data(data) for data in orders]
 
     def close_order(self, order_id) -> bool:
@@ -213,6 +207,19 @@ class BitmexRestApi(StockRestApi):
         return self.close_all_orders(order['symbol'])
 
     def close_all_orders(self, symbol: str) -> bool:
-        data, _ = _bitmex_api(self._handler.Order.Order_closePosition,
-                              symbol=symbol.upper())
+        data, _ = self._bitmex_api(self._handler.Order.Order_closePosition,
+                                   symbol=symbol.upper())
         return bool(data)
+
+    def _bitmex_api(self, method: callable, **kwargs):
+        headers = {}
+        if self._keepalive:
+            headers['Connection'] = "keep-alive"
+        if self._compress:
+            headers['Accept-Encoding'] = "deflate, gzip;q=1.0, *;q=0.5"
+        try:
+            resp = method(_request_options={'headers': headers}, **kwargs).response()
+            return resp.result, resp.metadata
+        except HTTPError as exc:
+            raise ConnectorError("Bitmex api error. Details: "
+                                 "{}, {}".format(exc.status_code, exc.message))

@@ -37,6 +37,7 @@ QUOTE_BIN_FIELDS = {
 }
 
 ORDER_FIELDS = {
+    'order_id': api.order_id_valid,
     'symbol': str,
     'value': int,
     'stop': float,

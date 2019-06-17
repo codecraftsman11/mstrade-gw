@@ -17,8 +17,8 @@ class Connector(object):
     def _connect(self, **kwargs):
         pass
 
-    def open(self):
-        self._handler = self._connect()
+    def open(self, **kwargs):
+        self._handler = self._connect(**kwargs)
         return self._handler
 
     def close(self):

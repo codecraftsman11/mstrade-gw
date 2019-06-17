@@ -25,6 +25,48 @@ def _bitmex(_debug) -> BitmexRestApi:
 
 
 @pytest.fixture
+def _bitmex_keepalive_compress(_debug) -> BitmexRestApi:
+    with BitmexRestApi(url=cfg.BITMEX_URL,
+                       auth={
+                           'api_key': cfg.BITMEX_API_KEY,
+                           'api_secret': cfg.BITMEX_API_SECRET
+                       },
+                       logger=_debug) as bitmex:
+        bitmex.open(keepalive=True, compress=True)
+        yield bitmex
+        bitmex.cancel_all_orders()
+        bitmex.close_all_orders(symbol=cfg.BITMEX_SYMBOL)
+
+
+@pytest.fixture
+def _bitmex_keepalive(_debug) -> BitmexRestApi:
+    with BitmexRestApi(url=cfg.BITMEX_URL,
+                       auth={
+                           'api_key': cfg.BITMEX_API_KEY,
+                           'api_secret': cfg.BITMEX_API_SECRET
+                       },
+                       logger=_debug) as bitmex:
+        bitmex.open(keepalive=True)
+        yield bitmex
+        bitmex.cancel_all_orders()
+        bitmex.close_all_orders(symbol=cfg.BITMEX_SYMBOL)
+
+
+@pytest.fixture
+def _bitmex_compress(_debug) -> BitmexRestApi:
+    with BitmexRestApi(url=cfg.BITMEX_URL,
+                       auth={
+                           'api_key': cfg.BITMEX_API_KEY,
+                           'api_secret': cfg.BITMEX_API_SECRET
+                       },
+                       logger=_debug) as bitmex:
+        bitmex.open(compress=True)
+        yield bitmex
+        bitmex.cancel_all_orders()
+        bitmex.close_all_orders(symbol=cfg.BITMEX_SYMBOL)
+
+
+@pytest.fixture
 def _bitmex_unauth(_debug) -> BitmexRestApi:
     with BitmexRestApi(url=cfg.BITMEX_URL,
                        auth={
@@ -63,6 +105,31 @@ class TestBitmexRestApi:
     def test_list_quote_bins(self, _bitmex: BitmexRestApi):
         quote_bins = _bitmex.list_quote_bins(symbol=cfg.BITMEX_SYMBOL,
                                              binsize='1m', count=1000)
+        assert quote_bins
+        assert isinstance(quote_bins, list)
+        assert len(quote_bins) == 1000
+        assert data_valid(quote_bins[0], cfg.QUOTE_BIN_FIELDS)
+
+    def test_list_quote_bins_keepalive_compress(self, _bitmex_keepalive_compress: BitmexRestApi):
+        quote_bins = _bitmex_keepalive_compress.list_quote_bins(symbol=cfg.BITMEX_SYMBOL,
+                                                                binsize='1m',
+                                                                count=1000)
+        assert quote_bins
+        assert isinstance(quote_bins, list)
+        assert len(quote_bins) == 1000
+        assert data_valid(quote_bins[0], cfg.QUOTE_BIN_FIELDS)
+
+    def test_list_quote_bins_keepalive(self, _bitmex_keepalive: BitmexRestApi):
+        quote_bins = _bitmex_keepalive.list_quote_bins(symbol=cfg.BITMEX_SYMBOL,
+                                                       binsize='1m', count=1000)
+        assert quote_bins
+        assert isinstance(quote_bins, list)
+        assert len(quote_bins) == 1000
+        assert data_valid(quote_bins[0], cfg.QUOTE_BIN_FIELDS)
+
+    def test_list_quote_bins_compress(self, _bitmex_compress: BitmexRestApi):
+        quote_bins = _bitmex_compress.list_quote_bins(symbol=cfg.BITMEX_SYMBOL,
+                                                      binsize='1m', count=1000)
         assert quote_bins
         assert isinstance(quote_bins, list)
         assert len(quote_bins) == 1000
