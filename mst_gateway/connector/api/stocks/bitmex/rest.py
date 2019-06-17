@@ -1,3 +1,4 @@
+import json
 import bitmex
 from bravado.exception import HTTPError
 from . import var
@@ -96,13 +97,29 @@ class BitmexRestApi(StockRestApi):
                              api_key=self._auth['api_key'],
                              api_secret=self._auth['api_secret'])
 
+    def _api_kwargs(self, kwargs):
+        # pylint: disable=no-self-use
+        api_kwargs = dict(filter={})
+        for _k, _v in kwargs.items():
+            if _k == 'date_from':
+                api_kwargs['startTime'] = _v
+            if _k == 'date_to':
+                api_kwargs['endTime'] = _v
+            if _k == 'count':
+                api_kwargs['count'] = _v
+        if not api_kwargs['filter']:
+            del api_kwargs['filter']
+        else:
+            api_kwargs['filter'] = json.dumps(api_kwargs['filter'])
+        return api_kwargs
+
     def list_quotes(self, symbol, timeframe=None, **kwargs) -> list:
         if timeframe is not None:
             symbol = symbol + ":" + timeframe
         quotes, _ = self._bitmex_api(self._handler.Trade.Trade_get,
                                      symbol=symbol.upper(),
                                      reverse=True,
-                                     **kwargs)
+                                     **self._api_kwargs(kwargs))
         return [load_quote_data(data) for data in quotes]
 
     def _list_quote_bins_page(self, symbol, binsize='1m', count=100, offset=0,
@@ -111,9 +128,9 @@ class BitmexRestApi(StockRestApi):
                                          symbol=symbol.upper(),
                                          binSize=binsize,
                                          reverse=True,
-                                         count=count,
                                          start=offset,
-                                         **kwargs)
+                                         count=count,
+                                         **self._api_kwargs(kwargs))
         return [load_quote_bin_data(data) for data in quote_bins]
 
     def list_quote_bins(self, symbol, binsize='1m', count=100, **kwargs) -> list:

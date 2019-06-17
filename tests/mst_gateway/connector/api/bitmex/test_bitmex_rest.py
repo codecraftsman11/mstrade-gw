@@ -1,13 +1,20 @@
 # pylint: disable=no-self-use
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
 import logging
 import pytest
 from mst_gateway.connector.api.stocks.bitmex import BitmexRestApi
 from mst_gateway.exceptions import ConnectorError
 from mst_gateway.logging import init_logger
 from mst_gateway.connector import api
+from mst_gateway.connector.api import schema
 from mst_gateway.utils import generate_order_id
 import tests.config as cfg
-from tests.utils import data_valid
+
+
+TEST_FROM_DATE = datetime.now(tz=timezone.utc) + timedelta(days=-2)
+TEST_TO_DATE = TEST_FROM_DATE + timedelta(minutes=1)
 
 
 @pytest.fixture
@@ -94,13 +101,27 @@ class TestBitmexRestApi:
 
     def test_list_symbols(self, _bitmex: BitmexRestApi,
                           _bitmex_unauth: BitmexRestApi):
-        assert data_valid(_bitmex.list_symbols().pop(), cfg.SYMBOL_FIELDS)
-        assert data_valid(_bitmex_unauth.list_symbols().pop(), cfg.SYMBOL_FIELDS)
+        assert schema.data_valid(_bitmex.list_symbols().pop(), schema.SYMBOL_FIELDS)
+        assert schema.data_valid(_bitmex_unauth.list_symbols().pop(), schema.SYMBOL_FIELDS)
 
     def test_list_quotes(self, _bitmex: BitmexRestApi,
                          _bitmex_unauth: BitmexRestApi):
-        assert data_valid(_bitmex.list_quotes(symbol=cfg.BITMEX_SYMBOL).pop(), cfg.QUOTE_FIELDS)
-        assert data_valid(_bitmex_unauth.list_quotes(symbol=cfg.BITMEX_SYMBOL).pop(), cfg.QUOTE_FIELDS)
+        assert schema.data_valid(_bitmex.list_quotes(symbol=cfg.BITMEX_SYMBOL).pop(),
+                                 schema.QUOTE_FIELDS)
+        assert schema.data_valid(_bitmex_unauth.list_quotes(symbol=cfg.BITMEX_SYMBOL).pop(),
+                                 schema.QUOTE_FIELDS)
+
+    def test_list_quotes_range(self, _bitmex: BitmexRestApi):
+        res_data = _bitmex.list_quotes(
+            symbol=cfg.BITMEX_SYMBOL,
+            date_from=TEST_FROM_DATE,
+            date_to=TEST_TO_DATE,
+            count=10
+        )
+        assert len(res_data) == 10
+        print(res_data[0])
+        assert res_data[0]['timestamp'] > TEST_FROM_DATE
+        assert res_data[-1]['timestamp'] < TEST_TO_DATE
 
     def test_list_quote_bins(self, _bitmex: BitmexRestApi):
         quote_bins = _bitmex.list_quote_bins(symbol=cfg.BITMEX_SYMBOL,
@@ -108,7 +129,19 @@ class TestBitmexRestApi:
         assert quote_bins
         assert isinstance(quote_bins, list)
         assert len(quote_bins) == 1000
-        assert data_valid(quote_bins[0], cfg.QUOTE_BIN_FIELDS)
+        assert schema.data_valid(quote_bins[0], schema.QUOTE_BIN_FIELDS)
+
+    def test_list_quote_bins_range(self, _bitmex: BitmexRestApi):
+        res_data = _bitmex.list_quote_bins(
+            symbol=cfg.BITMEX_SYMBOL,
+            binsize='1m',
+            count=1000,
+            date_from=TEST_FROM_DATE,
+            date_to=TEST_TO_DATE,
+        )
+        assert len(res_data) < 1000
+        assert res_data[0]['timestamp'] > TEST_FROM_DATE
+        assert res_data[-1]['timestamp'] < TEST_TO_DATE
 
     def test_list_quote_bins_keepalive_compress(self, _bitmex_keepalive_compress: BitmexRestApi):
         quote_bins = _bitmex_keepalive_compress.list_quote_bins(symbol=cfg.BITMEX_SYMBOL,
@@ -117,7 +150,7 @@ class TestBitmexRestApi:
         assert quote_bins
         assert isinstance(quote_bins, list)
         assert len(quote_bins) == 1000
-        assert data_valid(quote_bins[0], cfg.QUOTE_BIN_FIELDS)
+        assert schema.data_valid(quote_bins[0], schema.QUOTE_BIN_FIELDS)
 
     def test_list_quote_bins_keepalive(self, _bitmex_keepalive: BitmexRestApi):
         quote_bins = _bitmex_keepalive.list_quote_bins(symbol=cfg.BITMEX_SYMBOL,
@@ -125,7 +158,7 @@ class TestBitmexRestApi:
         assert quote_bins
         assert isinstance(quote_bins, list)
         assert len(quote_bins) == 1000
-        assert data_valid(quote_bins[0], cfg.QUOTE_BIN_FIELDS)
+        assert schema.data_valid(quote_bins[0], schema.QUOTE_BIN_FIELDS)
 
     def test_list_quote_bins_compress(self, _bitmex_compress: BitmexRestApi):
         quote_bins = _bitmex_compress.list_quote_bins(symbol=cfg.BITMEX_SYMBOL,
@@ -133,7 +166,7 @@ class TestBitmexRestApi:
         assert quote_bins
         assert isinstance(quote_bins, list)
         assert len(quote_bins) == 1000
-        assert data_valid(quote_bins[0], cfg.QUOTE_BIN_FIELDS)
+        assert schema.data_valid(quote_bins[0], schema.QUOTE_BIN_FIELDS)
 
     def test_create_order(self, _bitmex: BitmexRestApi):
         assert _bitmex.create_order(symbol=cfg.BITMEX_SYMBOL,
@@ -157,7 +190,7 @@ class TestBitmexRestApi:
                              order_type=api.MARKET,
                              order_id=order_id)
         order = _bitmex.get_order(order_id=order_id)
-        assert data_valid(order, cfg.ORDER_FIELDS)
+        assert schema.data_valid(order, schema.ORDER_FIELDS)
         assert order['symbol'] == cfg.BITMEX_SYMBOL
 
     def test_close_order(self, _bitmex: BitmexRestApi):
