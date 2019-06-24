@@ -174,14 +174,26 @@ class TestBitmexRestApi:
                                     order_type=api.MARKET)
 
     def test_list_orders(self, _bitmex: BitmexRestApi):
+        o_1 = generate_order_id()
         _bitmex.create_order(symbol=cfg.BITMEX_SYMBOL,
                              side=api.BUY,
+                             order_id=o_1,
                              order_type=api.MARKET)
+        o_2 = generate_order_id()
         _bitmex.create_order(symbol=cfg.BITMEX_SYMBOL,
                              side=api.BUY,
+                             order_id=o_2,
                              order_type=api.MARKET)
-        assert _bitmex.list_orders(symbol=cfg.BITMEX_SYMBOL, active_only=False,
-                                   options={'count': 1})
+        l_1 = _bitmex.list_orders(symbol=cfg.BITMEX_SYMBOL,
+                                  active_only=False,
+                                  count=1, offset=1)
+        l_2 = _bitmex.list_orders(symbol=cfg.BITMEX_SYMBOL,
+                                  active_only=False,
+                                  count=1)
+        assert len(l_1) == 1
+        assert l_1[0]['order_id'] == o_1
+        assert len(l_2) == 1
+        assert l_2[0]['order_id'] == o_2
 
     def test_get_order(self, _bitmex: BitmexRestApi, _debug: logging.Logger):
         order_id = generate_order_id()

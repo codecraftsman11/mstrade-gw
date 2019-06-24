@@ -206,7 +206,8 @@ class BitmexRestApi(StockRestApi):
             return None
         return load_order_data(data[0])
 
-    def list_orders(self, symbol: str, active_only: bool = True, options: dict = None) -> list:
+    def list_orders(self, symbol: str, active_only: bool = True,
+                    count: int = None, offset: int = 0, options: dict = None) -> list:
         if options is None:
             options = {}
         if active_only:
@@ -214,8 +215,13 @@ class BitmexRestApi(StockRestApi):
                 options['filter'] = {}
             options['filter']['open'] = True
             options['filter'] = _j(options['filter'])
+        if count is not None:
+            options['count'] = count
+        if offset > 0:
+            options['start'] = offset
         orders, _ = self._bitmex_api(self._handler.Order.Order_getOrders,
                                      symbol=symbol.upper(),
+                                     reverse=True,
                                      **options)
         return [load_order_data(data) for data in orders]
 

@@ -54,7 +54,8 @@ class StockRestApi(Connector):
         pass
 
     @abstractmethod
-    def list_orders(self, symbol: str, active_only: bool = True, options: dict = None) -> list:
+    def list_orders(self, symbol: str, active_only: bool = True,
+                    count: int = None, offset: int = 0, options: dict = None) -> list:
         pass
 
     @abstractmethod
