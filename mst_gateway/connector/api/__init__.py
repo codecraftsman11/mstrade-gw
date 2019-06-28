@@ -17,9 +17,6 @@ TPLIMIT = 5  # aka limit TakeProfit
 SL_MARKET = 0
 SL_LIMIT = 1
 
-# API Errors
-ERROR_OK = (0, 'OK')
-
 
 def init(params: dict, auth=None, cls=None, logger=None):
     cls = cls or import_module('.stocks.bitmex.rest',

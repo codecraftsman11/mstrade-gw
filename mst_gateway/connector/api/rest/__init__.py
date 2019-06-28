@@ -1,7 +1,8 @@
 from abc import ABCMeta, abstractmethod
 from logging import Logger
 from ...base import Connector
-from .. import ERROR_OK, MARKET
+from .. import MARKET
+from ..errors import ERROR_OK
 
 
 class StockRestApi(Connector):

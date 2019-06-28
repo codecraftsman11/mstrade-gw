@@ -1,52 +1,44 @@
-from typing import Dict, Set
-from abc import ABCMeta, abstractmethod
+from typing import Dict
+from abc import ABCMeta
+from abc import abstractmethod
 from logging import Logger
 from ...base import Connector
-from .. import ERROR_OK
-from .channel import StockWssChannel
+from .. import errors
+from .subscription import Subscription
+from .router import Router
+from .serializer import Serializer
 
 
-Route = str
-SubscriptionRoutes = Dict[Route, Set[StockWssChannel]]
-
-
-class StockWssConnector(Connector):
+class StockWssApi(Connector):
     __metaclass__ = ABCMeta
+    subscriptions: Dict[str, Subscription] = {
+        'symbol': None,
+        'quote': None,
+        'quote_bin': None
+    }
     BASE_URL = None
 
     def __init__(self, url: str = None, auth: dict = None, logger: Logger = None):
         self._url: str = url if url is not None else self.__class__.BASE_URL
-        self._error: tuple = ERROR_OK
-        self._subscriptions: Dict[str, SubscriptionRoutes]
+        self._error: tuple = errors.ERROR_OK
+        self._router: Router = self._create_router()
         super().__init__(auth, logger)
 
-    def subscirbe(self, subscription: str, wss_channel: StockWssChannel, route: str = ""):
-        if not route:
-            self._subscribe_root(subscription, wss_channel)
-            return
-        channelset = self._make_channelset(subscription, route)
-        channelset.add(wss_channel)
+    def subscription(self, subscr_name: str) -> Subscription:
+        return self.__class__.subscriptions.get(subscr_name)
 
-    def _subscribe_root(self, subscription: str, wss_channel: StockWssChannel):
-        pass
-
-    def _make_channelset(self, subscription, route):
-        # pylint: disable=no-self-use,unused-argument
-        """
-        Create channel set
-        """
-        return set()
+    def get_message(self, message: dict) -> Serializer:
+        serializer = self._router.get(message)
+        if not serializer:
+            return None
+        if not serializer.is_valid():
+            self._error = errors.ERROR_INVALID_DATA
+            self._logger.error("Error validating incoming message %s", message)
+            return None
+        return serializer.validated_data
 
     @abstractmethod
-    def unsubscribe(self, wss_channel: StockWssChannel, subscription: str,
-                    route: str = ""):
-        channelset = self._get_channelset(subscription, route)
-        if channelset:
-            channelset.remove(wss_channel)
-
-    def _get_channelset(self, subscription: str, route: str):
-        if subscription not in self._subscriptions:
-            return None
-        if route not in self._subscriptions[subscription]:
-            return None
-        return self._subscriptions[subscription][route]
+    def _create_router(self) -> Router:
+        """
+        return new router instance
+        """
