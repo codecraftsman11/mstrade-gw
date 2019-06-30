@@ -13,6 +13,10 @@ class Connector(object):
     def handler(self):
         return self._handler
 
+    @property
+    def logger(self):
+        return self._logger
+
     @abstractmethod
     def _connect(self, **kwargs):
         pass

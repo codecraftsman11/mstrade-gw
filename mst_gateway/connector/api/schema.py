@@ -39,12 +39,41 @@ ORDER_FIELDS = {
     'active': bool
 }
 
+SUBSCRIPTIONS = {
+    'symbol': {
+        'schema': SYMBOL_FIELDS,
+    },
+    'quote': {
+        'schema': QUOTE_FIELDS
+    },
+    'quote_bin': {
+        'schema': QUOTE_BIN_FIELDS
+    }
+}
+
+AUTH_SUBSCRIPTIONS = {
+    'order': {
+        'schema': ORDER_FIELDS
+    }
+}
+
 
 def data_valid(data, rules):
     if not isinstance(data, dict):
         raise TypeError("Data is not dictionary")
     if not set(data.keys()) == set(rules.keys()):
         raise ValueError("Keys differ")
+    for k in data:
+        if not value_valid(data[k], rules[k]):
+            raise ValueError("Invalid {}".format(k))
+    return True
+
+
+def data_update_valid(data, rules):
+    if not isinstance(data, dict):
+        raise TypeError("Data is not dictionary")
+    if set(data.keys()) - set(rules.keys()):
+        raise ValueError("In data present keys out of rule's range")
     for k in data:
         if not value_valid(data[k], rules[k]):
             raise ValueError("Invalid {}".format(k))

@@ -24,7 +24,7 @@ def _bitmex(_debug) -> BitmexRestApi:
                            'api_key': cfg.BITMEX_API_KEY,
                            'api_secret': cfg.BITMEX_API_SECRET
                        },
-                       logger=_debug) as bitmex:
+                       logger=_debug['logger']) as bitmex:
         bitmex.open()
         yield bitmex
         bitmex.cancel_all_orders()

@@ -2,6 +2,7 @@ from os import getenv
 
 
 BITMEX_URL = "https://testnet.bitmex.com/api/v1"
+BITMEX_WSS_URL = "wss://testnet.bitmex.com/realtime"
 BITMEX_SYMBOL = "XBTUSD"
 BITMEX_API_KEY = getenv('BITMEX_API_KEY')
 BITMEX_API_SECRET = getenv('BITMEX_API_SECRET')
