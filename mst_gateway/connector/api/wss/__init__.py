@@ -8,6 +8,7 @@ import websockets
 from ...base import Connector
 from .. import errors
 from .subscriber import Subscriber
+from .serializer import Serializer
 from .router import Router
 from ..schema import SUBSCRIPTIONS
 from ..schema import AUTH_SUBSCRIPTIONS
@@ -15,7 +16,7 @@ from ..schema import AUTH_SUBSCRIPTIONS
 
 class StockWssApi(Connector):
     __metaclass__ = ABCMeta
-    router = Router()
+    router_class = Router
     subscribers: Dict[str, Subscriber] = {key: None for key in
                                           SUBSCRIPTIONS}
     auth_subscribers: Dict[str, Subscriber] = {key: None for key in
@@ -30,13 +31,21 @@ class StockWssApi(Connector):
         self._url = url if url is not None else self.__class__.BASE_URL
         self._error = errors.ERROR_OK
         self._subscriptions = dict()
+        self._router = self.__class__.router_class(self)
         super().__init__(auth, logger)
 
     def __str__(self):
-        return "{}:{}".format(self.__class__.name, self._url)
+        return "{}".format(self.__class__.name)
+
+    def get_data(self, message: str) -> Serializer:
+        return self.router.get_data(message)
+
+    @property
+    def router(self):
+        return self._router
 
     async def subscribe(self, subscr_name: str, symbol: str = None) -> bool:
-        if self.subscription_registered(subscr_name, symbol):
+        if self.is_registered(subscr_name, symbol):
             return True
         subscriber = self._get_subscriber(subscr_name)
         if not subscriber:
@@ -45,11 +54,11 @@ class StockWssApi(Connector):
         if not await subscriber.subscribe(self, symbol):
             self._logger.error("Error subscribing %s to %s", self, subscr_name)
             return False
-        self._register_subscription(subscr_name, symbol)
+        self.register(subscr_name, symbol)
         return True
 
     async def unsubscribe(self, subscr_name: str, symbol: str = None) -> bool:
-        if not self.subscription_registered(subscr_name, symbol):
+        if not self.is_registered(subscr_name, symbol):
             return True
         subscriber = self._get_subscriber(subscr_name)
         if not subscriber:
@@ -59,10 +68,10 @@ class StockWssApi(Connector):
         if not await subscriber.unsubscribe(self, symbol):
             self._logger.error("Error unsubscribing from %s in %s", subscr_name, self)
             return False
-        self._unregister_subscription(subscr_name, symbol)
+        self.unregister(subscr_name, symbol)
         return True
 
-    def subscription_registered(self, subscr_name, symbol: str = None) -> bool:
+    def is_registered(self, subscr_name, symbol: str = None) -> bool:
         if subscr_name not in self._subscriptions:
             return False
         if isinstance(self._subscriptions[subscr_name], bool):
@@ -71,7 +80,7 @@ class StockWssApi(Connector):
             return True
         return False
 
-    def _register_subscription(self, subscr_name, symbol: str = None):
+    def register(self, subscr_name, symbol: str = None):
         if symbol is None:
             self._subscriptions[subscr_name] = True
         elif subscr_name not in self._subscriptions:
@@ -79,7 +88,7 @@ class StockWssApi(Connector):
         else:
             self._subscriptions[subscr_name][symbol] = True
 
-    def _unregister_subscription(self, subscr_name, symbol: str = None):
+    def unregister(self, subscr_name, symbol: str = None):
         if subscr_name not in self._subscriptions:
             return
         if symbol is None:
@@ -109,10 +118,10 @@ class StockWssApi(Connector):
 
     async def process_message(self, message, on_message: Coroutine = None):
         try:
-            data = self.__class__.router.get_data(self, message)
-        except ValueError:
+            data = self.get_data(message)
+        except Exception as exc:
             self._error = errors.ERROR_INVALID_DATA
-            self._logger.error("Error validating incoming message %s", message)
+            self._logger.error("Error validating incoming message %s; Details: %s", message, exc)
             return None
         if not data:
             return None

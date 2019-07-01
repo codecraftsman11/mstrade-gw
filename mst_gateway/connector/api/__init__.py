@@ -1,5 +1,6 @@
 # pylint: disable=broad-except
 from importlib import import_module
+from datetime import datetime
 
 # Sides
 BUY = 0
@@ -51,3 +52,13 @@ def type_valid(value):
                                                     STOPLIMIT, TP, TPLIMIT]
     except Exception:
         return False
+
+
+def datetime_valid(value):
+    if isinstance(value, datetime):
+        return True
+    try:
+        datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f%z")
+    except ValueError:
+        return False
+    return True

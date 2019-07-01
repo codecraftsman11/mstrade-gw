@@ -12,14 +12,16 @@ if TYPE_CHECKING:
 class Router:
     __metaclass__ = ABCMeta
 
-    def get_data(self, wss_api: StockWssApi, message: str) -> dict:
-        serializer: Serializer = self._get_serializer(wss_api, message)
+    def __init__(self, wss_api: StockWssApi):
+        self._wss_api = wss_api
+        self._routed_data = None
+
+    def get_data(self, message: str) -> dict:
+        serializer: Serializer = self._get_serializer(message)
         if not serializer:
             return None
-        if not serializer.is_valid():
-            raise ValueError()
-        return serializer.validated_data
+        return serializer.data(self._routed_data)
 
     @abstractmethod
-    def _get_serializer(self, wss_api: StockWssApi, message: str) -> Serializer:
-        return Serializer(wss_api, message)
+    def _get_serializer(self, message: str) -> Serializer:
+        pass

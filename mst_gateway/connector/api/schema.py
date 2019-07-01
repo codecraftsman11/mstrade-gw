@@ -1,10 +1,9 @@
 # pylint: disable=broad-except
-from datetime import datetime
 from .. import api
 
 
 QUOTE_FIELDS = {
-    "timestamp": datetime,
+    "timestamp": api.datetime_valid,
     "symbol": str,
     "volume": int,
     "price": float,
@@ -12,7 +11,7 @@ QUOTE_FIELDS = {
 }
 
 QUOTE_BIN_FIELDS = {
-    "timestamp": datetime,
+    "timestamp": api.datetime_valid,
     "symbol": str,
     "volume": int,
     "open": float,
@@ -22,7 +21,7 @@ QUOTE_BIN_FIELDS = {
 }
 
 SYMBOL_FIELDS = {
-    'timestamp': datetime,
+    'timestamp': api.datetime_valid,
     'symbol': str,
     'price': float
 }
@@ -35,7 +34,7 @@ ORDER_FIELDS = {
     'type': api.type_valid,
     'side': api.side_valid,
     'price': float,
-    'created': datetime,
+    'created': api.datetime_valid,
     'active': bool
 }
 

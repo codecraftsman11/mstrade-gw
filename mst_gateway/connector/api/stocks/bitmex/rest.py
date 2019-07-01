@@ -2,74 +2,11 @@ import json
 import bitmex
 from bravado.exception import HTTPError
 from . import var
+from . import utils
 from ...rest import StockRestApi
 from .... import api
 from .....exceptions import ConnectorError
 from .....utils import _j
-
-
-def store_order_type(order_type: int) -> str:
-    return var.ORDER_TYPE_WRITE_MAP.get(order_type)
-
-
-def load_order_type(order_type: str) -> int:
-    return var.ORDER_TYPE_READ_MAP.get(order_type)
-
-
-def store_order_side(order_side: int) -> str:
-    if order_side == api.SELL:
-        return 'Sell'
-    return 'Buy'
-
-
-def load_order_side(order_side: str) -> int:
-    if order_side == 'Sell':
-        return api.SELL
-    return api.BUY
-
-
-def load_order_data(raw_data: dict) -> dict:
-    return {
-        'order_id': raw_data['clOrdID'],
-        'symbol': raw_data['symbol'],
-        'value': raw_data['orderQty'],
-        'stop': raw_data['stopPx'],
-        'type': load_order_type(raw_data['ordType']),
-        'side': load_order_side(raw_data['side']),
-        'price': raw_data['price'],
-        'created': raw_data['timestamp'],
-        'active': raw_data['ordStatus'] != "New"
-    }
-
-
-def load_symbol_data(raw_data: dict) -> dict:
-    return {
-        'timestamp': raw_data.get('timestamp'),
-        'symbol': raw_data.get('symbol'),
-        'price': raw_data.get('lastPrice'),
-    }
-
-
-def load_quote_data(raw_data: dict) -> dict:
-    return {
-        'timestamp': raw_data.get('timestamp'),
-        'symbol': raw_data.get('symbol'),
-        'price': raw_data.get('price'),
-        'volume': raw_data.get('grossValue'),
-        'side': load_order_side(raw_data.get('side'))
-    }
-
-
-def load_quote_bin_data(raw_data: dict) -> dict:
-    return {
-        'timestamp': raw_data.get('timestamp'),
-        'symbol': raw_data.get('symbol'),
-        'open': raw_data.get("open"),
-        'close': raw_data.get("close"),
-        'high': raw_data.get("high"),
-        'low': raw_data.get('low'),
-        'volume': raw_data.get('volume'),
-    }
 
 
 def _make_create_order_args(args, options):
@@ -120,7 +57,7 @@ class BitmexRestApi(StockRestApi):
                                      symbol=symbol.upper(),
                                      reverse=True,
                                      **self._api_kwargs(kwargs))
-        return [load_quote_data(data) for data in quotes]
+        return [utils.load_quote_data(data) for data in quotes]
 
     def _list_quote_bins_page(self, symbol, binsize='1m', count=100, offset=0,
                               **kwargs):
@@ -131,7 +68,7 @@ class BitmexRestApi(StockRestApi):
                                          start=offset,
                                          count=count,
                                          **self._api_kwargs(kwargs))
-        return [load_quote_bin_data(data) for data in quote_bins]
+        return [utils.load_quote_bin_data(data) for data in quote_bins]
 
     def list_quote_bins(self, symbol, binsize='1m', count=100, **kwargs) -> list:
         pages = int((count - 1) / var.BITMEX_MAX_QUOTE_BINS_COUNT) + 1
@@ -157,14 +94,14 @@ class BitmexRestApi(StockRestApi):
     def list_symbols(self, **kwargs) -> list:
         instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive,
                                           **kwargs)
-        return [load_symbol_data(data) for data in instruments]
+        return [utils.load_symbol_data(data) for data in instruments]
 
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
         quotes, _ = self._bitmex_api(self._handler.Trade.Trade_get,
                                      symbol=symbol.upper(),
                                      reverse=True,
                                      count=1)
-        return load_quote_data(quotes[0])
+        return utils.load_quote_data(quotes[0])
 
     def create_order(self, symbol: str,
                      side: int,
@@ -175,9 +112,9 @@ class BitmexRestApi(StockRestApi):
                      options: dict = None) -> bool:
         args = dict(
             symbol=symbol.upper(),
-            side=store_order_side(side),
+            side=utils.store_order_side(side),
             orderQty=value,
-            ordType=store_order_type(order_type)
+            ordType=utils.store_order_type(order_type)
         )
         if price is None:
             args['ordType'] = 'Market'
@@ -204,7 +141,7 @@ class BitmexRestApi(StockRestApi):
         }))
         if not data:
             return None
-        return load_order_data(data[0])
+        return utils.load_order_data(data[0])
 
     def list_orders(self, symbol: str, active_only: bool = True,
                     count: int = None, offset: int = 0, options: dict = None) -> list:
@@ -223,7 +160,7 @@ class BitmexRestApi(StockRestApi):
                                      symbol=symbol.upper(),
                                      reverse=True,
                                      **options)
-        return [load_order_data(data) for data in orders]
+        return [utils.load_order_data(data) for data in orders]
 
     def close_order(self, order_id) -> bool:
         order = self.get_order(order_id)

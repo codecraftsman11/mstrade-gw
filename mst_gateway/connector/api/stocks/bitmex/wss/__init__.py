@@ -15,7 +15,7 @@ BITMEX_WSS_DEFAULT_TIMEOUT = 5
 class BitmexWssApi(StockWssApi):
     BASE_URL = "wss://www.bitmex.com/realtime"
     TEST_URL = "wss://testnet.bitmex.com/realtime"
-    name = "Bitmex"
+    name = "bitmex"
     subscribers = {
         'symbol': subscr.BitmexSymbolSubscriber(),
         'quote_bin': subscr.BitmexQuoteBinSubscriber(),
@@ -25,7 +25,7 @@ class BitmexWssApi(StockWssApi):
         'order': subscr.BitmexOrderSubscriber()
     }
 
-    router = BitmexWssRouter()
+    router_class = BitmexWssRouter
 
     def __init__(self,
                  url: str = None,
