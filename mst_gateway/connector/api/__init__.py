@@ -18,6 +18,8 @@ TPLIMIT = 5  # aka limit TakeProfit
 SL_MARKET = 0
 SL_LIMIT = 1
 
+DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
+
 
 def init(params: dict, auth=None, cls=None, logger=None):
     cls = cls or import_module('.stocks.bitmex.rest',
@@ -58,7 +60,7 @@ def datetime_valid(value):
     if isinstance(value, datetime):
         return True
     try:
-        datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f%z")
+        datetime.strptime(value, DATETIME_FORMAT)
     except ValueError:
         return False
     return True
