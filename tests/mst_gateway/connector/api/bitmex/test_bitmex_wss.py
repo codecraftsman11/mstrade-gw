@@ -65,9 +65,9 @@ TEST_SYMBOL_MESSAGES = [
     {
         'message': '{"table":"instrument","action":"update","data":[{"symbol":"XBTUSD","lastPrice":10933.67,"markPrice":10933.67,"timestamp":"2019-07-01T08:16:15.250Z"}]}',
         'data': {
-            'connection': "bitmex",
-            'account': "test",
+            'account': "bitmex.test",
             'table': "symbol",
+            'type': "update",
             'data': [
                 {
                     'symbol': "XBTUSD",
@@ -87,9 +87,9 @@ TEST_QUOTE_BIN_MESSAGES = [
     {
         'message': '{"table":"trade","action":"insert","data":[{"timestamp":"2019-07-01T11:58:09.589Z","symbol":"XBTUSD","side":"Buy","size":10,"price":11397.5,"tickDirection":"ZeroPlusTick","trdMatchID":"c05d0c8d-d4fc-97d1-ff13-7f36213f5240","grossValue":87740,"homeNotional":0.0008774,"foreignNotional":10}]}',
         'data': {
-            'connection': "bitmex",
-            'account': "test",
+            'account': "bitmex.test",
             'table': "quote_bin",
+            'type': "update",
             'data': [
                 {
                     'timestamp': "2019-07-01T11:58:09.589Z",
@@ -106,9 +106,9 @@ TEST_QUOTE_BIN_MESSAGES = [
     {
         'message': '{"table":"tradeBin1m","action":"insert","data":[{"timestamp":"2019-07-01T11:59:00.000Z","symbol":"XBTUSD","open":11322.5,"high":11331,"low":11319.5,"close":11321,"trades":66,"volume":7187,"vwap":11326.311,"lastSize":5,"turnover":63458685,"homeNotional":0.6345868499999999,"foreignNotional":7187}]}',
         'data': {
-            'connection': "bitmex",
-            'account': "test",
+            'account': "bitmex.test",
             'table': "quote_bin",
+            'type': "update",
             'data': [
                 {
                     'timestamp': "2019-07-01T11:59:00.000Z",
@@ -125,9 +125,9 @@ TEST_QUOTE_BIN_MESSAGES = [
     {
         'message': '{"table":"trade","action":"insert","data":[{"timestamp":"2019-07-01T11:59:36.307Z","symbol":"XBTUSD","side":"Sell","size":100,"price":11329,"tickDirection":"MinusTick","trdMatchID":"4e2522dc-c411-46dc-7f2f-e33491965ddd","grossValue":882700,"homeNotional":0.008827,"foreignNotional":100}]}',
         'data': {
-            'connection': "bitmex",
-            'account': "test",
+            'account': "bitmex.test",
             'table': "quote_bin",
+            'type': "update",
             'data': [
                 {
                     'timestamp': "2019-07-01T11:59:36.307Z",
@@ -144,9 +144,9 @@ TEST_QUOTE_BIN_MESSAGES = [
     {
         'message': '{"table":"trade","action":"insert","data":[{"timestamp":"2019-07-01T11:59:38.326Z","symbol":"XBTUSD","side":"Sell","size":5,"price":11339,"tickDirection":"ZeroMinusTick","trdMatchID":"1084f572-05d1-c16d-d5d3-02d5f8a9bbbb","grossValue":44135,"homeNotional":0.00044135,"foreignNotional":5}]}',
         'data': {
-            'connection': "bitmex",
-            'account': "test",
+            'account': "bitmex.test",
             'table': "quote_bin",
+            'type': "update",
             'data': [
                 {
                     'timestamp': "2019-07-01T11:59:38.326Z",

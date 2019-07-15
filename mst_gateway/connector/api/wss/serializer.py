@@ -23,8 +23,8 @@ class Serializer:
         if data is None:
             return None
         return {
-            'connection': str(self._wss_api),
-            'account': "test",
+            'account': "{}.test".format(self._wss_api),
             'table': self.__class__.subscription,
+            'type': "update",
             'data': data
         }
