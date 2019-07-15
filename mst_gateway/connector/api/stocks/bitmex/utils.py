@@ -30,7 +30,7 @@ def load_symbol_data(raw_data: dict) -> dict:
     return {
         'timestamp': raw_data.get('timestamp'),
         'symbol': raw_data.get('symbol'),
-        'price': raw_data.get('lastPrice'),
+        'price': float(raw_data.get('lastPrice')),
     }
 
 
@@ -62,7 +62,7 @@ def load_order_data(raw_data: dict, skip_undef=False) -> dict:
         'stop': raw_data.get('stopPx'),
         'type': raw_data.get('ordType'),
         'side': raw_data.get('side'),
-        'price': raw_data.get('price'),
+        'price': float(raw_data.get('price')),
         'created': raw_data.get('timestamp'),
         'active': raw_data.get('ordStatus') != "New"
     }
@@ -83,7 +83,7 @@ def load_quote_data(raw_data: dict) -> dict:
     return {
         'timestamp': raw_data.get('timestamp'),
         'symbol': raw_data.get('symbol'),
-        'price': raw_data.get('price'),
+        'price': float(raw_data.get('price')),
         'volume': raw_data.get('size'),
         'side': load_order_side(raw_data.get('side'))
     }
@@ -93,9 +93,9 @@ def load_quote_bin_data(raw_data: dict) -> dict:
     return {
         'timestamp': raw_data.get('timestamp'),
         'symbol': raw_data.get('symbol'),
-        'open': raw_data.get("open"),
-        'close': raw_data.get("close"),
-        'high': raw_data.get("high"),
-        'low': raw_data.get('low'),
+        'open': float(raw_data.get("open")),
+        'close': float(raw_data.get("close")),
+        'high': float(raw_data.get("high")),
+        'low': float(raw_data.get('low')),
         'volume': raw_data.get('volume'),
     }
