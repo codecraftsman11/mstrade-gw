@@ -30,7 +30,7 @@ class BitmexWssRouter(Router):
 
     def _is_subscription_message(self, data: dict) -> bool:
         # pylint: disable=no-self-use
-        return 'table' in data and data.get('action') in ("update", "insert")
+        return 'table' in data and data.get('action') in ("partial", "update", "insert")
 
     def _get_subscription_serializer(self, data: dict) -> Serializer:
         if data['table'] == "instrument":
@@ -41,7 +41,7 @@ class BitmexWssRouter(Router):
             return self._lookup_serializer("order", data)
         return None
 
-    def _create_serializer(self, subscr_name):
+    def _subscr_serializer(self, subscr_name) -> Serializer:
         if subscr_name not in self._serializers:
             self._serializers[subscr_name] = self.__class__.serializer_classes[subscr_name](self._wss_api)
         return self._serializers[subscr_name]
@@ -49,9 +49,10 @@ class BitmexWssRouter(Router):
     def _lookup_serializer(self, subscr_name, data: list) -> Serializer:
         self._routed_data = {
             'table': data['table'],
+            'action': data.get('action'),
             'data': []
         }
-        serializer = self._create_serializer(subscr_name)
+        serializer = self._subscr_serializer(subscr_name)
         for item in data['data']:
             if self._wss_api.is_registered(subscr_name, item['symbol']) \
                and serializer.is_item_valid(data['table'], item):

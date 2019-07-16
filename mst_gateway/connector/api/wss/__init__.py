@@ -8,7 +8,6 @@ import websockets
 from ...base import Connector
 from .. import errors
 from .subscriber import Subscriber
-from .serializer import Serializer
 from .router import Router
 from ..schema import SUBSCRIPTIONS
 from ..schema import AUTH_SUBSCRIPTIONS
@@ -37,12 +36,15 @@ class StockWssApi(Connector):
     def __str__(self):
         return "{}".format(self.__class__.name)
 
-    def get_data(self, message: str) -> Serializer:
+    def get_data(self, message: str) -> dict:
         return self.router.get_data(message)
 
     @property
     def router(self):
         return self._router
+
+    def get_state(self, subscr_name: str, symbol: str = None) -> dict:
+        return self.router.get_state(subscr_name, symbol)
 
     async def subscribe(self, subscr_name: str, symbol: str = None) -> bool:
         if self.is_registered(subscr_name, symbol):

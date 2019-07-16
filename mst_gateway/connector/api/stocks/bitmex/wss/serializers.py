@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+from typing import Tuple
 from abc import ABCMeta
 from abc import abstractmethod
 from ....wss.serializer import Serializer
@@ -21,11 +22,18 @@ class BitmexSerializer(Serializer):
     def is_item_valid(self, table: str, item: dict) -> bool:
         return False
 
-    def _get_data(self, message) -> dict:
+    def _get_data(self, message) -> Tuple[str, dict]:
         data = []
         for item in message['data']:
-            data.append(self._load_data(message['table'], item))
-        return data
+            new_state = self._load_data(message['table'], item)
+            self._update_state(new_state['symbol'], new_state)
+            data.append(new_state)
+        print(message)
+        if message.get('action') == "partial":
+            data_type = "partial"
+        else:
+            data_type = "update"
+        return (data_type, data)
 
 
 class BitmexSymbolSerializer(BitmexSerializer):

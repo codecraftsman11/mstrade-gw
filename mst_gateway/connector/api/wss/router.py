@@ -22,6 +22,16 @@ class Router:
             return None
         return serializer.data(self._routed_data)
 
+    def get_state(self, subscr_name: str, symbol: str = None) -> dict:
+        serializer: Serializer = self._subscr_serializer(subscr_name)
+        if not serializer:
+            return None
+        return serializer.state(symbol)
+
     @abstractmethod
     def _get_serializer(self, message: str) -> Serializer:
+        pass
+
+    @abstractmethod
+    def _subscr_serializer(self, subscr_name: str) -> Serializer:
         pass
