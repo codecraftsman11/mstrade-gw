@@ -14,13 +14,15 @@ class Serializer:
 
     def __init__(self, wss_api: StockWssApi):
         self._wss_api = wss_api
-        self._state = dict()
+        self._state = None
 
     @abstractmethod
     def _get_data(self, message) -> Tuple[str, dict]:
         return None
 
     def _get_state(self, symbol: str = None) -> dict:
+        if self._state is None:
+            return None
         if symbol is None:
             return [self._state[k] for k in self._state]
         if symbol in self._state:
@@ -28,6 +30,8 @@ class Serializer:
         return None
 
     def _update_state(self, symbol: str, data: any):
+        if self._state is None:
+            self._state = dict()
         self._state[symbol] = data
 
     def data(self, message):

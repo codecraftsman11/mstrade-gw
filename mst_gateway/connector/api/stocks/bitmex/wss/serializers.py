@@ -27,13 +27,16 @@ class BitmexSerializer(Serializer):
         for item in message['data']:
             new_state = self._load_data(message['table'], item)
             self._update_state(new_state['symbol'], new_state)
-            data.append(new_state)
-        print(message)
+            self._update_data(data, new_state)
         if message.get('action') == "partial":
             data_type = "partial"
         else:
             data_type = "update"
         return (data_type, data)
+
+    def _update_data(self, data: list, item: dict):
+        # pylint: disable=no-self-use
+        data.append(item)
 
 
 class BitmexSymbolSerializer(BitmexSerializer):
@@ -89,6 +92,12 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
     def _reset_quote_bin(self, item):
         self._bins[item['symbol']] = None
         return utils.load_quote_bin_data(item)
+
+    def _update_data(self, data: list, item: dict):
+        for ditem in data:
+            if ditem['symbol'] == item['symbol']:
+                return
+        data.append(item)
 
 
 class BitmexOrderSerializer(BitmexSerializer):
