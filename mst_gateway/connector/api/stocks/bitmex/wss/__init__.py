@@ -1,5 +1,4 @@
 import time
-from logging import Logger
 from websockets import client
 from ....wss import StockWssApi
 from . import subscribers as subscr
@@ -27,14 +26,6 @@ class BitmexWssApi(StockWssApi):
 
     router_class = BitmexWssRouter
 
-    def __init__(self,
-                 url: str = None,
-                 auth: dict = None,
-                 logger: Logger = None,
-                 timeout: int = None):
-        self._timeout = timeout or BITMEX_WSS_DEFAULT_TIMEOUT
-        super().__init__(url, auth, logger)
-
     async def _connect(self, **kwargs):
         _ws: client.WebSocketClientProtocol = await super()._connect(**kwargs)
         res = await _ws.recv()
@@ -45,7 +36,7 @@ class BitmexWssApi(StockWssApi):
         if auth is None:
             auth = self._auth
         wss = self.handler
-        expires = int(time.time()) + self._timeout
+        expires = int(time.time()) + self._options.get('timeout', BITMEX_WSS_DEFAULT_TIMEOUT)
         signature = bitmex_signature(auth.get('api_secret', ""), "GET", "/realtime", expires)
         await wss.send(make_cmd('authKeyExpires', [auth.get('api_key', ""), expires,
                                                    signature]))

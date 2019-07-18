@@ -26,12 +26,18 @@ class StockWssApi(Connector):
     def __init__(self,
                  url: str = None,
                  auth: dict = None,
-                 logger: Logger = None):
-        self._url = url if url is not None else self.__class__.BASE_URL
+                 logger: Logger = None,
+                 options: dict = None):
+        self._options = options or {}
+        self._url = url or self.__class__.BASE_URL
         self._error = errors.ERROR_OK
-        self._subscriptions = dict()
+        self._subscriptions = {}
         self._router = self.__class__.router_class(self)
         super().__init__(auth, logger)
+
+    @property
+    def options(self):
+        return self._options
 
     def __str__(self):
         return "{}".format(self.__class__.name)

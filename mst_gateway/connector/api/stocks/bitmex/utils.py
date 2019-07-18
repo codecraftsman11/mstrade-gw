@@ -1,3 +1,5 @@
+from typing import Union
+from datetime import datetime
 import urllib
 import json
 import hmac
@@ -28,9 +30,9 @@ def bitmex_signature(api_secret, verb, url, nonce, postdict=None):
 
 def load_symbol_data(raw_data: dict) -> dict:
     return {
-        'timestamp': raw_data.get('timestamp'),
+        'timestamp': _date(raw_data.get('timestamp')),
         'symbol': raw_data.get('symbol'),
-        'price': float(raw_data.get('lastPrice')),
+        'price': _float(raw_data.get('lastPrice')),
     }
 
 
@@ -62,8 +64,8 @@ def load_order_data(raw_data: dict, skip_undef=False) -> dict:
         'stop': raw_data.get('stopPx'),
         'type': raw_data.get('ordType'),
         'side': raw_data.get('side'),
-        'price': float(raw_data.get('price')),
-        'created': raw_data.get('timestamp'),
+        'price': _float(raw_data.get('price')),
+        'created': _date(raw_data.get('timestamp')),
         'active': raw_data.get('ordStatus') != "New"
     }
     for k in data:
@@ -81,9 +83,9 @@ def load_order_data(raw_data: dict, skip_undef=False) -> dict:
 
 def load_quote_data(raw_data: dict) -> dict:
     return {
-        'timestamp': raw_data.get('timestamp'),
+        'timestamp': _date(raw_data.get('timestamp')),
         'symbol': raw_data.get('symbol'),
-        'price': float(raw_data.get('price')),
+        'price': _float(raw_data.get('price')),
         'volume': raw_data.get('size'),
         'side': load_order_side(raw_data.get('side'))
     }
@@ -91,11 +93,48 @@ def load_quote_data(raw_data: dict) -> dict:
 
 def load_quote_bin_data(raw_data: dict) -> dict:
     return {
-        'timestamp': raw_data.get('timestamp'),
+        'timestamp': _date(raw_data.get('timestamp')),
         'symbol': raw_data.get('symbol'),
-        'open': float(raw_data.get("open")),
-        'close': float(raw_data.get("close")),
-        'high': float(raw_data.get("high")),
-        'low': float(raw_data.get('low')),
+        'open': _float(raw_data.get("open")),
+        'close': _float(raw_data.get("close")),
+        'high': _float(raw_data.get("high")),
+        'low': _float(raw_data.get('low')),
         'volume': raw_data.get('volume'),
     }
+
+
+def quote2bin(quote: dict) -> dict:
+    return {
+        'symbol': quote['symbol'],
+        'timestamp': quote['timestamp'],
+        'open': quote['price'],
+        'close': quote['price'],
+        'high': quote['price'],
+        'low': quote['price'],
+        'volume': quote['volume']
+    }
+
+
+def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
+    quote_bin['timestamp'] = quote['timestamp']
+    quote_bin['close'] = quote['price']
+    quote_bin['high'] = max(quote_bin['high'], quote['price'])
+    quote_bin['low'] = min(quote_bin['low'], quote['price'])
+    quote_bin['volume'] += quote['volume']
+    return quote_bin
+
+
+def _date(token: Union[datetime, str]) -> datetime:
+    if isinstance(token, datetime):
+        return token
+    try:
+        return datetime.strptime(token, api.DATETIME_FORMAT)
+    except ValueError:
+        return None
+
+
+def _float(token: Union[int, float, None]) -> Union[float, None]:
+    try:
+        return float(token)
+    except ValueError:
+        return None

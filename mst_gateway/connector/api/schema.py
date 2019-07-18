@@ -1,17 +1,20 @@
 # pylint: disable=broad-except
-from .. import api
+from ..api.validators import datetime_valid
+from ..api.validators import side_valid
+from ..api.validators import order_id_valid
+from ..api.validators import type_valid
 
 
 QUOTE_FIELDS = {
-    "timestamp": api.datetime_valid,
+    "timestamp": datetime_valid,
     "symbol": str,
     "volume": int,
     "price": float,
-    "side": api.side_valid,
+    "side": side_valid,
 }
 
 QUOTE_BIN_FIELDS = {
-    "timestamp": api.datetime_valid,
+    "timestamp": datetime_valid,
     "symbol": str,
     "volume": int,
     "open": float,
@@ -21,20 +24,20 @@ QUOTE_BIN_FIELDS = {
 }
 
 SYMBOL_FIELDS = {
-    'timestamp': api.datetime_valid,
+    'timestamp': datetime_valid,
     'symbol': str,
     'price': float
 }
 
 ORDER_FIELDS = {
-    'order_id': api.order_id_valid,
+    'order_id': order_id_valid,
     'symbol': str,
     'value': int,
     'stop': float,
-    'type': api.type_valid,
-    'side': api.side_valid,
+    'type': type_valid,
+    'side': side_valid,
     'price': float,
-    'created': api.datetime_valid,
+    'created': datetime_valid,
     'active': bool
 }
 

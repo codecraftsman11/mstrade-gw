@@ -13,7 +13,7 @@ from mst_gateway.utils import generate_order_id
 import tests.config as cfg
 
 
-TEST_FROM_DATE = datetime.now(tz=timezone.utc) + timedelta(days=-2)
+TEST_FROM_DATE = datetime.now(tz=timezone.utc) - timedelta(days=2)
 TEST_TO_DATE = TEST_FROM_DATE + timedelta(minutes=1)
 
 

@@ -1,6 +1,5 @@
 # pylint: disable=broad-except
 from importlib import import_module
-from datetime import datetime
 
 # Sides
 BUY = 0
@@ -32,35 +31,3 @@ def connect(params, auth, cls=None, logger=None):
     if auth:
         return connector.connect()
     return connector
-
-
-def side_valid(value):
-    try:
-        return isinstance(value, int) and value in [SELL, BUY]
-    except Exception:
-        return False
-
-
-def order_id_valid(value):
-    try:
-        return isinstance(value, str) and value
-    except Exception:
-        return False
-
-
-def type_valid(value):
-    try:
-        return isinstance(value, int) and value in [MARKET, LIMIT, STOP,
-                                                    STOPLIMIT, TP, TPLIMIT]
-    except Exception:
-        return False
-
-
-def datetime_valid(value):
-    if isinstance(value, datetime):
-        return True
-    try:
-        datetime.strptime(value, DATETIME_FORMAT)
-    except ValueError:
-        return False
-    return True
