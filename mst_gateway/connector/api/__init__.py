@@ -18,6 +18,7 @@ SL_MARKET = 0
 SL_LIMIT = 1
 
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
+DATETIME_OUT_FORMAT = "%Y-%m-%d %H:%M:%S.%fZ"
 
 
 def init(params: dict, auth=None, cls=None, logger=None):

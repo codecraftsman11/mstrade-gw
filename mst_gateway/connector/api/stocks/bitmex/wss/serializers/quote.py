@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from datetime import datetime
+from copy import copy
 from .base import BitmexSerializer
 from ...utils import load_quote_data
 from ...utils import load_quote_bin_data
@@ -29,8 +30,8 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
 
     def _load_data(self, message: dict, item: dict) -> dict:
         if self._bin_closed(message, item):
-            return self._reset_quote_bin(message, item)
-        return self._update_quote_bin(item)
+            return copy(self._reset_quote_bin(message, item))
+        return copy(self._update_quote_bin(item))
 
     def _get_quote_bin(self, item: dict) -> dict:
         quote = load_quote_data(item)
