@@ -17,8 +17,8 @@ TPLIMIT = 5  # aka limit TakeProfit
 SL_MARKET = 0
 SL_LIMIT = 1
 
-# API Errors
-ERROR_OK = (0, 'OK')
+DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
+DATETIME_OUT_FORMAT = "%Y-%m-%d %H:%M:%S.%fZ"
 
 
 def init(params: dict, auth=None, cls=None, logger=None):
@@ -32,25 +32,3 @@ def connect(params, auth, cls=None, logger=None):
     if auth:
         return connector.connect()
     return connector
-
-
-def side_valid(value):
-    try:
-        return isinstance(value, int) and value in [SELL, BUY]
-    except Exception:
-        return False
-
-
-def order_id_valid(value):
-    try:
-        return isinstance(value, str) and value
-    except Exception:
-        return False
-
-
-def type_valid(value):
-    try:
-        return isinstance(value, int) and value in [MARKET, LIMIT, STOP,
-                                                    STOPLIMIT, TP, TPLIMIT]
-    except Exception:
-        return False

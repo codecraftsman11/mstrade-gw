@@ -13,7 +13,7 @@ from mst_gateway.utils import generate_order_id
 import tests.config as cfg
 
 
-TEST_FROM_DATE = datetime.now(tz=timezone.utc) + timedelta(days=-2)
+TEST_FROM_DATE = datetime.now(tz=timezone.utc) - timedelta(days=2)
 TEST_TO_DATE = TEST_FROM_DATE + timedelta(minutes=1)
 
 
@@ -24,7 +24,7 @@ def _bitmex(_debug) -> BitmexRestApi:
                            'api_key': cfg.BITMEX_API_KEY,
                            'api_secret': cfg.BITMEX_API_SECRET
                        },
-                       logger=_debug) as bitmex:
+                       logger=_debug['logger']) as bitmex:
         bitmex.open()
         yield bitmex
         bitmex.cancel_all_orders()
