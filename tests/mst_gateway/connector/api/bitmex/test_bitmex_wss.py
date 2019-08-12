@@ -4,6 +4,7 @@ import logging
 import asyncio
 import pytest
 from websockets.client import WebSocketClientProtocol
+from websockets.exceptions import ConnectionClosed
 from mst_gateway.logging import init_logger
 from mst_gateway.connector.api import schema
 from mst_gateway.connector.api.stocks.bitmex import BitmexWssApi
@@ -62,8 +63,12 @@ def _debug(caplog):
 async def consume(_wss_api: BitmexWssApi, wss: WebSocketClientProtocol,
                   on_message: callable):
     while True:
-        message = await wss.recv()
-        if await _wss_api.process_message(message, on_message):
+        try:
+            message = await wss.recv()
+        except ConnectionClosed:
+            message = None
+            wss = await _wss_api.open(restore=True)
+        if message and await _wss_api.process_message(message, on_message):
             return
 
 TEST_SYMBOL_MESSAGES = [
@@ -413,6 +418,27 @@ class TestBitmexWssApi:
             try:
                 _wss = await _wss_api.open()
                 await _wss_api.subscribe('symbol')
+                await asyncio.wait_for(
+                    consume(_wss_api, _wss, self.on_message),
+                    timeout=5
+                )
+            except asyncio.TimeoutError:
+                pass
+            finally:
+                await _wss_api.close()
+
+        self.reset()
+        await subscribe()
+        assert self.data
+        assert schema.data_update_valid(self.data[-1]['data'][0], schema.SYMBOL_FIELDS)
+
+    @pytest.mark.asyncio
+    async def test_bitmex_wss_restore_connection(self, _wss_api: BitmexWssApi):
+        async def subscribe():
+            try:
+                _wss = await _wss_api.open()
+                await _wss_api.subscribe('symbol')
+                await _wss.close()
                 await asyncio.wait_for(
                     consume(_wss_api, _wss, self.on_message),
                     timeout=5

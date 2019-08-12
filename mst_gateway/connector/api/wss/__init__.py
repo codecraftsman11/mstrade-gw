@@ -52,8 +52,9 @@ class StockWssApi(Connector):
     def get_state(self, subscr_name: str, symbol: str = None) -> dict:
         return self.router.get_state(subscr_name, symbol)
 
-    async def subscribe(self, subscr_name: str, symbol: str = None) -> bool:
-        if self.is_registered(subscr_name, symbol):
+    async def subscribe(self, subscr_name: str, symbol: str = None,
+                        force: bool = False) -> bool:
+        if not force and self.is_registered(subscr_name, symbol):
             return True
         subscriber = self._get_subscriber(subscr_name)
         if not subscriber:
@@ -109,8 +110,19 @@ class StockWssApi(Connector):
                 del self._subscriptions[subscr_name]
 
     async def open(self, **kwargs):
+        restore = kwargs.get('restore', False)
         self._handler = await self._connect(**kwargs)
+        if restore:
+            await self._restore_subscriptions()
         return self._handler
+
+    async def _restore_subscriptions(self):
+        for subscr in self._subscriptions:
+            if not isinstance(self._subscriptions[subscr], dict):
+                await self.subscribe(subscr, force=True)
+            else:
+                for symbol in self._subscriptions[subscr]:
+                    await self.subscribe(subscr, symbol, force=True)
 
     async def _connect(self, **kwargs):
         ws_options = kwargs.get('ws_options', dict())
