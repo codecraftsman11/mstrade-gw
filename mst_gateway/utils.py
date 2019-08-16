@@ -1,10 +1,11 @@
+import datetime
 import json
 import random
 import sys
 
 
-def _j(struct) -> str:
-    return json.dumps(struct)
+def j_dumps(struct) -> str:
+    return json.dumps(struct, default=_convert)
 
 
 def j_q(src: str) -> dict:
@@ -26,3 +27,9 @@ def fetch_data(data, path=None, default=None):
 def generate_order_id():
     random.seed()  # nosec
     return "test.{}".format(random.randint(0, sys.maxsize))  # nosec
+
+
+def _convert(obj):
+    if isinstance(obj, datetime.datetime):
+        return obj.__str__()
+    return None

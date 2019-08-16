@@ -6,7 +6,7 @@ from . import utils
 from ...rest import StockRestApi
 from .... import api
 from .....exceptions import ConnectorError
-from .....utils import _j
+from .....utils import j_dumps
 
 
 def _make_create_order_args(args, options):
@@ -136,9 +136,10 @@ class BitmexRestApi(StockRestApi):
         return bool(data)
 
     def get_order(self, order_id: str) -> dict:
-        data, _ = self._bitmex_api(self._handler.Order.Order_getOrders, filter=_j({
-            'clOrdID': order_id
-        }))
+        data, _ = self._bitmex_api(self._handler.Order.Order_getOrders,
+                                   filter=j_dumps({
+                                       'clOrdID': order_id
+                                   }))
         if not data:
             return None
         return utils.load_order_data(data[0])
@@ -151,7 +152,7 @@ class BitmexRestApi(StockRestApi):
             if 'filter' not in options:
                 options['filter'] = {}
             options['filter']['open'] = True
-            options['filter'] = _j(options['filter'])
+            options['filter'] = j_dumps(options['filter'])
         if count is not None:
             options['count'] = count
         if offset > 0:
