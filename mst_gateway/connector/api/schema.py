@@ -41,6 +41,14 @@ ORDER_FIELDS = {
     'active': bool
 }
 
+ORDER_BOOK_FIELDS = {
+    'id': int,
+    'symbol': str,
+    'price': float,
+    'volume': int,
+    'side': side_valid
+}
+
 SUBSCRIPTIONS = {
     'symbol': {
         'schema': SYMBOL_FIELDS,
@@ -50,6 +58,9 @@ SUBSCRIPTIONS = {
     },
     'quote_bin': {
         'schema': QUOTE_BIN_FIELDS
+    },
+    'order_book': {
+        'schema': ORDER_BOOK_FIELDS
     }
 }
 

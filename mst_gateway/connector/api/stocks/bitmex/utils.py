@@ -103,6 +103,16 @@ def load_quote_bin_data(raw_data: dict) -> dict:
     }
 
 
+def load_order_book_data(raw_data: dict) -> dict:
+    return {
+        'id': raw_data.get('id'),
+        'symbol': raw_data.get('symbol'),
+        'price': _float(raw_data.get("price")),
+        'volume': raw_data.get('size'),
+        'side': load_order_side(raw_data.get('side'))
+    }
+
+
 def quote2bin(quote: dict) -> dict:
     return {
         'symbol': quote['symbol'],
