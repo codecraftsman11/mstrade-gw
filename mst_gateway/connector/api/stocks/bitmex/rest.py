@@ -172,7 +172,7 @@ class BitmexRestApi(StockRestApi):
                                    symbol=symbol.upper())
         return bool(data)
 
-    def list_order_book(self, symbol: str, depth: int = None) -> list:
+    def _do_list_order_book(self, symbol: str, depth: int = None) -> list:
         ob_items = []
         ob_depth = depth or 0
         ob_items, _ = self._bitmex_api(self._handler.OrderBook.OrderBook_getL2,

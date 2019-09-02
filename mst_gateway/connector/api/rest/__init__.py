@@ -3,6 +3,7 @@ from logging import Logger
 from ...base import Connector
 from .. import MARKET
 from ..errors import ERROR_OK
+from ..utils.order_book import pad_order_book
 
 
 class StockRestApi(Connector):
@@ -71,5 +72,19 @@ class StockRestApi(Connector):
     def close_all_orders(self, symbol: str) -> bool:
         raise NotImplementedError
 
-    def list_order_book(self, symbol: str, depth: int = None) -> bool:
+    def list_order_book(self, symbol: str, depth: int = None, tick_size: int = None) -> list:
+        data = self._do_list_order_book(symbol, depth)
+        if tick_size is None:
+            return data
+        if not data:
+            return data
+        start = data[0]['price']
+        finish = data[-1]['price']
+        steps = int((finish - start) / tick_size)
+        if steps == depth * 2:
+            return data
+        return pad_order_book(data, tick_size)
+
+    @abstractmethod
+    def _do_list_order_book(self, symbol: str, depth: int = None) -> list:
         raise NotImplementedError
