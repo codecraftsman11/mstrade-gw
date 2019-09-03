@@ -27,12 +27,15 @@ class StockWssApi(Connector):
                  url: str = None,
                  auth: dict = None,
                  logger: Logger = None,
-                 options: dict = None):
+                 options: dict = None,
+                 name: str = None):
         self._options = options or {}
         self._url = url or self.__class__.BASE_URL
         self._error = errors.ERROR_OK
         self._subscriptions = {}
         self._router = self.__class__.router_class(self)
+        if name is not None:
+            self.name = name
         super().__init__(auth, logger)
 
     @property

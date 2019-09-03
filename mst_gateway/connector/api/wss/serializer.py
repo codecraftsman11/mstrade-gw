@@ -35,13 +35,13 @@ class Serializer:
         self._state[symbol] = data
 
     def data(self, message):
-        (data_type, data) = self._get_data(message)
+        (action, data) = self._get_data(message)
         if data is None:
             return None
         return {
             'account': "{}.test".format(self._wss_api),
             'table': self.__class__.subscription,
-            'type': data_type,
+            'action': action,
             'data': data
         }
 
@@ -52,6 +52,6 @@ class Serializer:
         return {
             'account': "{}.test".format(self._wss_api),
             'table': self.__class__.subscription,
-            'type': "partial",
+            'action': "partial",
             'data': data
         }

@@ -146,5 +146,5 @@ def _date(token: Union[datetime, str]) -> datetime:
 def _float(token: Union[int, float, None]) -> Union[float, None]:
     try:
         return float(token)
-    except ValueError:
+    except (ValueError, TypeError):
         return None

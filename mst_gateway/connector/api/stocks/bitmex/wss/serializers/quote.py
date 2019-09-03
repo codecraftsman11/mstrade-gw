@@ -20,6 +20,12 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
         self._initialized = False
         super().__init__(wss_api)
 
+    @classmethod
+    def _get_data_action(cls, message):
+        if message.get('action') == "partial":
+            return "partial"
+        return "update"
+
     def is_item_valid(self, message: dict, item: dict) -> bool:
         if not self._initialized:
             if message['table'] != "tradeBin1m":

@@ -18,6 +18,7 @@ class BitmexWssApi(StockWssApi):
     subscribers = {
         'symbol': subscr.BitmexSymbolSubscriber(),
         'quote_bin': subscr.BitmexQuoteBinSubscriber(),
+        'order_book': subscr.BitmexOrderBookSubscriber()
     }
 
     auth_subscribers = {
