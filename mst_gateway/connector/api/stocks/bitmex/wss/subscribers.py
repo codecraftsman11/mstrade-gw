@@ -35,3 +35,7 @@ class BitmexQuoteBinSubscriber(BitmexSubscriber):
 
 class BitmexOrderSubscriber(BitmexSubscriber):
     subscriptions = ("order",)
+
+
+class BitmexOrderBookSubscriber(BitmexSubscriber):
+    subscriptions = ("orderBookL2_25",)

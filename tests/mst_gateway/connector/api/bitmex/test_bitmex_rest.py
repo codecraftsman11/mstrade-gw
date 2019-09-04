@@ -224,6 +224,21 @@ class TestBitmexRestApi:
         _bitmex.close_all_orders(symbol=cfg.BITMEX_SYMBOL)
         assert _bitmex.list_orders(symbol=cfg.BITMEX_SYMBOL) == []
 
+    def test_list_order_book(self, _bitmex: BitmexRestApi):
+        ob_items = _bitmex.list_order_book(symbol=cfg.BITMEX_SYMBOL)
+        assert ob_items
+        assert isinstance(ob_items, list)
+        assert schema.data_valid(ob_items[0], schema.ORDER_BOOK_FIELDS)
+
+    def test_list_order_book_range(self, _bitmex: BitmexRestApi):
+        ob_items = _bitmex.list_order_book(
+            symbol=cfg.BITMEX_SYMBOL,
+            depth=5
+        )
+        assert len(ob_items) == 10
+        assert ob_items[0]['side'] == api.SELL
+        assert ob_items[9]['side'] == api.BUY
+
     def test_unauth_get_user_exception(self, _bitmex_unauth: BitmexRestApi):
         with pytest.raises(ConnectorError):
             _bitmex_unauth.get_user()

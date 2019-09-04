@@ -9,10 +9,8 @@ class BitmexSerializer(Serializer):
     subscription = "base"
 
     @classmethod
-    def _get_data_type(cls, message):
-        if message.get('action') == "partial":
-            return "partial"
-        return "update"
+    def _get_data_action(cls, message):
+        return message.get('action', 'update')
 
     @classmethod
     def _update_data(cls, data: list, item: dict) -> dict:
@@ -31,7 +29,7 @@ class BitmexSerializer(Serializer):
         data = list()
         for item in message['data']:
             data = self._append_item(data, message, item)
-        return (self._get_data_type(message), data)
+        return (self._get_data_action(message), data)
 
     def _append_item(self, data, message, item):
         valid_item = self._load_data(message, item)

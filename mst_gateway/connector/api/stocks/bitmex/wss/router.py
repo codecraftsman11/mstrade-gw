@@ -11,10 +11,19 @@ if TYPE_CHECKING:
 
 
 class BitmexWssRouter(Router):
+    table_route_map = {
+        'instrument': "symbol",
+        'trade': "quote_bin",
+        'tradeBin1m': "quote_bin",
+        'order': "order",
+        'orderBookL2_25': "order_book"
+    }
+
     serializer_classes = {
         'symbol': serializers.BitmexSymbolSerializer,
         'quote_bin': serializers.BitmexQuoteBinSerializer,
         'quote_bin_trade': serializers.BitmexQuoteBinFromTradeSerializer,
+        'order_book': serializers.BitmexOrderBookSerializer,
         'order': serializers.BitmexOrderSerializer
     }
 
@@ -22,33 +31,26 @@ class BitmexWssRouter(Router):
         self._serializers = {}
         self._use_trade_bin = bool(wss_api.options.get('use_trade_bin', True))
         if self._use_trade_bin:
+            # use periodical quote_bin change events
             self._quote_bin = 'quote_bin'
         else:
+            # use realtime quote change events
             self._quote_bin = 'quote_bin_trade'
         super().__init__(wss_api)
 
     def _get_serializer(self, message: str) -> Serializer:
         self._routed_data = None
         data = parse_message(message)
-        if self._is_subscription_message(data):
-            return self._get_subscription_serializer(data)
-        return None
+        if not self._is_subscription_message(data):
+            return None
+        if data['table'] not in self.table_route_map:
+            return None
+        return self._lookup_serializer(self.table_route_map[data['table']], data)
 
     def _is_subscription_message(self, data: dict) -> bool:
         # pylint: disable=no-self-use
-        return 'table' in data and data['action'] in ("partial", "update", "insert")
-
-    def _get_subscription_serializer(self, data: dict) -> Serializer:
-        if data['table'] == "instrument":
-            return self._lookup_serializer("symbol", data)
-        if data['table'] == "trade":
-            return self._lookup_serializer("quote_bin", data)
-        if data['table'] == "tradeBin1m":
-            if self._use_trade_bin or data['action'] == 'partial':
-                return self._lookup_serializer("quote_bin", data)
-        if data['table'] == "order":
-            return self._lookup_serializer("order", data)
-        return None
+        return 'table' in data and data['action'] in ("partial", "update",
+                                                      "insert", "delete")
 
     def _subscr_serializer(self, subscr_name) -> Serializer:
         if subscr_name not in self._serializers:
@@ -57,6 +59,9 @@ class BitmexWssRouter(Router):
         return self._serializers[subscr_name]
 
     def _lookup_serializer(self, subscr_name, data: list) -> Serializer:
+        if data['table'] == "tradeBin1m":
+            if not self._use_trade_bin and data['action'] != 'partial':
+                return None
         self._routed_data = {
             'table': data['table'],
             'action': data.get('action'),

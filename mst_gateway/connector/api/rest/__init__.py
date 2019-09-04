@@ -3,6 +3,7 @@ from logging import Logger
 from ...base import Connector
 from .. import MARKET
 from ..errors import ERROR_OK
+from ..utils.order_book import pad_order_book
 
 
 class StockRestApi(Connector):
@@ -18,23 +19,23 @@ class StockRestApi(Connector):
 
     @abstractmethod
     def get_quote(self, symbol, timeframe=None, **kwargs) -> dict:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def list_quotes(self, symbol, timeframe=None, **kwargs) -> list:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def list_quote_bins(self, symbol, binsize='1m', count=100, **kwargs) -> list:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def get_user(self, **kwargs) -> dict:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def list_symbols(self, **kwargs) -> list:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def create_order(self, symbol: str,
@@ -44,29 +45,46 @@ class StockRestApi(Connector):
                      price: float = None,
                      order_id: str = None,
                      options: dict = None) -> bool:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def cancel_order(self, order_id: str) -> bool:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def get_order(self, order_id: str) -> bool:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def list_orders(self, symbol: str, active_only: bool = True,
                     count: int = None, offset: int = 0, options: dict = None) -> list:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def cancel_all_orders(self) -> bool:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def close_order(self, order_id: str) -> bool:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def close_all_orders(self, symbol: str) -> bool:
-        pass
+        raise NotImplementedError
+
+    def list_order_book(self, symbol: str, depth: int = None, tick_size: int = None) -> list:
+        data = self._do_list_order_book(symbol, depth)
+        if tick_size is None:
+            return data
+        if not data:
+            return data
+        start = data[0]['price']
+        finish = data[-1]['price']
+        steps = int((finish - start) / tick_size)
+        if steps == depth * 2:
+            return data
+        return pad_order_book(data, tick_size)
+
+    @abstractmethod
+    def _do_list_order_book(self, symbol: str, depth: int = None) -> list:
+        raise NotImplementedError
