@@ -32,3 +32,15 @@ def datetime_valid(value):
     except ValueError:
         return False
     return True
+
+
+def pair_valid(value: list) -> bool:
+    if not isinstance(value, list):
+        return False
+    if len(value) != 2:
+        return False
+    if not isinstance(value[0], str):
+        return False
+    if not isinstance(value[1], str):
+        return False
+    return value[0] and value[1]

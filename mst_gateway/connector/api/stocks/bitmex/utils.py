@@ -33,6 +33,8 @@ def load_symbol_data(raw_data: dict) -> dict:
         'timestamp': _date(raw_data.get('timestamp')),
         'symbol': raw_data.get('symbol'),
         'price': _float(raw_data.get('lastPrice')),
+        'pair': _get_symbol_pair(raw_data.get('symbol'),
+                                 raw_data.get('rootSymbol'))
     }
 
 
@@ -148,3 +150,18 @@ def _float(token: Union[int, float, None]) -> Union[float, None]:
         return float(token)
     except (ValueError, TypeError):
         return None
+
+
+def _get_symbol_pair(symbol: str, root_symbol: str) -> list:
+    # pylint: disable=unused-argument,fixme
+    return [symbol[:3], symbol[3:]]
+    # TODO: For wss packets
+    # if not root_symbol:
+    #     return ["", symbol]
+    # try:
+    #     pos = symbol.index(root_symbol)
+    # except ValueError:
+    #     return ["", symbol]
+    # if pos > 0:
+    #     return ["", symbol]
+    # return [root_symbol, symbol[pos:]]
