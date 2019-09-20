@@ -1,5 +1,6 @@
 # pylint: disable=broad-except
 from ..api.validators import datetime_valid
+from ..api.validators import pair_valid
 from ..api.validators import side_valid
 from ..api.validators import order_id_valid
 from ..api.validators import type_valid
@@ -25,6 +26,7 @@ QUOTE_BIN_FIELDS = {
 
 SYMBOL_FIELDS = {
     'timestamp': datetime_valid,
+    'pair': pair_valid,
     'symbol': str,
     'price': float
 }
