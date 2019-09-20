@@ -39,7 +39,7 @@ class Serializer:
         if data is None:
             return None
         return {
-            'account': "{}.test".format(self._wss_api),
+            'account': f"{self._wss_api}",
             'table': self.__class__.subscription,
             'action': action,
             'data': data
@@ -50,7 +50,7 @@ class Serializer:
         if data is None:
             return None
         return {
-            'account': "{}.test".format(self._wss_api),
+            'account': f"{self._wss_api}",
             'table': self.__class__.subscription,
             'action': "partial",
             'data': data
