@@ -36,6 +36,7 @@ def _rest(_debug) -> BitmexRestApi:
 @pytest.fixture
 def _wss_api(_debug) -> BitmexWssApi:
     with BitmexWssApi(url=cfg.BITMEX_WSS_URL,
+                      name='bitmex.test',
                       auth={
                           'api_key': cfg.BITMEX_API_KEY,
                           'api_secret': cfg.BITMEX_API_SECRET
@@ -47,6 +48,7 @@ def _wss_api(_debug) -> BitmexWssApi:
 @pytest.fixture
 def _wss_trade_api(_debug) -> BitmexWssApi:
     with BitmexWssApi(url=cfg.BITMEX_WSS_URL,
+                      name='bitmex.test',
                       auth={
                           'api_key': cfg.BITMEX_API_KEY,
                           'api_secret': cfg.BITMEX_API_SECRET
@@ -104,6 +106,12 @@ class TestBitmexWssApi:
         _wss_api.unregister("symbol")
         assert not _wss_api.is_registered("symbol")
         assert not _wss_api.is_registered("symbol", "XBTUSD")
+        _wss_api.register("symbol", "xbtusd")
+        assert _wss_api.is_registered("symbol", "XBTUSD")
+        assert _wss_api.is_registered("symbol", "xbtusd")
+        _wss_api.unregister("symbol", "XBTusd")
+        assert not _wss_api.is_registered("symbol", "XBTUSD")
+        assert not _wss_api.is_registered("symbol", "xbtusd")
 
     def test_bitmex_wss_router(self, _wss_api: BitmexWssApi):
         assert isinstance(_wss_api.router, BitmexWssRouter)

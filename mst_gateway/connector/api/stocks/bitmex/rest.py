@@ -54,7 +54,7 @@ class BitmexRestApi(StockRestApi):
         if timeframe is not None:
             symbol = symbol + ":" + timeframe
         quotes, _ = self._bitmex_api(self._handler.Trade.Trade_get,
-                                     symbol=symbol.upper(),
+                                     symbol=utils.symbol2stock(symbol),
                                      reverse=True,
                                      **self._api_kwargs(kwargs))
         return [utils.load_quote_data(data) for data in quotes]
@@ -62,7 +62,7 @@ class BitmexRestApi(StockRestApi):
     def _list_quote_bins_page(self, symbol, binsize='1m', count=100, offset=0,
                               **kwargs):
         quote_bins, _ = self._bitmex_api(self._handler.Trade.Trade_getBucketed,
-                                         symbol=symbol.upper(),
+                                         symbol=utils.symbol2stock(symbol),
                                          binSize=binsize,
                                          reverse=True,
                                          start=offset,
@@ -98,7 +98,7 @@ class BitmexRestApi(StockRestApi):
 
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
         quotes, _ = self._bitmex_api(self._handler.Trade.Trade_get,
-                                     symbol=symbol.upper(),
+                                     symbol=utils.symbol2stock(symbol),
                                      reverse=True,
                                      count=1)
         return utils.load_quote_data(quotes[0])
@@ -111,7 +111,7 @@ class BitmexRestApi(StockRestApi):
                      order_id: str = None,
                      options: dict = None) -> bool:
         args = dict(
-            symbol=symbol.upper(),
+            symbol=utils.symbol2stock(symbol),
             side=utils.store_order_side(side),
             orderQty=value,
             ordType=utils.store_order_type(order_type)
@@ -158,7 +158,7 @@ class BitmexRestApi(StockRestApi):
         if offset > 0:
             options['start'] = offset
         orders, _ = self._bitmex_api(self._handler.Order.Order_getOrders,
-                                     symbol=symbol.upper(),
+                                     symbol=utils.symbol2stock(symbol),
                                      reverse=True,
                                      **options)
         return [utils.load_order_data(data) for data in orders]
@@ -169,14 +169,14 @@ class BitmexRestApi(StockRestApi):
 
     def close_all_orders(self, symbol: str) -> bool:
         data, _ = self._bitmex_api(self._handler.Order.Order_closePosition,
-                                   symbol=symbol.upper())
+                                   symbol=utils.symbol2stock(symbol))
         return bool(data)
 
     def _do_list_order_book(self, symbol: str, depth: int = None) -> list:
         ob_items = []
         ob_depth = depth or 0
         ob_items, _ = self._bitmex_api(self._handler.OrderBook.OrderBook_getL2,
-                                       symbol=symbol.upper(),
+                                       symbol=utils.symbol2stock(symbol),
                                        depth=ob_depth)
         return [utils.load_order_book_data(data) for data in ob_items]
 
