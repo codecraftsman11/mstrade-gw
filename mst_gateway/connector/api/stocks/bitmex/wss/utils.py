@@ -1,8 +1,10 @@
 import json
+from ..utils import symbol2stock
 
 
 def make_cmd(cmd, args, symbol=None):
     if symbol is not None:
+        symbol = symbol2stock(symbol)
         args = f"{args}:{symbol}"
     return json.dumps({
         'op': cmd,

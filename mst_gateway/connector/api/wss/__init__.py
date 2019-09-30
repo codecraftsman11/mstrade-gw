@@ -43,7 +43,7 @@ class StockWssApi(Connector):
         return self._options
 
     def __str__(self):
-        return "{}".format(self.__class__.name)
+        return self.name
 
     def get_data(self, message: str) -> dict:
         return self.router.get_data(message)
@@ -84,33 +84,33 @@ class StockWssApi(Connector):
         return True
 
     def is_registered(self, subscr_name, symbol: str = None) -> bool:
-        if subscr_name not in self._subscriptions:
+        if subscr_name.lower() not in self._subscriptions:
             return False
-        if isinstance(self._subscriptions[subscr_name], bool):
+        if isinstance(self._subscriptions[subscr_name.lower()], bool):
             return True
-        if symbol is not None and symbol in self._subscriptions[subscr_name]:
+        if symbol is not None and symbol.lower() in self._subscriptions[subscr_name.lower()]:
             return True
         return False
 
     def register(self, subscr_name, symbol: str = None):
         if symbol is None:
-            self._subscriptions[subscr_name] = True
-        elif subscr_name not in self._subscriptions:
-            self._subscriptions[subscr_name] = {symbol: True}
+            self._subscriptions[subscr_name.lower()] = True
+        elif subscr_name.lower() not in self._subscriptions:
+            self._subscriptions[subscr_name.lower()] = {symbol.lower(): True}
         else:
-            self._subscriptions[subscr_name][symbol] = True
+            self._subscriptions[subscr_name.lower()][symbol.lower()] = True
 
     def unregister(self, subscr_name, symbol: str = None):
-        if subscr_name not in self._subscriptions:
+        if subscr_name.lower() not in self._subscriptions:
             return
         if symbol is None:
-            del self._subscriptions[subscr_name]
+            del self._subscriptions[subscr_name.lower()]
             return
-        if isinstance(self._subscriptions[subscr_name], dict):
-            if symbol in self._subscriptions[subscr_name]:
-                del self._subscriptions[subscr_name][symbol]
-            if not self._subscriptions[subscr_name]:
-                del self._subscriptions[subscr_name]
+        if isinstance(self._subscriptions[subscr_name.lower()], dict):
+            if symbol.lower() in self._subscriptions[subscr_name.lower()]:
+                del self._subscriptions[subscr_name.lower()][symbol.lower()]
+            if not self._subscriptions[subscr_name.lower()]:
+                del self._subscriptions[subscr_name.lower()]
 
     async def open(self, **kwargs):
         restore = kwargs.get('restore', False)
@@ -155,9 +155,9 @@ class StockWssApi(Connector):
         return data
 
     def _get_subscriber(self, subscr_name: str) -> Subscriber:
-        if subscr_name in self.__class__.subscribers:
-            return self.__class__.subscribers[subscr_name]
-        return self.__class__.auth_subscribers[subscr_name]
+        if subscr_name.lower() in self.__class__.subscribers:
+            return self.__class__.subscribers[subscr_name.lower()]
+        return self.__class__.auth_subscribers[subscr_name.lower()]
 
     @abstractmethod
     async def authenticate(self, auth: dict = None) -> bool:

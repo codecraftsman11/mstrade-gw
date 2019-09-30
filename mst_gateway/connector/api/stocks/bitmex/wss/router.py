@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from ....wss.router import Router
 from ....wss.serializer import Serializer
 from .utils import parse_message
+from ..utils import stock2symbol
 from . import serializers
 
 
@@ -69,7 +70,8 @@ class BitmexWssRouter(Router):
         }
         serializer = self._subscr_serializer(subscr_name)
         for item in data['data']:
-            if self._wss_api.is_registered(subscr_name, item['symbol']) \
+
+            if self._wss_api.is_registered(subscr_name, stock2symbol(item['symbol'])) \
                and serializer.is_item_valid(data, item):
                 self._routed_data['data'].append(item)
         if self._routed_data['data']:

@@ -25,21 +25,21 @@ class Serializer:
             return None
         if symbol is None:
             return [self._state[k] for k in self._state]
-        if symbol in self._state:
-            return [self._state[symbol]]
+        if symbol.lower() in self._state:
+            return [self._state[symbol.lower()]]
         return None
 
     def _update_state(self, symbol: str, data: any):
         if self._state is None:
             self._state = dict()
-        self._state[symbol] = data
+        self._state[symbol.lower()] = data
 
     def data(self, message):
         (action, data) = self._get_data(message)
         if data is None:
             return None
         return {
-            'account': "{}.test".format(self._wss_api),
+            'account': f"{self._wss_api}",
             'table': self.__class__.subscription,
             'action': action,
             'data': data
@@ -50,7 +50,7 @@ class Serializer:
         if data is None:
             return None
         return {
-            'account': "{}.test".format(self._wss_api),
+            'account': f"{self._wss_api}",
             'table': self.__class__.subscription,
             'action': "partial",
             'data': data

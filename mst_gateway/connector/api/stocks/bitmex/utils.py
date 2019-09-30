@@ -152,6 +152,14 @@ def _float(token: Union[int, float, None]) -> Union[float, None]:
         return None
 
 
+def symbol2stock(symbol):
+    return symbol.upper() if symbol is not None else None
+
+
+def stock2symbol(symbol):
+    return symbol.lower() if symbol is not None else None
+
+
 def _get_symbol_pair(symbol: str, root_symbol: str) -> list:
     # pylint: disable=unused-argument,fixme
     return [symbol[:3], symbol[3:]]

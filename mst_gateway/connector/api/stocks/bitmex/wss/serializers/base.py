@@ -2,6 +2,7 @@ from typing import Tuple
 from abc import ABCMeta
 from abc import abstractmethod
 from .....wss.serializer import Serializer
+from ...utils import stock2symbol
 
 
 class BitmexSerializer(Serializer):
@@ -33,5 +34,5 @@ class BitmexSerializer(Serializer):
 
     def _append_item(self, data, message, item):
         valid_item = self._load_data(message, item)
-        self._update_state(valid_item['symbol'], valid_item)
+        self._update_state(stock2symbol(valid_item['symbol']), valid_item)
         return self._update_data(data, valid_item)
