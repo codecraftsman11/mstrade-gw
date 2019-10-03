@@ -91,6 +91,13 @@ class BitmexRestApi(StockRestApi):
         data, _ = self._bitmex_api(self._handler.User.User_get, **kwargs)
         return data
 
+    def get_symbol(self, symbol) -> list:
+        instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_get,
+                                          symbol=utils.symbol2stock(symbol))
+        if not instruments:
+            return None
+        return utils.load_symbol_data(instruments[0])
+
     def list_symbols(self, **kwargs) -> list:
         instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive,
                                           **kwargs)
