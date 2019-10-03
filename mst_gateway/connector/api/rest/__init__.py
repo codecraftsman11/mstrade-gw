@@ -34,6 +34,10 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
+    def get_symbol(self, symbol) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
     def list_symbols(self, **kwargs) -> list:
         raise NotImplementedError
 
