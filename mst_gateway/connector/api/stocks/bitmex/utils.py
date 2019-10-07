@@ -33,6 +33,7 @@ def load_symbol_data(raw_data: dict) -> dict:
         'timestamp': _date(raw_data.get('timestamp')),
         'symbol': raw_data.get('symbol'),
         'price': _float(raw_data.get('lastPrice')),
+        'price24': _float(raw_data.get('prevPrice24h')),
         'pair': _get_symbol_pair(raw_data.get('symbol'),
                                  raw_data.get('rootSymbol'))
     }

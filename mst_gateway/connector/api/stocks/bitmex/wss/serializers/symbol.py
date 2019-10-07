@@ -23,4 +23,10 @@ class BitmexSymbolSerializer(BitmexSerializer):
         return item['symbol'] in self._symbols and 'lastPrice' in item
 
     def _load_data(self, message: dict, item: dict) -> dict:
+        state = self._get_state(item['symbol'])
+        if state:
+            if item.get('prevPrice24h') is None:
+                item['prevPrice24h'] = state[0]['price24']
+            if item.get('lastPrice') is None:
+                item['lastPrice'] = state[0]['price']
         return load_symbol_data(item)
