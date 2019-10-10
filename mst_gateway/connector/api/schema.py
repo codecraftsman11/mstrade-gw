@@ -28,7 +28,8 @@ SYMBOL_FIELDS = {
     'timestamp': datetime_valid,
     'pair': pair_valid,
     'symbol': str,
-    'price': float
+    'price': float,
+    'price24': float
 }
 
 ORDER_FIELDS = {

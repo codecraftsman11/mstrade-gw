@@ -155,13 +155,15 @@ class TestBitmexWssApi:
                     'symbol': "XBTUSD",
                     'pair': ["XBT", "USD"],
                     'timestamp': _date("2019-07-01T08:16:15.250Z"),
-                    'price': 10933.67
+                    'price': 10933.67,
+                    'price24': 10864.0
                 },
                 {
                     'symbol': "XBTEUR",
                     'pair': ["XBT", "EUR"],
                     'timestamp': _date("2019-07-18T20:35:00.000Z"),
-                    'price': 10.79
+                    'price': 10.79,
+                    'price24': 10.86
                 }
             ]
         }
