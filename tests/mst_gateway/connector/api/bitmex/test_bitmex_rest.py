@@ -120,8 +120,8 @@ class TestBitmexRestApi:
         )
         assert len(res_data) == 10
         print(res_data[0])
-        assert res_data[0]['timestamp'] > TEST_FROM_DATE
-        assert res_data[-1]['timestamp'] < TEST_TO_DATE
+        assert res_data[0]['time'] > TEST_FROM_DATE
+        assert res_data[-1]['time'] < TEST_TO_DATE
 
     def test_list_quote_bins(self, _bitmex: BitmexRestApi):
         quote_bins = _bitmex.list_quote_bins(symbol=cfg.BITMEX_SYMBOL,
@@ -140,8 +140,8 @@ class TestBitmexRestApi:
             date_to=TEST_TO_DATE,
         )
         assert len(res_data) < 1000
-        assert res_data[0]['timestamp'] > TEST_FROM_DATE
-        assert res_data[-1]['timestamp'] < TEST_TO_DATE
+        assert res_data[0]['time'] > TEST_FROM_DATE
+        assert res_data[-1]['time'] < TEST_TO_DATE
 
     def test_list_quote_bins_keepalive_compress(self, _bitmex_keepalive_compress: BitmexRestApi):
         quote_bins = _bitmex_keepalive_compress.list_quote_bins(symbol=cfg.BITMEX_SYMBOL,
@@ -242,3 +242,10 @@ class TestBitmexRestApi:
     def test_unauth_get_user_exception(self, _bitmex_unauth: BitmexRestApi):
         with pytest.raises(ConnectorError):
             _bitmex_unauth.get_user()
+
+    def test_list_trades(self, _bitmex: BitmexRestApi,
+                         _bitmex_unauth: BitmexRestApi):
+        assert schema.data_valid(_bitmex.list_trades(symbol=cfg.BITMEX_SYMBOL).pop(),
+                                 schema.TRADE_FIELDS)
+        assert schema.data_valid(_bitmex_unauth.list_trades(symbol=cfg.BITMEX_SYMBOL).pop(),
+                                 schema.TRADE_FIELDS)

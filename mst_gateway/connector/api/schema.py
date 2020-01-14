@@ -7,7 +7,8 @@ from ..api.validators import type_valid
 
 
 QUOTE_FIELDS = {
-    "timestamp": datetime_valid,
+    "time": datetime_valid,
+    "timestamp": int,
     "symbol": str,
     "volume": int,
     "price": float,
@@ -15,7 +16,8 @@ QUOTE_FIELDS = {
 }
 
 QUOTE_BIN_FIELDS = {
-    "timestamp": datetime_valid,
+    "time": datetime_valid,
+    "timestamp": int,
     "symbol": str,
     "volume": int,
     "open": float,
@@ -25,7 +27,8 @@ QUOTE_BIN_FIELDS = {
 }
 
 SYMBOL_FIELDS = {
-    'timestamp': datetime_valid,
+    'time': datetime_valid,
+    'timestamp': int,
     'pair': pair_valid,
     'symbol': str,
     'price': float,
@@ -52,6 +55,15 @@ ORDER_BOOK_FIELDS = {
     'side': side_valid
 }
 
+TRADE_FIELDS = {
+    "time": datetime_valid,
+    "timestamp": int,
+    "symbol": str,
+    "volume": int,
+    "price": float,
+    "side": side_valid,
+}
+
 SUBSCRIPTIONS = {
     'symbol': {
         'schema': SYMBOL_FIELDS,
@@ -64,7 +76,10 @@ SUBSCRIPTIONS = {
     },
     'order_book': {
         'schema': ORDER_BOOK_FIELDS
-    }
+    },
+    'trade': {
+        'schema': TRADE_FIELDS
+    },
 }
 
 AUTH_SUBSCRIPTIONS = {

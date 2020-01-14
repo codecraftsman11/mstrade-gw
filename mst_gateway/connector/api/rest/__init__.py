@@ -90,5 +90,9 @@ class StockRestApi(Connector):
         return pad_order_book(data, tick_size)
 
     @abstractmethod
+    def list_trades(self, symbol, **kwargs) -> list:
+        raise NotImplementedError
+
+    @abstractmethod
     def _do_list_order_book(self, symbol: str, depth: int = None) -> list:
         raise NotImplementedError

@@ -7,6 +7,7 @@ from websockets.client import WebSocketClientProtocol
 from websockets.exceptions import ConnectionClosed
 from mst_gateway.logging import init_logger
 from mst_gateway.connector.api import schema
+from mst_gateway.connector.api.utils import time2timestamp
 from mst_gateway.connector.api.stocks.bitmex import BitmexWssApi
 from mst_gateway.connector.api.stocks.bitmex import BitmexRestApi
 from mst_gateway.connector.api.stocks.bitmex.utils import _date
@@ -154,14 +155,16 @@ class TestBitmexWssApi:
                 {
                     'symbol': "XBTUSD",
                     'pair': ["XBT", "USD"],
-                    'timestamp': _date("2019-07-01T08:16:15.250Z"),
+                    'time': _date("2019-07-01T08:16:15.250Z"),
+                    'timestamp': time2timestamp(_date("2019-07-01T08:16:15.250Z")),
                     'price': 10933.67,
                     'price24': 10864.0
                 },
                 {
                     'symbol': "XBTEUR",
                     'pair': ["XBT", "EUR"],
-                    'timestamp': _date("2019-07-18T20:35:00.000Z"),
+                    'time': _date("2019-07-18T20:35:00.000Z"),
+                    'timestamp': time2timestamp(_date("2019-07-18T20:35:00.000Z")),
                     'price': 10.79,
                     'price24': 10.86
                 }
@@ -188,7 +191,8 @@ class TestBitmexWssApi:
             'action': "partial",
             'data': [
                 {
-                    'timestamp': _date("2019-07-01T11:59:38.326Z"),
+                    'time': _date("2019-07-01T11:59:38.326Z"),
+                    'timestamp': time2timestamp(_date("2019-07-01T11:59:38.326Z")),
                     'symbol': "XBTUSD",
                     'volume': 105,
                     'open': 11329,

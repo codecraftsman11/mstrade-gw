@@ -4,8 +4,9 @@ import urllib
 import json
 import hmac
 import hashlib
+from mst_gateway.connector import api
+from mst_gateway.connector.api.utils import time2timestamp
 from . import var
-from .... import api
 
 
 # Generates an API signature.
@@ -29,8 +30,10 @@ def bitmex_signature(api_secret, verb, url, nonce, postdict=None):
 
 
 def load_symbol_data(raw_data: dict) -> dict:
+    symbol_time = _date(raw_data.get('timestamp'))
     return {
-        'timestamp': _date(raw_data.get('timestamp')),
+        'time': symbol_time,
+        'timestamp': time2timestamp(symbol_time),
         'symbol': raw_data.get('symbol'),
         'price': _float(raw_data.get('lastPrice')),
         'price24': _float(raw_data.get('prevPrice24h')),
@@ -84,9 +87,15 @@ def load_order_data(raw_data: dict, skip_undef=False) -> dict:
     return data
 
 
+def load_trade_data(raw_data: dict) -> dict:
+    return load_quote_data(raw_data)
+
+
 def load_quote_data(raw_data: dict) -> dict:
+    quote_time = _date(raw_data.get('timestamp'))
     return {
-        'timestamp': _date(raw_data.get('timestamp')),
+        'time': quote_time,
+        'timestamp': time2timestamp(quote_time),
         'symbol': raw_data.get('symbol'),
         'price': _float(raw_data.get('price')),
         'volume': raw_data.get('size'),
@@ -95,8 +104,10 @@ def load_quote_data(raw_data: dict) -> dict:
 
 
 def load_quote_bin_data(raw_data: dict) -> dict:
+    quote_time = _date(raw_data.get('timestamp'))
     return {
-        'timestamp': _date(raw_data.get('timestamp')),
+        'time': quote_time,
+        'timestamp': time2timestamp(quote_time),
         'symbol': raw_data.get('symbol'),
         'open': _float(raw_data.get("open")),
         'close': _float(raw_data.get("close")),
@@ -120,6 +131,7 @@ def quote2bin(quote: dict) -> dict:
     return {
         'symbol': quote['symbol'],
         'timestamp': quote['timestamp'],
+        'time': quote['time'],
         'open': quote['price'],
         'close': quote['price'],
         'high': quote['price'],
@@ -130,6 +142,7 @@ def quote2bin(quote: dict) -> dict:
 
 def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
     quote_bin['timestamp'] = quote['timestamp']
+    quote_bin['time'] = quote['time']
     quote_bin['close'] = quote['price']
     quote_bin['high'] = max(quote_bin['high'], quote['price'])
     quote_bin['low'] = min(quote_bin['low'], quote['price'])
