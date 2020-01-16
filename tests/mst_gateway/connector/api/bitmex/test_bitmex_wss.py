@@ -6,6 +6,7 @@ import pytest
 from websockets.client import WebSocketClientProtocol
 from websockets.exceptions import ConnectionClosed
 from mst_gateway.logging import init_logger
+from mst_gateway.connector import api
 from mst_gateway.connector.api import schema
 from mst_gateway.connector.api.utils import time2timestamp
 from mst_gateway.connector.api.stocks.bitmex import BitmexWssApi
@@ -237,6 +238,32 @@ class TestBitmexWssApi:
             else:
                 assert not router._get_serializers(test['message']).get('trade')
 
+    def test_bitmex_wss_get_trade_data(self, _wss_api: BitmexWssApi):
+        _wss_api.register("trade", "XBTUSD")
+        for test in TEST_TRADE_MESSAGES:
+            data = _wss_api.get_data(test['message'])
+            assert test['data'] == data.get('trade')
+
+    def test_bitmex_wss_get_trade_state(self, _wss_api: BitmexWssApi):
+        _wss_api.register("trade")
+        for test in TEST_TRADE_MESSAGES:
+            _wss_api.get_data(test['message'])
+        assert _wss_api.get_state("trade") == {
+            'account': "bitmex.test",
+            'table': "trade",
+            'action': "partial",
+            'data': [
+                {
+                    'time': _date("2019-07-01T11:59:38.326Z"),
+                    'timestamp': time2timestamp(_date("2019-07-01T11:59:38.326Z")),
+                    'symbol': "XBTUSD",
+                    'volume': 5,
+                    'price': 11339,
+                    'side': api.SELL
+                }
+            ]
+        }
+
     def test_bitmex_wss_router_get_mixed_serializers(self, _wss_api: BitmexWssApi):
         # pylint: disable=protected-access
         _wss_api.register("trade")
@@ -256,12 +283,6 @@ class TestBitmexWssApi:
                     serializers.BitmexQuoteBinSerializer)
             else:
                 assert not _serializers.get('quote_bin')
-
-    def test_bitmex_wss_get_trade_data(self, _wss_api: BitmexWssApi):
-        _wss_api.register("trade", "XBTUSD")
-        for test in TEST_TRADE_MESSAGES:
-            data = _wss_api.get_data(test['message'])
-            assert test['data'] == data.get('trade')
 
     def test_bitmex_wss_get_mixed_data(self, _wss_api: BitmexWssApi):
         _wss_api.register("trade", "XBTUSD")
