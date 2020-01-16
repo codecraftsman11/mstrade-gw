@@ -57,7 +57,7 @@ def store_order_side(order_side: int) -> str:
 
 
 def load_order_side(order_side: str) -> int:
-    if order_side == 'Sell':
+    if order_side.lower() == 'sell':
         return api.SELL
     return api.BUY
 

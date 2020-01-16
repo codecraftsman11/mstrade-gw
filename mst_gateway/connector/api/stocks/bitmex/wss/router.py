@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+from typing import Dict
 from ....wss.router import Router
 from ....wss.serializer import Serializer
 from .utils import parse_message
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
 class BitmexWssRouter(Router):
     table_route_map = {
         'instrument': "symbol",
-        'trade': "quote_bin",
+        'trade': ["quote_bin", "trade"],
         'tradeBin1m': "quote_bin",
         'order': "order",
         'orderBookL2_25': "order_book"
@@ -25,7 +26,8 @@ class BitmexWssRouter(Router):
         'quote_bin': serializers.BitmexQuoteBinSerializer,
         'quote_bin_trade': serializers.BitmexQuoteBinFromTradeSerializer,
         'order_book': serializers.BitmexOrderBookSerializer,
-        'order': serializers.BitmexOrderSerializer
+        'order': serializers.BitmexOrderSerializer,
+        'trade': serializers.BitmexTradeSerializer
     }
 
     def __init__(self, wss_api: BitmexWssApi):
@@ -39,14 +41,22 @@ class BitmexWssRouter(Router):
             self._quote_bin = 'quote_bin_trade'
         super().__init__(wss_api)
 
-    def _get_serializer(self, message: str) -> Serializer:
-        self._routed_data = None
+    def _get_serializers(self, message: str) -> Dict[str, Serializer]:
+        self._routed_data = {}
+        _serializers = {}
         data = parse_message(message)
         if not self._is_subscription_message(data):
-            return None
+            return _serializers
         if data['table'] not in self.table_route_map:
-            return None
-        return self._lookup_serializer(self.table_route_map[data['table']], data)
+            return _serializers
+        subscriptions = self.table_route_map[data['table']]
+        if not isinstance(subscriptions, list):
+            subscriptions = [subscriptions]
+        for subscr_name in subscriptions:
+            serializer = self._lookup_serializer(subscr_name, data)
+            if serializer:
+                _serializers[subscr_name] = serializer
+        return _serializers
 
     def _is_subscription_message(self, data: dict) -> bool:
         # pylint: disable=no-self-use
@@ -63,17 +73,16 @@ class BitmexWssRouter(Router):
         if data['table'] == "tradeBin1m":
             if not self._use_trade_bin and data['action'] != 'partial':
                 return None
-        self._routed_data = {
+        self._routed_data[subscr_name] = {
             'table': data['table'],
             'action': data.get('action'),
             'data': list()
         }
         serializer = self._subscr_serializer(subscr_name)
         for item in data['data']:
-
             if self._wss_api.is_registered(subscr_name, stock2symbol(item['symbol'])) \
                and serializer.is_item_valid(data, item):
-                self._routed_data['data'].append(item)
-        if self._routed_data['data']:
+                self._routed_data[subscr_name]['data'].append(item)
+        if self._routed_data[subscr_name]['data']:
             return serializer
         return None

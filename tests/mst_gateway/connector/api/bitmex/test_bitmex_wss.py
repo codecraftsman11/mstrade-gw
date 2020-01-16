@@ -16,6 +16,7 @@ from mst_gateway.connector.api.stocks.bitmex.wss import serializers
 from mst_gateway.connector.api.stocks.bitmex.wss.router import BitmexWssRouter
 import tests.config as cfg
 from .data import TEST_QUOTE_BIN_MESSAGES
+from .data import TEST_TRADE_MESSAGES
 from .data import TEST_ORDER_BOOK_MESSAGES
 from .data import TEST_SYMBOL_MESSAGES
 
@@ -79,6 +80,7 @@ async def consume(_wss_api: BitmexWssApi, wss: WebSocketClientProtocol,
 
 
 class TestBitmexWssApi:
+    # pylint: disable=too-many-public-methods
 
     def test_bitmex_wss_parse_message(self):
         for test in TEST_SYMBOL_MESSAGES:
@@ -121,27 +123,29 @@ class TestBitmexWssApi:
         # pylint: disable=protected-access
         _wss_api.register("symbol")
         router = _wss_api.router
-        srlz1 = router._get_serializer(TEST_SYMBOL_MESSAGES[0]['message'])
-        srlz2 = router._get_serializer(TEST_SYMBOL_MESSAGES[2]['message'])
-        assert isinstance(srlz1, serializers.BitmexSymbolSerializer)
-        assert not router._get_serializer(TEST_SYMBOL_MESSAGES[1]['message'])
-        assert isinstance(srlz2, serializers.BitmexSymbolSerializer)
-        assert srlz1 == srlz2
+        srlz1 = router._get_serializers(TEST_SYMBOL_MESSAGES[0]['message'])
+        srlz2 = router._get_serializers(TEST_SYMBOL_MESSAGES[2]['message'])
+        assert isinstance(srlz1['symbol'], serializers.BitmexSymbolSerializer)
+        assert not router._get_serializers(TEST_SYMBOL_MESSAGES[1]['message'])
+        assert isinstance(srlz2['symbol'], serializers.BitmexSymbolSerializer)
+        assert srlz1['symbol'] == srlz2['symbol']
 
     def test_bitmex_wss_router_get_quote_bin_serializer(self, _wss_api: BitmexWssApi):
         # pylint: disable=protected-access
         _wss_api.register("quote_bin")
         router = _wss_api.router
-        assert not router._get_serializer(TEST_QUOTE_BIN_MESSAGES[0]['message'])
-        assert not router._get_serializer(TEST_QUOTE_BIN_MESSAGES[1]['message'])
+        assert not router._get_serializers(TEST_QUOTE_BIN_MESSAGES[0]['message'])
+        assert not router._get_serializers(TEST_QUOTE_BIN_MESSAGES[1]['message'])
         for test in TEST_QUOTE_BIN_MESSAGES[2:]:
-            assert isinstance(router._get_serializer(test['message']),
-                              serializers.BitmexQuoteBinSerializer)
+            assert isinstance(
+                router._get_serializers(test['message'])['quote_bin'],
+                serializers.BitmexQuoteBinSerializer)
 
     def test_bitmex_wss_get_symbol_data(self, _wss_api: BitmexWssApi):
         _wss_api.register("symbol")
         for test in TEST_SYMBOL_MESSAGES:
-            assert test['data'] == _wss_api.get_data(test['message'])
+            data = _wss_api.get_data(test['message'])
+            assert test['data'] == data.get('symbol')
 
     def test_bitmex_wss_get_symbol_state(self, _wss_api: BitmexWssApi):
         _wss_api.register("symbol")
@@ -174,12 +178,14 @@ class TestBitmexWssApi:
     def test_bitmex_wss_get_quote_bin_data(self, _wss_api: BitmexWssApi):
         _wss_api.register("quote_bin")
         for test in TEST_QUOTE_BIN_MESSAGES:
-            assert test['data'] == _wss_api.get_data(test['message'])
+            data = _wss_api.get_data(test['message'])
+            assert test['data'] == data.get('quote_bin')
 
     def test_bitmex_wss_get_quote_bin_traded_data(self, _wss_trade_api: BitmexWssApi):
         _wss_trade_api.register("quote_bin")
         for test in TEST_QUOTE_BIN_MESSAGES:
-            assert test['data_trade'] == _wss_trade_api.get_data(test['message'])
+            data = _wss_trade_api.get_data(test['message'])
+            assert test['data_trade'] == data.get('quote_bin')
 
     def test_bitmex_wss_get_quote_bin_state(self, _wss_api: BitmexWssApi):
         _wss_api.register("quote_bin")
@@ -207,15 +213,63 @@ class TestBitmexWssApi:
         # pylint: disable=protected-access
         _wss_api.register("order_book", "XBTUSD")
         router = _wss_api.router
-        assert not router._get_serializer(TEST_ORDER_BOOK_MESSAGES[0]['message'])
+        assert not router._get_serializers(TEST_ORDER_BOOK_MESSAGES[0]['message']).get('order_book')
         for test in TEST_ORDER_BOOK_MESSAGES[1:]:
-            assert isinstance(router._get_serializer(test['message']),
-                              serializers.BitmexOrderBookSerializer)
+            assert isinstance(
+                router._get_serializers(test['message'])['order_book'],
+                serializers.BitmexOrderBookSerializer)
 
     def test_bitmex_wss_get_order_book_data(self, _wss_api: BitmexWssApi):
         _wss_api.register("order_book", "XBTUSD")
         for test in TEST_ORDER_BOOK_MESSAGES:
-            assert test['data'] == _wss_api.get_data(test['message'])
+            data = _wss_api.get_data(test['message'])
+            assert test['data'] == data.get('order_book')
+
+    def test_bitmex_wss_router_get_trade_serializer(self, _wss_api: BitmexWssApi):
+        # pylint: disable=protected-access
+        _wss_api.register("trade")
+        router = _wss_api.router
+        for test in TEST_TRADE_MESSAGES:
+            if test['data']:
+                assert isinstance(
+                    router._get_serializers(test['message'])['trade'],
+                    serializers.BitmexTradeSerializer)
+            else:
+                assert not router._get_serializers(test['message']).get('trade')
+
+    def test_bitmex_wss_router_get_mixed_serializers(self, _wss_api: BitmexWssApi):
+        # pylint: disable=protected-access
+        _wss_api.register("trade")
+        _wss_api.register("quote_bin")
+        router = _wss_api.router
+        for test in TEST_TRADE_MESSAGES:
+            _serializers = router._get_serializers(test['message'])
+            if test['data']:
+                assert isinstance(
+                    _serializers['trade'],
+                    serializers.BitmexTradeSerializer)
+            else:
+                assert not _serializers.get('trade')
+            if test['data_quote']:
+                assert isinstance(
+                    _serializers['quote_bin'],
+                    serializers.BitmexQuoteBinSerializer)
+            else:
+                assert not _serializers.get('quote_bin')
+
+    def test_bitmex_wss_get_trade_data(self, _wss_api: BitmexWssApi):
+        _wss_api.register("trade", "XBTUSD")
+        for test in TEST_TRADE_MESSAGES:
+            data = _wss_api.get_data(test['message'])
+            assert test['data'] == data.get('trade')
+
+    def test_bitmex_wss_get_mixed_data(self, _wss_api: BitmexWssApi):
+        _wss_api.register("trade", "XBTUSD")
+        _wss_api.register("quote_bin", "XBTUSD")
+        for test in TEST_TRADE_MESSAGES:
+            data = _wss_api.get_data(test['message'])
+            assert test['data'] == data.get('trade')
+            assert test['data_quote'] == data.get('quote_bin')
 
     @pytest.mark.asyncio
     async def test_bitmex_wss_auth_client(self, _wss_api: BitmexWssApi):
@@ -246,7 +300,7 @@ class TestBitmexWssApi:
         self.reset()
         await subscribe()
         assert self.data
-        assert schema.data_update_valid(self.data[-1]['data'][0], schema.SYMBOL_FIELDS)
+        assert schema.data_update_valid(self.data[-1]['symbol']['data'][0], schema.SYMBOL_FIELDS)
 
     @pytest.mark.asyncio
     async def test_bitmex_wss_order_book(self, _wss_api: BitmexWssApi):
@@ -266,7 +320,7 @@ class TestBitmexWssApi:
         self.reset()
         await subscribe()
         assert self.data
-        assert schema.data_update_valid(self.data[-1]['data'][0],
+        assert schema.data_update_valid(self.data[-1]['order_book']['data'][0],
                                         schema.ORDER_BOOK_FIELDS)
 
     @pytest.mark.asyncio
@@ -288,7 +342,7 @@ class TestBitmexWssApi:
         self.reset()
         await subscribe()
         assert self.data
-        assert schema.data_update_valid(self.data[-1]['data'][0], schema.SYMBOL_FIELDS)
+        assert schema.data_update_valid(self.data[-1]['symbol']['data'][0], schema.SYMBOL_FIELDS)
 
     def on_message(self, data):
         self.data.append(data)

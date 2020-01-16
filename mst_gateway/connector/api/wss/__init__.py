@@ -45,8 +45,8 @@ class StockWssApi(Connector):
     def __str__(self):
         return self.name
 
-    def get_data(self, message: str) -> dict:
-        return self.router.get_data(message)
+    def get_data(self, message: str) -> Dict[str, Dict]:
+        return self._router.get_data(message)
 
     @property
     def router(self):
