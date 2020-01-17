@@ -1,6 +1,7 @@
 import time
 from websockets import client
 from ....wss import StockWssApi
+from ....wss.subscriber import Subscriber
 from . import subscribers as subscr
 from .utils import is_auth_ok
 from .utils import make_cmd
@@ -18,7 +19,8 @@ class BitmexWssApi(StockWssApi):
     subscribers = {
         'symbol': subscr.BitmexSymbolSubscriber(),
         'quote_bin': subscr.BitmexQuoteBinSubscriber(),
-        'order_book': subscr.BitmexOrderBookSubscriber()
+        'order_book': subscr.BitmexOrderBookSubscriber(),
+        # 'trade': subscr.BitmexTradeSubscriber()
     }
 
     auth_subscribers = {
@@ -42,3 +44,8 @@ class BitmexWssApi(StockWssApi):
         await wss.send(make_cmd('authKeyExpires', [auth.get('api_key', ""), expires,
                                                    signature]))
         return is_auth_ok(await wss.recv())
+
+    def _get_subscriber(self, subscr_name: str) -> Subscriber:
+        if subscr_name.lower() == "trade":
+            return super()._get_subscriber("quote_bin")
+        return super()._get_subscriber(subscr_name)

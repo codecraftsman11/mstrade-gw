@@ -82,7 +82,7 @@ class BitmexQuoteBinFromTradeSerializer(BitmexQuoteBinSerializer):
             old = self._bins.get(item['symbol'])
             if not old:
                 return False
-            return self._minute_updated(old['timestamp'], new['timestamp'])
+            return self._minute_updated(old['time'], new['time'])
         return False
 
     def _reset_quote_bin(self, message: dict, item: dict) -> dict:

@@ -170,6 +170,13 @@ class BitmexRestApi(StockRestApi):
                                      **options)
         return [utils.load_order_data(data) for data in orders]
 
+    def list_trades(self, symbol, **kwargs) -> list:
+        trades, _ = self._bitmex_api(self._handler.Trade.Trade_get,
+                                     symbol=utils.symbol2stock(symbol),
+                                     reverse=True,
+                                     **self._api_kwargs(kwargs))
+        return [utils.load_trade_data(data) for data in trades]
+
     def close_order(self, order_id) -> bool:
         order = self.get_order(order_id)
         return self.close_all_orders(order['symbol'])

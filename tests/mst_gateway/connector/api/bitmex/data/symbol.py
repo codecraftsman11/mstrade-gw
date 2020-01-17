@@ -1,4 +1,5 @@
 from mst_gateway.connector.api.stocks.bitmex.utils import _date
+from mst_gateway.connector.api.utils import time2timestamp
 
 
 TEST_SYMBOL_MESSAGES = [
@@ -13,14 +14,16 @@ TEST_SYMBOL_MESSAGES = [
                 {
                     'symbol': "XBTUSD",
                     'pair': ["XBT", "USD"],
-                    'timestamp': _date("2019-07-15T14:47:10.000Z"),
+                    'time': _date("2019-07-15T14:47:10.000Z"),
+                    'timestamp': time2timestamp(_date("2019-07-15T14:47:10.000Z")),
                     'price': 10650,
                     'price24': 10864
                 },
                 {
                     'symbol': "XBTEUR",
                     'pair': ["XBT", "EUR"],
-                    'timestamp': _date("2019-07-18T20:35:00.000Z"),
+                    'time': _date("2019-07-18T20:35:00.000Z"),
+                    'timestamp': time2timestamp(_date("2019-07-18T20:35:00.000Z")),
                     'price': 10.79,
                     'price24': 10.86
                 }
@@ -42,7 +45,8 @@ TEST_SYMBOL_MESSAGES = [
                 {
                     'symbol': "XBTUSD",
                     'pair': ["XBT", "USD"],
-                    'timestamp': _date("2019-07-01T08:16:15.250Z"),
+                    'time': _date("2019-07-01T08:16:15.250Z"),
+                    'timestamp': time2timestamp(_date("2019-07-01T08:16:15.250Z")),
                     'price': 10933.67,
                     'price24': 10864.0
                 }

@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+from typing import Dict
 from abc import ABCMeta
 from abc import abstractmethod
 from .serializer import Serializer
@@ -16,11 +17,13 @@ class Router:
         self._wss_api = wss_api
         self._routed_data = None
 
-    def get_data(self, message: str) -> dict:
-        serializer: Serializer = self._get_serializer(message)
-        if not serializer:
-            return None
-        return serializer.data(self._routed_data)
+    def get_data(self, message: str) -> Dict[str, Dict]:
+        data = {}
+        serializers = self._get_serializers(message)
+        for subscr_name in serializers:
+            data[subscr_name] = (serializers[subscr_name]
+                                 .data(self._routed_data[subscr_name]))
+        return data
 
     def get_state(self, subscr_name: str, symbol: str = None) -> dict:
         serializer: Serializer = self._subscr_serializer(subscr_name)
@@ -29,7 +32,7 @@ class Router:
         return serializer.state(symbol)
 
     @abstractmethod
-    def _get_serializer(self, message: str) -> Serializer:
+    def _get_serializers(self, message: str) -> Dict[str, Serializer]:
         pass
 
     @abstractmethod
