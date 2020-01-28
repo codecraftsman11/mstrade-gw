@@ -32,7 +32,10 @@ SYMBOL_FIELDS = {
     'pair': pair_valid,
     'symbol': str,
     'price': float,
-    'price24': float
+    'price24': float,
+    'tick': float,
+    'mark_price': float,
+    'face_price': float
 }
 
 ORDER_FIELDS = {

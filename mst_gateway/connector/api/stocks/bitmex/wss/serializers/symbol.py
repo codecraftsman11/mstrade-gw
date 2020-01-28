@@ -29,4 +29,8 @@ class BitmexSymbolSerializer(BitmexSerializer):
                 item['prevPrice24h'] = state[0]['price24']
             if item.get('lastPrice') is None:
                 item['lastPrice'] = state[0]['price']
+            if item.get('tickSize') is None:
+                item['tickSize'] = state[0]['tick']
+            if item.get('markPrice') is None:
+                item['markPrice'] = state[0]['mark_price']
         return load_symbol_data(item)

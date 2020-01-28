@@ -1,5 +1,5 @@
 # flake8: noqa
-from .order_book import TEST_ORDER_BOOK_MESSAGES
-from .quote import TEST_QUOTE_BIN_MESSAGES
-from .symbol import TEST_SYMBOL_MESSAGES
-from .trade import TEST_TRADE_MESSAGES
+from .order_book import *
+from .quote import *
+from .symbol import *
+from .trade import *

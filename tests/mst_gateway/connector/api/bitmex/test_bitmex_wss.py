@@ -20,6 +20,7 @@ from .data import TEST_QUOTE_BIN_MESSAGES
 from .data import TEST_TRADE_MESSAGES
 from .data import TEST_ORDER_BOOK_MESSAGES
 from .data import TEST_SYMBOL_MESSAGES
+from .data import RESULT_SYMBOL_STATE
 
 
 @pytest.fixture
@@ -152,29 +153,7 @@ class TestBitmexWssApi:
         _wss_api.register("symbol")
         for test in TEST_SYMBOL_MESSAGES:
             _wss_api.get_data(test['message'])
-        assert _wss_api.get_state("symbol") == {
-            'account': "bitmex.test",
-            'table': "symbol",
-            'action': "partial",
-            'data': [
-                {
-                    'symbol': "XBTUSD",
-                    'pair': ["XBT", "USD"],
-                    'time': _date("2019-07-01T08:16:15.250Z"),
-                    'timestamp': time2timestamp(_date("2019-07-01T08:16:15.250Z")),
-                    'price': 10933.67,
-                    'price24': 10864.0
-                },
-                {
-                    'symbol': "XBTEUR",
-                    'pair': ["XBT", "EUR"],
-                    'time': _date("2019-07-18T20:35:00.000Z"),
-                    'timestamp': time2timestamp(_date("2019-07-18T20:35:00.000Z")),
-                    'price': 10.79,
-                    'price24': 10.86
-                }
-            ]
-        }
+        assert _wss_api.get_state("symbol") == RESULT_SYMBOL_STATE
 
     def test_bitmex_wss_get_quote_bin_data(self, _wss_api: BitmexWssApi):
         _wss_api.register("quote_bin")
