@@ -17,7 +17,10 @@ TEST_SYMBOL_MESSAGES = [
                     'time': _date("2019-07-15T14:47:10.000Z"),
                     'timestamp': time2timestamp(_date("2019-07-15T14:47:10.000Z")),
                     'price': 10650,
-                    'price24': 10864
+                    'price24': 10864,
+                    'mark_price': 10551.29,
+                    'face_price': 1 / 10551.29,
+                    'tick': 0.5
                 },
                 {
                     'symbol': "XBTEUR",
@@ -25,7 +28,10 @@ TEST_SYMBOL_MESSAGES = [
                     'time': _date("2019-07-18T20:35:00.000Z"),
                     'timestamp': time2timestamp(_date("2019-07-18T20:35:00.000Z")),
                     'price': 10.79,
-                    'price24': 10.86
+                    'price24': 10.86,
+                    'mark_price': 10.79,
+                    'face_price': None,
+                    'tick': 0.01
                 }
             ]
         }
@@ -36,7 +42,7 @@ TEST_SYMBOL_MESSAGES = [
     },
     {
         'message':
-        '{"table":"instrument","action":"update","data":[{"symbol":"XBTUSD","lastPrice":10933.67,"markPrice":10933.67,"timestamp":"2019-07-01T08:16:15.250Z"},{"symbol":".EVOL7D","lastPrice":10933.67,"markPrice":10933.67,"timestamp":"2019-07-01T08:16:15.250Z"}]}',
+        '{"table":"instrument","action":"update","data":[{"symbol":"XBTUSD","lastPrice":10933.67,"markPrice":10933.77,"timestamp":"2019-07-01T08:16:15.250Z"},{"symbol":".EVOL7D","lastPrice":10933.67,"markPrice":10933.67,"timestamp":"2019-07-01T08:16:15.250Z"}]}',
         'data': {
             'account': "bitmex.test",
             'table': "symbol",
@@ -48,9 +54,42 @@ TEST_SYMBOL_MESSAGES = [
                     'time': _date("2019-07-01T08:16:15.250Z"),
                     'timestamp': time2timestamp(_date("2019-07-01T08:16:15.250Z")),
                     'price': 10933.67,
-                    'price24': 10864.0
+                    'price24': 10864.0,
+                    'mark_price': 10933.77,
+                    'face_price': 1 / 10933.77,
+                    'tick': 0.5
                 }
             ]
         }
     },
 ]
+
+RESULT_SYMBOL_STATE = {
+    'account': "bitmex.test",
+    'table': "symbol",
+    'action': "partial",
+    'data': [
+        {
+            'symbol': "XBTUSD",
+            'pair': ["XBT", "USD"],
+            'time': _date("2019-07-01T08:16:15.250Z"),
+            'timestamp': time2timestamp(_date("2019-07-01T08:16:15.250Z")),
+            'price': 10933.67,
+            'mark_price': 10933.77,
+            'face_price': 1 / 10933.77,
+            'price24': 10864.0,
+            'tick': 0.5
+        },
+        {
+            'symbol': "XBTEUR",
+            'pair': ["XBT", "EUR"],
+            'time': _date("2019-07-18T20:35:00.000Z"),
+            'timestamp': time2timestamp(_date("2019-07-18T20:35:00.000Z")),
+            'price': 10.79,
+            'mark_price': 10.79,
+            'face_price': None,
+            'price24': 10.86,
+            'tick': 0.01
+        }
+    ]
+}

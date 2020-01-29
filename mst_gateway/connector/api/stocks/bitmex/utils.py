@@ -30,15 +30,20 @@ def bitmex_signature(api_secret, verb, url, nonce, postdict=None):
 
 
 def load_symbol_data(raw_data: dict) -> dict:
+    symbol = raw_data.get('symbol')
     symbol_time = _date(raw_data.get('timestamp'))
+    mark_price = _float(raw_data.get('markPrice'))
     return {
         'time': symbol_time,
         'timestamp': time2timestamp(symbol_time),
-        'symbol': raw_data.get('symbol'),
+        'symbol': symbol,
         'price': _float(raw_data.get('lastPrice')),
         'price24': _float(raw_data.get('prevPrice24h')),
         'pair': _get_symbol_pair(raw_data.get('symbol'),
-                                 raw_data.get('rootSymbol'))
+                                 raw_data.get('rootSymbol')),
+        'tick': _float(raw_data.get('tickSize')),
+        'mark_price': mark_price,
+        'face_price': _face_price(symbol, mark_price)
     }
 
 
@@ -172,6 +177,28 @@ def symbol2stock(symbol):
 
 def stock2symbol(symbol):
     return symbol.lower() if symbol is not None else None
+
+
+def _face_price(symbol, price):
+    _symbol = symbol.lower()
+    try:
+        if _symbol in ('xbtusd', 'xbtm20', 'xbth20'):
+            return 1 / price
+        if _symbol in ('xbt7d_u105', 'xbt7d_d95'):
+            return 0.1 * price
+        if _symbol == 'ethusd':
+            return 0.00001 * price
+        if _symbol in ('adah20',
+                       'bchh20',
+                       'eosh20',
+                       'ethh20',
+                       'ltch20',
+                       'trxh20',
+                       'xrph20'):
+            return price
+    except (ValueError, TypeError):
+        pass
+    return None
 
 
 def _get_symbol_pair(symbol: str, root_symbol: str) -> list:
