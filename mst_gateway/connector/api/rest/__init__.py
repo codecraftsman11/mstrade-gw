@@ -1,9 +1,13 @@
 from abc import ABCMeta, abstractmethod
 from logging import Logger
 from ...base import Connector
-from .. import MARKET
 from ..errors import ERROR_OK
 from ..utils.order_book import pad_order_book
+from .. import (
+    MARKET,
+    BUY,
+    SELL
+)
 
 
 class StockRestApi(Connector):
@@ -76,8 +80,11 @@ class StockRestApi(Connector):
     def close_all_orders(self, symbol: str) -> bool:
         raise NotImplementedError
 
-    def list_order_book(self, symbol: str, depth: int = None, tick_size: int = None) -> list:
-        data = self._do_list_order_book(symbol, depth)
+    def list_order_book(self, symbol: str, depth: int = None, side: int = None, tick_size: int = None) -> list:
+        if side is not None \
+           and side not in (BUY, SELL):
+            return []
+        data = self._do_list_order_book(symbol, depth, side)
         if tick_size is None:
             return data
         if not data:
@@ -94,5 +101,6 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def _do_list_order_book(self, symbol: str, depth: int = None) -> list:
+    def _do_list_order_book(self, symbol: str,
+                            depth: int = None, side: int = None) -> list:
         raise NotImplementedError
