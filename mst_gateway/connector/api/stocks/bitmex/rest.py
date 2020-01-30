@@ -186,13 +186,18 @@ class BitmexRestApi(StockRestApi):
                                    symbol=utils.symbol2stock(symbol))
         return bool(data)
 
-    def _do_list_order_book(self, symbol: str, depth: int = None) -> list:
+    def _do_list_order_book(self, symbol: str,
+                            depth: int = None, side: int = None) -> list:
         ob_items = []
         ob_depth = depth or 0
         ob_items, _ = self._bitmex_api(self._handler.OrderBook.OrderBook_getL2,
                                        symbol=utils.symbol2stock(symbol),
                                        depth=ob_depth)
-        return [utils.load_order_book_data(data) for data in ob_items]
+        if side is None:
+            return [utils.load_order_book_data(data) for data in ob_items]
+        _side = utils.store_order_side(side)
+        return [utils.load_order_book_data(data)
+                for data in ob_items if data['side'] == _side]
 
     def _bitmex_api(self, method: callable, **kwargs):
         headers = {}
