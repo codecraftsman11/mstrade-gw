@@ -4,7 +4,7 @@ from ...base import Connector
 from ..errors import ERROR_OK
 from ..utils.order_book import pad_order_book
 from .. import (
-    MARKET,
+    OrderType,
     BUY,
     SELL
 )
@@ -49,7 +49,7 @@ class StockRestApi(Connector):
     def create_order(self, symbol: str,
                      side: int,
                      value: float = 1,
-                     order_type: int = MARKET,
+                     order_type: str = OrderType.market,
                      price: float = None,
                      order_id: str = None,
                      options: dict = None) -> bool:

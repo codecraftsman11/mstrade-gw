@@ -4,12 +4,12 @@ BITMEX_MAX_QUOTE_BINS_COUNT = 750
 
 
 ORDER_TYPE_WRITE_MAP = {
-    api.MARKET: 'Market',
-    api.LIMIT: 'Limit',
-    api.STOP: 'Stop',
-    api.STOPLIMIT: 'StopLimit',
-    api.TP: 'MarketIfTouched',
-    api.TPLIMIT: 'LimitIfTouched'
+    api.OrderType.market: 'Market',
+    api.OrderType.limit: 'Limit',
+    api.OrderType.sl_market: 'Stop',
+    api.OrderType.sl_limit: 'StopLimit',
+    api.OrderType.tp_market: 'MarketIfTouched',
+    api.OrderType.tp_limit: 'LimitIfTouched'
 }
 
 

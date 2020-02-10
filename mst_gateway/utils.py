@@ -2,6 +2,7 @@ import datetime
 import json
 import random
 import sys
+import inspect
 
 
 def j_dumps(struct) -> str:
@@ -33,3 +34,12 @@ def _convert(obj):
     if isinstance(obj, datetime.datetime):
         return obj.__str__()
     return None
+
+
+class ClassWithAttributes:
+    @classmethod
+    def _attributes(cls):
+        attributes = inspect.getmembers(
+            cls,
+            lambda a: not (inspect.isroutine(a) or inspect.isdatadescriptor(a)))
+        return (i for i in attributes if not i[0].startswith('__'))

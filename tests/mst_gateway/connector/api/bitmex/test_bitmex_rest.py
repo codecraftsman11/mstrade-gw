@@ -172,19 +172,19 @@ class TestBitmexRestApi:
     def test_bitmex_rest_create_order(self, _bitmex: BitmexRestApi):
         assert _bitmex.create_order(symbol=cfg.BITMEX_SYMBOL,
                                     side=api.BUY,
-                                    order_type=api.MARKET)
+                                    order_type=api.OrderType.market)
 
     def test_bitmex_rest_list_orders(self, _bitmex: BitmexRestApi):
         o_1 = generate_order_id()
         _bitmex.create_order(symbol=cfg.BITMEX_SYMBOL,
                              side=api.BUY,
                              order_id=o_1,
-                             order_type=api.MARKET)
+                             order_type=api.OrderType.market)
         o_2 = generate_order_id()
         _bitmex.create_order(symbol=cfg.BITMEX_SYMBOL,
                              side=api.BUY,
                              order_id=o_2,
-                             order_type=api.MARKET)
+                             order_type=api.OrderType.market)
         l_1 = _bitmex.list_orders(symbol=cfg.BITMEX_SYMBOL,
                                   active_only=False,
                                   count=1, offset=1)
@@ -200,7 +200,7 @@ class TestBitmexRestApi:
         order_id = generate_order_id()
         _bitmex.create_order(symbol=cfg.BITMEX_SYMBOL,
                              side=api.BUY,
-                             order_type=api.MARKET,
+                             order_type=api.OrderType.market,
                              order_id=order_id)
         order = _bitmex.get_order(order_id=order_id)
         assert schema.data_valid(order, schema.ORDER_FIELDS)
@@ -210,7 +210,7 @@ class TestBitmexRestApi:
         order_id = generate_order_id()
         _bitmex.create_order(symbol=cfg.BITMEX_SYMBOL,
                              side=api.BUY,
-                             order_type=api.MARKET,
+                             order_type=api.OrderType.market,
                              order_id=order_id)
         _bitmex.close_order(order_id)
         assert not _bitmex.list_orders(symbol=cfg.BITMEX_SYMBOL)
@@ -219,7 +219,7 @@ class TestBitmexRestApi:
         order_id = generate_order_id()
         _bitmex.create_order(symbol=cfg.BITMEX_SYMBOL,
                              side=api.BUY,
-                             order_type=api.MARKET,
+                             order_type=api.OrderType.market,
                              order_id=order_id)
         assert _bitmex.get_order(order_id=order_id)
         _bitmex.close_all_orders(symbol=cfg.BITMEX_SYMBOL)
