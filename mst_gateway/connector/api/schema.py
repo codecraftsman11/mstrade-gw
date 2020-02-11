@@ -1,9 +1,12 @@
 # pylint: disable=broad-except
-from ..api.validators import datetime_valid
-from ..api.validators import pair_valid
-from ..api.validators import side_valid
-from ..api.validators import order_id_valid
-from ..api.validators import type_valid
+from ..api.validators import (
+    datetime_valid,
+    pair_valid,
+    side_valid,
+    order_id_valid,
+    type_valid,
+    schema_valid
+)
 
 
 QUOTE_FIELDS = {
@@ -47,7 +50,8 @@ ORDER_FIELDS = {
     'side': side_valid,
     'price': float,
     'created': datetime_valid,
-    'active': bool
+    'active': bool,
+    'schema': schema_valid,
 }
 
 ORDER_BOOK_FIELDS = {

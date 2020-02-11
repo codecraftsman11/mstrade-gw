@@ -17,11 +17,11 @@ def order_id_valid(value):
 
 
 def type_valid(value):
-    try:
-        return isinstance(value, int) and value in (api.MARKET, api.LIMIT, api.STOP,
-                                                    api.STOPLIMIT, api.TP, api.TPLIMIT)
-    except Exception:
-        return False
+    return api.OrderType.is_valid(value)
+
+
+def schema_valid(value):
+    return api.OrderSchema.is_valid(value)
 
 
 def datetime_valid(value):

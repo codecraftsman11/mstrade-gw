@@ -113,7 +113,7 @@ class BitmexRestApi(StockRestApi):
     def create_order(self, symbol: str,
                      side: int,
                      value: float = 1,
-                     order_type: int = api.MARKET,
+                     order_type: str = api.OrderType.market,
                      price: float = None,
                      order_id: str = None,
                      options: dict = None) -> bool:

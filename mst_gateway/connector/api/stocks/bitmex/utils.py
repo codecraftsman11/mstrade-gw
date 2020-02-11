@@ -77,7 +77,8 @@ def load_order_data(raw_data: dict, skip_undef=False) -> dict:
         'side': raw_data.get('side'),
         'price': _float(raw_data.get('price')),
         'created': _date(raw_data.get('timestamp')),
-        'active': raw_data.get('ordStatus') != "New"
+        'active': raw_data.get('ordStatus') != "New",
+        'schema': api.OrderSchema.margin1
     }
     for k in data:
         if data[k] is None and skip_undef:
