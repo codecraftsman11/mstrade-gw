@@ -42,4 +42,11 @@ class ClassWithAttributes:
         attributes = inspect.getmembers(
             cls,
             lambda a: not (inspect.isroutine(a) or inspect.isdatadescriptor(a)))
-        return (i for i in attributes if not i[0].startswith('__'))
+        return [i for i in attributes if not i[0].startswith('__')]
+
+    @classmethod
+    def is_valid(cls, value) -> bool:
+        for attr in cls._attributes():
+            if value == attr[1]:
+                return True
+        return False
