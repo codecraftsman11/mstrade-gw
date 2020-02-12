@@ -26,7 +26,7 @@ def connect(params, auth, cls=None, logger=None):
     return connector
 
 def get_rest_api_class(path):
-    return import_module(path).get_rest_api()
+    return import_module(path).get_rest_api_class()
 
 def get_ws_api_class(path):
-    return import_module(path).get_ws_api()
+    return import_module(path).get_ws_api_class()
