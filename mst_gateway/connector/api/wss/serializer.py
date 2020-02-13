@@ -22,7 +22,7 @@ class Serializer:
         self._state = None
 
     @abstractmethod
-    def _get_data(self, message: any) -> Tuple[str, dict]:
+    def _get_data(self, message: any) -> Tuple[str, list]:
         raise NotImplementedError
 
     def _get_state(self, symbol: str = None) -> Optional[list]:
