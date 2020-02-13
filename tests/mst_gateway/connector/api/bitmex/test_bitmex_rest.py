@@ -15,7 +15,8 @@ import tests.config as cfg
 
 
 TEST_FROM_DATE = datetime.now(tz=timezone.utc) - timedelta(days=2)
-TEST_TO_DATE = TEST_FROM_DATE + timedelta(minutes=1)
+TEST_RANGE_TO_DATE = TEST_FROM_DATE + timedelta(minutes=1)
+TEST_TO_DATE = datetime.now(tz=timezone.utc)
 
 
 @pytest.fixture
@@ -138,11 +139,11 @@ class TestBitmexRestApi:
             binsize='1m',
             count=1000,
             date_from=TEST_FROM_DATE,
-            date_to=TEST_TO_DATE,
+            date_to=TEST_RANGE_TO_DATE,
         )
         assert len(res_data) < 1000
         assert res_data[0]['time'] > TEST_FROM_DATE
-        assert res_data[-1]['time'] < TEST_TO_DATE
+        assert res_data[-1]['time'] < TEST_RANGE_TO_DATE
 
     def test_bitmex_rest_list_quote_bins_keepalive_compress(self, _bitmex_keepalive_compress: BitmexRestApi):
         quote_bins = _bitmex_keepalive_compress.list_quote_bins(symbol=cfg.BITMEX_SYMBOL,
