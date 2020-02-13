@@ -25,7 +25,7 @@ class BitmexSerializer(Serializer):
     def is_item_valid(self, message: dict, item: dict) -> bool:
         return False
 
-    def _get_data(self, message) -> Tuple[str, dict]:
+    def _get_data(self, message: dict) -> Tuple[str, list]:
         data = []
         for item in message['data']:
             self._append_item(data, message, item)
