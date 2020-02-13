@@ -1,3 +1,4 @@
+from typing import Optional
 from mst_gateway.connector.api import BUY, SELL
 
 
@@ -18,7 +19,7 @@ def _pad_ob_side(data, tick_size, side):
     return data
 
 
-def _ob_middle_index(data: list) -> int:
+def _ob_middle_index(data: list) -> Optional[int]:
     if not data:
         return None
     side = data[0]['side']

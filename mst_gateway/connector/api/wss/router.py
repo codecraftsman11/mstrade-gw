@@ -1,8 +1,13 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-from typing import Dict
-from abc import ABCMeta
-from abc import abstractmethod
+from typing import (
+    TYPE_CHECKING,
+    Dict,
+    Optional
+)
+from abc import (
+    ABCMeta,
+    abstractmethod
+)
 from .serializer import Serializer
 
 
@@ -25,7 +30,7 @@ class Router:
                                  .data(self._routed_data[subscr_name]))
         return data
 
-    def get_state(self, subscr_name: str, symbol: str = None) -> dict:
+    def get_state(self, subscr_name: str, symbol: str = None) -> Optional[dict]:
         serializer: Serializer = self._subscr_serializer(subscr_name)
         if not serializer:
             return None

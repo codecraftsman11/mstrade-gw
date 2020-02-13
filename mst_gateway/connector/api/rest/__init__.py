@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from typing import Optional
 from logging import Logger
 from ...base import Connector
 from ..errors import ERROR_OK
@@ -60,7 +61,7 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def get_order(self, order_id: str) -> bool:
+    def get_order(self, order_id: str) -> Optional[dict]:
         raise NotImplementedError
 
     @abstractmethod
