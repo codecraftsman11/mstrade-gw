@@ -9,6 +9,7 @@ from ....wss.serializer import Serializer
 from .utils import parse_message
 from ..utils import stock2symbol
 from . import serializers
+from .serializers.base import BitmexSerializer
 
 
 if TYPE_CHECKING:
@@ -66,7 +67,7 @@ class BitmexWssRouter(Router):
         return 'table' in data and data['action'] in ("partial", "update",
                                                       "insert", "delete")
 
-    def _subscr_serializer(self, subscr_name) -> Serializer:
+    def _subscr_serializer(self, subscr_name) -> BitmexSerializer:
         if subscr_name not in self._serializers:
             subscr_key = self._quote_bin if subscr_name == "quote_bin" else subscr_name
             self._serializers[subscr_name] = self.__class__.serializer_classes[subscr_key](self._wss_api)

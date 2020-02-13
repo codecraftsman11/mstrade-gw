@@ -38,8 +38,8 @@ class Router:
 
     @abstractmethod
     def _get_serializers(self, message: str) -> Dict[str, Serializer]:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def _subscr_serializer(self, subscr_name: str) -> Serializer:
-        pass
+        raise NotImplementedError
