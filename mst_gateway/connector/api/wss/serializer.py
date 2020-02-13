@@ -34,7 +34,7 @@ class Serializer:
             self._state = dict()
         self._state[symbol.lower()] = data
 
-    def data(self, message):
+    def data(self, message) -> dict:
         (action, data) = self._get_data(message)
         if data is None:
             return None
@@ -45,7 +45,7 @@ class Serializer:
             'data': data
         }
 
-    def state(self, symbol: str = None):
+    def state(self, symbol: str = None) -> dict:
         data = self._get_state(symbol)
         if data is None:
             return None
