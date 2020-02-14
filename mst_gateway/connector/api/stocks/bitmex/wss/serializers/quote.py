@@ -21,7 +21,7 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
         super().__init__(wss_api)
 
     @classmethod
-    def _get_data_action(cls, message):
+    def _get_data_action(cls, message) -> str:
         if message.get('action') == "partial":
             return "partial"
         return "update"
@@ -46,7 +46,7 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
             return quote2bin(quote)
         return update_quote_bin(quote_bin, quote)
 
-    def _update_quote_bin(self, item):
+    def _update_quote_bin(self, item) -> dict:
         self._bins[item['symbol']] = self._get_quote_bin(item)
         return self._bins[item['symbol']]
 
@@ -55,12 +55,11 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
         self._bins[item['symbol']] = None
         return load_quote_bin_data(item)
 
-    def _update_data(self, data: list, item: dict) -> dict:
+    def _update_data(self, data: list, item: dict):
         for ditem in data:
             if ditem['symbol'] == item['symbol']:
-                return data
+                return
         data.append(item)
-        return data
 
     def _bin_closed(self, message: dict, item: dict) -> bool:
         # pylint:disable=no-self-use,unused-argument

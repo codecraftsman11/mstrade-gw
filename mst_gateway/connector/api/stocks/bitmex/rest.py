@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 import bitmex
 from bravado.exception import HTTPError
 from . import var
@@ -142,7 +143,7 @@ class BitmexRestApi(StockRestApi):
                                    orderID=order_id)
         return bool(data)
 
-    def get_order(self, order_id: str) -> dict:
+    def get_order(self, order_id: str) -> Optional[dict]:
         data, _ = self._bitmex_api(self._handler.Order.Order_getOrders,
                                    filter=j_dumps({
                                        'clOrdID': order_id
@@ -151,8 +152,11 @@ class BitmexRestApi(StockRestApi):
             return None
         return utils.load_order_data(data[0])
 
-    def list_orders(self, symbol: str, active_only: bool = True,
-                    count: int = None, offset: int = 0, options: dict = None) -> list:
+    def list_orders(self, symbol: str,
+                    active_only: bool = True,
+                    count: int = None,
+                    offset: int = 0,
+                    options: dict = None) -> list:
         if options is None:
             options = {}
         if active_only:

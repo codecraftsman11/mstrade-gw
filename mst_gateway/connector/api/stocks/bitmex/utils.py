@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Optional
 from datetime import datetime
 import urllib
 import json
@@ -47,11 +47,11 @@ def load_symbol_data(raw_data: dict) -> dict:
     }
 
 
-def store_order_type(order_type: int) -> str:
+def store_order_type(order_type: str) -> str:
     return var.ORDER_TYPE_WRITE_MAP.get(order_type)
 
 
-def load_order_type(order_type: str) -> int:
+def load_order_type(order_type: str) -> str:
     return var.ORDER_TYPE_READ_MAP.get(order_type)
 
 
@@ -156,7 +156,7 @@ def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
     return quote_bin
 
 
-def _date(token: Union[datetime, str]) -> datetime:
+def _date(token: Union[datetime, str]) -> Optional[datetime]:
     if isinstance(token, datetime):
         return token
     try:
@@ -165,7 +165,7 @@ def _date(token: Union[datetime, str]) -> datetime:
         return None
 
 
-def _float(token: Union[int, float, None]) -> Union[float, None]:
+def _float(token: Union[int, float, None]) -> Optional[float]:
     try:
         return float(token)
     except (ValueError, TypeError):

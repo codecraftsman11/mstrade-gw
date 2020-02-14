@@ -1,11 +1,15 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-from typing import Dict
+from typing import (
+    Optional,
+    Dict,
+    TYPE_CHECKING
+)
 from ....wss.router import Router
 from ....wss.serializer import Serializer
 from .utils import parse_message
 from ..utils import stock2symbol
 from . import serializers
+from .serializers.base import BitmexSerializer
 
 
 if TYPE_CHECKING:
@@ -63,13 +67,13 @@ class BitmexWssRouter(Router):
         return 'table' in data and data['action'] in ("partial", "update",
                                                       "insert", "delete")
 
-    def _subscr_serializer(self, subscr_name) -> Serializer:
+    def _subscr_serializer(self, subscr_name) -> BitmexSerializer:
         if subscr_name not in self._serializers:
             subscr_key = self._quote_bin if subscr_name == "quote_bin" else subscr_name
             self._serializers[subscr_name] = self.__class__.serializer_classes[subscr_key](self._wss_api)
         return self._serializers[subscr_name]
 
-    def _lookup_serializer(self, subscr_name, data: list) -> Serializer:
+    def _lookup_serializer(self, subscr_name, data: dict) -> Optional[Serializer]:
         if data['table'] == "tradeBin1m":
             if not self._use_trade_bin and data['action'] != 'partial':
                 return None

@@ -1,8 +1,13 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-from typing import Tuple
-from abc import ABCMeta
-from abc import abstractmethod
+from typing import (
+    Optional,
+    TYPE_CHECKING,
+    Tuple
+)
+from abc import (
+    ABCMeta,
+    abstractmethod
+)
 
 if TYPE_CHECKING:
     from . import StockWssApi
@@ -17,10 +22,10 @@ class Serializer:
         self._state = None
 
     @abstractmethod
-    def _get_data(self, message) -> Tuple[str, dict]:
-        return None
+    def _get_data(self, message: any) -> Tuple[str, list]:
+        raise NotImplementedError
 
-    def _get_state(self, symbol: str = None) -> dict:
+    def _get_state(self, symbol: str = None) -> Optional[list]:
         if self._state is None:
             return None
         if symbol is None:
@@ -34,7 +39,7 @@ class Serializer:
             self._state = dict()
         self._state[symbol.lower()] = data
 
-    def data(self, message):
+    def data(self, message) -> dict:
         (action, data) = self._get_data(message)
         if data is None:
             return None
@@ -45,7 +50,7 @@ class Serializer:
             'data': data
         }
 
-    def state(self, symbol: str = None):
+    def state(self, symbol: str = None) -> Optional[dict]:
         data = self._get_state(symbol)
         if data is None:
             return None
