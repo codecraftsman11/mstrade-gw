@@ -188,7 +188,7 @@ def _face_price(symbol, price):
         if _symbol in ('xbt7d_u105', 'xbt7d_d95'):
             return 0.1 * price
         if _symbol == 'ethusd':
-            return 0.00001 * price
+            return 1e-6 * price
         if _symbol in ('adah20',
                        'bchh20',
                        'eosh20',
