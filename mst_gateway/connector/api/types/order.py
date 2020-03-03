@@ -4,10 +4,8 @@ from mst_gateway.utils import ClassWithAttributes
 class OrderType(ClassWithAttributes):
     market = 'market'
     limit = 'limit'
-    sl_market = 'sl_market'
-    sl_limit = 'sl_limit'
-    tp_market = 'tp_market'
-    tp_limit = 'tp_limit'
+    stop_loss = 'stop_loss'
+    take_profit = 'take_profit'
     noloss = 'noloss'
     trailing_stop = 'trailing_stop'
     trailing_trigger_stop = 'trailing_trigger_stop'
@@ -36,12 +34,50 @@ class OrderState(ClassWithAttributes):
     liquidated = 'liquidated'   # Active order is liquidated
 
 
-ALGORITHM_ORDER_TYPES = (
+class OrderTTL(ClassWithAttributes):
+    GTC = 'GTC'
+    H1 = 'H1'
+    H4 = 'H4'
+    D1 = 'D1'
+
+
+class OrderExec(ClassWithAttributes):
+    market = 'market'
+    limit = 'limit'
+
+
+ORDER_STANDARD_TYPES = (
+    OrderType.limit,
+    OrderType.market,
+)
+
+
+ORDER_ALGORITHM_TYPES = (
     OrderType.box_top,
     OrderType.limit_turn,
     OrderType.stop_turn,
     OrderType.squeeze,
     OrderType.limit_smart
+)
+
+
+ORDER_OPEN_TYPES = (
+    OrderType.limit,
+    OrderType.market,
+    OrderType.box_top,
+    OrderType.limit_turn,
+    OrderType.stop_turn,
+    OrderType.squeeze,
+    OrderType.limit_smart
+)
+
+
+ORDER_CLOSE_TYPES = (
+    OrderType.stop_loss,
+    OrderType.take_profit,
+    OrderType.noloss,
+    OrderType.trailing_stop,
+    OrderType.trailing_trigger_stop
 )
 
 # Sides
