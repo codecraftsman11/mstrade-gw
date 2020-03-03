@@ -189,6 +189,8 @@ def _face_price(symbol, price):
             return 0.1 * price
         if _symbol == 'ethusd':
             return 0.00001 * price
+        if _symbol == 'xrpusd':
+            return 0.0002 * price
         if _symbol in ('adah20',
                        'bchh20',
                        'eosh20',
