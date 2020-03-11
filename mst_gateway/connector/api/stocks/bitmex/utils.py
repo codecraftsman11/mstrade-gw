@@ -43,7 +43,9 @@ def load_symbol_data(raw_data: dict) -> dict:
                                  raw_data.get('rootSymbol')),
         'tick': _float(raw_data.get('tickSize')),
         'mark_price': mark_price,
-        'face_price': _face_price(symbol, mark_price)
+        'face_price': _face_price(symbol, mark_price),
+        'bid_price': _float(raw_data.get('bidPrice')),
+        'ask_price': _float(raw_data.get('askPrice'))
     }
 
 

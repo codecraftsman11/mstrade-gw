@@ -38,7 +38,9 @@ SYMBOL_FIELDS = {
     'price24': float,
     'tick': float,
     'mark_price': float,
-    'face_price': float
+    'face_price': float,
+    'bid_price': float,
+    'ask_price': float
 }
 
 ORDER_FIELDS = {
