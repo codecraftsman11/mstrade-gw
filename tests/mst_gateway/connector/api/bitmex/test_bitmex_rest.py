@@ -262,7 +262,7 @@ class TestBitmexRestApi:
         assert _face_price('ADAH20', price) == price
         assert _face_price('BCHH20', price) == price
         assert _face_price('EOSH20', price) == price
-        assert _face_price('ETHUSD', price) == 0.00001 * price
+        assert _face_price('ETHUSD', price) == 1e-6 * price
         assert _face_price('ETHH20', price) == price
         assert _face_price('LTCH20', price) == price
         assert _face_price('TRXH20', price) == price

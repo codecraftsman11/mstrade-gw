@@ -20,6 +20,8 @@ TEST_SYMBOL_MESSAGES = [
                     'price24': 10864,
                     'mark_price': 10551.29,
                     'face_price': 1 / 10551.29,
+                    'ask_price': 10650,
+                    'bid_price': 10649.5,
                     'tick': 0.5
                 },
                 {
@@ -31,6 +33,8 @@ TEST_SYMBOL_MESSAGES = [
                     'price24': 10.86,
                     'mark_price': 10.79,
                     'face_price': None,
+                    'ask_price': None,
+                    'bid_price': None,
                     'tick': 0.01
                 }
             ]
@@ -57,7 +61,9 @@ TEST_SYMBOL_MESSAGES = [
                     'price24': 10864.0,
                     'mark_price': 10933.77,
                     'face_price': 1 / 10933.77,
-                    'tick': 0.5
+                    'tick': 0.5,
+                    'bid_price': 10649.5,
+                    'ask_price': 10650
                 }
             ]
         }
@@ -77,6 +83,8 @@ RESULT_SYMBOL_STATE = {
             'price': 10933.67,
             'mark_price': 10933.77,
             'face_price': 1 / 10933.77,
+            'bid_price': 10649.5,
+            'ask_price': 10650,
             'price24': 10864.0,
             'tick': 0.5
         },
@@ -88,6 +96,8 @@ RESULT_SYMBOL_STATE = {
             'price': 10.79,
             'mark_price': 10.79,
             'face_price': None,
+            'bid_price': None,
+            'ask_price': None,
             'price24': 10.86,
             'tick': 0.01
         }

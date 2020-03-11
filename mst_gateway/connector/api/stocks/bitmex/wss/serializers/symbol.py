@@ -33,4 +33,8 @@ class BitmexSymbolSerializer(BitmexSerializer):
                 item['tickSize'] = state[0]['tick']
             if item.get('markPrice') is None:
                 item['markPrice'] = state[0]['mark_price']
+            if item.get('askPrice') is None:
+                item['askPrice'] = state[0]['ask_price']
+            if item.get('bidPrice') is None:
+                item['bidPrice'] = state[0]['bid_price']
         return load_symbol_data(item)
