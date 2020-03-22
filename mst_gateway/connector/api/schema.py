@@ -40,7 +40,8 @@ SYMBOL_FIELDS = {
     'mark_price': float,
     'face_price': float,
     'bid_price': float,
-    'ask_price': float
+    'ask_price': float,
+    'reversed': bool
 }
 
 ORDER_FIELDS = {

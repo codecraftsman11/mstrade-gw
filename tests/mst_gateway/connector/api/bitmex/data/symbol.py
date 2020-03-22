@@ -22,7 +22,8 @@ TEST_SYMBOL_MESSAGES = [
                     'face_price': 1 / 10551.29,
                     'ask_price': 10650,
                     'bid_price': 10649.5,
-                    'tick': 0.5
+                    'tick': 0.5,
+                    'reversed': True
                 },
                 {
                     'symbol': "XBTEUR",
@@ -35,7 +36,8 @@ TEST_SYMBOL_MESSAGES = [
                     'face_price': None,
                     'ask_price': None,
                     'bid_price': None,
-                    'tick': 0.01
+                    'tick': 0.01,
+                    'reversed': None
                 }
             ]
         }
@@ -63,7 +65,8 @@ TEST_SYMBOL_MESSAGES = [
                     'face_price': 1 / 10933.77,
                     'tick': 0.5,
                     'bid_price': 10649.5,
-                    'ask_price': 10650
+                    'ask_price': 10650,
+                    'reversed': True
                 }
             ]
         }
@@ -86,7 +89,8 @@ RESULT_SYMBOL_STATE = {
             'bid_price': 10649.5,
             'ask_price': 10650,
             'price24': 10864.0,
-            'tick': 0.5
+            'tick': 0.5,
+            'reversed': True
         },
         {
             'symbol': "XBTEUR",
@@ -99,7 +103,8 @@ RESULT_SYMBOL_STATE = {
             'bid_price': None,
             'ask_price': None,
             'price24': 10.86,
-            'tick': 0.01
+            'tick': 0.01,
+            'reversed': None
         }
     ]
 }

@@ -1,4 +1,4 @@
-from typing import Union, Optional
+from typing import Union, Optional, Tuple
 from datetime import datetime
 import urllib
 import json
@@ -33,6 +33,7 @@ def load_symbol_data(raw_data: dict) -> dict:
     symbol = raw_data.get('symbol')
     symbol_time = _date(raw_data.get('timestamp'))
     mark_price = _float(raw_data.get('markPrice'))
+    face_price, _reversed = _face_price(symbol, mark_price)
     return {
         'time': symbol_time,
         'timestamp': time2timestamp(symbol_time),
@@ -43,9 +44,10 @@ def load_symbol_data(raw_data: dict) -> dict:
                                  raw_data.get('rootSymbol')),
         'tick': _float(raw_data.get('tickSize')),
         'mark_price': mark_price,
-        'face_price': _face_price(symbol, mark_price),
+        'face_price': face_price,
         'bid_price': _float(raw_data.get('bidPrice')),
-        'ask_price': _float(raw_data.get('askPrice'))
+        'ask_price': _float(raw_data.get('askPrice')),
+        'reversed': _reversed
     }
 
 
@@ -182,17 +184,17 @@ def stock2symbol(symbol):
     return symbol.lower() if symbol is not None else None
 
 
-def _face_price(symbol, price):
+def _face_price(symbol: str, price: float) -> Tuple[float, bool]:
     _symbol = symbol.lower()
     try:
         if _symbol in ('xbtusd', 'xbtm20', 'xbth20'):
-            return 1 / price
+            return (1 / price, True)
         if _symbol in ('xbt7d_u105', 'xbt7d_d95'):
-            return 0.1 * price
+            return (0.1 * price, False)
         if _symbol == 'ethusd':
-            return 1e-6 * price
+            return (1e-6 * price, False)
         if _symbol == 'xrpusd':
-            return 0.0002 * price
+            return (0.0002 * price, False)
         if _symbol in ('adah20',
                        'bchh20',
                        'eosh20',
@@ -200,10 +202,10 @@ def _face_price(symbol, price):
                        'ltch20',
                        'trxh20',
                        'xrph20'):
-            return price
+            return (price, False)
     except (ValueError, TypeError):
         pass
-    return None
+    return None, None
 
 
 def _get_symbol_pair(symbol: str, root_symbol: str) -> list:
