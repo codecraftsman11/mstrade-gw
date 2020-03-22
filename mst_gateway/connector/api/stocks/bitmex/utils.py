@@ -184,7 +184,7 @@ def stock2symbol(symbol):
     return symbol.lower() if symbol is not None else None
 
 
-def _face_price(symbol, price) -> Tuple[float, bool]:
+def _face_price(symbol: str, price: float) -> Tuple[float, bool]:
     _symbol = symbol.lower()
     try:
         if _symbol in ('xbtusd', 'xbtm20', 'xbth20'):
