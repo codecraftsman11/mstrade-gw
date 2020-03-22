@@ -254,17 +254,17 @@ class TestBitmexRestApi:
 
     def test_bitmex_face_price(self):
         price = 3
-        assert _face_price('XBTUSD', price) == 1 / price
-        assert _face_price('XBTH20', price) == 1 / price
-        assert _face_price('XBTM20', price) == 1 / price
-        assert _face_price('XBT7D_U105', price) == 0.1 * price
-        assert _face_price('XBT7D_D95', price) == 0.1 * price
-        assert _face_price('ADAH20', price) == price
-        assert _face_price('BCHH20', price) == price
-        assert _face_price('EOSH20', price) == price
-        assert _face_price('ETHUSD', price) == 1e-6 * price
-        assert _face_price('ETHH20', price) == price
-        assert _face_price('LTCH20', price) == price
-        assert _face_price('TRXH20', price) == price
-        assert _face_price('XRPH20', price) == price
-        assert _face_price('XBTEUR', price) is None
+        assert _face_price('XBTUSD', price) == (1 / price, True)
+        assert _face_price('XBTH20', price) == (1 / price, True)
+        assert _face_price('XBTM20', price) == (1 / price, True)
+        assert _face_price('XBT7D_U105', price) == (0.1 * price, False)
+        assert _face_price('XBT7D_D95', price) == (0.1 * price, False)
+        assert _face_price('ADAH20', price) == (price, False)
+        assert _face_price('BCHH20', price) == (price, False)
+        assert _face_price('EOSH20', price) == (price, False)
+        assert _face_price('ETHUSD', price) == (1e-6 * price, False)
+        assert _face_price('ETHH20', price) == (price, False)
+        assert _face_price('LTCH20', price) == (price, False)
+        assert _face_price('TRXH20', price) == (price, False)
+        assert _face_price('XRPH20', price) == (price, False)
+        assert _face_price('XBTEUR', price) == (None, None)
