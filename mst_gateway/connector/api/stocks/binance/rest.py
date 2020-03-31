@@ -37,6 +37,66 @@ class BinanceRestApi(StockRestApi):
         )
         return [utils.load_quote_bin_data(d) for d in data]
 
+    def create_order(self, symbol: str,
+                     side: str = Client.SIDE_BUY,
+                     value: float = 1,
+                     order_type: str = Client.ORDER_TYPE_MARKET,
+                     **params) -> bool:
+        params.update(
+            dict(
+                symbol=symbol,
+                side=side,
+                type=order_type,
+                quantity=value
+            )
+        )
+        if params.get('order_id'):
+            params['newClientOrderId'] = params.get('order_id')
+        data = self._binance_api(self._handler.create_order, **params)
+        return bool(data)
+
+    def cancel_all_orders(self):
+        open_orders = [dict(symbol=order["symbol"], orderId=order["orderId"]) for order in
+                       self._binance_api(self._handler.get_open_orders)]
+        data = [self._binance_api(self._handler.cancel_order, **order) for order in open_orders]
+        return bool(data)
+
+    def cancel_order(self, **params):
+        data = self._binance_api(self._handler.cancel_order, **params)
+        return bool(data)
+
+    def get_order(self, order_id: str, **params):
+        params.update(orderId=order_id)
+        data = self._binance_api(self._handler.get_order, **params)
+        if not data:
+            return None
+        return utils.load_order_data(data)
+
+    def list_orders(self, symbol: str,
+                    active_only: bool = True,
+                    count: int = None,
+                    offset: int = 0,
+                    params: dict = None) -> list:
+        if params is None:
+            params = {}
+        if active_only:
+            data = self._binance_api(self._handler.get_open_orders, **params)
+            return [utils.load_order_data(d) for d in data]
+        if count is not None:
+            params['limit'] = count
+        data = self._binance_api(self._handler.get_all_orders, **params)
+        return [utils.load_order_data(d) for d in data][offset:count]
+
+    def list_trades(self, symbol, **params) -> list:
+        data = self._binance_api(self._handler.get_my_trades, **params)
+        return [utils.load_trade_data(d) for d in data]
+
+    def close_order(self, order_id):
+        return NotImplementedError
+
+    def close_all_orders(self, symbol: str):
+        return NotImplementedError
+
     def _binance_api(self, method: callable, **kwargs):
         try:
             resp = method(**kwargs)

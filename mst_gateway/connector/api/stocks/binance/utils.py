@@ -27,6 +27,21 @@ def load_symbol_data(raw_data: dict) -> dict:
     }
 
 
+def load_trade_data(raw_data: dict) -> dict:
+    """{
+        "id": 28457,
+        "price": "4.00000100",
+        "qty": "12.00000000",
+        "commission": "10.10000000",
+        "commissionAsset": "BNB",
+        "time": 1499865549590,
+        "isBuyer": true,
+        "isMaker": false,
+        "isBestMatch": true
+    }"""
+    return load_quote_data(raw_data)
+
+
 def load_quote_data(raw_data: dict, symbol: str = None) -> dict:
     """
         {'id': 170622457,
@@ -59,6 +74,22 @@ def load_quote_bin_data(raw_data: list, symbol: str = None) -> dict:
         'low': _float(raw_data[3]),
         'volume': raw_data[5],
     }
+
+
+def load_order_data(raw_data: dict, skip_undef=False) -> dict:
+    data = {
+        'order_id': raw_data.get('orderId') or raw_data.get('clientOrderId'),
+        'symbol': raw_data.get('symbol'),
+        'origQty': raw_data.get('orderQty'),
+        'stop': raw_data.get('stopPrice'),
+        'type': raw_data.get('type'),
+        'side': raw_data.get('side'),
+        'price': _float(raw_data.get('price')),
+        'created': _date(raw_data.get('time')),
+        'active': raw_data.get('status') != "NEW",
+        # 'schema': api.OrderSchema.margin1
+    }
+    return data
 
 
 def _date(token: Union[datetime, int]) -> Optional[datetime]:
