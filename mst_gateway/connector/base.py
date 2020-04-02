@@ -1,8 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
 
-class Connector(object):
-    __metaclass__ = ABCMeta
+class Connector(metaclass=ABCMeta):
 
     def __init__(self, auth=None, logger=None):
         self._auth = auth
