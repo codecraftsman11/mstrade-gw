@@ -1,6 +1,5 @@
 import json
 from typing import Optional
-import bitmex
 from bravado.exception import HTTPError
 from . import var
 from . import utils
@@ -8,6 +7,8 @@ from ...rest import StockRestApi
 from .... import api
 from .....exceptions import ConnectorError
 from .....utils import j_dumps
+from .var import BITMEX_SWAGGER, TBITMEX_SWAGGER
+from BitMEXAPIKeyAuthenticator import APIKeyAuthenticator
 
 
 def _make_create_order_args(args, options):
@@ -31,9 +32,17 @@ class BitmexRestApi(StockRestApi):
     def _connect(self, **kwargs):
         self._keepalive = bool(kwargs.get('keepalive', False))
         self._compress = bool(kwargs.get('compress', False))
-        return bitmex.bitmex(test=self._url == self.__class__.TEST_URL,
-                             api_key=self._auth['api_key'],
-                             api_secret=self._auth['api_secret'])
+        if self._url == self.TEST_URL:
+            return self.__swagger(TBITMEX_SWAGGER)
+        return self.__swagger(BITMEX_SWAGGER)
+
+    def __swagger(self, swagger):
+        swagger.swagger_spec.http_client.authenticator = APIKeyAuthenticator(
+            host=self._url,
+            api_key=self._auth.get('api_key'),
+            api_secret=self._auth.get('api_secret'),
+        )
+        return swagger
 
     def _api_kwargs(self, kwargs):
         # pylint: disable=no-self-use
@@ -92,11 +101,11 @@ class BitmexRestApi(StockRestApi):
         data, _ = self._bitmex_api(self._handler.User.User_get, **kwargs)
         return data
 
-    def get_symbol(self, symbol) -> list:
+    def get_symbol(self, symbol) -> dict:
         instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_get,
                                           symbol=utils.symbol2stock(symbol))
         if not instruments:
-            return None
+            return dict()
         return utils.load_symbol_data(instruments[0])
 
     def list_symbols(self, **kwargs) -> list:
@@ -192,7 +201,6 @@ class BitmexRestApi(StockRestApi):
 
     def _do_list_order_book(self, symbol: str,
                             depth: int = None, side: int = None) -> list:
-        ob_items = []
         ob_depth = depth or 0
         ob_items, _ = self._bitmex_api(self._handler.OrderBook.OrderBook_getL2,
                                        symbol=utils.symbol2stock(symbol),
@@ -215,3 +223,12 @@ class BitmexRestApi(StockRestApi):
         except HTTPError as exc:
             raise ConnectorError("Bitmex api error. Details: "
                                  "{}, {}".format(exc.status_code, exc.message))
+
+    def __setstate__(self, state):
+        self.__dict__ = state
+        self.open()
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.pop('_handler', None)
+        return state

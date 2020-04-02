@@ -1,4 +1,9 @@
+import bitmex
 from .... import api
+
+BITMEX_SWAGGER = bitmex.bitmex(test=False)
+TBITMEX_SWAGGER = bitmex.bitmex(test=True)
+
 
 BITMEX_MAX_QUOTE_BINS_COUNT = 750
 
