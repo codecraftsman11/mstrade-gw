@@ -37,11 +37,14 @@ class BitmexRestApi(StockRestApi):
         return self.__swagger(BITMEX_SWAGGER)
 
     def __swagger(self, swagger):
-        swagger.swagger_spec.http_client.authenticator = APIKeyAuthenticator(
-            host=self._url,
-            api_key=self._auth.get('api_key'),
-            api_secret=self._auth.get('api_secret'),
-        )
+        if self._auth and self._auth.get('api_key') and self._auth.get('api_secret'):
+            swagger.swagger_spec.http_client.authenticator = APIKeyAuthenticator(
+                host=self._url,
+                api_key=self._auth.get('api_key'),
+                api_secret=self._auth.get('api_secret'),
+            )
+        else:
+            swagger.swagger_spec.http_client.authenticator = None
         return swagger
 
     def _api_kwargs(self, kwargs):
