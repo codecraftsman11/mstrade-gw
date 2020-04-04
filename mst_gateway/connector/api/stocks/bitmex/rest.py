@@ -1,14 +1,14 @@
-import json
 from typing import Optional
+import json
+import bitmex
 from bravado.exception import HTTPError
-from . import var
-from . import utils
+from bravado.client import SwaggerClient
+from BitMEXAPIKeyAuthenticator import APIKeyAuthenticator
+from . import utils, var
 from ...rest import StockRestApi
 from .... import api
 from .....exceptions import ConnectorError
 from .....utils import j_dumps
-from .var import BITMEX_SWAGGER, TBITMEX_SWAGGER
-from BitMEXAPIKeyAuthenticator import APIKeyAuthenticator
 
 
 def _make_create_order_args(args, options):
@@ -25,27 +25,44 @@ def _make_create_order_args(args, options):
     return True
 
 
-class BitmexRestApi(StockRestApi):
+class BitmexFactory():
     BASE_URL = "https://www.bitmex.com/api/v1"
     TEST_URL = "https://testnet.bitmex.com/api/v1"
+    BITMEX_SWAGGER = bitmex.bitmex(test=False)
+    TBITMEX_SWAGGER = bitmex.bitmex(test=True)
+
+    @classmethod
+    def make_client(cls, url, api_key, api_secret):
+        swagger = cls._get_swagger_spec(url)
+        if api_key and api_secret:
+            swagger.swagger_spec.http_client.authenticator = APIKeyAuthenticator(
+                url,
+                api_key,
+                api_secret,
+            )
+        return swagger
+
+    @classmethod
+    def _get_swagger_spec(cls, url):
+        if url == cls.BASE_URL:
+            swagger = cls.BITMEX_SWAGGER
+        else:
+            swagger = cls.TBITMEX_SWAGGER
+        return SwaggerClient.from_spec(
+            spec_dict=swagger.swagger_spec.spec_dict,
+            origin_url=swagger.swagger_spec.origin_url,
+            config=swagger.swagger_spec.config)
+
+
+class BitmexRestApi(StockRestApi):
 
     def _connect(self, **kwargs):
         self._keepalive = bool(kwargs.get('keepalive', False))
         self._compress = bool(kwargs.get('compress', False))
-        if self._url == self.TEST_URL:
-            return self.__swagger(TBITMEX_SWAGGER)
-        return self.__swagger(BITMEX_SWAGGER)
-
-    def __swagger(self, swagger):
-        if self._auth and self._auth.get('api_key') and self._auth.get('api_secret'):
-            swagger.swagger_spec.http_client.authenticator = APIKeyAuthenticator(
-                host=self._url,
-                api_key=self._auth.get('api_key'),
-                api_secret=self._auth.get('api_secret'),
-            )
-        else:
-            swagger.swagger_spec.http_client.authenticator = None
-        return swagger
+        return BitmexFactory.make_client(
+            self._url,
+            self._auth.get('api_key'),
+            self._auth.get('api_secret'))
 
     def _api_kwargs(self, kwargs):
         # pylint: disable=no-self-use
