@@ -36,9 +36,9 @@ class BitmexFactory():
         swagger = cls._get_swagger_spec(url)
         if api_key and api_secret:
             swagger.swagger_spec.http_client.authenticator = APIKeyAuthenticator(
-                url,
-                api_key,
-                api_secret,
+                host=url,
+                api_key=api_key,
+                api_secret=api_secret,
             )
         return swagger
 
@@ -49,7 +49,7 @@ class BitmexFactory():
         else:
             swagger = cls.TBITMEX_SWAGGER
         return SwaggerClient.from_spec(
-            spec_dict=swagger.swagger_spec.spec_dict,
+            spec_dict=swagger.swagger_spec.client_spec_dict,
             origin_url=swagger.swagger_spec.origin_url,
             config=swagger.swagger_spec.config)
 
