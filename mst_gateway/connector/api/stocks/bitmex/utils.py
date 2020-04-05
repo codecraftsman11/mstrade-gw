@@ -1,9 +1,10 @@
-from typing import Union, Optional, Tuple
-from datetime import datetime
 import urllib
 import json
 import hmac
 import hashlib
+import re
+from typing import Union, Optional, Tuple
+from datetime import datetime
 from mst_gateway.connector import api
 from mst_gateway.connector.api.utils import time2timestamp
 from . import var
@@ -33,7 +34,7 @@ def load_symbol_data(raw_data: dict) -> dict:
     symbol = raw_data.get('symbol')
     symbol_time = _date(raw_data.get('timestamp'))
     mark_price = _float(raw_data.get('markPrice'))
-    face_price, _reversed = _face_price(symbol, mark_price)
+    face_price, _reversed = calc_face_price(symbol, mark_price)
     return {
         'time': symbol_time,
         'timestamp': time2timestamp(symbol_time),
@@ -184,28 +185,49 @@ def stock2symbol(symbol):
     return symbol.lower() if symbol is not None else None
 
 
-def _face_price(symbol: str, price: float) -> Tuple[float, bool]:
+def calc_face_price(symbol: str, price: float) -> Tuple[Optional[float],
+                                                        Optional[bool]]:
     _symbol = symbol.lower()
+    result = (None, None)
     try:
-        if _symbol in ('xbtusd', 'xbtm20', 'xbth20'):
-            return (1 / price, True)
-        if _symbol in ('xbt7d_u105', 'xbt7d_d95'):
-            return (0.1 * price, False)
-        if _symbol == 'ethusd':
-            return (1e-6 * price, False)
-        if _symbol == 'xrpusd':
-            return (0.0002 * price, False)
-        if _symbol in ('adah20',
-                       'bchh20',
-                       'eosh20',
-                       'ethh20',
-                       'ltch20',
-                       'trxh20',
-                       'xrph20'):
-            return (price, False)
+        if _symbol == "xbtusd":
+            result = (1 / price, True)
+        elif re.match(r'xbt[fghjkmnquvxz]\d{2}$', _symbol):
+            result = (1 / price, True)
+        elif _symbol in ('xbt7d_u105', 'xbt7d_d95'):
+            result = (0.1 * price, False)
+        elif _symbol == 'ethusd':
+            result = (1e-6 * price, False)
+        elif _symbol == 'xrpusd':
+            result = (0.0002 * price, False)
+        elif re.match(r'(ada|bch|eos|eth|ltc|trx|xrp)[fghjkmnquvxz]\d{2}',
+                      _symbol):
+            result = (price, False)
     except (ValueError, TypeError):
         pass
-    return None, None
+    return result
+
+
+def calc_price(symbol: str, face_price: float) -> Optional[float]:
+    _symbol = symbol.lower()
+    result = None
+    try:
+        if _symbol == "xbtusd":
+            result = 1 / face_price
+        elif re.match(r'xbt[fghjkmnquvxz]\d{2}$', _symbol):
+            result = 1 / face_price
+        elif _symbol in ('xbt7d_u105', 'xbt7d_d95'):
+            result = 10 * face_price
+        elif _symbol == 'ethusd':
+            result = 1e+6 * face_price
+        elif _symbol == 'xrpusd':
+            result = face_price / 0.0002
+        elif re.match(r'(ada|bch|eos|eth|ltc|trx|xrp)[fghjkmnquvxz]\d{2}$',
+                      _symbol):
+            result = face_price
+    except (ValueError, TypeError):
+        pass
+    return result
 
 
 def _get_symbol_pair(symbol: str, root_symbol: str) -> list:
