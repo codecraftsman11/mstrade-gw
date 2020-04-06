@@ -203,7 +203,7 @@ def calc_face_price(symbol: str, price: float) -> Tuple[Optional[float],
         elif re.match(r'(ada|bch|eos|eth|ltc|trx|xrp)[fghjkmnquvxz]\d{2}',
                       _symbol):
             result = (price, False)
-    except (ValueError, TypeError):
+    except (ValueError, TypeError, ZeroDivisionError):
         pass
     return result
 
@@ -225,7 +225,7 @@ def calc_price(symbol: str, face_price: float) -> Optional[float]:
         elif re.match(r'(ada|bch|eos|eth|ltc|trx|xrp)[fghjkmnquvxz]\d{2}$',
                       _symbol):
             result = face_price
-    except (ValueError, TypeError):
+    except (ValueError, TypeError, ZeroDivisionError):
         pass
     return result
 

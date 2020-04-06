@@ -271,6 +271,7 @@ class TestBitmexRestApi:
         assert calc_face_price('TRXH20', price) == (price, False)
         assert calc_face_price('XRPH20', price) == (price, False)
         assert calc_face_price('XBTEUR', price) == (None, None)
+        assert calc_face_price('XBTUSD', 0) == (None, None)
 
     def test_bitmex_calc_price(self):
         price = 3
@@ -288,3 +289,4 @@ class TestBitmexRestApi:
         assert calc_price('TRXH20', price) == price
         assert calc_price('XRPH20', price) == price
         assert calc_price('XBTEUR', price) is None
+        assert calc_price('XBTUSD', 0) is None
