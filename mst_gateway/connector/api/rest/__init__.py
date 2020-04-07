@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import Optional
+from typing import Optional, Tuple
 from logging import Logger
 from ...base import Connector
 from ..errors import ERROR_OK
@@ -103,4 +103,15 @@ class StockRestApi(Connector):
     @abstractmethod
     def _do_list_order_book(self, symbol: str,
                             depth: int = None, side: int = None) -> list:
+        raise NotImplementedError
+
+    @classmethod
+    @abstractmethod
+    def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float],
+                                                                 Optional[bool]]:
+        raise NotImplementedError
+
+    @classmethod
+    @abstractmethod
+    def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
         raise NotImplementedError
