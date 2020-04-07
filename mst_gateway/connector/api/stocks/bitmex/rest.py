@@ -1,5 +1,8 @@
 import json
-from typing import Optional
+from typing import (
+    Tuple,
+    Optional
+)
 import bitmex
 from bravado.exception import HTTPError
 from . import var
@@ -215,3 +218,12 @@ class BitmexRestApi(StockRestApi):
         except HTTPError as exc:
             raise ConnectorError("Bitmex api error. Details: "
                                  "{}, {}".format(exc.status_code, exc.message))
+
+    @classmethod
+    def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float],
+                                                                 Optional[bool]]:
+        return utils.calc_face_price(symbol, price)
+
+    @classmethod
+    def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
+        return utils.calc_price(symbol, face_price)
