@@ -252,7 +252,7 @@ class BitmexRestApi(StockRestApi):
     def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
         return utils.calc_price(symbol, face_price)
 
-def __setstate__(self, state):
+    def __setstate__(self, state):
         self.__dict__ = state
         self.open()
 

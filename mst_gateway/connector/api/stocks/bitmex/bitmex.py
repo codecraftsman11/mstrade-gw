@@ -23,8 +23,7 @@ class APIKeyAuthenticator(BaseAPIKeyAuthenticator):
             r.headers.pop('api-key', None)
             r.headers.pop('api-signature', None)
             return r
-        super().apply(r)
-        return r
+        return super().apply(r)
 
 
 class CallableOperation(BaseCallableOperation):
