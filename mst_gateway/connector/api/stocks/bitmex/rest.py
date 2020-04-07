@@ -1,9 +1,7 @@
 from typing import Optional
 import json
-import bitmex
 from bravado.exception import HTTPError
-from bravado.client import SwaggerClient
-from BitMEXAPIKeyAuthenticator import APIKeyAuthenticator
+from .bitmex import bitmex_connector, APIKeyAuthenticator
 from . import utils, var
 from ...rest import StockRestApi
 from .... import api
@@ -25,44 +23,38 @@ def _make_create_order_args(args, options):
     return True
 
 
-class BitmexFactory():
+class BitmexFactory:
     BASE_URL = "https://www.bitmex.com/api/v1"
     TEST_URL = "https://testnet.bitmex.com/api/v1"
-    BITMEX_SWAGGER = bitmex.bitmex(test=False)
-    TBITMEX_SWAGGER = bitmex.bitmex(test=True)
+    BITMEX_SWAGGER = bitmex_connector(test=False)
+    TBITMEX_SWAGGER = bitmex_connector(test=True)
 
     @classmethod
-    def make_client(cls, url, api_key, api_secret):
-        swagger = cls._get_swagger_spec(url)
-        if api_key and api_secret:
-            swagger.swagger_spec.http_client.authenticator = APIKeyAuthenticator(
-                host=url,
-                api_key=api_key,
-                api_secret=api_secret,
-            )
-        return swagger
-
-    @classmethod
-    def _get_swagger_spec(cls, url):
+    def make_client(cls, url):
         if url == cls.BASE_URL:
             swagger = cls.BITMEX_SWAGGER
         else:
             swagger = cls.TBITMEX_SWAGGER
-        return SwaggerClient.from_spec(
-            spec_dict=swagger.swagger_spec.client_spec_dict,
-            origin_url=swagger.swagger_spec.origin_url,
-            config=swagger.swagger_spec.config)
+        return swagger
 
 
 class BitmexRestApi(StockRestApi):
+    BASE_URL = BitmexFactory.BASE_URL
+    TEST_URL = BitmexFactory.TEST_URL
 
     def _connect(self, **kwargs):
         self._keepalive = bool(kwargs.get('keepalive', False))
         self._compress = bool(kwargs.get('compress', False))
-        return BitmexFactory.make_client(
-            self._url,
-            self._auth.get('api_key'),
-            self._auth.get('api_secret'))
+        return BitmexFactory.make_client(self._url)
+
+    @property
+    def _authenticator(self):
+        self._auth = self._auth if isinstance(self._auth, dict) else {}
+        return APIKeyAuthenticator(
+            host=self._url,
+            api_key=self._auth.get('api_key'),
+            api_secret=self._auth.get('api_secret')
+        )
 
     def _api_kwargs(self, kwargs):
         # pylint: disable=no-self-use
@@ -238,7 +230,11 @@ class BitmexRestApi(StockRestApi):
         if self._compress:
             headers['Accept-Encoding'] = "deflate, gzip;q=1.0, *;q=0.5"
         try:
-            resp = method(_request_options={'headers': headers}, **kwargs).response()
+            resp = method(
+                authenticator=self._authenticator,
+                _request_options={'headers': headers},
+                **kwargs
+            ).response()
             return resp.result, resp.metadata
         except HTTPError as exc:
             raise ConnectorError("Bitmex api error. Details: "
