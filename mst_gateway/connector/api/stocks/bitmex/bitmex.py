@@ -23,14 +23,7 @@ class APIKeyAuthenticator(BaseAPIKeyAuthenticator):
             r.headers.pop('api-key', None)
             r.headers.pop('api-signature', None)
             return r
-        # 10s grace period in case of clock skew
-        expires = int(round(time.time()) + 10)
-        r.headers['api-expires'] = str(expires)
-        r.headers['api-key'] = self.api_key
-        prepared = r.prepare()
-        body = prepared.body or ''
-        url = prepared.path_url
-        r.headers['api-signature'] = self.generate_signature(self.api_secret, r.method, url, expires, body)
+        super().apply(r)
         return r
 
 
@@ -42,7 +35,7 @@ class CallableOperation(BaseCallableOperation):
         :rtype: :class:`bravado.http_future.HTTPFuture`
         """
         log.debug(u'%s(%s)', self.operation.operation_id, op_kwargs)
-        # warn_for_deprecated_op(self.operation)
+        warn_for_deprecated_op(self.operation)
 
         http_client = self.operation.swagger_spec.http_client
         setattr(http_client, 'authenticator', op_kwargs.pop('authenticator', None))
