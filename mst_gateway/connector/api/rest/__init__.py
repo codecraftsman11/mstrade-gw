@@ -1,9 +1,8 @@
 from abc import ABCMeta, abstractmethod
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 from logging import Logger
 from ...base import Connector
 from ..errors import ERROR_OK
-from ..utils.order_book import pad_order_book
 from .. import (
     OrderType,
     BUY,
@@ -81,29 +80,22 @@ class StockRestApi(Connector):
     def close_all_orders(self, symbol: str) -> bool:
         raise NotImplementedError
 
-    def list_order_book(self, symbol: str, depth: int = None, side: int = None, tick_size: int = None) -> list:
+    def list_order_book(
+            self, symbol: str, depth: int = None, side: int = None,
+            split: bool = False, offset: int = 0) -> Union[list, dict]:
         if side is not None \
            and side not in (BUY, SELL):
-            return []
-        data = self._do_list_order_book(symbol, depth, side)
-        if tick_size is None:
-            return data
-        if not data:
-            return data
-        start = data[0]['price']
-        finish = data[-1]['price']
-        steps = int((finish - start) / tick_size)
-        if steps == depth * 2:
-            return data
-        return pad_order_book(data, tick_size)
+            return [] if split else {BUY: [], SELL: []}
+        return self.get_order_book(symbol, depth, side, split, offset)
 
     @abstractmethod
     def list_trades(self, symbol, **kwargs) -> list:
         raise NotImplementedError
 
     @abstractmethod
-    def _do_list_order_book(self, symbol: str,
-                            depth: int = None, side: int = None) -> list:
+    def get_order_book(
+            self, symbol: str, depth: int = None, side: int = None,
+            split: bool = False, offset: int = 0) -> Union[list, dict]:
         raise NotImplementedError
 
     @classmethod

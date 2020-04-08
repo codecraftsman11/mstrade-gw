@@ -98,6 +98,7 @@ def _debug(caplog):
 
 
 class TestBitmexRestApi:
+    # pylint: disable=too-many-public-methods
     def test_bitmex_rest_get_user(self, _bitmex: BitmexRestApi):
         result = _bitmex.get_user()
         assert result['username'] == cfg.BITMEX_USERNAME
@@ -243,6 +244,28 @@ class TestBitmexRestApi:
         assert len(ob_items) == 10
         assert ob_items[0]['side'] == api.SELL
         assert ob_items[9]['side'] == api.BUY
+
+    def test_bitmex_rest_list_order_book_split(self, _bitmex: BitmexRestApi):
+        ob_items = _bitmex.list_order_book(
+            symbol=cfg.BITMEX_SYMBOL,
+            depth=5,
+            split=True
+        )
+        assert len(ob_items[api.BUY]) == 5
+        assert len(ob_items[api.SELL]) == 5
+        assert ob_items[api.BUY][0]['side'] == api.BUY
+        assert ob_items[api.SELL][0]['side'] == api.SELL
+
+    def test_bitmex_rest_list_order_book_offset(self, _bitmex: BitmexRestApi):
+        ob_items = _bitmex.list_order_book(
+            symbol=cfg.BITMEX_SYMBOL,
+            depth=1,
+            split=True,
+            offset=10
+        )
+        assert len(ob_items[api.BUY]) == 1
+        assert len(ob_items[api.SELL]) == 1
+        assert abs(ob_items[api.SELL][0]['price'] - ob_items[api.BUY][0]['price']) > 5
 
     def test_bitmex_rest_unauth_get_user_exception(self, _bitmex_unauth: BitmexRestApi):
         with pytest.raises(ConnectorError):
