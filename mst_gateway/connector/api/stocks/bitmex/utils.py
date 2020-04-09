@@ -62,12 +62,12 @@ def load_order_type(order_type: str) -> str:
 
 def store_order_side(order_side: int) -> str:
     if order_side == api.SELL:
-        return 'Sell'
-    return 'Buy'
+        return var.BITMEX_SELL
+    return var.BITMEX_BUY
 
 
 def load_order_side(order_side: str) -> int:
-    if order_side.lower() == 'sell':
+    if order_side.lower() == var.BITMEX_SELL.lower():
         return api.SELL
     return api.BUY
 
@@ -227,6 +227,28 @@ def calc_price(symbol: str, face_price: float) -> Optional[float]:
             result = face_price
     except (ValueError, TypeError, ZeroDivisionError):
         pass
+    return result
+
+
+def split_order_book(ob_items, _side, offset):
+    result = {}
+    if _side == var.BITMEX_BUY or _side is None:
+        result[api.BUY] = []
+        buy_i = 0
+    if _side == var.BITMEX_BUY or _side is None:
+        result[api.SELL] = []
+    for _ob in ob_items:
+        if _side and _ob['side'] != _side:
+            continue
+        data = load_order_book_data(_ob)
+        if _ob['side'] == var.BITMEX_BUY:
+            buy_i += 1
+            if buy_i > offset:
+                result[api.BUY].append(data)
+        if _ob['side'] == var.BITMEX_SELL:
+            result[api.SELL].append(data)
+    if offset:
+        result[api.SELL] = result[api.SELL][:-offset]
     return result
 
 
