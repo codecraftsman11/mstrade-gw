@@ -1,7 +1,8 @@
 import json
 from typing import (
     Tuple,
-    Optional
+    Optional,
+    Union
 )
 from bravado.exception import HTTPError
 from .bitmex import bitmex_connector, APIKeyAuthenticator
@@ -214,17 +215,25 @@ class BitmexRestApi(StockRestApi):
                                    symbol=utils.symbol2stock(symbol))
         return bool(data)
 
-    def _do_list_order_book(self, symbol: str,
-                            depth: int = None, side: int = None) -> list:
+    def get_order_book(
+            self, symbol: str, depth: int = None, side: int = None,
+            split: bool = False, offset: int = 0) -> Union[list, dict]:
         ob_depth = depth or 0
+        if ob_depth:
+            ob_depth += offset
         ob_items, _ = self._bitmex_api(self._handler.OrderBook.OrderBook_getL2,
                                        symbol=utils.symbol2stock(symbol),
                                        depth=ob_depth)
-        if side is None:
-            return [utils.load_order_book_data(data) for data in ob_items]
-        _side = utils.store_order_side(side)
-        return [utils.load_order_book_data(data)
-                for data in ob_items if data['side'] == _side]
+        _side = None
+        if side is not None:
+            _side = utils.store_order_side(side)
+
+        if split:
+            return utils.split_order_book(ob_items, _side, offset)
+
+        return [utils.load_order_book_data(_ob)
+                for _ob in ob_items
+                if _side is None or _ob['side'] == _side]
 
     def _bitmex_api(self, method: callable, **kwargs):
         headers = {}
