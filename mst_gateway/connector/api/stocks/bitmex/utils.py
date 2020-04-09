@@ -3,7 +3,6 @@ import json
 import hmac
 import hashlib
 import re
-from collections import deque
 from typing import Union, Optional, Tuple
 from datetime import datetime
 from mst_gateway.connector import api
@@ -237,7 +236,7 @@ def split_order_book(ob_items, _side, offset):
         result[api.BUY] = []
         buy_i = 0
     if _side == var.BITMEX_BUY or _side is None:
-        result[api.SELL] = deque()
+        result[api.SELL] = []
         sell_i = 0
     for _ob in ob_items:
         if _side and _ob['side'] != _side:
@@ -250,9 +249,7 @@ def split_order_book(ob_items, _side, offset):
         if _ob['side'] == var.BITMEX_SELL:
             sell_i += 1
             if sell_i > offset:
-                result[api.SELL].appendleft(data)
-    if api.SELL in result:
-        result[api.SELL] = list(result[api.SELL])
+                result[api.SELL].append(data)
     return result
 
 
