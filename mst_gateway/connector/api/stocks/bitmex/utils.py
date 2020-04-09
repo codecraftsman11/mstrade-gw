@@ -237,7 +237,6 @@ def split_order_book(ob_items, _side, offset):
         buy_i = 0
     if _side == var.BITMEX_BUY or _side is None:
         result[api.SELL] = []
-        sell_i = 0
     for _ob in ob_items:
         if _side and _ob['side'] != _side:
             continue
@@ -247,9 +246,9 @@ def split_order_book(ob_items, _side, offset):
             if buy_i > offset:
                 result[api.BUY].append(data)
         if _ob['side'] == var.BITMEX_SELL:
-            sell_i += 1
-            if sell_i > offset:
-                result[api.SELL].append(data)
+            result[api.SELL].append(data)
+    if offset:
+        result[api.SELL] = result[api.SELL][:-offset]
     return result
 
 
