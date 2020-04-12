@@ -119,6 +119,34 @@ class StockWssApi(Connector):
             await self._restore_subscriptions()
         return self._handler
 
+    def run(self, recv_callback, **kwargs):
+        asyncio.create_task(
+            self.consume(
+                recv_callback,
+                **kwargs
+            )
+        )
+
+    async def consume(self, recv_callback: callable, **kwargs):
+        while True:
+            if not self.handler:
+                try:
+                    await self.open()
+                except (OSError, TypeError, ValueError):
+                    continue
+
+            if self.handler.closed:
+                await asyncio.sleep(kwargs.get('countdown', 10))
+                try:
+                    await self.open(restore=True)
+                except OSError:
+                    continue
+            try:
+                message = await self.handler.recv()
+            except websockets.exceptions.ConnectionClosed:
+                continue
+            await self.process_message(message, recv_callback)
+
     async def _restore_subscriptions(self):
         for subscr in self._subscriptions:
             if not isinstance(self._subscriptions[subscr], dict):
