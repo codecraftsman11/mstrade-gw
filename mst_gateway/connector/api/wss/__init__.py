@@ -119,8 +119,18 @@ class StockWssApi(Connector):
             await self._restore_subscriptions()
         return self._handler
 
-    def run(self, recv_callback, **kwargs):
-        asyncio.create_task(
+    def create_task(self, recv_callback, **kwargs):
+        return asyncio.create_task(
+            self.consume(
+                recv_callback,
+                **kwargs
+            )
+        )
+
+    def run(self, recv_callback, loop=None, **kwargs):
+        if not loop:
+            loop = asyncio.new_event_loop()
+        loop.run_until_complete(
             self.consume(
                 recv_callback,
                 **kwargs
