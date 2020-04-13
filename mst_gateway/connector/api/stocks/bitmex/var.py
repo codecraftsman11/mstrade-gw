@@ -1,5 +1,6 @@
 from .... import api
 
+
 BITMEX_MAX_QUOTE_BINS_COUNT = 750
 
 
