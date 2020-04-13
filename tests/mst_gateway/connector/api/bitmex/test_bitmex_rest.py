@@ -99,6 +99,13 @@ def _debug(caplog):
 
 class TestBitmexRestApi:
     # pylint: disable=too-many-public-methods
+    def test_bitmex_rest_client_single(self, _bitmex: BitmexRestApi):
+        assert True
+
+    def test_bitmex_rest_client_scope(self, _bitmex: BitmexRestApi,
+                                      _bitmex_unauth: BitmexRestApi):
+        assert True
+
     def test_bitmex_rest_get_user(self, _bitmex: BitmexRestApi):
         result = _bitmex.get_user()
         assert result['username'] == cfg.BITMEX_USERNAME

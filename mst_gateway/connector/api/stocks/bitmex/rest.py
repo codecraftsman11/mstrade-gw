@@ -4,10 +4,9 @@ from typing import (
     Optional,
     Union
 )
-import bitmex
 from bravado.exception import HTTPError
-from . import var
-from . import utils
+from .bitmex import bitmex_connector, APIKeyAuthenticator
+from . import utils, var
 from ...rest import StockRestApi
 from .... import api
 from .....exceptions import ConnectorError
@@ -28,16 +27,38 @@ def _make_create_order_args(args, options):
     return True
 
 
-class BitmexRestApi(StockRestApi):
+class BitmexFactory:
     BASE_URL = "https://www.bitmex.com/api/v1"
     TEST_URL = "https://testnet.bitmex.com/api/v1"
+    BITMEX_SWAGGER = bitmex_connector(test=False)
+    TBITMEX_SWAGGER = bitmex_connector(test=True)
+
+    @classmethod
+    def make_client(cls, url):
+        if url == cls.BASE_URL:
+            swagger = cls.BITMEX_SWAGGER
+        else:
+            swagger = cls.TBITMEX_SWAGGER
+        return swagger
+
+
+class BitmexRestApi(StockRestApi):
+    BASE_URL = BitmexFactory.BASE_URL
+    TEST_URL = BitmexFactory.TEST_URL
 
     def _connect(self, **kwargs):
         self._keepalive = bool(kwargs.get('keepalive', False))
         self._compress = bool(kwargs.get('compress', False))
-        return bitmex.bitmex(test=self._url == self.__class__.TEST_URL,
-                             api_key=self._auth['api_key'],
-                             api_secret=self._auth['api_secret'])
+        return BitmexFactory.make_client(self._url)
+
+    @property
+    def _authenticator(self):
+        self._auth = self._auth if isinstance(self._auth, dict) else {}
+        return APIKeyAuthenticator(
+            host=self._url,
+            api_key=self._auth.get('api_key'),
+            api_secret=self._auth.get('api_secret')
+        )
 
     def _api_kwargs(self, kwargs):
         # pylint: disable=no-self-use
@@ -96,11 +117,11 @@ class BitmexRestApi(StockRestApi):
         data, _ = self._bitmex_api(self._handler.User.User_get, **kwargs)
         return data
 
-    def get_symbol(self, symbol) -> list:
+    def get_symbol(self, symbol) -> dict:
         instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_get,
                                           symbol=utils.symbol2stock(symbol))
         if not instruments:
-            return None
+            return dict()
         return utils.load_symbol_data(instruments[0])
 
     def list_symbols(self, **kwargs) -> list:
@@ -197,7 +218,6 @@ class BitmexRestApi(StockRestApi):
     def get_order_book(
             self, symbol: str, depth: int = None, side: int = None,
             split: bool = False, offset: int = 0) -> Union[list, dict]:
-        ob_items = []
         ob_depth = depth or 0
         if ob_depth:
             ob_depth += offset
@@ -222,7 +242,11 @@ class BitmexRestApi(StockRestApi):
         if self._compress:
             headers['Accept-Encoding'] = "deflate, gzip;q=1.0, *;q=0.5"
         try:
-            resp = method(_request_options={'headers': headers}, **kwargs).response()
+            resp = method(
+                authenticator=self._authenticator,
+                _request_options={'headers': headers},
+                **kwargs
+            ).response()
             return resp.result, resp.metadata
         except HTTPError as exc:
             raise ConnectorError("Bitmex api error. Details: "
@@ -236,3 +260,12 @@ class BitmexRestApi(StockRestApi):
     @classmethod
     def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
         return utils.calc_price(symbol, face_price)
+
+    def __setstate__(self, state):
+        self.__dict__ = state
+        self.open()
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.pop('_handler', None)
+        return state
