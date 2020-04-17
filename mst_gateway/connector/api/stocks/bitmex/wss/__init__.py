@@ -49,3 +49,10 @@ class BitmexWssApi(StockWssApi):
         if subscr_name.lower() == "trade":
             return super()._get_subscriber("quote_bin")
         return super()._get_subscriber(subscr_name)
+
+    def __setstate__(self, state):
+        self.__dict__ = state
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        return state
