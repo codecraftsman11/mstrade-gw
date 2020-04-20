@@ -161,6 +161,24 @@ def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
     return quote_bin
 
 
+def load_wallet_data(raw_data: dict) -> dict:
+    return {
+        'currency': _xbt(raw_data.get('currency')),
+        'balance': _xbt(raw_data.get('walletBalance')),
+        'unrealised_pnl': _xbt(raw_data.get('unrealisedPnl')),
+        'margin_balance': _xbt(raw_data.get('marginBalance')),
+        'maint_margin': _xbt(raw_data.get('maintMargin')),
+        'init_margin': _xbt(raw_data.get('initMargin')),
+        'available_margin': _xbt(raw_data.get('availableMargin'))
+    }
+
+
+def _xbt(value: int):
+    if isinstance(value, int):
+        return round(value/10**8, 8)
+    return value
+
+
 def _date(token: Union[datetime, str]) -> Optional[datetime]:
     if isinstance(token, datetime):
         return token

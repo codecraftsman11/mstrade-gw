@@ -117,6 +117,10 @@ class BitmexRestApi(StockRestApi):
         data, _ = self._bitmex_api(self._handler.User.User_get, **kwargs)
         return data
 
+    def get_wallet(self, **kwargs) -> dict:
+        data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
+        return utils.load_wallet_data(data)
+
     def get_symbol(self, symbol) -> dict:
         instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_get,
                                           symbol=utils.symbol2stock(symbol))
