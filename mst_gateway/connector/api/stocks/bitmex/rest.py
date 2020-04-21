@@ -253,8 +253,10 @@ class BitmexRestApi(StockRestApi):
             ).response()
             return resp.result, resp.metadata
         except HTTPError as exc:
-            raise ConnectorError("Bitmex api error. Details: "
-                                 "{}, {}".format(exc.status_code, exc.message))
+            message = exc.swagger_result.get('error', {}).get('message') \
+                if isinstance(exc.swagger_result, dict) \
+                else ''
+            raise ConnectorError(f"Bitmex api error. Details: {exc.status_code}, {exc.message or message}")
 
     @classmethod
     def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float],
