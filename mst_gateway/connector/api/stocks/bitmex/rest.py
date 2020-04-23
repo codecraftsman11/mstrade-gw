@@ -228,16 +228,23 @@ class BitmexRestApi(StockRestApi):
         ob_items, _ = self._bitmex_api(self._handler.OrderBook.OrderBook_getL2,
                                        symbol=utils.symbol2stock(symbol),
                                        depth=ob_depth)
-        _side = None
-        if side is not None:
-            _side = utils.store_order_side(side)
+        if not split \
+           and side is None \
+           and not offset:
+            return [utils.load_order_book_data(_ob)
+                    for _ob in ob_items]
 
+        splitted_ob = utils.split_order_book(
+            ob_items,
+            utils.store_order_side(side),
+            offset
+        )
         if split:
-            return utils.split_order_book(ob_items, _side, offset)
-
-        return [utils.load_order_book_data(_ob)
-                for _ob in ob_items
-                if _side is None or _ob['side'] == _side]
+            return splitted_ob
+        if side is None:
+            return splitted_ob.get(api.SELL, []) \
+                + splitted_ob.get(api.BUY, [])
+        return splitted_ob.get(side, [])
 
     def _bitmex_api(self, method: callable, **kwargs):
         headers = {}

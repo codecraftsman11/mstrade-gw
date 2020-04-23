@@ -61,6 +61,8 @@ def load_order_type(order_type: str) -> str:
 
 
 def store_order_side(order_side: int) -> str:
+    if order_side is None:
+        return None
     if order_side == api.SELL:
         return var.BITMEX_SELL
     return var.BITMEX_BUY
@@ -265,7 +267,7 @@ def split_order_book(ob_items, side, offset):
                 result[api.BUY].append(data)
         if _ob['side'] == var.BITMEX_SELL:
             result[api.SELL].append(data)
-    if offset:
+    if offset and api.SELL in result:
         result[api.SELL] = result[api.SELL][:-offset]
     return result
 
