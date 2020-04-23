@@ -175,7 +175,7 @@ def load_wallet_data(raw_data: dict) -> dict:
 
 def _xbt(value: int):
     if isinstance(value, int):
-        return round(value/10**8, 8)
+        return round(value / 10 ** 8, 8)
     return value
 
 
@@ -248,15 +248,15 @@ def calc_price(symbol: str, face_price: float) -> Optional[float]:
     return result
 
 
-def split_order_book(ob_items, _side, offset):
+def split_order_book(ob_items, side, offset):
     result = {}
-    if _side == var.BITMEX_BUY or _side is None:
+    if side == var.BITMEX_BUY or side is None:
         result[api.BUY] = []
         buy_i = 0
-    if _side == var.BITMEX_BUY or _side is None:
+    if side == var.BITMEX_SELL or side is None:
         result[api.SELL] = []
     for _ob in ob_items:
-        if _side and _ob['side'] != _side:
+        if side and _ob['side'] != side:
             continue
         data = load_order_book_data(_ob)
         if _ob['side'] == var.BITMEX_BUY:

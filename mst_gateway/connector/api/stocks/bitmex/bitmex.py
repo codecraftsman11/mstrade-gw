@@ -1,5 +1,3 @@
-import logging
-import time
 from bravado.client import (
     construct_request,
     ResourceDecorator as BaseResourceDecorator,
@@ -10,9 +8,6 @@ from bravado.requests_client import RequestsClient
 from bravado.warning import warn_for_deprecated_op
 from bravado.config import RequestConfig
 from BitMEXAPIKeyAuthenticator import APIKeyAuthenticator as BaseAPIKeyAuthenticator
-
-
-log = logging.getLogger(__name__)
 
 
 class APIKeyAuthenticator(BaseAPIKeyAuthenticator):
@@ -33,7 +28,6 @@ class CallableOperation(BaseCallableOperation):
 
         :rtype: :class:`bravado.http_future.HTTPFuture`
         """
-        log.debug(u'%s(%s)', self.operation.operation_id, op_kwargs)
         warn_for_deprecated_op(self.operation)
 
         http_client = self.operation.swagger_spec.http_client
