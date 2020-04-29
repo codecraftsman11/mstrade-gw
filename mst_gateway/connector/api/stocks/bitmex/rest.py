@@ -2,7 +2,8 @@ import json
 from typing import (
     Tuple,
     Optional,
-    Union
+    Union,
+    List
 )
 from bravado.exception import HTTPError
 from .bitmex import bitmex_connector, APIKeyAuthenticator
@@ -117,9 +118,9 @@ class BitmexRestApi(StockRestApi):
         data, _ = self._bitmex_api(self._handler.User.User_get, **kwargs)
         return data
 
-    def get_wallet(self, **kwargs) -> dict:
+    def list_wallets(self, **kwargs) -> List[dict]:
         data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
-        return utils.load_wallet_data(data)
+        return [utils.load_wallet_data(data)]
 
     def get_symbol(self, symbol) -> dict:
         instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_get,

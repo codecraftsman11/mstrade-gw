@@ -1,5 +1,5 @@
-from abc import ABCMeta, abstractmethod
-from typing import Optional, Tuple, Union
+from abc import abstractmethod
+from typing import Optional, Tuple, Union, List
 from logging import Logger
 from ...base import Connector
 from ..errors import ERROR_OK
@@ -37,7 +37,7 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def get_wallet(self, **kwargs) -> dict:
+    def list_wallets(self, **kwargs) -> List[dict]:
         raise NotImplementedError
 
     @abstractmethod
