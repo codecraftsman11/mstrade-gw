@@ -285,6 +285,11 @@ class TestBitmexRestApi:
         assert schema.data_valid(_bitmex_unauth.list_trades(symbol=cfg.BITMEX_SYMBOL).pop(),
                                  schema.TRADE_FIELDS)
 
+    def test_bitmex_rest_list_wallets(self, _bitmex: BitmexRestApi):
+        assert schema.data_valid(
+            _bitmex.list_wallets().pop(),
+            schema.WALLET_FIELDS)
+
     def test_bitmex_calc_face_price(self):
         price = 3
         assert calc_face_price('XBTUSD', price) == (1 / price, True)
