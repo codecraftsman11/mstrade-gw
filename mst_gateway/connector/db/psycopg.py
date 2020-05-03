@@ -2,7 +2,12 @@ import random
 import string
 import psycopg2
 from .base import Connector
-from ...exceptions import AuthError, QueryError, ConnectorError
+from ...exceptions import (
+    AuthError,
+    QueryError,
+    ConnectorError,
+    IntegrityError
+)
 
 
 def _random_str(count):
@@ -29,6 +34,8 @@ class Cursor:
             del kwargs['multi']
         try:
             return self._cursor.execute(*vargs, **kwargs)
+        except psycopg2.IntegrityError as err:
+            raise IntegrityError(err.msg, err.errno)
         except psycopg2.Error as err:
             if not err.pgcode \
                or err.pgcode[:2] in ('08',  # Connection Exception

@@ -1,6 +1,15 @@
-from mysql.connector import connect, Error
+from mysql.connector import (
+    connect,
+    Error,
+    IntegrityError as MySQLIntegrityError
+)
 from .base import Connector
-from ...exceptions import AuthError, ConnectorError, QueryError
+from ...exceptions import (
+    AuthError,
+    ConnectorError,
+    QueryError,
+    IntegrityError
+)
 
 
 class Cursor:
@@ -31,6 +40,8 @@ class Cursor:
             if kwargs.get('multi'):
                 res = list(res)
             return res
+        except MySQLIntegrityError as err:
+            raise IntegrityError(err.msg, err.errno)
         except Error as err:
             if err.errno < 1000 \
                or 2000 <= err.errno < 3000:
