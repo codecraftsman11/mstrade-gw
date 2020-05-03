@@ -24,7 +24,8 @@ setup(
         'bitmex'
     ],
     extras_require={
-        #  'mysql': ['mysql-connector-python'],
+        'mysql': ['mysql-connector-python'],
+        'pgsql': ['psycopg2']
     },
     entry_points={
         'console_scripts': [
