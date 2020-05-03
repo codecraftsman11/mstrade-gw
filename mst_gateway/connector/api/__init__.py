@@ -15,7 +15,7 @@ def init(params: dict, auth=None, cls=None, logger=None):
 def connect(params, auth, cls=None, logger=None):
     connector = init(params, auth, cls, logger)
     if auth:
-        return connector.open()
+        connector.open()
     return connector
 
 def get_rest_api_class(path):

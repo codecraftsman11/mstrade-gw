@@ -16,3 +16,7 @@ class ConnectorError(GatewayError):
 
 class SignalInterrupt(GatewayError):
     pass
+
+
+class QueryError(GatewayError):
+    pass
