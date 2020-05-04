@@ -74,6 +74,16 @@ TRADE_FIELDS = {
     "side": side_valid,
 }
 
+WALLET_FIELDS = {
+    'currency': str,
+    'balance': float,
+    'unrealised_pnl': float,
+    'margin_balance': float,
+    'maint_margin': float,
+    'init_margin': float,
+    'available_margin': float
+}
+
 SUBSCRIPTIONS = {
     'symbol': {
         'schema': SYMBOL_FIELDS,

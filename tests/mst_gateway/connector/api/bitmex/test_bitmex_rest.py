@@ -10,7 +10,10 @@ from mst_gateway.logging import init_logger
 from mst_gateway.connector import api
 from mst_gateway.connector.api import schema
 from mst_gateway.utils import generate_order_id
-from mst_gateway.connector.api.stocks.bitmex.utils import _face_price
+from mst_gateway.connector.api.stocks.bitmex.utils import (
+    calc_face_price,
+    calc_price
+)
 import tests.config as cfg
 
 
@@ -95,6 +98,14 @@ def _debug(caplog):
 
 
 class TestBitmexRestApi:
+    # pylint: disable=too-many-public-methods
+    def test_bitmex_rest_client_single(self, _bitmex: BitmexRestApi):
+        assert True
+
+    def test_bitmex_rest_client_scope(self, _bitmex: BitmexRestApi,
+                                      _bitmex_unauth: BitmexRestApi):
+        assert True
+
     def test_bitmex_rest_get_user(self, _bitmex: BitmexRestApi):
         result = _bitmex.get_user()
         assert result['username'] == cfg.BITMEX_USERNAME
@@ -241,6 +252,28 @@ class TestBitmexRestApi:
         assert ob_items[0]['side'] == api.SELL
         assert ob_items[9]['side'] == api.BUY
 
+    def test_bitmex_rest_list_order_book_split(self, _bitmex: BitmexRestApi):
+        ob_items = _bitmex.list_order_book(
+            symbol=cfg.BITMEX_SYMBOL,
+            depth=5,
+            split=True
+        )
+        assert len(ob_items[api.BUY]) == 5
+        assert len(ob_items[api.SELL]) == 5
+        assert ob_items[api.BUY][0]['side'] == api.BUY
+        assert ob_items[api.SELL][0]['side'] == api.SELL
+
+    def test_bitmex_rest_list_order_book_offset(self, _bitmex: BitmexRestApi):
+        ob_items = _bitmex.list_order_book(
+            symbol=cfg.BITMEX_SYMBOL,
+            depth=1,
+            split=True,
+            offset=10
+        )
+        assert len(ob_items[api.BUY]) == 1
+        assert len(ob_items[api.SELL]) == 1
+        assert abs(ob_items[api.SELL][0]['price'] - ob_items[api.BUY][0]['price']) > 5
+
     def test_bitmex_rest_unauth_get_user_exception(self, _bitmex_unauth: BitmexRestApi):
         with pytest.raises(ConnectorError):
             _bitmex_unauth.get_user()
@@ -252,19 +285,43 @@ class TestBitmexRestApi:
         assert schema.data_valid(_bitmex_unauth.list_trades(symbol=cfg.BITMEX_SYMBOL).pop(),
                                  schema.TRADE_FIELDS)
 
-    def test_bitmex_face_price(self):
+    def test_bitmex_rest_list_wallets(self, _bitmex: BitmexRestApi):
+        data = _bitmex.list_wallets().pop()
+        assert list(data.keys()) == ['margin1']
+        assert schema.data_valid(data['margin1'], schema.WALLET_FIELDS)
+
+    def test_bitmex_calc_face_price(self):
         price = 3
-        assert _face_price('XBTUSD', price) == (1 / price, True)
-        assert _face_price('XBTH20', price) == (1 / price, True)
-        assert _face_price('XBTM20', price) == (1 / price, True)
-        assert _face_price('XBT7D_U105', price) == (0.1 * price, False)
-        assert _face_price('XBT7D_D95', price) == (0.1 * price, False)
-        assert _face_price('ADAH20', price) == (price, False)
-        assert _face_price('BCHH20', price) == (price, False)
-        assert _face_price('EOSH20', price) == (price, False)
-        assert _face_price('ETHUSD', price) == (1e-6 * price, False)
-        assert _face_price('ETHH20', price) == (price, False)
-        assert _face_price('LTCH20', price) == (price, False)
-        assert _face_price('TRXH20', price) == (price, False)
-        assert _face_price('XRPH20', price) == (price, False)
-        assert _face_price('XBTEUR', price) == (None, None)
+        assert calc_face_price('XBTUSD', price) == (1 / price, True)
+        assert calc_face_price('XBTH20', price) == (1 / price, True)
+        assert calc_face_price('XBTM20', price) == (1 / price, True)
+        assert calc_face_price('XBT7D_U105', price) == (0.1 * price, False)
+        assert calc_face_price('XBT7D_D95', price) == (0.1 * price, False)
+        assert calc_face_price('ADAH20', price) == (price, False)
+        assert calc_face_price('BCHH20', price) == (price, False)
+        assert calc_face_price('EOSH20', price) == (price, False)
+        assert calc_face_price('ETHUSD', price) == (1e-6 * price, False)
+        assert calc_face_price('ETHH20', price) == (price, False)
+        assert calc_face_price('LTCH20', price) == (price, False)
+        assert calc_face_price('TRXH20', price) == (price, False)
+        assert calc_face_price('XRPH20', price) == (price, False)
+        assert calc_face_price('XBTEUR', price) == (None, None)
+        assert calc_face_price('XBTUSD', 0) == (None, None)
+
+    def test_bitmex_calc_price(self):
+        price = 3
+        assert calc_price('XBTUSD', price) == 1 / price
+        assert calc_price('XBTH20', price) == 1 / price
+        assert calc_price('XBTM20', price) == 1 / price
+        assert calc_price('XBT7D_U105', price) == price * 10
+        assert calc_price('XBT7D_D95', price) == price * 10
+        assert calc_price('ADAH20', price) == price
+        assert calc_price('BCHH20', price) == price
+        assert calc_price('EOSH20', price) == price
+        assert calc_price('ETHUSD', price) == 1e+6 * price
+        assert calc_price('ETHH20', price) == price
+        assert calc_price('LTCH20', price) == price
+        assert calc_price('TRXH20', price) == price
+        assert calc_price('XRPH20', price) == price
+        assert calc_price('XBTEUR', price) is None
+        assert calc_price('XBTUSD', 0) is None

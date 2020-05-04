@@ -1,9 +1,8 @@
-from abc import ABCMeta, abstractmethod
-from typing import Optional
+from abc import abstractmethod
+from typing import Optional, Tuple, Union, List
 from logging import Logger
 from ...base import Connector
 from ..errors import ERROR_OK
-from ..utils.order_book import pad_order_book
 from .. import (
     OrderType,
     BUY,
@@ -12,12 +11,11 @@ from .. import (
 
 
 class StockRestApi(Connector):
-    __metaclass__ = ABCMeta
     BASE_URL = None
 
     def __init__(self, url: str = None, auth: dict = None, logger: Logger = None):
-        self._keepalive: bool = None
-        self._compress: bool = None
+        self._keepalive: bool = False
+        self._compress: bool = False
         self._url: str = url if url is not None else self.__class__.BASE_URL
         self._error: tuple = ERROR_OK
         super().__init__(auth, logger)
@@ -36,6 +34,10 @@ class StockRestApi(Connector):
 
     @abstractmethod
     def get_user(self, **kwargs) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_wallets(self, **kwargs) -> List[dict]:
         raise NotImplementedError
 
     @abstractmethod
@@ -81,27 +83,31 @@ class StockRestApi(Connector):
     def close_all_orders(self, symbol: str) -> bool:
         raise NotImplementedError
 
-    def list_order_book(self, symbol: str, depth: int = None, side: int = None, tick_size: int = None) -> list:
+    def list_order_book(
+            self, symbol: str, depth: int = None, side: int = None,
+            split: bool = False, offset: int = 0) -> Union[list, dict]:
         if side is not None \
            and side not in (BUY, SELL):
-            return []
-        data = self._do_list_order_book(symbol, depth, side)
-        if tick_size is None:
-            return data
-        if not data:
-            return data
-        start = data[0]['price']
-        finish = data[-1]['price']
-        steps = int((finish - start) / tick_size)
-        if steps == depth * 2:
-            return data
-        return pad_order_book(data, tick_size)
+            return [] if split else {BUY: [], SELL: []}
+        return self.get_order_book(symbol, depth, side, split, offset)
 
     @abstractmethod
     def list_trades(self, symbol, **kwargs) -> list:
         raise NotImplementedError
 
     @abstractmethod
-    def _do_list_order_book(self, symbol: str,
-                            depth: int = None, side: int = None) -> list:
+    def get_order_book(
+            self, symbol: str, depth: int = None, side: int = None,
+            split: bool = False, offset: int = 0) -> Union[list, dict]:
+        raise NotImplementedError
+
+    @classmethod
+    @abstractmethod
+    def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float],
+                                                                 Optional[bool]]:
+        raise NotImplementedError
+
+    @classmethod
+    @abstractmethod
+    def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
         raise NotImplementedError
