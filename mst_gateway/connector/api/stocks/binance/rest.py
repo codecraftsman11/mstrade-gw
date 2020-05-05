@@ -12,8 +12,8 @@ class BinanceRestApi(StockRestApi):
                       api_secret=self._auth['api_secret'])
 
     def get_user(self) -> dict:
-        data = self._binance_api(self._handler.get_account)
-        return data
+        data = self._binance_api(self._handler.get_deposit_address, asset='eth')
+        return utils.load_user_data(data)
 
     def get_symbol(self, symbol) -> dict:
         data = self._binance_api(self._handler.get_ticker, symbol=symbol)
@@ -96,6 +96,20 @@ class BinanceRestApi(StockRestApi):
 
     def close_all_orders(self, symbol: str):
         return NotImplementedError
+
+    def calc_face_price(self, symbol: str, price: float):
+        raise NotImplementedError
+
+    def calc_price(self, symbol: str, face_price: float):
+        raise NotImplementedError
+
+    def get_order_book(
+            self, symbol: str, depth: int = None, side: int = None,
+            split: bool = False, offset: int = 0):
+        raise NotImplementedError
+
+    def list_wallets(self, **kwargs):
+        raise NotImplementedError
 
     def _binance_api(self, method: callable, **kwargs):
         try:

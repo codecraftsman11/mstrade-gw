@@ -93,6 +93,13 @@ def load_order_data(raw_data: dict, skip_undef=False) -> dict:
     return data
 
 
+def load_user_data(raw_data: dict) -> dict:
+    data = {
+        'id': str(raw_data.get('address')).lower()
+    }
+    return data
+
+
 def _date(token: Union[datetime, int]) -> Optional[datetime]:
     if isinstance(token, datetime):
         return token

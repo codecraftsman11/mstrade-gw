@@ -107,10 +107,7 @@ class TestBitmexRestApi:
         assert True
 
     def test_bitmex_rest_get_user(self, _bitmex: BitmexRestApi):
-        result = _bitmex.get_user()
-        assert result['username'] == cfg.BITMEX_USERNAME
-        assert result['email'] == cfg.BITMEX_EMAIL
-        assert result['preferences']['locale'] == cfg.BITMEX_LOCALE
+        assert schema.data_valid(_bitmex.get_user(), schema.USER_FIELDS)
 
     def test_bitmex_rest_list_symbols(self, _bitmex: BitmexRestApi,
                                       _bitmex_unauth: BitmexRestApi):

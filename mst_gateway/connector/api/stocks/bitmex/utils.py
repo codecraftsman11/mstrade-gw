@@ -100,6 +100,13 @@ def load_order_data(raw_data: dict, skip_undef=False) -> dict:
     return data
 
 
+def load_user_data(raw_data: dict) -> dict:
+    data = {
+        'id': str(raw_data.get('id')).lower()
+    }
+    return data
+
+
 def load_trade_data(raw_data: dict) -> dict:
     return load_quote_data(raw_data)
 
