@@ -138,3 +138,12 @@ class BinanceRestApi(StockRestApi):
             if _k == 'date_to':
                 api_kwargs['endTime'] = _v
         return api_kwargs
+
+    def __setstate__(self, state):
+        self.__dict__ = state
+        self.open()
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.pop('_handler', None)
+        return state
