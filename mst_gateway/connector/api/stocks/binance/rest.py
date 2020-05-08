@@ -22,7 +22,6 @@ class BinanceRestApi(StockRestApi):
 
     def list_symbols(self, **kwargs) -> list:
         data = self._binance_api(self._handler.get_ticker)
-        print(data)
         return [utils.load_symbol_data(d) for d in data]
 
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
