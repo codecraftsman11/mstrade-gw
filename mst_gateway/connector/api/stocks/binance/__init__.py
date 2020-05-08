@@ -2,7 +2,7 @@ from .rest import BinanceRestApi
 
 
 def get_connector_class():
-    raise BinanceRestApi
+    return BinanceRestApi
 
 
 def get_rest_api_class():
