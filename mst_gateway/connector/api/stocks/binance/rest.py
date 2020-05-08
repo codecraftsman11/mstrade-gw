@@ -17,7 +17,7 @@ class BinanceRestApi(StockRestApi):
         return utils.load_user_data(data)
 
     def get_symbol(self, symbol) -> dict:
-        data = self._binance_api(self._handler.get_ticker, symbol=symbol)
+        data = self._binance_api(self._handler.get_ticker, symbol=symbol.upper())
         return utils.load_symbol_data(data)
 
     def list_symbols(self, **kwargs) -> list:
@@ -25,16 +25,16 @@ class BinanceRestApi(StockRestApi):
         return [utils.load_symbol_data(d) for d in data]
 
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
-        data = self._binance_api(self._handler.get_historical_trades, symbol=symbol, limit=1)
+        data = self._binance_api(self._handler.get_historical_trades, symbol=symbol.upper(), limit=1)
         return utils.load_quote_data(data[0], symbol)
 
     def list_quotes(self, symbol: str, timeframe: str = None, **kwargs) -> list:
-        data = self._binance_api(self._handler.get_historical_trades, symbol=symbol)
+        data = self._binance_api(self._handler.get_historical_trades, symbol=symbol.upper())
         return [utils.load_quote_data(d, symbol) for d in data]
 
     def list_quote_bins(self, symbol, binsize='1m', count=100, **kwargs):
         data = self._binance_api(
-            self._handler.get_klines, symbol=symbol, interval=binsize, limit=count, **self._api_kwargs(kwargs)
+            self._handler.get_klines, symbol=symbol.upper(), interval=binsize, limit=count, **self._api_kwargs(kwargs)
         )
         return [utils.load_quote_bin_data(d) for d in data]
 
@@ -45,7 +45,7 @@ class BinanceRestApi(StockRestApi):
                      **params) -> bool:
         params.update(
             dict(
-                symbol=symbol,
+                symbol=symbol.upper(),
                 side=side,
                 type=order_type,
                 quantity=value
