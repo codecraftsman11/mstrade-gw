@@ -1,12 +1,17 @@
 from abc import ABCMeta, abstractmethod
+from ..logging import init_logger
 
 
 class Connector(metaclass=ABCMeta):
 
     def __init__(self, auth=None, logger=None):
         self._auth = auth
-        self._logger = logger
+        self._logger = logger or init_logger()
         self._handler = None
+
+    @property
+    def auth(self):
+        return self._auth
 
     @property
     def handler(self):

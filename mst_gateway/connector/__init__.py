@@ -22,3 +22,7 @@ def module(connector_type=None):
         return import_module('.' + connector_type, __package__)
     except Exception:
         raise ConnectorError('Invalid connector type (%s)' % (connector_type))
+
+
+def get_connector_class(path):
+    return import_module(path, __package__).get_connector_class()
