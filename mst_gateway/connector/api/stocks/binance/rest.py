@@ -1,5 +1,6 @@
 from bravado.exception import HTTPError
 from binance.client import Client
+from binance.exceptions import BinanceAPIException, BinanceRequestException
 from . import utils
 from ...rest import StockRestApi
 from .....exceptions import ConnectorError
@@ -114,9 +115,20 @@ class BinanceRestApi(StockRestApi):
     def _binance_api(self, method: callable, **kwargs):
         try:
             resp = method(**kwargs)
-            return resp
         except HTTPError as exc:
             raise ConnectorError(f"Binance api error. Details: {exc.status_code}, {exc.message}")
+        except BinanceAPIException as exc:
+            raise ConnectorError(f"Binance api error. Details: {exc.code}, {exc.message}")
+        except BinanceRequestException as exc:
+            raise ConnectorError(f"Binance api error. Details: {exc.message}")
+
+        if resp.get('mgs'):
+            try:
+                _, msg = resp['mgs'].split('=', 1)
+            except ValueError:
+                msg = resp['mgs']
+            raise ConnectorError(f"Binance api error. Details: {msg}")
+        return resp
 
     def _api_kwargs(self, kwargs):
         api_kwargs = dict()
