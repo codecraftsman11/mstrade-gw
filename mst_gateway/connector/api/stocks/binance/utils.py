@@ -17,8 +17,7 @@ def load_symbol_data(raw_data: dict) -> dict:
         'symbol': symbol,
         'price': _float(raw_data.get('lastPrice')),
         'price24': _float(raw_data.get('weightedAvgPrice')),
-        # 'pair': symbol,
-        'pair': None,
+        'pair': _binance_pair(symbol),
         'tick': _float(1e-8),
         'mark_price': mark_price,
         'face_price': face_price,
@@ -26,6 +25,13 @@ def load_symbol_data(raw_data: dict) -> dict:
         'ask_price': _float(raw_data.get('askPrice')),
         'reversed': _reversed
     }
+
+
+def _binance_pair(symbol):
+    l = len(symbol)
+    b = l//2
+    q = l-b
+    return symbol[:b], symbol[-q:]
 
 
 def load_trade_data(raw_data: dict) -> dict:
