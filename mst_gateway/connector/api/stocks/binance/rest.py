@@ -36,7 +36,7 @@ class BinanceRestApi(StockRestApi):
         data = self._binance_api(
             self._handler.get_klines, symbol=symbol.upper(), interval=binsize, limit=count, **self._api_kwargs(kwargs)
         )
-        return [utils.load_quote_bin_data(d) for d in data]
+        return [utils.load_quote_bin_data(d, symbol.upper()) for d in data]
 
     def create_order(self, symbol: str,
                      side: str = Client.SIDE_BUY,
@@ -89,7 +89,7 @@ class BinanceRestApi(StockRestApi):
         return [utils.load_order_data(d) for d in data][offset:count]
 
     def list_trades(self, symbol, **params) -> list:
-        data = self._binance_api(self._handler.get_my_trades, **params)
+        data = self._binance_api(self._handler.get_my_trades, symbol=symbol.upper(), **self._api_kwargs(params))
         return [utils.load_trade_data(d) for d in data]
 
     def close_order(self, order_id):
@@ -137,6 +137,8 @@ class BinanceRestApi(StockRestApi):
                 api_kwargs['startTime'] = _v
             if _k == 'date_to':
                 api_kwargs['endTime'] = _v
+            if _k == 'count':
+                api_kwargs['limit'] = _v
         return api_kwargs
 
     def __setstate__(self, state):
