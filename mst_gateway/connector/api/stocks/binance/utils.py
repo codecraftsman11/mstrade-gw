@@ -1,5 +1,6 @@
 from typing import Union, Optional
 from datetime import datetime
+from mst_gateway.connector import api
 
 
 def _face_price(symbol, mark_price):
@@ -49,6 +50,12 @@ def load_trade_data(raw_data: dict) -> dict:
     return load_quote_data(raw_data)
 
 
+def load_order_side(order_side: bool) -> int:
+    if order_side:
+        return api.BUY
+    return api.SELL
+
+
 def load_quote_data(raw_data: dict, symbol: str = None) -> dict:
     """
         {'id': 170622457,
@@ -65,8 +72,7 @@ def load_quote_data(raw_data: dict, symbol: str = None) -> dict:
         'symbol': symbol,
         'price': _float(raw_data.get('price')),
         'volume': raw_data.get('qty'),
-        # 'side': load_order_side(raw_data.get('side'))
-        'side': None
+        'side': load_order_side(raw_data.get('isBuyerMaker')),
     }
 
 
