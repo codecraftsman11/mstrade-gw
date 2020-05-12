@@ -1,3 +1,4 @@
+from datetime import datetime
 from bravado.exception import HTTPError
 from binance.client import Client
 from binance.exceptions import BinanceAPIException, BinanceRequestException
@@ -22,7 +23,7 @@ class BinanceRestApi(StockRestApi):
 
     def list_symbols(self, **kwargs) -> list:
         data = self._binance_api(self._handler.get_ticker)
-        return [utils.load_symbol_data(d) for d in data if (d['weightedAvgPrice'] != '0')]
+        return [utils.load_symbol_data(d) for d in data if utils._float(d['weightedAvgPrice'])]
 
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
         data = self._binance_api(self._handler.get_historical_trades, symbol=symbol.upper(), limit=1)
@@ -121,7 +122,6 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(f"Binance api error. Details: {exc.code}, {exc.message}")
         except BinanceRequestException as exc:
             raise ConnectorError(f"Binance api error. Details: {exc.message}")
-
         if isinstance(resp, dict) and resp.get('msg'):
             try:
                 _, msg = resp['msg'].split('=', 1)
@@ -133,10 +133,10 @@ class BinanceRestApi(StockRestApi):
     def _api_kwargs(self, kwargs):
         api_kwargs = dict()
         for _k, _v in kwargs.items():
-            if _k == 'date_from':
-                api_kwargs['startTime'] = _v
-            if _k == 'date_to':
-                api_kwargs['endTime'] = _v
+            if _k == 'date_from' and isinstance(_v, datetime):
+                api_kwargs['startTime'] = int(_v.timestamp())
+            if _k == 'date_to' and isinstance(_v, datetime):
+                api_kwargs['endTime'] = int(_v.timestamp())
             if _k == 'count':
                 api_kwargs['limit'] = _v
         return api_kwargs
