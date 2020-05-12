@@ -13,6 +13,13 @@ class BinanceRestApi(StockRestApi):
         return Client(api_key=self._auth['api_key'],
                       api_secret=self._auth['api_secret'])
 
+    def ping(self) -> bool:
+        try:
+            self._binance_api(self._handler.ping)
+        except ConnectorError:
+            return False
+        return True
+
     def get_user(self) -> dict:
         data = self._binance_api(self._handler.get_deposit_address, asset='eth')
         return utils.load_user_data(data)

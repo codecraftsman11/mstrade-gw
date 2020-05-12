@@ -21,6 +21,10 @@ class StockRestApi(Connector):
         super().__init__(auth, logger)
 
     @abstractmethod
+    def ping(self) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_quote(self, symbol, timeframe=None, **kwargs) -> dict:
         raise NotImplementedError
 
