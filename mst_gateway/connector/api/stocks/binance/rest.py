@@ -22,7 +22,7 @@ class BinanceRestApi(StockRestApi):
 
     def list_symbols(self, **kwargs) -> list:
         data = self._binance_api(self._handler.get_ticker)
-        return [utils.load_symbol_data(d) for d in data]
+        return [utils.load_symbol_data(d) for d in data if (d['weightedAvgPrice'] != '0')]
 
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
         data = self._binance_api(self._handler.get_historical_trades, symbol=symbol.upper(), limit=1)
@@ -122,11 +122,11 @@ class BinanceRestApi(StockRestApi):
         except BinanceRequestException as exc:
             raise ConnectorError(f"Binance api error. Details: {exc.message}")
 
-        if isinstance(resp, dict) and resp.get('mgs'):
+        if isinstance(resp, dict) and resp.get('msg'):
             try:
-                _, msg = resp['mgs'].split('=', 1)
+                _, msg = resp['msg'].split('=', 1)
             except ValueError:
-                msg = resp['mgs']
+                msg = resp['msg']
             raise ConnectorError(f"Binance api error. Details: {msg}")
         return resp
 
