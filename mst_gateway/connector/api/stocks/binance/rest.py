@@ -141,9 +141,9 @@ class BinanceRestApi(StockRestApi):
         api_kwargs = dict()
         for _k, _v in kwargs.items():
             if _k == 'date_from' and isinstance(_v, datetime):
-                api_kwargs['startTime'] = int(_v.timestamp())
+                api_kwargs['startTime'] = int(_v.timestamp()*1000)
             if _k == 'date_to' and isinstance(_v, datetime):
-                api_kwargs['endTime'] = int(_v.timestamp())
+                api_kwargs['endTime'] = int(_v.timestamp()*1000)
             if _k == 'count':
                 api_kwargs['limit'] = _v
         return api_kwargs
