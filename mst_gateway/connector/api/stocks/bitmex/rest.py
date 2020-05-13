@@ -102,7 +102,7 @@ class BitmexRestApi(StockRestApi):
                                          start=offset,
                                          count=count,
                                          **self._api_kwargs(kwargs))
-        return reversed([utils.load_quote_bin_data(data) for data in quote_bins])
+        return [utils.load_quote_bin_data(data) for data in quote_bins]
 
     def list_quote_bins(self, symbol, binsize='1m', count=100, **kwargs) -> list:
         pages = int((count - 1) / var.BITMEX_MAX_QUOTE_BINS_COUNT) + 1
@@ -119,7 +119,7 @@ class BitmexRestApi(StockRestApi):
                                                 count=items_count,
                                                 **kwargs)
             quote_bins += quotes
-        return quote_bins
+        return list(reversed(quote_bins))
 
     def get_user(self, **kwargs) -> dict:
         data, _ = self._bitmex_api(self._handler.User.User_get, **kwargs)
