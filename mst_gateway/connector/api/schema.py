@@ -108,6 +108,10 @@ AUTH_SUBSCRIPTIONS = {
     }
 }
 
+USER_FIELDS = {
+  'id': str
+}
+
 
 def data_valid(data, rules):
     if not isinstance(data, dict):
