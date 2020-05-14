@@ -2,7 +2,7 @@ from datetime import datetime
 from bravado.exception import HTTPError
 from binance.client import Client
 from binance.exceptions import BinanceAPIException, BinanceRequestException
-from . import utils
+from . import utils, var
 from ...rest import StockRestApi
 from .....exceptions import ConnectorError
 
@@ -40,11 +40,29 @@ class BinanceRestApi(StockRestApi):
         data = self._binance_api(self._handler.get_historical_trades, symbol=symbol.upper())
         return [utils.load_quote_data(d, symbol) for d in data]
 
-    def list_quote_bins(self, symbol, binsize='1m', count=100, **kwargs):
+    def _list_quote_bins_page(self, symbol, binsize='1m', count=100, **kwargs):
         data = self._binance_api(
-            self._handler.get_klines, symbol=symbol.upper(), interval=binsize, limit=count, **self._api_kwargs(kwargs)
+            self._handler.get_klines, symbol=symbol.upper(), interval=binsize, limit=count, **kwargs
         )
         return [utils.load_quote_bin_data(d, symbol.upper()) for d in data]
+
+    def list_quote_bins(self, symbol, binsize='1m', count=100, **kwargs) -> list:
+        pages = int((count - 1) / var.BINANCE_MAX_QUOTE_BINS_COUNT + 1)
+        rest = count % var.BINANCE_MAX_QUOTE_BINS_COUNT
+        quote_bins = []
+        kwargs = self._api_kwargs(kwargs)
+        for i in range(pages):
+            if i == pages - 1:
+                items_count = rest
+            else:
+                items_count = var.BINANCE_MAX_QUOTE_BINS_COUNT
+            quotes = self._list_quote_bins_page(symbol=symbol,
+                                                binsize=binsize,
+                                                count=items_count,
+                                                **kwargs)
+            kwargs['startTime'] = quotes[-1].get('timestamp')+1
+            quote_bins += quotes
+        return quote_bins
 
     def create_order(self, symbol: str,
                      side: str = Client.SIDE_BUY,
