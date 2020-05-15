@@ -41,7 +41,7 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def list_wallets(self, **kwargs) -> List[dict]:
+    def get_wallet(self, **kwargs) -> dict:
         raise NotImplementedError
 
     @abstractmethod

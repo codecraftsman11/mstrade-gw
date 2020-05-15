@@ -30,7 +30,7 @@ class BinanceRestApi(StockRestApi):
 
     def list_symbols(self, **kwargs) -> list:
         data = self._binance_api(self._handler.get_ticker)
-        return [utils.load_symbol_data(d) for d in data if utils._float(d['weightedAvgPrice'])]
+        return [utils.load_symbol_data(d) for d in data if utils.to_float(d['weightedAvgPrice'])]
 
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
         data = self._binance_api(self._handler.get_historical_trades, symbol=symbol.upper(), limit=1)
@@ -117,8 +117,27 @@ class BinanceRestApi(StockRestApi):
             split: bool = False, offset: int = 0):
         raise NotImplementedError
 
-    def list_wallets(self, **kwargs):
-        raise NotImplementedError
+    def get_wallet(self, **kwargs) -> dict:
+        schema = kwargs.pop('schema', '').lower()
+        if schema == 'exchange':
+            return self._spot_wallet(**kwargs)
+        if schema in ('margin2', None):
+            return self._margin_wallet(**kwargs)
+        if schema in ('futures', None):
+            return self._futures_wallet(**kwargs)
+        return dict()
+
+    def _spot_wallet(self, **kwargs):
+        data = self._binance_api(self._handler.get_account, **kwargs)
+        return utils.load_spot_wallet_data(data)
+
+    def _margin_wallet(self, **kwargs):
+        data = self._binance_api(self._handler.get_margin_account, **kwargs)
+        return utils.load_margin_wallet_data(data)
+
+    def _futures_wallet(self, **kwargs):
+        data = self._binance_api(self._handler.futures_account, **kwargs)
+        return utils.load_futures_wallet_data(data)
 
     def _binance_api(self, method: callable, **kwargs):
         try:
