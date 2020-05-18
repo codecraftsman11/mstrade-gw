@@ -116,7 +116,7 @@ class BinanceRestApi(StockRestApi):
 
     def list_trades(self, symbol, **params) -> list:
         data = self._binance_api(self._handler.get_my_trades, symbol=symbol.upper(), **self._api_kwargs(params))
-        return [utils.load_trade_data(d) for d in data]
+        return [utils.load_trade_data(d, symbol.upper()) for d in data]
 
     def close_order(self, order_id):
         return NotImplementedError
@@ -139,9 +139,9 @@ class BinanceRestApi(StockRestApi):
         schema = kwargs.pop('schema', '').lower()
         if schema == 'exchange':
             return self._spot_wallet(**kwargs)
-        if schema in ('margin2', None):
+        if schema == 'margin2':
             return self._margin_wallet(**kwargs)
-        if schema in ('futures', None):
+        if schema == 'futures':
             return self._futures_wallet(**kwargs)
         return dict()
 

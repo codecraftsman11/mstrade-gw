@@ -35,7 +35,7 @@ def _binance_pair(symbol):
     return symbol[:base], symbol[-quote:]
 
 
-def load_trade_data(raw_data: dict) -> dict:
+def load_trade_data(raw_data: dict, symbol: str = None) -> dict:
     """{
         "id": 28457,
         "price": "4.00000100",
@@ -47,7 +47,14 @@ def load_trade_data(raw_data: dict) -> dict:
         "isMaker": false,
         "isBestMatch": true
     }"""
-    return load_quote_data(raw_data)
+    return {
+        'time': to_date(raw_data.get('time')),
+        'timestamp': raw_data.get('time'),
+        'symbol': symbol,
+        'price': to_float(raw_data.get('price')),
+        'volume': raw_data.get('qty'),
+        'side': load_order_side(raw_data.get('isBuyer')),
+    }
 
 
 def load_order_side(order_side: bool) -> int:
