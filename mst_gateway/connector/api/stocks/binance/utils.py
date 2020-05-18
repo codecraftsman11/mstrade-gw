@@ -36,24 +36,24 @@ def _binance_pair(symbol):
 
 
 def load_trade_data(raw_data: dict, symbol: str = None) -> dict:
-    """{
+    """
+    {
         "id": 28457,
         "price": "4.00000100",
         "qty": "12.00000000",
-        "commission": "10.10000000",
-        "commissionAsset": "BNB",
+        "quoteQty": "48.000012",
         "time": 1499865549590,
-        "isBuyer": true,
-        "isMaker": false,
+        "isBuyerMaker": true,
         "isBestMatch": true
-    }"""
+      }
+    """
     return {
         'time': to_date(raw_data.get('time')),
         'timestamp': raw_data.get('time'),
         'symbol': symbol,
         'price': to_float(raw_data.get('price')),
         'volume': raw_data.get('qty'),
-        'side': load_order_side(raw_data.get('isBuyer')),
+        'side': load_order_side(raw_data.get('isBuyerMaker')),
     }
 
 

@@ -115,7 +115,7 @@ class BinanceRestApi(StockRestApi):
         return [utils.load_order_data(d) for d in data][offset:count]
 
     def list_trades(self, symbol, **params) -> list:
-        data = self._binance_api(self._handler.get_my_trades, symbol=symbol.upper(), **self._api_kwargs(params))
+        data = self._binance_api(self._handler.get_recent_trades, symbol=symbol.upper(), **self._api_kwargs(params))
         return [utils.load_trade_data(d, symbol.upper()) for d in data]
 
     def close_order(self, order_id):
