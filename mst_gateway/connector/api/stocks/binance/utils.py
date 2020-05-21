@@ -127,13 +127,13 @@ def load_spot_wallet_data(raw_data: dict) -> dict:
 
 def load_margin_wallet_data(raw_data: dict) -> dict:
     return {
+        'trade_enabled': raw_data.get('tradeEnabled'),
+        'transfer_enabled': raw_data.get('transferEnabled'),
         'borrow_enabled': raw_data.get('borrowEnabled'),
         'margin_level': raw_data.get('marginLevel'),
         'total_balance': raw_data.get('totalAssetOfBtc'),
         'total_liability': raw_data.get('totalLiabilityOfBtc'),
         'total_net_balance': raw_data.get('totalNetAssetOfBtc'),
-        'trade_enabled': raw_data.get('tradeEnabled'),
-        'transfer_enabled': raw_data.get('transferEnabled'),
         'balances': _margin_balance_data(raw_data.get('userAssets'))
     }
 
@@ -144,8 +144,8 @@ def load_futures_wallet_data(raw_data: dict) -> dict:
         'total_initial_margin': to_float(raw_data.get('totalInitialMargin')),
         'total_maint_margin': to_float(raw_data.get('totalMaintMargin')),
         'total_margin_balance': to_float(raw_data.get('totalMarginBalance')),
-        # 'total_open_order_initial_margin': to_float(raw_data.get('totalOpenOrderInitialMargin')),
-        # 'total_position_initial_margin': to_float(raw_data.get('totalPositionInitialMargin')),
+        'total_open_order_initial_margin': to_float(raw_data.get('totalOpenOrderInitialMargin')),
+        'total_position_initial_margin': to_float(raw_data.get('totalPositionInitialMargin')),
         'total_unrealised_pnl': to_float(raw_data.get('totalUnrealizedProfit')),
         'total_balance': raw_data.get('totalWalletBalance'),
         'balances': _futures_balance_data(raw_data.get('assets'))
@@ -164,6 +164,7 @@ def _spot_balance_data(balances: list):
             'maint_margin': to_float(b['locked']),
             'init_margin': None,
             'available_margin': round(to_float(b['free']) - to_float(b['locked']), 8),
+            'type': to_wallet_state_type(to_float(b['locked'])),
         } for b in balances
     ]
 
@@ -180,6 +181,7 @@ def _margin_balance_data(balances: list):
             'maint_margin': to_float(b['locked']),
             'init_margin': None,
             'available_margin': round(to_float(b['free']) - to_float(b['locked']), 8),
+            'type': to_wallet_state_type(to_float(b['locked'])),
         } for b in balances
     ]
 
@@ -196,8 +198,22 @@ def _futures_balance_data(balances: list):
             'maint_margin': to_float(b['maintMargin']),
             'init_margin': to_float(b['initialMargin']),
             'available_margin': round(to_float(b['marginBalance']) - to_float(b['maintMargin']), 8),
+            'type': to_wallet_state_type(to_float(b['maintMargin'])),
         } for b in balances
     ]
+
+
+def to_wallet_state_type(value):
+    if bool(value):
+        return 'trade'
+    return 'hold'
+
+
+def load_transfer_data(raw_data: dict) -> dict:
+    data = {
+        'transaction': raw_data.get('tranId')
+    }
+    return data
 
 
 def to_date(token: Union[datetime, int]) -> Optional[datetime]:
