@@ -2,6 +2,7 @@ from datetime import datetime
 from bravado.exception import HTTPError
 from binance.client import Client
 from binance.exceptions import BinanceAPIException, BinanceRequestException
+from .binance import Client
 from . import utils, var
 from ...rest import StockRestApi
 from .....exceptions import ConnectorError
@@ -119,10 +120,10 @@ class BinanceRestApi(StockRestApi):
         return [utils.load_trade_data(d, symbol.upper()) for d in data]
 
     def close_order(self, order_id):
-        return NotImplementedError
+        raise NotImplementedError
 
     def close_all_orders(self, symbol: str):
-        return NotImplementedError
+        raise NotImplementedError
 
     def calc_face_price(self, symbol: str, price: float):
         raise NotImplementedError
@@ -156,6 +157,20 @@ class BinanceRestApi(StockRestApi):
     def _futures_wallet(self, **kwargs):
         data = self._binance_api(self._handler.futures_account, **kwargs)
         return utils.load_futures_wallet_data(data)
+
+    def wallet_transfer(self, from_wallet: str, to_wallet: str, asset: str, amount: float) -> dict:
+        if from_wallet.lower() == 'spot' and to_wallet.lower() == 'margin':
+            method = self._handler.transfer_spot_to_margin
+        elif from_wallet.lower() == 'margin' and to_wallet.lower() == 'spot':
+            method = self._handler.transfer_margin_to_spot
+        elif from_wallet.lower() == 'spot' and to_wallet.lower() == 'futures':
+            method = self._handler.futures_transfer_spot_to_futures
+        elif from_wallet.lower() == 'futures' and to_wallet.lower() == 'spot':
+            method = self._handler.futures_transfer_futures_to_spot
+        else:
+            raise ConnectorError('Invalid wallet type.')
+        data = self._binance_api(method, asset=asset.upper(), amount=str(amount))
+        return utils.load_transfer_data(data)
 
     def _binance_api(self, method: callable, **kwargs):
         try:

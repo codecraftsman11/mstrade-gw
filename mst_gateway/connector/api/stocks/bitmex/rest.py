@@ -6,7 +6,9 @@ from typing import (
     List
 )
 from bravado.exception import HTTPError
-from .bitmex import bitmex_connector, APIKeyAuthenticator
+from .bitmex import (
+    bitmex_connector, APIKeyAuthenticator, SwaggerClient
+)
 from . import utils, var
 from ...rest import StockRestApi
 from .... import api
@@ -31,16 +33,19 @@ def _make_create_order_args(args, options):
 class BitmexFactory:
     BASE_URL = "https://www.bitmex.com/api/v1"
     TEST_URL = "https://testnet.bitmex.com/api/v1"
-    BITMEX_SWAGGER = bitmex_connector(test=False)
-    TBITMEX_SWAGGER = bitmex_connector(test=True)
+    BITMEX_SWAGGER = None   # type: SwaggerClient
+    TBITMEX_SWAGGER = None  # type: SwaggerClient
 
     @classmethod
     def make_client(cls, url):
         if url == cls.BASE_URL:
-            swagger = cls.BITMEX_SWAGGER
+            if not cls.BITMEX_SWAGGER:
+                cls.BITMEX_SWAGGER = bitmex_connector(test=False)
+            return cls.BITMEX_SWAGGER
         else:
-            swagger = cls.TBITMEX_SWAGGER
-        return swagger
+            if not cls.TBITMEX_SWAGGER:
+                cls.TBITMEX_SWAGGER = bitmex_connector(test=True)
+            return cls.TBITMEX_SWAGGER
 
 
 class BitmexRestApi(StockRestApi):
@@ -255,6 +260,9 @@ class BitmexRestApi(StockRestApi):
             return splitted_ob.get(api.SELL, []) \
                 + splitted_ob.get(api.BUY, [])
         return splitted_ob.get(side, [])
+
+    def wallet_transfer(self, from_wallet: str, to_wallet: str, asset: str, amount: float):
+        raise ConnectorError('Bitmex api error. Details: Invalid method.')
 
     def _bitmex_api(self, method: callable, **kwargs):
         headers = {}

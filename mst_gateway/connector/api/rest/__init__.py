@@ -105,6 +105,10 @@ class StockRestApi(Connector):
             split: bool = False, offset: int = 0) -> Union[list, dict]:
         raise NotImplementedError
 
+    @abstractmethod
+    def wallet_transfer(self, from_wallet: str, to_wallet: str, asset: str, amount: str) -> Optional[dict]:
+        raise NotImplementedError
+
     @classmethod
     @abstractmethod
     def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float],

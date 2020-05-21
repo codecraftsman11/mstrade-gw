@@ -182,10 +182,17 @@ def load_wallet_data(raw_data: dict) -> dict:
                 'margin_balance': to_xbt(raw_data.get('marginBalance')),
                 'maint_margin': to_xbt(raw_data.get('maintMargin')),
                 'init_margin': to_xbt(raw_data.get('initMargin')),
-                'available_margin': to_xbt(raw_data.get('availableMargin'))
+                'available_margin': to_xbt(raw_data.get('availableMargin')),
+                'type': to_wallet_state_type(to_xbt(raw_data.get('maintMargin')))
             }
         ]
     }
+
+
+def to_wallet_state_type(value):
+    if bool(value):
+        return 'trade'
+    return 'hold'
 
 
 def to_xbt(value: int):
