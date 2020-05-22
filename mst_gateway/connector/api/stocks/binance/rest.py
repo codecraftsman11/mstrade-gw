@@ -158,6 +158,23 @@ class BinanceRestApi(StockRestApi):
         data = self._binance_api(self._handler.futures_account, **kwargs)
         return utils.load_futures_wallet_data(data)
 
+    def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
+        if schema.lower() == 'margin2':
+            _spot = self._binance_api(self._handler.get_account, **kwargs)
+            _margin = self._binance_api(self._handler.get_margin_account, **kwargs)
+            return {
+                'exchange': utils.load_spot_wallet_detail_data(_spot, asset),
+                'margin2': utils.load_margin_wallet_detail_data(_margin, asset)
+            }
+        if schema.lower() == 'futures':
+            _spot = self._binance_api(self._handler.get_account, **kwargs)
+            _futures = self._binance_api(self._handler.futures_account, **kwargs)
+            return {
+                'exchange': utils.load_spot_wallet_detail_data(_spot, asset),
+                'futures': utils.load_futures_wallet_detail_data(_futures, asset)
+            }
+        raise ConnectorError(f"Invalid schema {schema}.")
+
     def wallet_transfer(self, from_wallet: str, to_wallet: str, asset: str, amount: float) -> dict:
         if from_wallet.lower() == 'exchange' and to_wallet.lower() == 'margin2':
             method = self._handler.transfer_spot_to_margin
@@ -168,7 +185,7 @@ class BinanceRestApi(StockRestApi):
         elif from_wallet.lower() == 'futures' and to_wallet.lower() == 'exchange':
             method = self._handler.futures_transfer_futures_to_spot
         else:
-            raise ConnectorError('Invalid wallet type.')
+            raise ConnectorError(f"Invalid wallet pair {from_wallet} and {to_wallet}.")
         data = self._binance_api(method, asset=asset.upper(), amount=str(amount))
         return utils.load_transfer_data(data)
 

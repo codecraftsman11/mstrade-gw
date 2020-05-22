@@ -45,6 +45,10 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
+    def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_symbol(self, symbol) -> dict:
         raise NotImplementedError
 

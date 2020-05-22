@@ -1,6 +1,7 @@
 from typing import Union, Optional
 from datetime import datetime
 from mst_gateway.connector import api
+from .....exceptions import ConnectorError
 
 
 def _face_price(symbol, mark_price):
@@ -125,6 +126,13 @@ def load_spot_wallet_data(raw_data: dict) -> dict:
     }
 
 
+def load_spot_wallet_detail_data(raw_data: dict, asset: str) -> dict:
+    for a in raw_data.get('balances'):
+        if a.get('asset', '').upper() == asset.upper():
+            return _spot_balance_data([a])[0]
+    raise ConnectorError(f"Invalid asset {asset}.")
+
+
 def load_margin_wallet_data(raw_data: dict) -> dict:
     return {
         'trade_enabled': raw_data.get('tradeEnabled'),
@@ -136,6 +144,13 @@ def load_margin_wallet_data(raw_data: dict) -> dict:
         'total_net_balance': raw_data.get('totalNetAssetOfBtc'),
         'balances': _margin_balance_data(raw_data.get('userAssets'))
     }
+
+
+def load_margin_wallet_detail_data(raw_data: dict, asset: str) -> dict:
+    for a in raw_data.get('userAssets'):
+        if a.get('asset', '').upper() == asset.upper():
+            return _margin_balance_data([a])[0]
+    raise ConnectorError(f"Invalid asset {asset}.")
 
 
 def load_futures_wallet_data(raw_data: dict) -> dict:
@@ -150,6 +165,13 @@ def load_futures_wallet_data(raw_data: dict) -> dict:
         'total_balance': raw_data.get('totalWalletBalance'),
         'balances': _futures_balance_data(raw_data.get('assets'))
     }
+
+
+def load_futures_wallet_detail_data(raw_data: dict, asset: str) -> dict:
+    for a in raw_data.get('assets'):
+        if a.get('asset', '').upper() == asset.upper():
+            return _futures_balance_data([a])[0]
+    raise ConnectorError(f"Invalid asset {asset}.")
 
 
 def _spot_balance_data(balances: list):

@@ -134,7 +134,13 @@ class BitmexRestApi(StockRestApi):
         if schema == 'margin1':
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
             return utils.load_wallet_data(data)
-        return dict()
+        return dict(balances=list())
+
+    def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
+        raise ConnectorError('Bitmex api error. Details: Invalid method.')
+
+    def wallet_transfer(self, from_wallet: str, to_wallet: str, asset: str, amount: float):
+        raise ConnectorError('Bitmex api error. Details: Invalid method.')
 
     def get_symbol(self, symbol) -> dict:
         instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_get,
@@ -260,9 +266,6 @@ class BitmexRestApi(StockRestApi):
             return splitted_ob.get(api.SELL, []) \
                 + splitted_ob.get(api.BUY, [])
         return splitted_ob.get(side, [])
-
-    def wallet_transfer(self, from_wallet: str, to_wallet: str, asset: str, amount: float):
-        raise ConnectorError('Bitmex api error. Details: Invalid method.')
 
     def _bitmex_api(self, method: callable, **kwargs):
         headers = {}
