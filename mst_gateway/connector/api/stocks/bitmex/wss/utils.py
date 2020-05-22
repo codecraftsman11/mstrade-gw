@@ -27,7 +27,6 @@ def is_ok(response: str) -> bool:
 
 def is_auth_ok(response: str) -> bool:
     data = json.loads(response)
-    print(data)
     return not bool(data.get('error'))
 
 
