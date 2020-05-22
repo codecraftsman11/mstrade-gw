@@ -103,6 +103,7 @@ class BitmexRestApi(StockRestApi):
         quote_bins, _ = self._bitmex_api(self._handler.Trade.Trade_getBucketed,
                                          symbol=utils.symbol2stock(symbol),
                                          binSize=binsize,
+                                         reverse=True,
                                          start=offset,
                                          count=count,
                                          **self._api_kwargs(kwargs))
@@ -123,7 +124,7 @@ class BitmexRestApi(StockRestApi):
                                                 count=items_count,
                                                 **kwargs)
             quote_bins += quotes
-        return quote_bins
+        return list(reversed(quote_bins))
 
     def get_user(self, **kwargs) -> dict:
         data, _ = self._bitmex_api(self._handler.User.User_get, **kwargs)
