@@ -32,22 +32,22 @@ def bitmex_signature(api_secret, verb, url, nonce, postdict=None):
 
 def load_symbol_data(raw_data: dict) -> dict:
     symbol = raw_data.get('symbol')
-    symbol_time = _date(raw_data.get('timestamp'))
-    mark_price = _float(raw_data.get('markPrice'))
+    symbol_time = to_date(raw_data.get('timestamp'))
+    mark_price = to_float(raw_data.get('markPrice'))
     face_price, _reversed = calc_face_price(symbol, mark_price)
     return {
         'time': symbol_time,
         'timestamp': time2timestamp(symbol_time),
         'symbol': symbol,
-        'price': _float(raw_data.get('lastPrice')),
-        'price24': _float(raw_data.get('prevPrice24h')),
+        'price': to_float(raw_data.get('lastPrice')),
+        'price24': to_float(raw_data.get('prevPrice24h')),
         'pair': _get_symbol_pair(raw_data.get('symbol'),
                                  raw_data.get('rootSymbol')),
-        'tick': _float(raw_data.get('tickSize')),
+        'tick': to_float(raw_data.get('tickSize')),
         'mark_price': mark_price,
         'face_price': face_price,
-        'bid_price': _float(raw_data.get('bidPrice')),
-        'ask_price': _float(raw_data.get('askPrice')),
+        'bid_price': to_float(raw_data.get('bidPrice')),
+        'ask_price': to_float(raw_data.get('askPrice')),
         'reversed': _reversed
     }
 
@@ -82,8 +82,8 @@ def load_order_data(raw_data: dict, skip_undef=False) -> dict:
         'stop': raw_data.get('stopPx'),
         'type': raw_data.get('ordType'),
         'side': raw_data.get('side'),
-        'price': _float(raw_data.get('price')),
-        'created': _date(raw_data.get('timestamp')),
+        'price': to_float(raw_data.get('price')),
+        'created': to_date(raw_data.get('timestamp')),
         'active': raw_data.get('ordStatus') != "New",
         'schema': api.OrderSchema.margin1
     }
@@ -112,27 +112,27 @@ def load_trade_data(raw_data: dict) -> dict:
 
 
 def load_quote_data(raw_data: dict) -> dict:
-    quote_time = _date(raw_data.get('timestamp'))
+    quote_time = to_date(raw_data.get('timestamp'))
     return {
         'time': quote_time,
         'timestamp': time2timestamp(quote_time),
         'symbol': raw_data.get('symbol'),
-        'price': _float(raw_data.get('price')),
+        'price': to_float(raw_data.get('price')),
         'volume': raw_data.get('size'),
         'side': load_order_side(raw_data.get('side'))
     }
 
 
 def load_quote_bin_data(raw_data: dict) -> dict:
-    quote_time = _date(raw_data.get('timestamp'))
+    quote_time = to_date(raw_data.get('timestamp'))
     return {
         'time': quote_time,
         'timestamp': time2timestamp(quote_time),
         'symbol': raw_data.get('symbol'),
-        'open': _float(raw_data.get("open")),
-        'close': _float(raw_data.get("close")),
-        'high': _float(raw_data.get("high")),
-        'low': _float(raw_data.get('low')),
+        'open': to_float(raw_data.get("open")),
+        'close': to_float(raw_data.get("close")),
+        'high': to_float(raw_data.get("high")),
+        'low': to_float(raw_data.get('low')),
         'volume': raw_data.get('volume'),
     }
 
@@ -141,7 +141,7 @@ def load_order_book_data(raw_data: dict) -> dict:
     return {
         'id': raw_data.get('id'),
         'symbol': raw_data.get('symbol'),
-        'price': _float(raw_data.get("price")),
+        'price': to_float(raw_data.get("price")),
         'volume': raw_data.get('size'),
         'side': load_order_side(raw_data.get('side'))
     }
@@ -172,23 +172,36 @@ def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
 
 def load_wallet_data(raw_data: dict) -> dict:
     return {
-        'currency': _xbt(raw_data.get('currency')),
-        'balance': _xbt(raw_data.get('walletBalance')),
-        'unrealised_pnl': _xbt(raw_data.get('unrealisedPnl')),
-        'margin_balance': _xbt(raw_data.get('marginBalance')),
-        'maint_margin': _xbt(raw_data.get('maintMargin')),
-        'init_margin': _xbt(raw_data.get('initMargin')),
-        'available_margin': _xbt(raw_data.get('availableMargin'))
+        'balances': [
+            {
+                'currency': to_xbt(raw_data.get('currency')),
+                'balance': to_xbt(raw_data.get('walletBalance')),
+                'borrowed': None,
+                'interest': None,
+                'unrealised_pnl': to_xbt(raw_data.get('unrealisedPnl')),
+                'margin_balance': to_xbt(raw_data.get('marginBalance')),
+                'maint_margin': to_xbt(raw_data.get('maintMargin')),
+                'init_margin': to_xbt(raw_data.get('initMargin')),
+                'available_margin': to_xbt(raw_data.get('availableMargin')),
+                'type': to_wallet_state_type(to_xbt(raw_data.get('maintMargin')))
+            }
+        ]
     }
 
 
-def _xbt(value: int):
+def to_wallet_state_type(value):
+    if bool(value):
+        return 'trade'
+    return 'hold'
+
+
+def to_xbt(value: int):
     if isinstance(value, int):
         return round(value / 10 ** 8, 8)
     return value
 
 
-def _date(token: Union[datetime, str]) -> Optional[datetime]:
+def to_date(token: Union[datetime, str]) -> Optional[datetime]:
     if isinstance(token, datetime):
         return token
     try:
@@ -197,7 +210,7 @@ def _date(token: Union[datetime, str]) -> Optional[datetime]:
         return None
 
 
-def _float(token: Union[int, float, None]) -> Optional[float]:
+def to_float(token: Union[int, float, None]) -> Optional[float]:
     try:
         return float(token)
     except (ValueError, TypeError):
