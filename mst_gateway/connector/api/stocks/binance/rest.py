@@ -159,6 +159,11 @@ class BinanceRestApi(StockRestApi):
         return utils.load_futures_wallet_data(data)
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
+        if schema.lower() == 'exchange':
+            _spot = self._binance_api(self._handler.get_account, **kwargs)
+            return {
+                'exchange': utils.load_spot_wallet_detail_data(_spot, asset),
+            }
         if schema.lower() == 'margin2':
             _spot = self._binance_api(self._handler.get_account, **kwargs)
             _margin = self._binance_api(self._handler.get_margin_account, **kwargs)
