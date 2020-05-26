@@ -41,7 +41,11 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def list_wallets(self, **kwargs) -> List[dict]:
+    def get_wallet(self, **kwargs) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
         raise NotImplementedError
 
     @abstractmethod
@@ -103,6 +107,10 @@ class StockRestApi(Connector):
     def get_order_book(
             self, symbol: str, depth: int = None, side: int = None,
             split: bool = False, offset: int = 0) -> Union[list, dict]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def wallet_transfer(self, from_wallet: str, to_wallet: str, asset: str, amount: str) -> Optional[dict]:
         raise NotImplementedError
 
     @classmethod

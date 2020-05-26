@@ -6,7 +6,9 @@ from typing import (
     List
 )
 from bravado.exception import HTTPError
-from .bitmex import bitmex_connector, APIKeyAuthenticator
+from .bitmex import (
+    bitmex_connector, APIKeyAuthenticator, SwaggerClient
+)
 from . import utils, var
 from ...rest import StockRestApi
 from .... import api
@@ -31,16 +33,19 @@ def _make_create_order_args(args, options):
 class BitmexFactory:
     BASE_URL = "https://www.bitmex.com/api/v1"
     TEST_URL = "https://testnet.bitmex.com/api/v1"
-    BITMEX_SWAGGER = bitmex_connector(test=False)
-    TBITMEX_SWAGGER = bitmex_connector(test=True)
+    BITMEX_SWAGGER = None   # type: SwaggerClient
+    TBITMEX_SWAGGER = None  # type: SwaggerClient
 
     @classmethod
     def make_client(cls, url):
         if url == cls.BASE_URL:
-            swagger = cls.BITMEX_SWAGGER
+            if not cls.BITMEX_SWAGGER:
+                cls.BITMEX_SWAGGER = bitmex_connector(test=False)
+            return cls.BITMEX_SWAGGER
         else:
-            swagger = cls.TBITMEX_SWAGGER
-        return swagger
+            if not cls.TBITMEX_SWAGGER:
+                cls.TBITMEX_SWAGGER = bitmex_connector(test=True)
+            return cls.TBITMEX_SWAGGER
 
 
 class BitmexRestApi(StockRestApi):
@@ -98,6 +103,7 @@ class BitmexRestApi(StockRestApi):
         quote_bins, _ = self._bitmex_api(self._handler.Trade.Trade_getBucketed,
                                          symbol=utils.symbol2stock(symbol),
                                          binSize=binsize,
+                                         reverse=True,
                                          start=offset,
                                          count=count,
                                          **self._api_kwargs(kwargs))
@@ -118,15 +124,24 @@ class BitmexRestApi(StockRestApi):
                                                 count=items_count,
                                                 **kwargs)
             quote_bins += quotes
-        return quote_bins
+        return list(reversed(quote_bins))
 
     def get_user(self, **kwargs) -> dict:
         data, _ = self._bitmex_api(self._handler.User.User_get, **kwargs)
         return utils.load_user_data(data)
 
-    def list_wallets(self, **kwargs) -> List[dict]:
-        data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
-        return [{'margin1': utils.load_wallet_data(data)}]
+    def get_wallet(self, **kwargs) -> dict:
+        schema = kwargs.pop('schema', '').lower()
+        if schema == 'margin1':
+            data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
+            return utils.load_wallet_data(data)
+        return dict(balances=list())
+
+    def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
+        raise ConnectorError('Bitmex api error. Details: Invalid method.')
+
+    def wallet_transfer(self, from_wallet: str, to_wallet: str, asset: str, amount: float):
+        raise ConnectorError('Bitmex api error. Details: Invalid method.')
 
     def get_symbol(self, symbol) -> dict:
         instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_get,

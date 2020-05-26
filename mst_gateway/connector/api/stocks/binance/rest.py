@@ -2,6 +2,7 @@ from datetime import datetime
 from bravado.exception import HTTPError
 from binance.client import Client
 from binance.exceptions import BinanceAPIException, BinanceRequestException
+from .binance import Client
 from . import utils, var
 from ...rest import StockRestApi
 from .....exceptions import ConnectorError
@@ -30,7 +31,7 @@ class BinanceRestApi(StockRestApi):
 
     def list_symbols(self, **kwargs) -> list:
         data = self._binance_api(self._handler.get_ticker)
-        return [utils.load_symbol_data(d) for d in data if utils._float(d['weightedAvgPrice'])]
+        return [utils.load_symbol_data(d) for d in data if utils.to_float(d['weightedAvgPrice'])]
 
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
         data = self._binance_api(self._handler.get_historical_trades, symbol=symbol.upper(), limit=1)
@@ -115,14 +116,14 @@ class BinanceRestApi(StockRestApi):
         return [utils.load_order_data(d) for d in data][offset:count]
 
     def list_trades(self, symbol, **params) -> list:
-        data = self._binance_api(self._handler.get_my_trades, symbol=symbol.upper(), **self._api_kwargs(params))
-        return [utils.load_trade_data(d) for d in data]
+        data = self._binance_api(self._handler.get_recent_trades, symbol=symbol.upper(), **self._api_kwargs(params))
+        return [utils.load_trade_data(d, symbol.upper()) for d in data]
 
     def close_order(self, order_id):
-        return NotImplementedError
+        raise NotImplementedError
 
     def close_all_orders(self, symbol: str):
-        return NotImplementedError
+        raise NotImplementedError
 
     def calc_face_price(self, symbol: str, price: float):
         raise NotImplementedError
@@ -135,8 +136,63 @@ class BinanceRestApi(StockRestApi):
             split: bool = False, offset: int = 0):
         raise NotImplementedError
 
-    def list_wallets(self, **kwargs):
-        raise NotImplementedError
+    def get_wallet(self, **kwargs) -> dict:
+        schema = kwargs.pop('schema', '').lower()
+        if schema == 'exchange':
+            return self._spot_wallet(**kwargs)
+        if schema == 'margin2':
+            return self._margin_wallet(**kwargs)
+        if schema == 'futures':
+            return self._futures_wallet(**kwargs)
+        return dict(balances=list())
+
+    def _spot_wallet(self, **kwargs):
+        data = self._binance_api(self._handler.get_account, **kwargs)
+        return utils.load_spot_wallet_data(data)
+
+    def _margin_wallet(self, **kwargs):
+        data = self._binance_api(self._handler.get_margin_account, **kwargs)
+        return utils.load_margin_wallet_data(data)
+
+    def _futures_wallet(self, **kwargs):
+        data = self._binance_api(self._handler.futures_account, **kwargs)
+        return utils.load_futures_wallet_data(data)
+
+    def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
+        if schema.lower() == 'exchange':
+            _spot = self._binance_api(self._handler.get_account, **kwargs)
+            return {
+                'exchange': utils.load_spot_wallet_detail_data(_spot, asset),
+            }
+        if schema.lower() == 'margin2':
+            _spot = self._binance_api(self._handler.get_account, **kwargs)
+            _margin = self._binance_api(self._handler.get_margin_account, **kwargs)
+            return {
+                'exchange': utils.load_spot_wallet_detail_data(_spot, asset),
+                'margin2': utils.load_margin_wallet_detail_data(_margin, asset)
+            }
+        if schema.lower() == 'futures':
+            _spot = self._binance_api(self._handler.get_account, **kwargs)
+            _futures = self._binance_api(self._handler.futures_account, **kwargs)
+            return {
+                'exchange': utils.load_spot_wallet_detail_data(_spot, asset),
+                'futures': utils.load_futures_wallet_detail_data(_futures, asset)
+            }
+        raise ConnectorError(f"Invalid schema {schema}.")
+
+    def wallet_transfer(self, from_wallet: str, to_wallet: str, asset: str, amount: float) -> dict:
+        if from_wallet.lower() == 'exchange' and to_wallet.lower() == 'margin2':
+            method = self._handler.transfer_spot_to_margin
+        elif from_wallet.lower() == 'margin2' and to_wallet.lower() == 'exchange':
+            method = self._handler.transfer_margin_to_spot
+        elif from_wallet.lower() == 'exchange' and to_wallet.lower() == 'futures':
+            method = self._handler.futures_transfer_spot_to_futures
+        elif from_wallet.lower() == 'futures' and to_wallet.lower() == 'exchange':
+            method = self._handler.futures_transfer_futures_to_spot
+        else:
+            raise ConnectorError(f"Invalid wallet pair {from_wallet} and {to_wallet}.")
+        data = self._binance_api(method, asset=asset.upper(), amount=str(amount))
+        return utils.load_transfer_data(data)
 
     def _binance_api(self, method: callable, **kwargs):
         try:
