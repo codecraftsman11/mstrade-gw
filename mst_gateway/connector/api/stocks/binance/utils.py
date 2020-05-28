@@ -64,6 +64,53 @@ def load_order_side(order_side: bool) -> int:
     return api.SELL
 
 
+def load_order_book_side(order_side: str) -> int:
+    if order_side == 'bids':
+        return api.BUY
+    return api.SELL
+
+
+def load_order_book_data(raw_data: dict, symbol: str, ent_side, split, offset, request_depth) -> Union[list, dict]:
+    raw_data.pop('lastUpdateId')
+    _raw_data = dict()
+    if offset and request_depth:
+        _raw_data['asks'] = raw_data['asks'][offset:request_depth+offset]
+        _raw_data['bids'] = raw_data['bids'][-request_depth-offset:-offset]
+    elif offset and request_depth is None:
+        _raw_data['asks'] = raw_data['asks'][offset:]
+        _raw_data['bids'] = raw_data['bids'][:-offset]
+    elif request_depth:
+        _raw_data['asks'] = raw_data['asks'][:request_depth]
+        _raw_data['bids'] = raw_data['bids'][-request_depth:]
+    _raw_data['asks'] = reversed(_raw_data.get('asks', []))
+
+    res = list() if not split else dict()
+    for k, v in _raw_data.items():
+        side = load_order_book_side(k)
+        if ent_side is not None and not ent_side == side:
+            continue
+        if split:
+            res.update({side: list()})
+            for item in v:
+                res[side].append(dict(
+                    id=None,
+                    symbol=symbol,
+                    price=to_float(item[0]),
+                    volume=item[1],
+                    side=side
+                ))
+        else:
+            for item in v:
+                res.append(dict(
+                    id=None,
+                    symbol=symbol,
+                    price=to_float(item[0]),
+                    volume=item[1],
+                    side=side
+                ))
+    return res
+
+
 def load_quote_data(raw_data: dict, symbol: str = None) -> dict:
     """
         {'id': 170622457,
