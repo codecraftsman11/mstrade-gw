@@ -1,8 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from bravado.exception import HTTPError
-from binance.client import Client
 from binance.exceptions import BinanceAPIException, BinanceRequestException
-from .binance import Client
+from .lib import Client
 from . import utils, var
 from ...rest import StockRestApi
 from .....exceptions import ConnectorError
@@ -203,6 +202,12 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(f"Binance api error. Details: {exc.code}, {exc.message}")
         except BinanceRequestException as exc:
             raise ConnectorError(f"Binance api error. Details: {exc.message}")
+
+        self.throttle.set(
+            key=self._acc_name,
+            **self.__get_limit_header(self.handler.response.headers)
+        )
+
         if isinstance(resp, dict) and resp.get('msg'):
             try:
                 _, msg = resp['msg'].split('=', 1)
@@ -221,6 +226,28 @@ class BinanceRestApi(StockRestApi):
             if _k == 'count':
                 api_kwargs['limit'] = _v
         return api_kwargs
+
+    def __get_limit_header(self, headers):
+        for h in headers:
+            if str(h).startswith('X-MBX-USED-WEIGHT-'):
+                rate = h[len('X-MBX-USED-WEIGHT-'):]
+                return dict(
+                    limit=int(headers[h]),
+                    reset=self.__parse_reset(rate)
+                )
+        return dict(limit=0, reset=None)
+
+    def __parse_reset(self, rate: str) -> int:
+        now = datetime.utcnow()
+        if len(rate) < 2:
+            return int((now + timedelta(seconds=(60 - now.second))).timestamp())
+        try:
+            num = int(rate[:-1])
+        except ValueError:
+            num = 1
+        period = rate[len(rate)-1:]
+        duration = {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}.get(period.lower(), 60)
+        return int((now + timedelta(seconds=((num * duration) - now.second))).timestamp())
 
     def __setstate__(self, state):
         self.__dict__ = state

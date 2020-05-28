@@ -6,7 +6,7 @@ from typing import (
     List
 )
 from bravado.exception import HTTPError
-from .bitmex import (
+from .lib import (
     bitmex_connector, APIKeyAuthenticator, SwaggerClient
 )
 from . import utils, var
@@ -280,6 +280,14 @@ class BitmexRestApi(StockRestApi):
                 _request_options={'headers': headers},
                 **kwargs
             ).response()
+
+            self.throttle.set(
+                key=self._acc_name,
+                limit=(int(resp.incoming_response.headers.get('X-RateLimit-Limit', 0)) -
+                       int(resp.incoming_response.headers.get('X-RateLimit-Remaining', 0))),
+                reset=int(resp.incoming_response.headers.get('X-RateLimit-Reset', 0))
+            )
+
             return resp.result, resp.metadata
         except HTTPError as exc:
             message = exc.swagger_result.get('error', {}).get('message') \
