@@ -231,11 +231,25 @@ class BinanceRestApi(StockRestApi):
         for h in headers:
             if str(h).startswith('X-MBX-USED-WEIGHT-'):
                 rate = h[len('X-MBX-USED-WEIGHT-'):]
-                return dict(
-                    limit=int(headers[h]),
-                    reset=self.__parse_reset(rate)
-                )
-        return dict(limit=0, reset=None)
+                try:
+                    return dict(
+                        limit=int(headers[h]),
+                        reset=self.__parse_reset(rate),
+                        scope='rest'
+                    )
+                except ValueError:
+                    pass
+            elif str(h).startswith('X-MBX-ORDER-COUNT-'):
+                rate = h[len('X-MBX-ORDER-COUNT-'):]
+                try:
+                    return dict(
+                        limit=int(headers[h]),
+                        reset=self.__parse_reset(rate),
+                        scope='order'
+                    )
+                except ValueError:
+                    pass
+        return dict(limit=0, reset=None, scope='rest')
 
     def __parse_reset(self, rate: str) -> int:
         now = datetime.utcnow()
