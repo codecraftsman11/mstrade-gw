@@ -1,31 +1,24 @@
-from typing import List
+from ..throttle import Throttle
 
 
-class Throttle:
-    _requests = dict()
+class ThrottleRest(Throttle):
 
-    @property
-    def requests(self):
-        return self._requests
+    def set(self, key, limit: int, reset: int, scope: str):
+        if self._requests.get(self._key(key)):
+            self._requests[self._key(key)].update(
+                {
+                    scope: [limit, reset]
+                }
+            )
+        else:
+            self._requests.update({
+                self._key(key): {
+                    scope: [limit, reset]
+                }
+            })
 
-    @classmethod
-    def set(cls, key, limit: int, reset: int):
-        cls._requests.update({
-            cls._key(key): [limit, reset]
-        })
+    def get(self, key) -> dict:
+        return self._requests.get(self._key(key), {'rest': [0, None]})
 
-    @classmethod
-    def get(cls, key) -> List[int]:
-        return cls._requests.get(cls._key(key), [0, None])
-
-    @classmethod
-    def remove(cls, key):
-        cls._requests.pop(cls._key(key), None)
-
-    @staticmethod
-    def _key(key: (str, list, tuple, dict)) -> str:
-        if isinstance(key, (list, tuple)):
-            return '|'.join(key)
-        if isinstance(key, dict):
-            return '|'.join(key.values())
-        return str(key).lower()
+    def remove(self, key):
+        self._requests.pop(self._key(key), None)
