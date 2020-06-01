@@ -134,14 +134,14 @@ class BinanceRestApi(StockRestApi):
     def get_order_book(
             self, symbol: str, depth: int = None, side: int = None,
             split: bool = False, offset: int = 0):
-        request_depth = depth
+        limit = 100
         if depth:
-            for limit in [100, 500, 1000, 5000]:
-                if limit >= offset+depth:
-                    depth = limit
+            for _l in [100, 500, 1000, 5000]:
+                if _l >= offset+depth:
+                    limit = _l
                     break
-        data = self._binance_api(self._handler.get_order_book, symbol=symbol.upper(), limit=depth)
-        return utils.load_order_book_data(data, symbol, side, split, offset, request_depth)
+        data = self._binance_api(self._handler.get_order_book, symbol=symbol.upper(), limit=limit)
+        return utils.load_order_book_data(data, symbol, side, split, offset, depth)
 
     def get_wallet(self, **kwargs) -> dict:
         schema = kwargs.pop('schema', '').lower()
