@@ -149,7 +149,6 @@ class StockWssApi(Connector):
 
     async def consume(self, recv_callback: callable, **kwargs):
         while True:
-            print('handler', self.handler)
             if not self.handler:
                 try:
                     await self.open()
