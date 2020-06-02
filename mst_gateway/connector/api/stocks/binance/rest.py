@@ -1,13 +1,22 @@
+from logging import Logger
 from datetime import datetime, timedelta
 from bravado.exception import HTTPError
 from binance.exceptions import BinanceAPIException, BinanceRequestException
 from .lib import Client
 from . import utils, var
 from ...rest import StockRestApi
+from ...rest.throttle import ThrottleRest
 from .....exceptions import ConnectorError
 
 
 class BinanceRestApi(StockRestApi):
+
+    def __init__(self, url: str = None, auth: dict = None, logger: Logger = None,
+                 throttle_storage=None, throttle_hash_name: str = '*'):
+        super().__init__(url, auth, logger)
+        self._throttle_hash_name = throttle_hash_name
+        if throttle_storage:
+            self.throttle = ThrottleRest(storage=throttle_storage)
 
     def _connect(self, **kwargs):
         return Client(api_key=self._auth['api_key'],
@@ -204,7 +213,7 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(f"Binance api error. Details: {exc.message}")
 
         self.throttle.set(
-            key=self._acc_name,
+            key=self._throttle_hash_name,
             **self.__get_limit_header(self.handler.response.headers)
         )
 

@@ -1,25 +1,34 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from ..throttle import Throttle
 
 
 class ThrottleWss(Throttle):
     duration = 60
+    timeout = None
 
     def set(self, key, limit: int):
-        now = datetime.utcnow()
-        reset = int((now + timedelta(seconds=(self.duration - now.second))).timestamp())
-        _limit, _reset = self._requests.get(self._key(key), [limit, reset])
-        self._requests[self._key(key)] = [limit, reset] if int(now.timestamp()) > _reset else [_limit + limit, _reset]
+        history = self.get(key)
+        history.insert(0, int(limit))
+        self._set(self._key(key), history)
 
-    def get(self, key) -> dict:
-        return self._requests.get(self._key(key), [0, 0])
+    def get(self, key) -> list:
+        return self._get(self._key(key)) or []
 
-    def validate(self, key, rate, limit):
+    def remove(self, key):
+        try:
+            self._remove(self._key(key))
+        except KeyError:
+            pass
+
+    def validate(self, key, rate):
         now = int(datetime.utcnow().timestamp())
         if not rate:
             return True
-        connect_count, reset_time = self.get(self._key(key))
-        if connect_count >= rate and now < reset_time:
+        history = self.get(key)
+        while history and history[-1] <= now - self.duration:
+            history.pop()
+        if len(history) >= rate:
             return False
-        self.set(self._key(key), limit)
+
+        self.set(key, now)
         return True

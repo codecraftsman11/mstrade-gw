@@ -120,8 +120,7 @@ class StockWssApi(Connector):
     async def open(self, **kwargs):
         if not self.throttle.validate(
             key=dict(name=self.name, url=self._url),
-            rate=self._throttle_rate,
-            limit=1
+            rate=self._throttle_rate
         ):
             raise ConnectionError
         restore = kwargs.get('restore', False)
@@ -150,6 +149,7 @@ class StockWssApi(Connector):
 
     async def consume(self, recv_callback: callable, **kwargs):
         while True:
+            print('handler', self.handler)
             if not self.handler:
                 try:
                     await self.open()

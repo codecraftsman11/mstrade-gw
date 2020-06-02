@@ -1,4 +1,5 @@
 import json
+from logging import Logger
 from typing import (
     Tuple,
     Optional,
@@ -11,6 +12,7 @@ from .lib import (
 )
 from . import utils, var
 from ...rest import StockRestApi
+from ...rest.throttle import ThrottleRest
 from .... import api
 from .....exceptions import ConnectorError
 from .....utils import j_dumps
@@ -51,6 +53,13 @@ class BitmexFactory:
 class BitmexRestApi(StockRestApi):
     BASE_URL = BitmexFactory.BASE_URL
     TEST_URL = BitmexFactory.TEST_URL
+
+    def __init__(self, url: str = None, auth: dict = None, logger: Logger = None,
+                 throttle_storage=None, throttle_hash_name: str = '*'):
+        super().__init__(url, auth, logger)
+        self._throttle_hash_name = throttle_hash_name
+        if throttle_storage:
+            self.throttle = ThrottleRest(storage=throttle_storage)
 
     def _connect(self, **kwargs):
         self._keepalive = bool(kwargs.get('keepalive', False))
@@ -282,7 +291,7 @@ class BitmexRestApi(StockRestApi):
             ).response()
 
             self.throttle.set(
-                key=self._acc_name,
+                key=self._throttle_hash_name,
                 limit=(int(resp.incoming_response.headers.get('X-RateLimit-Limit', 0)) -
                        int(resp.incoming_response.headers.get('X-RateLimit-Remaining', 0))),
                 reset=int(resp.incoming_response.headers.get('X-RateLimit-Reset', 0)),

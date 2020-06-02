@@ -15,12 +15,11 @@ class StockRestApi(Connector):
     throttle = ThrottleRest()
     BASE_URL = None
 
-    def __init__(self, url: str = None, auth: dict = None, logger: Logger = None, acc_name: str = '*'):
+    def __init__(self, url: str = None, auth: dict = None, logger: Logger = None):
         self._keepalive: bool = False
         self._compress: bool = False
         self._url: str = url if url is not None else self.__class__.BASE_URL
         self._error: tuple = ERROR_OK
-        self._acc_name = acc_name
         super().__init__(auth, logger)
 
     @abstractmethod
