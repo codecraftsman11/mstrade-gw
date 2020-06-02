@@ -1,5 +1,7 @@
-from typing import Union, Optional
+import hashlib
+import re
 from datetime import datetime
+from typing import Union, Optional
 from mst_gateway.connector import api
 from .....exceptions import ConnectorError
 
@@ -70,6 +72,13 @@ def load_order_book_side(order_side: str) -> int:
     return api.SELL
 
 
+def generate_order_book_id(symbol: str, price: float) -> int:
+    hash_object = hashlib.sha1(symbol.encode())
+    res = int(re.sub(r'[^0-9.]+', r'', hash_object.hexdigest())[-15:])
+    result = int(res - price * 10 ** 8)
+    return result
+
+
 def load_order_book_data(raw_data: dict, symbol: str, ent_side, split, offset, depth) -> Union[list, dict]:
     _raw_data = dict()
     if offset and depth:
@@ -95,19 +104,19 @@ def load_order_book_data(raw_data: dict, symbol: str, ent_side, split, offset, d
             res.update({side: list()})
             for item in v:
                 res[side].append(dict(
-                    id=int(to_float(item[0])*10**8),
+                    id=generate_order_book_id(symbol, to_float(item[0])),
                     symbol=symbol,
                     price=to_float(item[0]),
-                    volume=item[1],
+                    volume=to_float(item[1]),
                     side=side
                 ))
         else:
             for item in v:
                 res.append(dict(
-                    id=int(to_float(item[0])*10**8),
+                    id=generate_order_book_id(symbol, to_float(item[0])),
                     symbol=symbol,
                     price=to_float(item[0]),
-                    volume=item[1],
+                    volume=to_float(item[1]),
                     side=side
                 ))
     return res
