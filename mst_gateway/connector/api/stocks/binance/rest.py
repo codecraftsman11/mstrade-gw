@@ -1,14 +1,22 @@
-from datetime import datetime
+from logging import Logger
+from datetime import datetime, timedelta
 from bravado.exception import HTTPError
-from binance.client import Client
 from binance.exceptions import BinanceAPIException, BinanceRequestException
-from .binance import Client
+from .lib import Client
 from . import utils, var
 from ...rest import StockRestApi
+from ...rest.throttle import ThrottleRest
 from .....exceptions import ConnectorError
 
 
 class BinanceRestApi(StockRestApi):
+
+    def __init__(self, url: str = None, auth: dict = None, logger: Logger = None,
+                 throttle_storage=None, throttle_hash_name: str = '*'):
+        super().__init__(url, auth, logger)
+        self._throttle_hash_name = throttle_hash_name
+        if throttle_storage:
+            self.throttle = ThrottleRest(storage=throttle_storage)
 
     def _connect(self, **kwargs):
         return Client(api_key=self._auth['api_key'],
@@ -203,6 +211,12 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(f"Binance api error. Details: {exc.code}, {exc.message}")
         except BinanceRequestException as exc:
             raise ConnectorError(f"Binance api error. Details: {exc.message}")
+
+        self.throttle.set(
+            key=self._throttle_hash_name,
+            **self.__get_limit_header(self.handler.response.headers)
+        )
+
         if isinstance(resp, dict) and resp.get('msg'):
             try:
                 _, msg = resp['msg'].split('=', 1)
@@ -221,6 +235,42 @@ class BinanceRestApi(StockRestApi):
             if _k == 'count':
                 api_kwargs['limit'] = _v
         return api_kwargs
+
+    def __get_limit_header(self, headers):
+        for h in headers:
+            if str(h).startswith('X-MBX-USED-WEIGHT-'):
+                rate = h[len('X-MBX-USED-WEIGHT-'):]
+                try:
+                    return dict(
+                        limit=int(headers[h]),
+                        reset=self.__parse_reset(rate),
+                        scope='rest'
+                    )
+                except ValueError:
+                    pass
+            elif str(h).startswith('X-MBX-ORDER-COUNT-'):
+                rate = h[len('X-MBX-ORDER-COUNT-'):]
+                try:
+                    return dict(
+                        limit=int(headers[h]),
+                        reset=self.__parse_reset(rate),
+                        scope='order'
+                    )
+                except ValueError:
+                    pass
+        return dict(limit=0, reset=None, scope='rest')
+
+    def __parse_reset(self, rate: str) -> int:
+        now = datetime.utcnow()
+        if len(rate) < 2:
+            return int((now + timedelta(seconds=(60 - now.second))).timestamp())
+        try:
+            num = int(rate[:-1])
+        except ValueError:
+            num = 1
+        period = rate[len(rate)-1:]
+        duration = {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}.get(period.lower(), 60)
+        return int((now + timedelta(seconds=((num * duration) - now.second))).timestamp())
 
     def __setstate__(self, state):
         self.__dict__ = state
