@@ -11,7 +11,7 @@ from mst_gateway.connector.api import schema
 from mst_gateway.connector.api.utils import time2timestamp
 from mst_gateway.connector.api.stocks.bitmex import BitmexWssApi
 from mst_gateway.connector.api.stocks.bitmex import BitmexRestApi
-from mst_gateway.connector.api.stocks.bitmex.utils import _date
+from mst_gateway.connector.api.stocks.bitmex.utils import to_date
 from mst_gateway.connector.api.stocks.bitmex.wss import utils
 from mst_gateway.connector.api.stocks.bitmex.wss import serializers
 from mst_gateway.connector.api.stocks.bitmex.wss.router import BitmexWssRouter
@@ -177,8 +177,8 @@ class TestBitmexWssApi:
             'action': "partial",
             'data': [
                 {
-                    'time': _date("2019-07-01T11:59:38.326Z"),
-                    'timestamp': time2timestamp(_date("2019-07-01T11:59:38.326Z")),
+                    'time': to_date("2019-07-01T11:59:38.326Z"),
+                    'timestamp': time2timestamp(to_date("2019-07-01T11:59:38.326Z")),
                     'symbol': "XBTUSD",
                     'volume': 105,
                     'open': 11329,
@@ -233,8 +233,8 @@ class TestBitmexWssApi:
             'action': "partial",
             'data': [
                 {
-                    'time': _date("2019-07-01T11:59:38.326Z"),
-                    'timestamp': time2timestamp(_date("2019-07-01T11:59:38.326Z")),
+                    'time': to_date("2019-07-01T11:59:38.326Z"),
+                    'timestamp': time2timestamp(to_date("2019-07-01T11:59:38.326Z")),
                     'symbol': "XBTUSD",
                     'volume': 5,
                     'price': 11339,
