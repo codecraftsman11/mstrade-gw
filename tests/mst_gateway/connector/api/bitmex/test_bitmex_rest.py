@@ -284,7 +284,6 @@ class TestBitmexRestApi:
 
     def test_bitmex_rest_get_wallet(self, _bitmex: BitmexRestApi):
         data = _bitmex.get_wallet()
-        print(data)
         assert schema.data_valid(data['balances'].pop(), schema.WALLET_FIELDS)
 
     def test_bitmex_calc_face_price(self):
