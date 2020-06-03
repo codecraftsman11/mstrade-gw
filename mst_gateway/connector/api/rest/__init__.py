@@ -8,9 +8,11 @@ from .. import (
     BUY,
     SELL
 )
+from .throttle import ThrottleRest
 
 
 class StockRestApi(Connector):
+    throttle = ThrottleRest()
     BASE_URL = None
 
     def __init__(self, url: str = None, auth: dict = None, logger: Logger = None):

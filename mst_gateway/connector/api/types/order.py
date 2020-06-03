@@ -19,7 +19,7 @@ class OrderType(ClassWithAttributes):
 class OrderSchema(ClassWithAttributes):
     margin1 = 'margin1'
     margin2 = 'margin2'
-    trade = 'trade'
+    futures = 'futures'
     exchange = 'exchange'
 
 
