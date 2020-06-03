@@ -18,8 +18,10 @@ def connect(params, auth, cls=None, logger=None):
         connector.open()
     return connector
 
+
 def get_rest_api_class(path):
     return import_module(path, __package__).get_rest_api_class()
+
 
 def get_ws_api_class(path):
     return import_module(path, __package__).get_ws_api_class()

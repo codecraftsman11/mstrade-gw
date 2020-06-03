@@ -1,10 +1,11 @@
 import time
+from logging import Logger
 from websockets import client
 from ....wss import StockWssApi
+from ....wss.throttle import ThrottleWss
 from ....wss.subscriber import Subscriber
 from . import subscribers as subscr
-from .utils import is_auth_ok
-from .utils import make_cmd
+from .utils import is_auth_ok, make_cmd
 from ..utils import bitmex_signature
 from .router import BitmexWssRouter
 
@@ -28,6 +29,18 @@ class BitmexWssApi(StockWssApi):
     }
 
     router_class = BitmexWssRouter
+
+    def __init__(self,
+                 url: str = None,
+                 auth: dict = None,
+                 logger: Logger = None,
+                 options: dict = None,
+                 name: str = None,
+                 throttle_rate: int = 30,
+                 throttle_storage=None):
+        super().__init__(url, auth, logger, options, name, throttle_rate)
+        if throttle_storage:
+            self.throttle = ThrottleWss(throttle_storage)
 
     async def _connect(self, **kwargs):
         _ws: client.WebSocketClientProtocol = await super()._connect(**kwargs)

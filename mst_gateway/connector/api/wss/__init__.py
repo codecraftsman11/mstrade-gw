@@ -1,3 +1,4 @@
+import time
 from typing import Dict
 from typing import Coroutine
 import asyncio
@@ -11,6 +12,7 @@ from .subscriber import Subscriber
 from .router import Router
 from ..schema import SUBSCRIPTIONS
 from ..schema import AUTH_SUBSCRIPTIONS
+from .throttle import ThrottleWss
 
 
 class StockWssApi(Connector):
@@ -22,18 +24,21 @@ class StockWssApi(Connector):
                                                AUTH_SUBSCRIPTIONS}
     name = "Base"
     BASE_URL = None
+    throttle = ThrottleWss()
 
     def __init__(self,
                  url: str = None,
                  auth: dict = None,
                  logger: Logger = None,
                  options: dict = None,
-                 name: str = None):
+                 name: str = None,
+                 throttle_rate: int = 30):
         self._options = options or {}
         self._url = url or self.__class__.BASE_URL
         self._error = errors.ERROR_OK
         self._subscriptions = {}
         self._router = self.__class__.router_class(self)
+        self._throttle_rate = throttle_rate
         if name is not None:
             self.name = name
         super().__init__(auth, logger)
@@ -113,6 +118,11 @@ class StockWssApi(Connector):
                 del self._subscriptions[subscr_name.lower()]
 
     async def open(self, **kwargs):
+        if not self.throttle.validate(
+            key=dict(name=self.name, url=self._url),
+            rate=self._throttle_rate
+        ):
+            raise ConnectionError
         restore = kwargs.get('restore', False)
         self._handler = await self._connect(**kwargs)
         if restore:
