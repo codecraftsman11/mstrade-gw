@@ -252,7 +252,7 @@ class BitmexRestApi(StockRestApi):
 
     def get_order_book(
             self, symbol: str, depth: int = None, side: int = None,
-            split: bool = False, offset: int = 0) -> Union[list, dict]:
+            split: bool = False, offset: int = 0, schema: str = None) -> Union[list, dict]:
         ob_depth = depth or 0
         if ob_depth:
             ob_depth += offset
