@@ -140,7 +140,7 @@ class BitmexRestApi(StockRestApi):
         return utils.load_user_data(data)
 
     def get_wallet(self, **kwargs) -> dict:
-        schema = kwargs.pop('schema', '').lower()
+        schema = kwargs.pop('schema', 'margin1').lower()
         if schema == 'margin1':
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
             return utils.load_wallet_data(data)

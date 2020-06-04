@@ -1,4 +1,4 @@
-from mst_gateway.connector.api.stocks.bitmex.utils import _date
+from mst_gateway.connector.api.stocks.bitmex.utils import to_date
 from mst_gateway.connector.api.utils import time2timestamp
 
 
@@ -14,8 +14,8 @@ TEST_SYMBOL_MESSAGES = [
                 {
                     'symbol': "XBTUSD",
                     'pair': ["XBT", "USD"],
-                    'time': _date("2019-07-15T14:47:10.000Z"),
-                    'timestamp': time2timestamp(_date("2019-07-15T14:47:10.000Z")),
+                    'time': to_date("2019-07-15T14:47:10.000Z"),
+                    'timestamp': time2timestamp(to_date("2019-07-15T14:47:10.000Z")),
                     'price': 10650,
                     'price24': 10864,
                     'mark_price': 10551.29,
@@ -28,8 +28,8 @@ TEST_SYMBOL_MESSAGES = [
                 {
                     'symbol': "XBTEUR",
                     'pair': ["XBT", "EUR"],
-                    'time': _date("2019-07-18T20:35:00.000Z"),
-                    'timestamp': time2timestamp(_date("2019-07-18T20:35:00.000Z")),
+                    'time': to_date("2019-07-18T20:35:00.000Z"),
+                    'timestamp': time2timestamp(to_date("2019-07-18T20:35:00.000Z")),
                     'price': 10.79,
                     'price24': 10.86,
                     'mark_price': 10.79,
@@ -57,8 +57,8 @@ TEST_SYMBOL_MESSAGES = [
                 {
                     'symbol': "XBTUSD",
                     'pair': ["XBT", "USD"],
-                    'time': _date("2019-07-01T08:16:15.250Z"),
-                    'timestamp': time2timestamp(_date("2019-07-01T08:16:15.250Z")),
+                    'time': to_date("2019-07-01T08:16:15.250Z"),
+                    'timestamp': time2timestamp(to_date("2019-07-01T08:16:15.250Z")),
                     'price': 10933.67,
                     'price24': 10864.0,
                     'mark_price': 10933.77,
@@ -81,8 +81,8 @@ RESULT_SYMBOL_STATE = {
         {
             'symbol': "XBTUSD",
             'pair': ["XBT", "USD"],
-            'time': _date("2019-07-01T08:16:15.250Z"),
-            'timestamp': time2timestamp(_date("2019-07-01T08:16:15.250Z")),
+            'time': to_date("2019-07-01T08:16:15.250Z"),
+            'timestamp': time2timestamp(to_date("2019-07-01T08:16:15.250Z")),
             'price': 10933.67,
             'mark_price': 10933.77,
             'face_price': 1 / 10933.77,
@@ -95,8 +95,8 @@ RESULT_SYMBOL_STATE = {
         {
             'symbol': "XBTEUR",
             'pair': ["XBT", "EUR"],
-            'time': _date("2019-07-18T20:35:00.000Z"),
-            'timestamp': time2timestamp(_date("2019-07-18T20:35:00.000Z")),
+            'time': to_date("2019-07-18T20:35:00.000Z"),
+            'timestamp': time2timestamp(to_date("2019-07-18T20:35:00.000Z")),
             'price': 10.79,
             'mark_price': 10.79,
             'face_price': None,
