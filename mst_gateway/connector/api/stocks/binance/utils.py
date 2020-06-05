@@ -204,10 +204,10 @@ def load_margin_wallet_data(raw_data: dict) -> dict:
     }
 
 
-def load_margin_wallet_detail_data(raw_data: dict, asset: str) -> dict:
+def load_margin_wallet_detail_data(raw_data: dict, asset: str, max_borrow: dict = None) -> dict:
     for a in raw_data.get('userAssets'):
         if a.get('asset', '').upper() == asset.upper():
-            return _margin_balance_data([a])[0]
+            return _margin_balance_data([a], _margin_max_borrow(max_borrow))[0]
     raise ConnectorError(f"Invalid asset {asset}.")
 
 
@@ -238,6 +238,7 @@ def _spot_balance_data(balances: list):
             'currency': b['asset'],
             'balance': b['free'],
             'borrowed': None,
+            'available_borrow': None,
             'interest': None,
             'unrealised_pnl': 0,
             'margin_balance': to_float(b['free']),
@@ -249,12 +250,13 @@ def _spot_balance_data(balances: list):
     ]
 
 
-def _margin_balance_data(balances: list):
+def _margin_balance_data(balances: list, max_borrow: float = None):
     return [
         {
             'currency': b['asset'],
             'balance': b['netAsset'],
             'borrowed': b['borrowed'],
+            'available_borrow': max_borrow,
             'interest': b['interest'],
             'unrealised_pnl': 0,
             'margin_balance': to_float(b['free']),
@@ -266,12 +268,19 @@ def _margin_balance_data(balances: list):
     ]
 
 
+def _margin_max_borrow(data):
+    if isinstance(data, dict):
+        return to_float(data.get('amount'))
+    return None
+
+
 def _futures_balance_data(balances: list):
     return [
         {
             'currency': b['asset'],
             'balance': to_float(b['walletBalance']),
             'borrowed': None,
+            'available_borrow': None,
             'interest': None,
             'unrealised_pnl': to_float(b['unrealizedProfit']),
             'margin_balance': to_float(b['marginBalance']),
@@ -289,7 +298,7 @@ def to_wallet_state_type(value):
     return 'hold'
 
 
-def load_transfer_data(raw_data: dict) -> dict:
+def load_transaction_id(raw_data: dict) -> dict:
     data = {
         'transaction': raw_data.get('tranId')
     }

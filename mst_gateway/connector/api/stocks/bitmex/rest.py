@@ -152,6 +152,9 @@ class BitmexRestApi(StockRestApi):
     def wallet_transfer(self, from_wallet: str, to_wallet: str, asset: str, amount: float):
         raise ConnectorError('Bitmex api error. Details: Invalid method.')
 
+    def wallet_borrow_repay(self, action: str, schema: str, asset: str, amount: float):
+        raise ConnectorError('Bitmex api error. Details: Invalid method.')
+
     def get_symbol(self, symbol) -> dict:
         instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_get,
                                           symbol=utils.symbol2stock(symbol))
