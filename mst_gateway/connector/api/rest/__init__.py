@@ -117,8 +117,11 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def wallet_borrow_repay(self, action: str, schema: str, asset: str,
-                            amount: Union[float, str]) -> Optional[dict]:
+    def wallet_borrow(self, schema: str, asset: str, amount: Union[float, str]) -> Optional[dict]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def wallet_repay(self, schema: str, asset: str, amount: Union[float, str]) -> Optional[dict]:
         raise NotImplementedError
 
     @classmethod

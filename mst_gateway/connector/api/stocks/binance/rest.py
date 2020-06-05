@@ -213,21 +213,22 @@ class BinanceRestApi(StockRestApi):
         data = self._binance_api(method, asset=asset.upper(), amount=str(amount))
         return utils.load_transaction_id(data)
 
-    def wallet_borrow_repay(self, action: str, schema: str, asset: str, amount: float):
-        method = None
-        if action == 'borrow':
-            if schema.lower() == 'margin2':
-                method = self._handler.create_margin_loan
-            elif schema.lower() == 'futures':
-                raise ConnectorError(f"Unavailable method for {schema}.")
-        elif action == 'repay':
-            if schema.lower() == 'margin2':
-                method = self._handler.repay_margin_loan
-            elif schema.lower() == 'futures':
-                raise ConnectorError(f"Unavailable method for {schema}.")
+    def wallet_borrow(self, schema: str, asset: str, amount: float):
+        if schema.lower() == 'margin2':
+            method = self._handler.create_margin_loan
+        elif schema.lower() == 'futures':
+            raise ConnectorError(f"Unavailable method for {schema}.")
         else:
-            raise ConnectorError(f"Unavailable action method for {schema}.")
-        if method is None:
+            raise ConnectorError(f"Invalid schema {schema}.")
+        data = self._binance_api(method, asset=asset.upper(), amount=str(amount))
+        return utils.load_transaction_id(data)
+
+    def wallet_repay(self, schema: str, asset: str, amount: float):
+        if schema.lower() == 'margin2':
+            method = self._handler.repay_margin_loan
+        elif schema.lower() == 'futures':
+            raise ConnectorError(f"Unavailable method for {schema}.")
+        else:
             raise ConnectorError(f"Invalid schema {schema}.")
         data = self._binance_api(method, asset=asset.upper(), amount=str(amount))
         return utils.load_transaction_id(data)
