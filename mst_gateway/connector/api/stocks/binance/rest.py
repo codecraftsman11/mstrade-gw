@@ -185,9 +185,10 @@ class BinanceRestApi(StockRestApi):
         if schema.lower() == 'margin2':
             _spot = self._binance_api(self._handler.get_account, **kwargs)
             _margin = self._binance_api(self._handler.get_margin_account, **kwargs)
+            _borrow = self._binance_api(self._handler.get_max_margin_loan, asset=asset.upper())
             return {
                 'exchange': utils.load_spot_wallet_detail_data(_spot, asset),
-                'margin2': utils.load_margin_wallet_detail_data(_margin, asset)
+                'margin2': utils.load_margin_wallet_detail_data(_margin, asset, _borrow)
             }
         if schema.lower() == 'futures':
             _spot = self._binance_api(self._handler.get_account, **kwargs)
@@ -210,7 +211,27 @@ class BinanceRestApi(StockRestApi):
         else:
             raise ConnectorError(f"Invalid wallet pair {from_wallet} and {to_wallet}.")
         data = self._binance_api(method, asset=asset.upper(), amount=str(amount))
-        return utils.load_transfer_data(data)
+        return utils.load_transaction_id(data)
+
+    def wallet_borrow(self, schema: str, asset: str, amount: float):
+        if schema.lower() == 'margin2':
+            method = self._handler.create_margin_loan
+        elif schema.lower() == 'futures':
+            raise ConnectorError(f"Unavailable method for {schema}.")
+        else:
+            raise ConnectorError(f"Invalid schema {schema}.")
+        data = self._binance_api(method, asset=asset.upper(), amount=str(amount))
+        return utils.load_transaction_id(data)
+
+    def wallet_repay(self, schema: str, asset: str, amount: float):
+        if schema.lower() == 'margin2':
+            method = self._handler.repay_margin_loan
+        elif schema.lower() == 'futures':
+            raise ConnectorError(f"Unavailable method for {schema}.")
+        else:
+            raise ConnectorError(f"Invalid schema {schema}.")
+        data = self._binance_api(method, asset=asset.upper(), amount=str(amount))
+        return utils.load_transaction_id(data)
 
     def _binance_api(self, method: callable, **kwargs):
         try:
