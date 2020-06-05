@@ -23,7 +23,8 @@ class BitmexWssRouter(Router):
         'tradeBin1m': "quote_bin",
         'order': "order",
         'orderBookL2_25': "order_book",
-        'position': 'position'
+        'position': 'position',
+        'execution': 'execution'
     }
 
     serializer_classes = {
@@ -33,7 +34,8 @@ class BitmexWssRouter(Router):
         'order_book': serializers.BitmexOrderBookSerializer,
         'order': serializers.BitmexOrderSerializer,
         'trade': serializers.BitmexTradeSerializer,
-        'position': serializers.BitmexPositionSerializer
+        'position': serializers.BitmexPositionSerializer,
+        'execution': serializers.BitmexExecutionSerializer
     }
 
     def __init__(self, wss_api: BitmexWssApi):
