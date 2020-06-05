@@ -77,11 +77,14 @@ TRADE_FIELDS = {
 WALLET_FIELDS = {
     'currency': str,
     'balance': float,
+    'borrowed': float,
+    'interest': float,
     'unrealised_pnl': float,
     'margin_balance': float,
     'maint_margin': float,
     'init_margin': float,
-    'available_margin': float
+    'available_margin': float,
+    'type': str
 }
 
 SUBSCRIPTIONS = {

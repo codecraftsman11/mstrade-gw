@@ -1,5 +1,7 @@
-from typing import Union, Optional
+import hashlib
+import re
 from datetime import datetime
+from typing import Union, Optional
 from mst_gateway.connector import api
 from .....exceptions import ConnectorError
 
@@ -62,6 +64,62 @@ def load_order_side(order_side: bool) -> int:
     if order_side:
         return api.BUY
     return api.SELL
+
+
+def load_order_book_side(order_side: str) -> int:
+    if order_side == 'bids':
+        return api.BUY
+    return api.SELL
+
+
+def generate_order_book_id(symbol: str, price: float) -> int:
+    hash_object = hashlib.sha1(symbol.encode())
+    res = int(re.sub(r'[^0-9.]+', r'', hash_object.hexdigest())[-15:])
+    result = int(res - price * 10 ** 8)
+    return result
+
+
+def load_order_book_data(raw_data: dict, symbol: str, ent_side, split, offset, depth) -> Union[list, dict]:
+    _raw_data = dict()
+    if offset and depth:
+        _raw_data['asks'] = raw_data['asks'][offset:depth + offset]
+        _raw_data['bids'] = raw_data['bids'][-depth - offset:-offset]
+    elif offset and depth is None:
+        _raw_data['asks'] = raw_data['asks'][offset:]
+        _raw_data['bids'] = raw_data['bids'][:-offset]
+    elif depth:
+        _raw_data['asks'] = raw_data['asks'][:depth]
+        _raw_data['bids'] = raw_data['bids'][-depth:]
+    else:
+        _raw_data['asks'] = raw_data['asks']
+        _raw_data['bids'] = raw_data['bids']
+    _raw_data['asks'] = reversed(_raw_data.get('asks', []))
+
+    res = list() if not split else dict()
+    for k, v in _raw_data.items():
+        side = load_order_book_side(k)
+        if ent_side is not None and not ent_side == side:
+            continue
+        if split:
+            res.update({side: list()})
+            for item in v:
+                res[side].append(dict(
+                    id=generate_order_book_id(symbol, to_float(item[0])),
+                    symbol=symbol,
+                    price=to_float(item[0]),
+                    volume=to_float(item[1]),
+                    side=side
+                ))
+        else:
+            for item in v:
+                res.append(dict(
+                    id=generate_order_book_id(symbol, to_float(item[0])),
+                    symbol=symbol,
+                    price=to_float(item[0]),
+                    volume=to_float(item[1]),
+                    side=side
+                ))
+    return res
 
 
 def load_quote_data(raw_data: dict, symbol: str = None) -> dict:

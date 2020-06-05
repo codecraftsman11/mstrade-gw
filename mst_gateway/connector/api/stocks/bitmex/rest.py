@@ -140,7 +140,7 @@ class BitmexRestApi(StockRestApi):
         return utils.load_user_data(data)
 
     def get_wallet(self, **kwargs) -> dict:
-        schema = kwargs.pop('schema', '').lower()
+        schema = kwargs.pop('schema', 'margin1').lower()
         if schema == 'margin1':
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
             return utils.load_wallet_data(data)
@@ -252,7 +252,7 @@ class BitmexRestApi(StockRestApi):
 
     def get_order_book(
             self, symbol: str, depth: int = None, side: int = None,
-            split: bool = False, offset: int = 0) -> Union[list, dict]:
+            split: bool = False, offset: int = 0, schema: str = None) -> Union[list, dict]:
         ob_depth = depth or 0
         if ob_depth:
             ob_depth += offset

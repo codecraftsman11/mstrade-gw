@@ -282,10 +282,9 @@ class TestBitmexRestApi:
         assert schema.data_valid(_bitmex_unauth.list_trades(symbol=cfg.BITMEX_SYMBOL).pop(),
                                  schema.TRADE_FIELDS)
 
-    def test_bitmex_rest_list_wallets(self, _bitmex: BitmexRestApi):
-        data = _bitmex.list_wallets().pop()
-        assert list(data.keys()) == ['margin1']
-        assert schema.data_valid(data['margin1'], schema.WALLET_FIELDS)
+    def test_bitmex_rest_get_wallet(self, _bitmex: BitmexRestApi):
+        data = _bitmex.get_wallet()
+        assert schema.data_valid(data['balances'].pop(), schema.WALLET_FIELDS)
 
     def test_bitmex_calc_face_price(self):
         price = 3
