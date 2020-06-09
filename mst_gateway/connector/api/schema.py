@@ -78,6 +78,7 @@ WALLET_FIELDS = {
     'currency': str,
     'balance': float,
     'borrowed': float,
+    'available_borrow': float,
     'interest': float,
     'unrealised_pnl': float,
     'margin_balance': float,
