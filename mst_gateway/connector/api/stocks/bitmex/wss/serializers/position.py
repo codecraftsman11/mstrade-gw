@@ -14,6 +14,7 @@ class BitmexPositionSerializer(BitmexSerializer):
                 mark_price=item.get('markPrice'),
                 last_price=item.get('lastPrice'),
                 volume=item.get('currentQty'),
-                liquidation_price=item.get('liquidationPrice', None)
+                liquidation_price=item.get('liquidationPrice'),
+                entry_price=item.get('avgEntryPrice')
             )
         return data
