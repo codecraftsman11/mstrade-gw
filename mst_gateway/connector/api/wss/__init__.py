@@ -169,6 +169,9 @@ class StockWssApi(Connector):
 
     async def _restore_subscriptions(self):
         for subscr in self._subscriptions:
+            if subscr in self.auth_subscribers:
+                if not await self.authenticate():
+                    continue
             if not isinstance(self._subscriptions[subscr], dict):
                 await self.subscribe(subscr, force=True)
             else:
