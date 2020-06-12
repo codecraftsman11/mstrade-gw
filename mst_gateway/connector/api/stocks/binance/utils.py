@@ -31,6 +31,20 @@ def load_symbol_data(raw_data: dict) -> dict:
     }
 
 
+def load_exchange_symbol_info(raw_data: dict) -> dict:
+    schema = []
+    if raw_data.get('isSpotTradingAllowed'):
+        schema.append('exchange')
+    if raw_data.get('isMarginTradingAllowed'):
+        schema.append('margin2')
+    return {
+        'symbol': raw_data.get('symbol'),
+        'base_asset': raw_data.get('baseAsset'),
+        'quote_asset': raw_data.get('quoteAsset'),
+        'schema': schema
+    }
+
+
 def _binance_pair(symbol):
     length = len(symbol)
     base = length // 2

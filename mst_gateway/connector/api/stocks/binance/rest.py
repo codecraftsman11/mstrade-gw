@@ -41,6 +41,10 @@ class BinanceRestApi(StockRestApi):
         data = self._binance_api(self._handler.get_ticker)
         return [utils.load_symbol_data(d) for d in data if utils.to_float(d['weightedAvgPrice'])]
 
+    def get_exchange_symbol_info(self) -> list:
+        data = self._binance_api(self._handler.get_exchange_info)
+        return [utils.load_exchange_symbol_info(d) for d in data.get('symbols') if d.get('status') == 'TRADING']
+
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
         data = self._binance_api(self._handler.get_historical_trades, symbol=symbol.upper(), limit=1)
         return utils.load_quote_data(data[0], symbol)

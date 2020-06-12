@@ -59,6 +59,10 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
+    def get_exchange_symbol_info(self) -> list:
+        raise NotImplementedError
+
+    @abstractmethod
     def create_order(self, symbol: str,
                      side: int,
                      value: float = 1,

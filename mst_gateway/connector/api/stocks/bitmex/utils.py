@@ -52,6 +52,22 @@ def load_symbol_data(raw_data: dict) -> dict:
     }
 
 
+def load_exchange_symbol_info(raw_data: dict) -> dict:
+    symbol = raw_data.get('symbol')
+    base_asset = raw_data.get('rootSymbol')
+    return {
+        'symbol': symbol,
+        'base_asset': base_asset,
+        'quote_asset': _quote_asset(symbol, base_asset),
+        'schema': ['margin1']
+    }
+
+
+def _quote_asset(symbol, base_asset):
+    quote_asset = symbol[len(base_asset):]
+    return quote_asset
+
+
 def store_order_type(order_type: str) -> str:
     return var.ORDER_TYPE_WRITE_MAP.get(order_type)
 
