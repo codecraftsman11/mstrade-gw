@@ -51,11 +51,11 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def get_symbol(self, symbol) -> dict:
+    def get_symbol(self, symbol, schema) -> dict:
         raise NotImplementedError
 
     @abstractmethod
-    def list_symbols(self, **kwargs) -> list:
+    def list_symbols(self, schema, **kwargs) -> list:
         raise NotImplementedError
 
     @abstractmethod

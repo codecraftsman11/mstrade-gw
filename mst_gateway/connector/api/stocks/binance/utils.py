@@ -21,7 +21,7 @@ def load_symbol_data(raw_data: dict) -> dict:
         'symbol': symbol,
         'price': to_float(raw_data.get('lastPrice')),
         'price24': to_float(raw_data.get('weightedAvgPrice')),
-        'pair': _binance_pair(symbol),
+        # 'pair': _binance_pair(symbol),
         'tick': to_float(1e-8),
         'mark_price': mark_price,
         'face_price': face_price,
@@ -42,6 +42,15 @@ def load_exchange_symbol_info(raw_data: dict) -> dict:
         'base_asset': raw_data.get('baseAsset'),
         'quote_asset': raw_data.get('quoteAsset'),
         'schema': schema
+    }
+
+
+def load_futures_exchange_symbol_info(raw_data: dict) -> dict:
+    return {
+        'symbol': raw_data.get('symbol'),
+        'base_asset': raw_data.get('baseAsset'),
+        'quote_asset': raw_data.get('quoteAsset'),
+        'schema': ['futures']
     }
 
 

@@ -33,17 +33,30 @@ class BinanceRestApi(StockRestApi):
         data = self._binance_api(self._handler.get_deposit_address, asset='eth')
         return utils.load_user_data(data)
 
-    def get_symbol(self, symbol) -> dict:
-        data = self._binance_api(self._handler.get_ticker, symbol=symbol.upper())
+    def get_symbol(self, symbol, schema) -> dict:
+        if schema == 'futures':
+            data = self._binance_api(self._handler.futures_ticker, symbol=symbol.upper())
+        else:
+            data = self._binance_api(self._handler.get_ticker, symbol=symbol.upper())
         return utils.load_symbol_data(data)
 
-    def list_symbols(self, **kwargs) -> list:
-        data = self._binance_api(self._handler.get_ticker)
-        return [utils.load_symbol_data(d) for d in data if utils.to_float(d['weightedAvgPrice'])]
+    def list_symbols(self, schema, **kwargs) -> list:
+        if schema == 'futures':
+            data = self._binance_api(self._handler.futures_ticker)
+            return [utils.load_symbol_data(d) for d in data]
+        else:
+            data = self._binance_api(self._handler.get_ticker)
+            return [utils.load_symbol_data(d) for d in data if utils.to_float(d['weightedAvgPrice'])]
 
     def get_exchange_symbol_info(self) -> list:
-        data = self._binance_api(self._handler.get_exchange_info)
-        return [utils.load_exchange_symbol_info(d) for d in data.get('symbols') if d.get('status') == 'TRADING']
+        f_data = self._binance_api(self._handler.futures_exchange_info)
+        e_data = self._binance_api(self._handler.get_exchange_info)
+        data = [
+            utils.load_exchange_symbol_info(d) for d in e_data.get('symbols') if d.get('status') == 'TRADING'
+        ]
+        data.extend([
+            utils.load_futures_exchange_symbol_info(d) for d in f_data.get('symbols') if d.get('status') == 'TRADING'])
+        return data
 
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
         data = self._binance_api(self._handler.get_historical_trades, symbol=symbol.upper(), limit=1)

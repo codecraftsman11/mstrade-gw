@@ -41,8 +41,8 @@ def load_symbol_data(raw_data: dict) -> dict:
         'symbol': symbol,
         'price': to_float(raw_data.get('lastPrice')),
         'price24': to_float(raw_data.get('prevPrice24h')),
-        'pair': _get_symbol_pair(raw_data.get('symbol'),
-                                 raw_data.get('rootSymbol')),
+        # 'pair': _get_symbol_pair(raw_data.get('symbol'),
+        #                          raw_data.get('rootSymbol')),
         'tick': to_float(raw_data.get('tickSize')),
         'mark_price': mark_price,
         'face_price': face_price,
@@ -309,16 +309,16 @@ def split_order_book(ob_items, side, offset):
     return result
 
 
-def _get_symbol_pair(symbol: str, root_symbol: str) -> list:
-    # pylint: disable=unused-argument,fixme
-    return [symbol[:3], symbol[3:]]
-    # TODO: For wss packets
-    # if not root_symbol:
-    #     return ["", symbol]
-    # try:
-    #     pos = symbol.index(root_symbol)
-    # except ValueError:
-    #     return ["", symbol]
-    # if pos > 0:
-    #     return ["", symbol]
-    # return [root_symbol, symbol[pos:]]
+# def _get_symbol_pair(symbol: str, root_symbol: str) -> list:
+#     # pylint: disable=unused-argument,fixme
+#     return [symbol[:3], symbol[3:]]
+#     # TODO: For wss packets
+#     # if not root_symbol:
+#     #     return ["", symbol]
+#     # try:
+#     #     pos = symbol.index(root_symbol)
+#     # except ValueError:
+#     #     return ["", symbol]
+#     # if pos > 0:
+#     #     return ["", symbol]
+#     # return [root_symbol, symbol[pos:]]
