@@ -1,4 +1,5 @@
 from binance.client import Client as BaseClient
+from binance.exceptions import BinanceAPIException
 
 
 class Client(BaseClient):
@@ -39,3 +40,27 @@ class Client(BaseClient):
     def futures_transfer_futures_to_spot(self, **params):
         params['type'] = 2
         return self._request_margin_api('post', 'futures/transfer', True, data=params)
+
+    def get_lending_project_position_list(self, **params):
+        """Get Lending Product List
+
+        https://binance-docs.github.io/apidocs/spot/en/#get-customized-fixed-project-position-user_data
+
+        :param asset: required
+        :type asset: str
+        """
+        return self._request_margin_api('get', 'lending/project/position/list', signed=True, data=params)
+
+    def get_public_interest_rate(self, **params):
+        method = 'get'
+        uri = 'https://www.binance.com/gateway-api/v1/public/margin/vip/spec/list-all'
+        signed = False
+        result = self._request(method, uri, signed, **params)
+        return result.get('data', [])
+
+    def get_friendly_interest_rate(self, **params):
+        method = 'get'
+        uri = 'https://www.binance.com/gateway-api/v1/friendly/margin/interest-rate'
+        signed = False
+        result = self._request(method, uri, signed, data=params)
+        return result.get('data', [])
