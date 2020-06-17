@@ -80,6 +80,7 @@ WALLET_FIELDS = {
     'borrowed': float,
     'available_borrow': float,
     'interest': float,
+    'interest_rate': float,
     'unrealised_pnl': float,
     'margin_balance': float,
     'maint_margin': float,

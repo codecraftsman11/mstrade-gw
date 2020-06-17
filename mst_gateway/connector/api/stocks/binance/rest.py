@@ -166,15 +166,18 @@ class BinanceRestApi(StockRestApi):
 
     def _spot_wallet(self, **kwargs):
         data = self._binance_api(self._handler.get_account, **kwargs)
-        return utils.load_spot_wallet_data(data)
+        currencies = utils.load_currencies_as_dict(self._binance_api(self._handler.get_all_tickers))
+        return utils.load_spot_wallet_data(data, currencies)
 
     def _margin_wallet(self, **kwargs):
         data = self._binance_api(self._handler.get_margin_account, **kwargs)
-        return utils.load_margin_wallet_data(data)
+        currencies = utils.load_currencies_as_dict(self._binance_api(self._handler.get_all_tickers))
+        return utils.load_margin_wallet_data(data,  currencies)
 
     def _futures_wallet(self, **kwargs):
         data = self._binance_api(self._handler.futures_account, **kwargs)
-        return utils.load_futures_wallet_data(data)
+        currencies = utils.load_currencies_as_dict(self._binance_api(self._handler.futures_symbol_ticker))
+        return utils.load_futures_wallet_data(data, currencies)
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
         if schema.lower() == 'exchange':
@@ -186,9 +189,10 @@ class BinanceRestApi(StockRestApi):
             _spot = self._binance_api(self._handler.get_account, **kwargs)
             _margin = self._binance_api(self._handler.get_margin_account, **kwargs)
             _borrow = self._binance_api(self._handler.get_max_margin_loan, asset=asset.upper())
+            _interest_rates = self._binance_api(self._handler.get_friendly_interest_rate, **kwargs)
             return {
                 'exchange': utils.load_spot_wallet_detail_data(_spot, asset),
-                'margin2': utils.load_margin_wallet_detail_data(_margin, asset, _borrow)
+                'margin2': utils.load_margin_wallet_detail_data(_margin, asset, _borrow, _interest_rates)
             }
         if schema.lower() == 'futures':
             _spot = self._binance_api(self._handler.get_account, **kwargs)
@@ -232,6 +236,45 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(f"Invalid schema {schema}.")
         data = self._binance_api(method, asset=asset.upper(), amount=str(amount))
         return utils.load_transaction_id(data)
+
+    def convert_symbol(self, symbol: str, amount: float) -> float:
+        currency = self._binance_api(self._handler.get_symbol_ticker, symbol=symbol.upper())
+        _price = utils.to_float(currency.get('price')) or 0
+        return round(_price * amount, 8)
+
+    def get_wallet_summary(self, schema: str) -> dict:
+        if schema.lower() == 'exchange':
+            balances = utils.load_spot_wallet_balances(self._binance_api(self._handler.get_account))
+            currencies = utils.load_currencies_as_dict(self._binance_api(self._handler.get_all_tickers))
+        elif schema.lower() == 'margin2':
+            balances = utils.load_margin_wallet_balances(self._binance_api(self._handler.get_margin_account))
+            currencies = utils.load_currencies_as_dict(self._binance_api(self._handler.get_all_tickers))
+        elif schema.lower() == 'futures':
+            balances = utils.load_future_wallet_balances(self._binance_api(self._handler.futures_account))
+            currencies = utils.load_currencies_as_dict(self._binance_api(self._handler.futures_symbol_ticker))
+        else:
+            raise ConnectorError(f"Invalid schema {schema}.")
+
+        total_balance_btc = utils.load_wallet_summary(
+            currencies,
+            balances,
+            'btc',
+            ('balance', 'unrealised_pnl', 'margin_balance')
+        )
+        total_balance_usd = utils.load_wallet_summary(
+            currencies,
+            balances,
+            'usdt',
+            ('balance', 'unrealised_pnl', 'margin_balance')
+        )
+        return dict(
+            total_balance_btc=round(total_balance_btc['balance'], 8),
+            total_balance_usd=round(total_balance_usd['balance'], 8),
+            total_margin_balance_btc=round(total_balance_btc['margin_balance'], 8),
+            total_margin_balance_usd=round(total_balance_usd['margin_balance'], 8),
+            total_unrealised_pnl_btc=round(total_balance_btc['unrealised_pnl'], 8),
+            total_unrealised_pnl_usd=round(total_balance_usd['unrealised_pnl'], 8),
+        )
 
     def _binance_api(self, method: callable, **kwargs):
         try:
