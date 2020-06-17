@@ -52,6 +52,23 @@ class Client(BaseClient):
         return self._request_margin_api('get', 'lending/project/position/list', signed=True, data=params)
 
     def get_public_interest_rate(self, **params):
+        """
+        :returns: API response
+
+        .. code-block:: python
+            [
+                {
+                    "assetName": "MATIC",
+                    "specs": [
+                        {
+                            "vipLevel": "0",
+                            "dailyInterestRate": "0.00020000",
+                            "borrowLimit": "100000.00000000"
+                        }
+                    ]
+                }
+            ]
+        """
         method = 'get'
         uri = 'https://www.binance.com/gateway-api/v1/public/margin/vip/spec/list-all'
         signed = False
@@ -59,6 +76,19 @@ class Client(BaseClient):
         return result.get('data', [])
 
     def get_friendly_interest_rate(self, **params):
+        """
+        :returns: API response
+
+        .. code-block:: python
+            [
+               {
+                  "asset": "ADA",
+                  "interestRate": "0.00020000",
+                  "effectiveTimestamp": "1584763200000",
+                  "duration": "1"
+               }
+            ]
+        """
         method = 'get'
         uri = 'https://www.binance.com/gateway-api/v1/friendly/margin/interest-rate'
         signed = False
