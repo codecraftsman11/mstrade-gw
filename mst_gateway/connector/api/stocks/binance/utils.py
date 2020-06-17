@@ -351,16 +351,6 @@ def load_wallet_summary(currencies: dict, balances: list, asset: str,
     return total_balance
 
 
-# def load_wallet_summary(currencies: dict, balances: list, asset: str) -> Tuple[float, float]:
-#     total_balance = 0
-#     total_unrealised_pnl = 0
-#     for b in balances:
-#         _price = currencies.get(f"{b['currency']}{asset}".lower()) or 0
-#         total_balance += _price * b['balance']
-#         total_unrealised_pnl += _price * b['unrealised_pnl']
-#     return round(total_balance, 8), round(total_unrealised_pnl, 8)
-
-
 def load_currencies_as_dict(currencies: list):
     return {cur['symbol'].lower(): to_float(cur['price']) for cur in currencies}
 
