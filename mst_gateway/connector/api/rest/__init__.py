@@ -134,3 +134,11 @@ class StockRestApi(Connector):
     @abstractmethod
     def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
         raise NotImplementedError
+
+    @abstractmethod
+    def convert_symbol(self, symbol: str, amount: float) -> float:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_wallet_summary(self, schema: str) -> dict:
+        raise NotImplementedError
