@@ -3,6 +3,14 @@ from binance.exceptions import BinanceAPIException
 
 
 class Client(BaseClient):
+    FUTURES_API_V2_VERSION = 'v2'
+
+    def _create_futures_api_v2_uri(self, path):
+        return self.FUTURES_URL + '/' + self.FUTURES_API_V2_VERSION + '/' + path
+
+    def _request_futures_api_v2(self, method, path, signed=False, **kwargs):
+        uri = self._create_futures_api_v2_uri(path)
+        return self._request(method, uri, signed, True, **kwargs)
 
     def futures_transfer_spot_to_futures(self, **params):
         """Execute transfer between spot account and futures account.
@@ -69,10 +77,9 @@ class Client(BaseClient):
                 }
             ]
         """
-        method = 'get'
         uri = 'https://www.binance.com/gateway-api/v1/public/margin/vip/spec/list-all'
         signed = False
-        result = self._request(method, uri, signed, **params)
+        result = self._request('get', uri, signed, **params)
         return result.get('data', [])
 
     def get_friendly_interest_rate(self, **params):
@@ -89,8 +96,15 @@ class Client(BaseClient):
                }
             ]
         """
-        method = 'get'
         uri = 'https://www.binance.com/gateway-api/v1/friendly/margin/interest-rate'
         signed = False
-        result = self._request(method, uri, signed, data=params)
+        result = self._request('get', uri, signed, data=params)
         return result.get('data', [])
+
+    def futures_account_v2(self, **params):
+        """Get current account information.
+
+        https://binance-docs.github.io/apidocs/futures/en/#account-information-v2-user_data
+
+        """
+        return self._request_futures_api_v2('get', 'account', True, data=params)
