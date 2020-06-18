@@ -359,6 +359,19 @@ def load_currencies_as_list(currencies: list):
     return [{cur['symbol'].lower(): to_float(cur['price'])} for cur in currencies]
 
 
+def load_total_wallet_summary(total: dict, summary: dict, asset: str, fields: Union[list, tuple]):
+    for f in fields:
+        if total.get(f'total_{f}_{asset}'):
+            total[f'total_{f}_{asset}'] += summary[f]
+        else:
+            total[f'total_{f}_{asset}'] = summary[f]
+    return total
+
+
+def load_currency_exchange_symbol(currency: list) -> list:
+    return [{'symbol': c.get('symbol'), 'price': to_float(c.get('price'))} for c in currency]
+
+
 def to_wallet_state_type(value):
     if bool(value):
         return 'trade'

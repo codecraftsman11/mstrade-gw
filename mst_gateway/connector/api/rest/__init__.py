@@ -136,9 +136,9 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def convert_symbol(self, symbol: str, amount: float) -> float:
+    def currency_exchange_symbol(self, schema: str) -> list:
         raise NotImplementedError
 
     @abstractmethod
-    def get_wallet_summary(self, schema: str) -> dict:
+    def get_wallet_summary(self, schemas: iter) -> dict:
         raise NotImplementedError

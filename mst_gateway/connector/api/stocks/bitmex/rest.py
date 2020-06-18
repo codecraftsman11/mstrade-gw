@@ -283,10 +283,10 @@ class BitmexRestApi(StockRestApi):
                 + splitted_ob.get(api.BUY, [])
         return splitted_ob.get(side, [])
 
-    def convert_symbol(self, symbol: str, amount: float) -> float:
+    def currency_exchange_symbol(self, schema: str) -> list:
         raise NotImplementedError
 
-    def get_wallet_summary(self, schema: str) -> dict:
+    def get_wallet_summary(self, schemas: iter) -> dict:
         raise NotImplementedError
 
     def _bitmex_api(self, method: callable, **kwargs):
