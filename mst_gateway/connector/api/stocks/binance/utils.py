@@ -41,7 +41,8 @@ def load_exchange_symbol_info(raw_data: dict) -> dict:
         'symbol': raw_data.get('symbol'),
         'base_asset': raw_data.get('baseAsset'),
         'quote_asset': raw_data.get('quoteAsset'),
-        'schema': schema
+        'schema': schema,
+        'tick': to_float(raw_data.get('filters', [{}])[0].get('tickSize'))
     }
 
 
@@ -50,7 +51,8 @@ def load_futures_exchange_symbol_info(raw_data: dict) -> dict:
         'symbol': raw_data.get('symbol'),
         'base_asset': raw_data.get('baseAsset'),
         'quote_asset': raw_data.get('quoteAsset'),
-        'schema': ['futures']
+        'schema': ['futures'],
+        'tick': to_float(raw_data.get('filters', [{}])[0].get('tickSize'))
     }
 
 

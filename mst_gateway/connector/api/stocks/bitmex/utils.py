@@ -59,7 +59,8 @@ def load_exchange_symbol_info(raw_data: dict) -> dict:
         'symbol': symbol,
         'base_asset': base_asset,
         'quote_asset': _quote_asset(symbol, base_asset),
-        'schema': ['margin1']
+        'schema': ['margin1'],
+        'tick': to_float(raw_data.get('tickSize'))
     }
 
 
