@@ -224,21 +224,31 @@ def load_margin_wallet_balances(raw_data: dict) -> list:
 
 
 def load_margin_wallet_detail_data(raw_data: dict, asset: str,
-                                   max_borrow: dict = None, interest_rates: list = None) -> dict:
-    _h1_rate = None
-    for rate in interest_rates:
-        if rate.get('asset', '').upper() == asset.upper():
-            _ir = to_float(rate.get('interestRate')) or 0
-            _h1_rate = round(_ir * 100 / 24, 8)
-            break
+                                   max_borrow: dict, interest_rate: float) -> dict:
     for a in raw_data.get('userAssets'):
         if a.get('asset', '').upper() == asset.upper():
             return _margin_balance_data(
                 balances=[a],
                 max_borrow=_margin_max_borrow(max_borrow),
-                interest_rate=_h1_rate
+                interest_rate=interest_rate
             )[0]
     raise ConnectorError(f"Invalid asset {asset}.")
+
+
+def get_vip(data: dict) -> str:
+    return str(data.get('feeTier', 0))
+
+
+def get_interest_rate(asset_rates: list, vip_level: str, asset: str):
+    _h1_rate = None
+    for rate in asset_rates:
+        if rate.get('assetName', '').upper() == asset.upper():
+            for spec in rate['specs']:
+                if str(spec.get('vipLevel')) == vip_level:
+                    _r = to_float(spec.get('dailyInterestRate')) or 0
+                    _h1_rate = round(_r * 100 / 24, 8)
+                    break
+    return _h1_rate
 
 
 def load_futures_wallet_data(raw_data: dict, currencies: dict) -> dict:
