@@ -55,11 +55,16 @@ def load_symbol_data(raw_data: dict) -> dict:
 def load_exchange_symbol_info(raw_data: dict) -> dict:
     symbol = raw_data.get('symbol')
     base_asset = raw_data.get('rootSymbol')
+
+    if re.search(r'\d{2}$', symbol):
+        schema = ['futures']
+    else:
+        schema = ['margin1']
     return {
         'symbol': symbol,
         'base_asset': base_asset,
         'quote_asset': _quote_asset(symbol, base_asset),
-        'schema': ['margin1'],
+        'schema': schema,
         'tick': to_float(raw_data.get('tickSize'))
     }
 
@@ -308,7 +313,6 @@ def split_order_book(ob_items, side, offset):
     if offset and api.SELL in result:
         result[api.SELL] = result[api.SELL][:-offset]
     return result
-
 
 # def _get_symbol_pair(symbol: str, root_symbol: str) -> list:
 #     # pylint: disable=unused-argument,fixme
