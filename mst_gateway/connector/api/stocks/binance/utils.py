@@ -329,12 +329,12 @@ def _futures_balance_data(balances: list):
     return [
         {
             'currency': b['asset'],
-            'balance': to_float(b['walletBalance']),
+            'balance': to_float(b['maxWithdrawAmount']),
             'borrowed': None,
             'available_borrow': None,
             'interest': None,
             'interest_rate': None,
-            'unrealised_pnl': to_float(b['unrealizedProfit']),
+            'unrealised_pnl': abs(to_float(b['unrealizedProfit'])),
             'margin_balance': to_float(b['marginBalance']),
             'maint_margin': to_float(b['maintMargin']),
             'init_margin': to_float(b['initialMargin']),
@@ -404,7 +404,7 @@ def to_date(token: Union[datetime, int]) -> Optional[datetime]:
         return None
 
 
-def to_float(token: Union[int, float, None]) -> Optional[float]:
+def to_float(token: Union[int, float, str, None]) -> Optional[float]:
     try:
         return float(token)
     except (ValueError, TypeError):
