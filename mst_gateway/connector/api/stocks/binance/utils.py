@@ -286,6 +286,7 @@ def _spot_balance_data(balances: list):
         {
             'currency': b['asset'],
             'balance': to_float(b['free']),
+            'withdraw_balance': to_float(b['free']),
             'borrowed': None,
             'available_borrow': None,
             'interest': None,
@@ -305,6 +306,7 @@ def _margin_balance_data(balances: list, max_borrow: float = None, interest_rate
         {
             'currency': b['asset'],
             'balance': to_float(b['netAsset']),
+            'withdraw_balance': round(to_float(b['netAsset']) - (to_float(b['interest']) + to_float(b['borrowed'])), 8),
             'borrowed': to_float(b['borrowed']),
             'available_borrow': max_borrow,
             'interest': to_float(b['interest']),
@@ -329,7 +331,8 @@ def _futures_balance_data(balances: list):
     return [
         {
             'currency': b['asset'],
-            'balance': to_float(b['maxWithdrawAmount']),
+            'balance': to_float(b['walletBalance']),
+            'withdraw_balance': to_float(b['maxWithdrawAmount']),
             'borrowed': None,
             'available_borrow': None,
             'interest': None,

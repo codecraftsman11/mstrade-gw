@@ -77,6 +77,7 @@ TRADE_FIELDS = {
 WALLET_FIELDS = {
     'currency': str,
     'balance': float,
+    'withdraw_balance': float,
     'borrowed': float,
     'available_borrow': float,
     'interest': float,
