@@ -178,14 +178,15 @@ def load_user_data(raw_data: dict) -> dict:
     return data
 
 
-def load_spot_wallet_data(raw_data: dict, currencies: dict) -> dict:
+def load_spot_wallet_data(raw_data: dict, currencies: dict,
+                          assets: Union[list, tuple], fields: Union[list, tuple]) -> dict:
     balances = _spot_balance_data(raw_data.get('balances'))
-    total_balance_btc = load_wallet_summary(currencies, balances, 'btc', ['balance'])
-    total_balance_usd = load_wallet_summary(currencies, balances, 'usdt', ['balance'])
+    total_balance = dict()
+    for asset in assets:
+        total_balance[asset] = load_wallet_summary(currencies, balances, asset, ['balance'])
     return {
-        'total_balance_btc': round(total_balance_btc['balance'], 8),
-        'total_balance_usd': round(total_balance_usd['balance'], 8),
-        'balances': balances
+        'balances': balances,
+        **_load_total_wallet_summary_list(total_balance, ['balance'])
     }
 
 
@@ -200,22 +201,19 @@ def load_spot_wallet_detail_data(raw_data: dict, asset: str) -> dict:
     raise ConnectorError(f"Invalid asset {asset}.")
 
 
-def load_margin_wallet_data(raw_data: dict, currencies: dict) -> dict:
+def load_margin_wallet_data(raw_data: dict, currencies: dict,
+                            assets: Union[list, tuple], fields: Union[list, tuple]) -> dict:
     balances = _margin_balance_data(raw_data.get('userAssets'))
-    total_balance_btc = load_wallet_summary(currencies, balances, 'btc', ['balance', 'borrowed', 'margin_balance'])
-    total_balance_usd = load_wallet_summary(currencies, balances, 'usdt', ['balance', 'borrowed', 'margin_balance'])
+    total_balance = dict()
+    for asset in assets:
+        total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
     return {
-        'total_balance_btc': round(total_balance_btc['balance'], 8),
-        'total_balance_usd': round(total_balance_usd['balance'], 8),
-        'total_borrowed_btc': round(total_balance_btc['borrowed'], 8),
-        'total_borrowed_usd': round(total_balance_usd['borrowed'], 8),
-        'total_margin_balance_btc': round(total_balance_btc['margin_balance'], 8),
-        'total_margin_balance_usd': round(total_balance_usd['margin_balance'], 8),
         'trade_enabled': raw_data.get('tradeEnabled'),
         'transfer_enabled': raw_data.get('transferEnabled'),
         'borrow_enabled': raw_data.get('borrowEnabled'),
         'margin_level': raw_data.get('marginLevel'),
-        'balances': balances
+        'balances': balances,
+        **_load_total_wallet_summary_list(total_balance, fields)
     }
 
 
@@ -251,22 +249,21 @@ def get_interest_rate(asset_rates: list, vip_level: str, asset: str):
     return _h1_rate
 
 
-def load_futures_wallet_data(raw_data: dict, currencies: dict) -> dict:
+def load_futures_wallet_data(raw_data: dict, currencies: dict,
+                             assets: Union[list, tuple], fields: Union[list, tuple]) -> dict:
     balances = _futures_balance_data(raw_data.get('assets'))
-    total_balance_btc = load_wallet_summary(currencies, balances, 'btc', ['balance', 'margin_balance'])
-    total_balance_usd = load_wallet_summary(currencies, balances, 'usdt', ['balance', 'margin_balance'])
+    total_balance = dict()
+    for asset in assets:
+        total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
     return {
-        'total_balance_btc': round(total_balance_btc['balance'], 8),
-        'total_balance_usd': round(total_balance_usd['balance'], 8),
-        'total_margin_balance_btc': round(total_balance_btc['margin_balance'], 8),
-        'total_margin_balance_usd': round(total_balance_usd['margin_balance'], 8),
         'trade_enabled': raw_data.get('canTrade'),
         'total_initial_margin': to_float(raw_data.get('totalInitialMargin')),
         'total_maint_margin': to_float(raw_data.get('totalMaintMargin')),
         'total_open_order_initial_margin': to_float(raw_data.get('totalOpenOrderInitialMargin')),
         'total_position_initial_margin': to_float(raw_data.get('totalPositionInitialMargin')),
         'total_unrealised_pnl': to_float(raw_data.get('totalUnrealizedProfit')),
-        'balances': balances
+        'balances': balances,
+        **_load_total_wallet_summary_list(total_balance, fields)
     }
 
 
@@ -347,10 +344,30 @@ def _futures_balance_data(balances: list):
     ]
 
 
+def _load_total_wallet_summary_list(summary, fields):
+    total = dict()
+    for field in fields:
+        t_field = f'total_{field}'
+        total[t_field] = dict()
+        for k, v in summary.items():
+            if total[t_field].get(k):
+                total[t_field][k] += v[field]
+            else:
+                total[t_field][k] = v[field]
+    for f, asset in total.items():
+        for k, v in asset.items():
+            total[f][k] = round(v, 8)
+    return total
+
+
 def load_wallet_summary(currencies: dict, balances: list, asset: str,
                         fields: Union[list, tuple, None]):
     if fields is None:
         fields = ('balance',)
+    if asset.lower() == 'usd':
+        asset = 'usdt'
+    if asset.lower() == 'xbt':
+        asset = 'btc'
     total_balance = dict()
     for f in fields:
         total_balance[f] = 0
@@ -372,12 +389,17 @@ def load_currencies_as_list(currencies: list):
     return [{cur['symbol'].lower(): to_float(cur['price'])} for cur in currencies]
 
 
-def load_total_wallet_summary(total: dict, summary: dict, asset: str, fields: Union[list, tuple]):
-    for f in fields:
-        if total.get(f'total_{f}_{asset}'):
-            total[f'total_{f}_{asset}'] += summary[f]
-        else:
-            total[f'total_{f}_{asset}'] = summary[f]
+def load_total_wallet_summary(total: dict, summary: dict, assets: Union[list, tuple], fields: Union[list, tuple]):
+    for schema in summary.keys():
+        for field in fields:
+            t_field = f'total_{field}'
+            if total.get(t_field) is None:
+                total[t_field] = dict()
+            for asset in assets:
+                if total[t_field].get(asset) is None:
+                    total[t_field][asset] = 0
+                else:
+                    total[t_field][asset] += summary[schema][asset][field]
     return total
 
 

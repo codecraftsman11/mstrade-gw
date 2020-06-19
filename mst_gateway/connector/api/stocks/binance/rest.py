@@ -166,19 +166,25 @@ class BinanceRestApi(StockRestApi):
         return dict(balances=list())
 
     def _spot_wallet(self, **kwargs):
+        assets = kwargs.get('assets', ('btc', 'usd'))
+        fields = ('balance',)
         data = self._binance_api(self._handler.get_account, **kwargs)
         currencies = utils.load_currencies_as_dict(self._binance_api(self._handler.get_all_tickers))
-        return utils.load_spot_wallet_data(data, currencies)
+        return utils.load_spot_wallet_data(data, currencies, assets, fields)
 
     def _margin_wallet(self, **kwargs):
+        assets = kwargs.get('assets', ('btc', 'usd'))
+        fields = ('balance', 'unrealised_pnl', 'margin_balance')
         data = self._binance_api(self._handler.get_margin_account, **kwargs)
         currencies = utils.load_currencies_as_dict(self._binance_api(self._handler.get_all_tickers))
-        return utils.load_margin_wallet_data(data,  currencies)
+        return utils.load_margin_wallet_data(data, currencies, assets, fields)
 
     def _futures_wallet(self, **kwargs):
+        assets = kwargs.get('assets', ('btc', 'usd'))
+        fields = ('balance', 'unrealised_pnl', 'margin_balance')
         data = self._binance_api(self._handler.futures_account, **kwargs)
         currencies = utils.load_currencies_as_dict(self._binance_api(self._handler.futures_symbol_ticker))
-        return utils.load_futures_wallet_data(data, currencies)
+        return utils.load_futures_wallet_data(data, currencies, assets, fields)
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
         if schema.lower() == 'exchange':
@@ -251,11 +257,15 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(f"Invalid schema {schema}.")
         return utils.load_currency_exchange_symbol(currency)
 
-    def get_wallet_summary(self, schemas: iter) -> dict:
+    def get_wallet_summary(self, schemas: iter, **kwargs) -> dict:
         if not schemas:
             schemas = ('exchange', 'margin2', 'futures')
+        assets = kwargs.get('assets', ('btc', 'usd'))
+        fields = ('balance', 'unrealised_pnl', 'margin_balance')
+
         total_summary = dict()
         for schema in schemas:
+            total_balance = {schema: {}}
             if schema == 'exchange':
                 balances = utils.load_spot_wallet_balances(self._binance_api(self._handler.get_account))
                 currencies = utils.load_currencies_as_dict(self._binance_api(self._handler.get_all_tickers))
@@ -267,12 +277,9 @@ class BinanceRestApi(StockRestApi):
                 currencies = utils.load_currencies_as_dict(self._binance_api(self._handler.futures_symbol_ticker))
             else:
                 continue
-
-            fields = ('balance', 'unrealised_pnl', 'margin_balance')
-            total_balance_btc = utils.load_wallet_summary(currencies, balances, 'btc', fields)
-            total_balance_usd = utils.load_wallet_summary(currencies, balances, 'usdt', fields)
-            utils.load_total_wallet_summary(total_summary, total_balance_btc, 'btc', fields)
-            utils.load_total_wallet_summary(total_summary, total_balance_usd, 'usd', fields)
+            for asset in assets:
+                total_balance[schema][asset] = utils.load_wallet_summary(currencies, balances, asset, fields)
+            utils.load_total_wallet_summary(total_summary, total_balance, assets, fields)
         return total_summary
 
     def _binance_api(self, method: callable, **kwargs):

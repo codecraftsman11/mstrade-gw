@@ -286,7 +286,7 @@ class BitmexRestApi(StockRestApi):
     def currency_exchange_symbol(self, schema: str) -> list:
         raise NotImplementedError
 
-    def get_wallet_summary(self, schemas: iter) -> dict:
+    def get_wallet_summary(self, schemas: iter, **kwargs) -> dict:
         raise NotImplementedError
 
     def _bitmex_api(self, method: callable, **kwargs):
