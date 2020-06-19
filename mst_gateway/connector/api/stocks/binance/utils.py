@@ -306,7 +306,7 @@ def _margin_balance_data(balances: list, max_borrow: float = None, interest_rate
         {
             'currency': b['asset'],
             'balance': to_float(b['netAsset']),
-            'withdraw_balance': round(to_float(b['netAsset']) - (to_float(b['interest']) + to_float(b['borrowed'])), 8),
+            'withdraw_balance': to_float(b['netAsset']),
             'borrowed': to_float(b['borrowed']),
             'available_borrow': max_borrow,
             'interest': to_float(b['interest']),
