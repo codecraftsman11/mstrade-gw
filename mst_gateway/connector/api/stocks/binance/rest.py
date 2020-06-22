@@ -140,9 +140,9 @@ class BinanceRestApi(StockRestApi):
         data = self._binance_api(self._handler.get_all_orders, **params)
         return [utils.load_order_data(d) for d in data][offset:count]
 
-    def list_trades(self, symbol, **params) -> list:
+    def list_trades(self, symbol, system_symbol: str, **params) -> list:
         data = self._binance_api(self._handler.get_recent_trades, symbol=symbol.upper(), **self._api_kwargs(params))
-        return [utils.load_trade_data(d, symbol.upper()) for d in data]
+        return [utils.load_trade_data(d, symbol, system_symbol) for d in data]
 
     def close_order(self, order_id):
         raise NotImplementedError
@@ -157,7 +157,7 @@ class BinanceRestApi(StockRestApi):
         raise NotImplementedError
 
     def get_order_book(
-            self, symbol: str, depth: int = None, side: int = None,
+            self, symbol, system_symbol: str, depth: int = None, side: int = None,
             split: bool = False, offset: int = 0, schema: str = None):
         limit = 100
         if depth:
@@ -169,7 +169,7 @@ class BinanceRestApi(StockRestApi):
             data = self._binance_api(self._handler.futures_order_book, symbol=symbol.upper(), limit=limit)
         else:
             data = self._binance_api(self._handler.get_order_book, symbol=symbol.upper(), limit=limit)
-        return utils.load_order_book_data(data, symbol, side, split, offset, depth)
+        return utils.load_order_book_data(data, symbol, system_symbol, side, split, offset, depth)
 
     def get_wallet(self, **kwargs) -> dict:
         schema = kwargs.pop('schema', '').lower()

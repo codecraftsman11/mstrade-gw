@@ -129,16 +129,17 @@ def load_user_data(raw_data: dict) -> dict:
     return data
 
 
-def load_trade_data(raw_data: dict) -> dict:
-    return load_quote_data(raw_data)
+def load_trade_data(raw_data: dict, system_symbol=None) -> dict:
+    return load_quote_data(raw_data, system_symbol)
 
 
-def load_quote_data(raw_data: dict) -> dict:
+def load_quote_data(raw_data: dict, system_symbol) -> dict:
     quote_time = to_date(raw_data.get('timestamp'))
     return {
         'time': quote_time,
         'timestamp': time2timestamp(quote_time),
-        'symbol': raw_data.get('symbol'),
+        'symbol': raw_data.get('symbol').lower(),
+        'system_symbol': system_symbol,
         'price': to_float(raw_data.get('price')),
         'volume': raw_data.get('size'),
         'side': load_order_side(raw_data.get('side'))
@@ -159,10 +160,11 @@ def load_quote_bin_data(raw_data: dict) -> dict:
     }
 
 
-def load_order_book_data(raw_data: dict) -> dict:
+def load_order_book_data(raw_data: dict, system_symbol: str) -> dict:
     return {
         'id': raw_data.get('id'),
-        'symbol': raw_data.get('symbol'),
+        'symbol': raw_data.get('symbol').lower(),
+        'system_symbol': system_symbol,
         'price': to_float(raw_data.get("price")),
         'volume': raw_data.get('size'),
         'side': load_order_side(raw_data.get('side'))
@@ -293,7 +295,7 @@ def calc_price(symbol: str, face_price: float) -> Optional[float]:
     return result
 
 
-def split_order_book(ob_items, side, offset):
+def split_order_book(ob_items, side, offset, system_symbol: str):
     result = {}
     if side == var.BITMEX_BUY or side is None:
         result[api.BUY] = []
@@ -303,7 +305,7 @@ def split_order_book(ob_items, side, offset):
     for _ob in ob_items:
         if side and _ob['side'] != side:
             continue
-        data = load_order_book_data(_ob)
+        data = load_order_book_data(_ob, system_symbol)
         if _ob['side'] == var.BITMEX_BUY:
             buy_i += 1
             if buy_i > offset:
