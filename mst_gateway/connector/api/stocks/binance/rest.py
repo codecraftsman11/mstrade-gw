@@ -1,3 +1,4 @@
+from typing import Optional, Union
 from logging import Logger
 from datetime import datetime, timedelta
 from bravado.exception import HTTPError
@@ -182,16 +183,25 @@ class BinanceRestApi(StockRestApi):
         return dict(balances=list())
 
     def _spot_wallet(self, **kwargs):
+        assets = kwargs.get('assets', ('btc', 'usd'))
+        fields = ('balance',)
         data = self._binance_api(self._handler.get_account, **kwargs)
-        return utils.load_spot_wallet_data(data)
+        currencies = utils.load_currencies_as_dict(self._binance_api(self._handler.get_all_tickers))
+        return utils.load_spot_wallet_data(data, currencies, assets, fields)
 
     def _margin_wallet(self, **kwargs):
+        assets = kwargs.get('assets', ('btc', 'usd'))
+        fields = ('balance', 'unrealised_pnl', 'margin_balance')
         data = self._binance_api(self._handler.get_margin_account, **kwargs)
-        return utils.load_margin_wallet_data(data)
+        currencies = utils.load_currencies_as_dict(self._binance_api(self._handler.get_all_tickers))
+        return utils.load_margin_wallet_data(data, currencies, assets, fields)
 
     def _futures_wallet(self, **kwargs):
+        assets = kwargs.get('assets', ('btc', 'usd'))
+        fields = ('balance', 'unrealised_pnl', 'margin_balance')
         data = self._binance_api(self._handler.futures_account, **kwargs)
-        return utils.load_futures_wallet_data(data)
+        currencies = utils.load_currencies_as_dict(self._binance_api(self._handler.futures_symbol_ticker))
+        return utils.load_futures_wallet_data(data, currencies, assets, fields)
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
         if schema.lower() == 'exchange':
@@ -203,9 +213,14 @@ class BinanceRestApi(StockRestApi):
             _spot = self._binance_api(self._handler.get_account, **kwargs)
             _margin = self._binance_api(self._handler.get_margin_account, **kwargs)
             _borrow = self._binance_api(self._handler.get_max_margin_loan, asset=asset.upper())
+            _interest_rate = utils.get_interest_rate(
+                self._binance_api(self._handler.get_public_interest_rate, **kwargs),
+                utils.get_vip(self._binance_api(self._handler.futures_account_v2)),
+                asset
+            )
             return {
                 'exchange': utils.load_spot_wallet_detail_data(_spot, asset),
-                'margin2': utils.load_margin_wallet_detail_data(_margin, asset, _borrow)
+                'margin2': utils.load_margin_wallet_detail_data(_margin, asset, _borrow, _interest_rate)
             }
         if schema.lower() == 'futures':
             _spot = self._binance_api(self._handler.get_account, **kwargs)
@@ -249,6 +264,40 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(f"Invalid schema {schema}.")
         data = self._binance_api(method, asset=asset.upper(), amount=str(amount))
         return utils.load_transaction_id(data)
+
+    def currency_exchange_symbol(self, schema: str) -> list:
+        if schema.lower() in ('exchange', 'margin2'):
+            currency = self._binance_api(self._handler.get_symbol_ticker)
+        elif schema.lower() == 'futures':
+            currency = self._binance_api(self._handler.futures_symbol_ticker)
+        else:
+            raise ConnectorError(f"Invalid schema {schema}.")
+        return utils.load_currency_exchange_symbol(currency)
+
+    def get_wallet_summary(self, schemas: iter, **kwargs) -> dict:
+        if not schemas:
+            schemas = ('exchange', 'margin2', 'futures')
+        assets = kwargs.get('assets', ('btc', 'usd'))
+        fields = ('balance', 'unrealised_pnl', 'margin_balance')
+
+        total_summary = dict()
+        for schema in schemas:
+            total_balance = {schema: {}}
+            if schema == 'exchange':
+                balances = utils.load_spot_wallet_balances(self._binance_api(self._handler.get_account))
+                currencies = utils.load_currencies_as_dict(self._binance_api(self._handler.get_all_tickers))
+            elif schema == 'margin2':
+                balances = utils.load_margin_wallet_balances(self._binance_api(self._handler.get_margin_account))
+                currencies = utils.load_currencies_as_dict(self._binance_api(self._handler.get_all_tickers))
+            elif schema == 'futures':
+                balances = utils.load_future_wallet_balances(self._binance_api(self._handler.futures_account))
+                currencies = utils.load_currencies_as_dict(self._binance_api(self._handler.futures_symbol_ticker))
+            else:
+                continue
+            for asset in assets:
+                total_balance[schema][asset] = utils.load_wallet_summary(currencies, balances, asset, fields)
+            utils.load_total_wallet_summary(total_summary, total_balance, assets, fields)
+        return total_summary
 
     def _binance_api(self, method: callable, **kwargs):
         try:
