@@ -141,10 +141,10 @@ class BitmexRestApi(StockRestApi):
 
     def get_wallet(self, **kwargs) -> dict:
         schema = kwargs.pop('schema', 'margin1').lower()
-        if schema == 'margin1':
+        if schema in ('margin1', 'futures'):
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
             return utils.load_wallet_data(data)
-        return dict(balances=list())
+        raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
         raise ConnectorError('Bitmex api error. Details: Invalid method.')
@@ -287,7 +287,23 @@ class BitmexRestApi(StockRestApi):
         raise NotImplementedError
 
     def get_wallet_summary(self, schemas: iter, **kwargs) -> dict:
-        raise NotImplementedError
+        if not schemas:
+            schemas = ('margin1',)
+        assets = kwargs.get('assets', ('btc', 'usd'))
+        fields = ('balance', 'unrealised_pnl', 'margin_balance')
+
+        total_summary = dict()
+        for schema in schemas:
+            total_balance = {schema: {}}
+            if schema == 'margin1':
+                balances = self.get_wallet(schema=schema)['balances']
+                currencies = utils.load_currencies_as_dict(self.list_symbols())
+            else:
+                continue
+            for asset in assets:
+                total_balance[schema][asset] = utils.load_wallet_summary(currencies, balances, asset, fields)
+            utils.load_total_wallet_summary(total_summary, total_balance, assets, fields)
+        return total_summary
 
     def _bitmex_api(self, method: callable, **kwargs):
         headers = {}
