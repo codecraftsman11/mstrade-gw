@@ -163,7 +163,7 @@ class BinanceRestApi(StockRestApi):
             return self._margin_wallet(**kwargs)
         if schema == 'futures':
             return self._futures_wallet(**kwargs)
-        return dict(balances=list())
+        raise ConnectorError(f"Invalid schema {schema}.")
 
     def _spot_wallet(self, **kwargs):
         assets = kwargs.get('assets', ('btc', 'usd'))
