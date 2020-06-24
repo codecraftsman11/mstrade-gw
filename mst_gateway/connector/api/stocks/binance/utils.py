@@ -63,7 +63,7 @@ def _binance_pair(symbol):
     return symbol[:base], symbol[-quote:]
 
 
-def load_trade_data(raw_data: dict, symbol: str, system_symbol: str) -> dict:
+def load_trade_data(raw_data: dict, symbol: str) -> dict:
     """
     {
         "id": 28457,
@@ -79,7 +79,6 @@ def load_trade_data(raw_data: dict, symbol: str, system_symbol: str) -> dict:
         'time': to_date(raw_data.get('time')),
         'timestamp': raw_data.get('time'),
         'symbol': symbol,
-        'system_symbol': system_symbol,
         'price': to_float(raw_data.get('price')),
         'volume': raw_data.get('qty'),
         'side': load_order_side(raw_data.get('isBuyerMaker')),
@@ -105,7 +104,7 @@ def generate_order_book_id(symbol: str, price: float) -> int:
     return result
 
 
-def load_order_book_data(raw_data: dict, symbol: str, system_symbol: str, ent_side, split, offset, depth) -> Union[list, dict]:
+def load_order_book_data(raw_data: dict, symbol: str, ent_side, split, offset, depth) -> Union[list, dict]:
     _raw_data = dict()
     if offset and depth:
         _raw_data['asks'] = raw_data['asks'][offset:depth + offset]
@@ -132,7 +131,6 @@ def load_order_book_data(raw_data: dict, symbol: str, system_symbol: str, ent_si
                 res[side].append(dict(
                     id=generate_order_book_id(symbol, to_float(item[0])),
                     symbol=symbol,
-                    system_symbol=system_symbol,
                     price=to_float(item[0]),
                     volume=to_float(item[1]),
                     side=side
@@ -142,7 +140,6 @@ def load_order_book_data(raw_data: dict, symbol: str, system_symbol: str, ent_si
                 res.append(dict(
                     id=generate_order_book_id(symbol, to_float(item[0])),
                     symbol=symbol,
-                    system_symbol=system_symbol,
                     price=to_float(item[0]),
                     volume=to_float(item[1]),
                     side=side

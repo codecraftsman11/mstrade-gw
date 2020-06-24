@@ -7,6 +7,7 @@ from .lib import Client
 from . import utils, var
 from ...rest import StockRestApi
 from ...rest.throttle import ThrottleRest
+from ..... import exceptions
 from .....exceptions import ConnectorError
 
 
@@ -37,17 +38,20 @@ class BinanceRestApi(StockRestApi):
     def get_symbol(self, symbol, schema) -> dict:
         if schema == 'futures':
             data = self._binance_api(self._handler.futures_ticker, symbol=symbol.upper())
-        else:
+        elif schema in ('margin2', 'exchange'):
             data = self._binance_api(self._handler.get_ticker, symbol=symbol.upper())
+        else:
+            raise ConnectorError(f"Invalid schema {schema}.")
         return utils.load_symbol_data(data)
 
     def list_symbols(self, schema, **kwargs) -> list:
         if schema == 'futures':
             data = self._binance_api(self._handler.futures_ticker)
             return [utils.load_symbol_data(d) for d in data]
-        else:
+        elif schema in ('margin2', 'exchange'):
             data = self._binance_api(self._handler.get_ticker)
             return [utils.load_symbol_data(d) for d in data if utils.to_float(d['weightedAvgPrice'])]
+        raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_exchange_symbol_info(self) -> list:
         f_data = self._binance_api(self._handler.futures_exchange_info)
@@ -141,9 +145,9 @@ class BinanceRestApi(StockRestApi):
         data = self._binance_api(self._handler.get_all_orders, **params)
         return [utils.load_order_data(d) for d in data][offset:count]
 
-    def list_trades(self, symbol, system_symbol: str, **params) -> list:
+    def list_trades(self, symbol, **params) -> list:
         data = self._binance_api(self._handler.get_recent_trades, symbol=symbol.upper(), **self._api_kwargs(params))
-        return [utils.load_trade_data(d, symbol, system_symbol) for d in data]
+        return [utils.load_trade_data(d, symbol) for d in data]
 
     def close_order(self, order_id):
         raise NotImplementedError
@@ -158,7 +162,7 @@ class BinanceRestApi(StockRestApi):
         raise NotImplementedError
 
     def get_order_book(
-            self, symbol, system_symbol: str, depth: int = None, side: int = None,
+            self, symbol, depth: int = None, side: int = None,
             split: bool = False, offset: int = 0, schema: str = None):
         limit = 100
         if depth:
@@ -168,9 +172,11 @@ class BinanceRestApi(StockRestApi):
                     break
         if schema == 'futures':
             data = self._binance_api(self._handler.futures_order_book, symbol=symbol.upper(), limit=limit)
-        else:
+        elif schema in ('margin2', 'exchange'):
             data = self._binance_api(self._handler.get_order_book, symbol=symbol.upper(), limit=limit)
-        return utils.load_order_book_data(data, symbol, system_symbol, side, split, offset, depth)
+        else:
+            raise ConnectorError(f"Invalid schema {schema}.")
+        return utils.load_order_book_data(data, symbol, side, split, offset, depth)
 
     def get_wallet(self, **kwargs) -> dict:
         schema = kwargs.pop('schema', '').lower()
