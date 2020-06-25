@@ -196,7 +196,7 @@ def load_wallet_data(raw_data: dict) -> dict:
     return {
         'balances': [
             {
-                'currency': to_xbt(raw_data.get('currency')),
+                'currency': raw_data.get('currency', '').upper(),
                 'balance': to_xbt(raw_data.get('walletBalance')),
                 'withdraw_balance': None,
                 'borrowed': None,
@@ -218,6 +218,47 @@ def to_wallet_state_type(value):
     if bool(value):
         return 'trade'
     return 'hold'
+
+
+def load_wallet_summary(currencies: dict, balances: list, asset: str,
+                        fields: Union[list, tuple, None]):
+    if fields is None:
+        fields = ('balance',)
+    if asset.lower() == 'btc':
+        asset = 'xbt'
+    total_balance = dict()
+    for f in fields:
+        total_balance[f] = 0
+    for b in balances:
+        if b['currency'].lower() == asset.lower():
+            _price = 1
+        else:
+            _price = currencies.get(f"{b['currency']}{asset}".lower()) or 0
+        for f in fields:
+            total_balance[f] += _price * (b[f] or 0)
+    return total_balance
+
+
+def load_total_wallet_summary(total: dict, summary: dict, assets: Union[list, tuple], fields: Union[list, tuple]):
+    for schema in summary.keys():
+        for field in fields:
+            t_field = f'total_{field}'
+            if total.get(t_field) is None:
+                total[t_field] = dict()
+            for asset in assets:
+                if total[t_field].get(asset) is None:
+                    total[t_field][asset] = summary[schema][asset][field]
+                else:
+                    total[t_field][asset] += summary[schema][asset][field]
+    return total
+
+
+def load_currency(currency: dict):
+    return {currency['symbol'].lower(): to_float(currency['price'])}
+
+
+def load_currencies_as_dict(currencies: list):
+    return {cur['symbol'].lower(): to_float(cur['price']) for cur in currencies}
 
 
 def to_xbt(value: int):

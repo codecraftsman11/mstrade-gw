@@ -422,7 +422,7 @@ def load_total_wallet_summary(total: dict, summary: dict, assets: Union[list, tu
                 total[t_field] = dict()
             for asset in assets:
                 if total[t_field].get(asset) is None:
-                    total[t_field][asset] = 0
+                    total[t_field][asset] = summary[schema][asset][field]
                 else:
                     total[t_field][asset] += summary[schema][asset][field]
     return total
