@@ -162,7 +162,7 @@ class BinanceRestApi(StockRestApi):
         raise NotImplementedError
 
     def get_order_book(
-            self, symbol, depth: int = None, side: int = None,
+            self, symbol: str, depth: int = None, side: int = None,
             split: bool = False, offset: int = 0, schema: str = None):
         limit = 100
         if depth:

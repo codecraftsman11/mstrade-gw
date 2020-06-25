@@ -111,7 +111,7 @@ class StockRestApi(Connector):
 
     @abstractmethod
     def get_order_book(
-            self, symbol, depth: int = None, side: int = None,
+            self, symbol: str, depth: int = None, side: int = None,
             split: bool = False, offset: int = 0, schema: str = None) -> Union[list, dict]:
         raise NotImplementedError
 
