@@ -167,11 +167,12 @@ def load_quote_data(raw_data: dict, symbol: str = None) -> dict:
     }
 
 
-def load_quote_bin_data(raw_data: list, symbol: str = None) -> dict:
+def load_quote_bin_data(raw_data: list, symbol: str = None, schema: str = None) -> dict:
     return {
         'time': to_date(raw_data[0]),
         'timestamp': raw_data[0],
         'symbol': symbol,
+        'schema': schema,
         'open': to_float(raw_data[1]),
         'close': to_float(raw_data[4]),
         'high': to_float(raw_data[2]),

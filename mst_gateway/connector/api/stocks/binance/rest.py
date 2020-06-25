@@ -71,13 +71,21 @@ class BinanceRestApi(StockRestApi):
         data = self._binance_api(self._handler.get_historical_trades, symbol=symbol.upper())
         return [utils.load_quote_data(d, symbol) for d in data]
 
-    def _list_quote_bins_page(self, symbol, binsize='1m', count=100, **kwargs):
-        data = self._binance_api(
-            self._handler.get_klines, symbol=symbol.upper(), interval=binsize, limit=count, **kwargs
-        )
-        return [utils.load_quote_bin_data(d, symbol.upper()) for d in data]
+    def _list_quote_bins_page(self, symbol, schema, binsize='1m', count=100, **kwargs):
+        if schema == 'futures':
+            data = self._binance_api(
+                self._handler.futures_klines, symbol=symbol.upper(), interval=binsize, limit=count, **kwargs
+            )
+            return [utils.load_quote_bin_data(d, symbol.upper(), schema) for d in data]
+        elif schema in ('margin2', 'exchange'):
+            data = self._binance_api(
+                self._handler.get_klines, symbol=symbol.upper(), interval=binsize, limit=count, **kwargs
+            )
+            return [utils.load_quote_bin_data(d, symbol.upper(), schema) for d in data]
+        else:
+            raise ConnectorError(f"Invalid schema {schema}.")
 
-    def list_quote_bins(self, symbol, binsize='1m', count=100, **kwargs) -> list:
+    def list_quote_bins(self, symbol, schema, binsize='1m', count=100, **kwargs) -> list:
         pages = int((count - 1) / var.BINANCE_MAX_QUOTE_BINS_COUNT + 1)
         rest = count % var.BINANCE_MAX_QUOTE_BINS_COUNT
         quote_bins = []
@@ -88,6 +96,7 @@ class BinanceRestApi(StockRestApi):
             else:
                 items_count = var.BINANCE_MAX_QUOTE_BINS_COUNT
             quotes = self._list_quote_bins_page(symbol=symbol,
+                                                schema=schema,
                                                 binsize=binsize,
                                                 count=items_count,
                                                 **kwargs)

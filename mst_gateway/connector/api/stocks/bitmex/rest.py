@@ -107,7 +107,7 @@ class BitmexRestApi(StockRestApi):
                                      **self._api_kwargs(kwargs))
         return [utils.load_quote_data(data) for data in quotes]
 
-    def _list_quote_bins_page(self, symbol, binsize='1m', count=100, offset=0,
+    def _list_quote_bins_page(self, symbol, schema, binsize='1m', count=100, offset=0,
                               **kwargs):
         quote_bins, _ = self._bitmex_api(self._handler.Trade.Trade_getBucketed,
                                          symbol=utils.symbol2stock(symbol),
@@ -116,9 +116,9 @@ class BitmexRestApi(StockRestApi):
                                          start=offset,
                                          count=count,
                                          **self._api_kwargs(kwargs))
-        return [utils.load_quote_bin_data(data) for data in quote_bins]
+        return [utils.load_quote_bin_data(data, schema) for data in quote_bins]
 
-    def list_quote_bins(self, symbol, binsize='1m', count=100, **kwargs) -> list:
+    def list_quote_bins(self, symbol, schema, binsize='1m', count=100, **kwargs) -> list:
         pages = int((count - 1) / var.BITMEX_MAX_QUOTE_BINS_COUNT) + 1
         rest = count % var.BITMEX_MAX_QUOTE_BINS_COUNT
         quote_bins = []
@@ -128,6 +128,7 @@ class BitmexRestApi(StockRestApi):
             else:
                 items_count = var.BITMEX_MAX_QUOTE_BINS_COUNT
             quotes = self._list_quote_bins_page(symbol=symbol,
+                                                schema=schema,
                                                 binsize=binsize,
                                                 offset=i * var.BITMEX_MAX_QUOTE_BINS_COUNT,
                                                 count=items_count,
@@ -301,7 +302,7 @@ class BitmexRestApi(StockRestApi):
             total_balance = {schema: {}}
             if schema == 'margin1':
                 balances = self.get_wallet(schema=schema)['balances']
-                currencies = utils.load_currencies_as_dict(self.list_symbols())
+                currencies = utils.load_currencies_as_dict(self.list_symbols(schema))
             else:
                 continue
             for asset in assets:

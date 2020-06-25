@@ -35,7 +35,7 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def list_quote_bins(self, symbol, binsize='1m', count=100, **kwargs) -> list:
+    def list_quote_bins(self, symbol, schema: str, binsize='1m', count=100, **kwargs) -> list:
         raise NotImplementedError
 
     @abstractmethod

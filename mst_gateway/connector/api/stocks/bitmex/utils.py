@@ -145,12 +145,13 @@ def load_quote_data(raw_data: dict) -> dict:
     }
 
 
-def load_quote_bin_data(raw_data: dict) -> dict:
+def load_quote_bin_data(raw_data: dict, schema: str = None) -> dict:
     quote_time = to_date(raw_data.get('timestamp'))
     return {
         'time': quote_time,
         'timestamp': time2timestamp(quote_time),
         'symbol': raw_data.get('symbol'),
+        'schema': schema,
         'open': to_float(raw_data.get("open")),
         'close': to_float(raw_data.get("close")),
         'high': to_float(raw_data.get("high")),
