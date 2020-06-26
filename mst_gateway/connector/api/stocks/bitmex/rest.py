@@ -107,7 +107,7 @@ class BitmexRestApi(StockRestApi):
                                      **self._api_kwargs(kwargs))
         return [utils.load_quote_data(data) for data in quotes]
 
-    def _list_quote_bins_page(self, symbol, binsize='1m', count=100, offset=0,
+    def _list_quote_bins_page(self, symbol, schema, binsize='1m', count=100, offset=0,
                               **kwargs):
         quote_bins, _ = self._bitmex_api(self._handler.Trade.Trade_getBucketed,
                                          symbol=utils.symbol2stock(symbol),
@@ -116,9 +116,9 @@ class BitmexRestApi(StockRestApi):
                                          start=offset,
                                          count=count,
                                          **self._api_kwargs(kwargs))
-        return [utils.load_quote_bin_data(data) for data in quote_bins]
+        return [utils.load_quote_bin_data(data, schema) for data in quote_bins]
 
-    def list_quote_bins(self, symbol, binsize='1m', count=100, **kwargs) -> list:
+    def list_quote_bins(self, symbol, schema, binsize='1m', count=100, **kwargs) -> list:
         pages = int((count - 1) / var.BITMEX_MAX_QUOTE_BINS_COUNT) + 1
         rest = count % var.BITMEX_MAX_QUOTE_BINS_COUNT
         quote_bins = []
@@ -128,6 +128,7 @@ class BitmexRestApi(StockRestApi):
             else:
                 items_count = var.BITMEX_MAX_QUOTE_BINS_COUNT
             quotes = self._list_quote_bins_page(symbol=symbol,
+                                                schema=schema,
                                                 binsize=binsize,
                                                 offset=i * var.BITMEX_MAX_QUOTE_BINS_COUNT,
                                                 count=items_count,
@@ -158,17 +159,21 @@ class BitmexRestApi(StockRestApi):
     def wallet_repay(self, schema: str, asset: str, amount: float):
         raise ConnectorError('Bitmex api error. Details: Invalid method.')
 
-    def get_symbol(self, symbol) -> dict:
+    def get_symbol(self, symbol, schema) -> dict:
         instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_get,
                                           symbol=utils.symbol2stock(symbol))
         if not instruments:
             return dict()
         return utils.load_symbol_data(instruments[0])
 
-    def list_symbols(self, **kwargs) -> list:
+    def list_symbols(self, schema, **kwargs) -> list:
         instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive,
                                           **kwargs)
         return [utils.load_symbol_data(data) for data in instruments]
+
+    def get_exchange_symbol_info(self) -> list:
+        data = self._bitmex_api(self._handler.Instrument.Instrument_getActive)
+        return [utils.load_exchange_symbol_info(d) for d in data[0]]
 
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
         quotes, _ = self._bitmex_api(self._handler.Trade.Trade_get,
@@ -274,7 +279,7 @@ class BitmexRestApi(StockRestApi):
         splitted_ob = utils.split_order_book(
             ob_items,
             utils.store_order_side(side),
-            offset
+            offset,
         )
         if split:
             return splitted_ob
@@ -297,7 +302,7 @@ class BitmexRestApi(StockRestApi):
             total_balance = {schema: {}}
             if schema == 'margin1':
                 balances = self.get_wallet(schema=schema)['balances']
-                currencies = utils.load_currencies_as_dict(self.list_symbols())
+                currencies = utils.load_currencies_as_dict(self.list_symbols(schema))
             else:
                 continue
             for asset in assets:

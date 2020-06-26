@@ -41,8 +41,8 @@ def load_symbol_data(raw_data: dict) -> dict:
         'symbol': symbol,
         'price': to_float(raw_data.get('lastPrice')),
         'price24': to_float(raw_data.get('prevPrice24h')),
-        'pair': _get_symbol_pair(raw_data.get('symbol'),
-                                 raw_data.get('rootSymbol')),
+        # 'pair': _get_symbol_pair(raw_data.get('symbol'),
+        #                          raw_data.get('rootSymbol')),
         'tick': to_float(raw_data.get('tickSize')),
         'mark_price': mark_price,
         'face_price': face_price,
@@ -50,6 +50,28 @@ def load_symbol_data(raw_data: dict) -> dict:
         'ask_price': to_float(raw_data.get('askPrice')),
         'reversed': _reversed
     }
+
+
+def load_exchange_symbol_info(raw_data: dict) -> dict:
+    symbol = raw_data.get('symbol')
+    base_asset = raw_data.get('rootSymbol')
+
+    if re.search(r'\d{2}$', symbol):
+        schema = ['futures']
+    else:
+        schema = ['margin1']
+    return {
+        'symbol': symbol,
+        'base_asset': base_asset,
+        'quote_asset': _quote_asset(symbol, base_asset),
+        'schema': schema,
+        'tick': to_float(raw_data.get('tickSize'))
+    }
+
+
+def _quote_asset(symbol, base_asset):
+    quote_asset = symbol[len(base_asset):]
+    return quote_asset
 
 
 def store_order_type(order_type: str) -> str:
@@ -116,19 +138,20 @@ def load_quote_data(raw_data: dict) -> dict:
     return {
         'time': quote_time,
         'timestamp': time2timestamp(quote_time),
-        'symbol': raw_data.get('symbol'),
+        'symbol': raw_data.get('symbol').lower(),
         'price': to_float(raw_data.get('price')),
         'volume': raw_data.get('size'),
         'side': load_order_side(raw_data.get('side'))
     }
 
 
-def load_quote_bin_data(raw_data: dict) -> dict:
+def load_quote_bin_data(raw_data: dict, schema: str = None) -> dict:
     quote_time = to_date(raw_data.get('timestamp'))
     return {
         'time': quote_time,
         'timestamp': time2timestamp(quote_time),
         'symbol': raw_data.get('symbol'),
+        'schema': schema,
         'open': to_float(raw_data.get("open")),
         'close': to_float(raw_data.get("close")),
         'high': to_float(raw_data.get("high")),
@@ -140,7 +163,7 @@ def load_quote_bin_data(raw_data: dict) -> dict:
 def load_order_book_data(raw_data: dict) -> dict:
     return {
         'id': raw_data.get('id'),
-        'symbol': raw_data.get('symbol'),
+        'symbol': raw_data.get('symbol').lower(),
         'price': to_float(raw_data.get("price")),
         'volume': raw_data.get('size'),
         'side': load_order_side(raw_data.get('side'))
@@ -335,17 +358,16 @@ def split_order_book(ob_items, side, offset):
         result[api.SELL] = result[api.SELL][:-offset]
     return result
 
-
-def _get_symbol_pair(symbol: str, root_symbol: str) -> list:
-    # pylint: disable=unused-argument,fixme
-    return [symbol[:3], symbol[3:]]
-    # TODO: For wss packets
-    # if not root_symbol:
-    #     return ["", symbol]
-    # try:
-    #     pos = symbol.index(root_symbol)
-    # except ValueError:
-    #     return ["", symbol]
-    # if pos > 0:
-    #     return ["", symbol]
-    # return [root_symbol, symbol[pos:]]
+# def _get_symbol_pair(symbol: str, root_symbol: str) -> list:
+#     # pylint: disable=unused-argument,fixme
+#     return [symbol[:3], symbol[3:]]
+#     # TODO: For wss packets
+#     # if not root_symbol:
+#     #     return ["", symbol]
+#     # try:
+#     #     pos = symbol.index(root_symbol)
+#     # except ValueError:
+#     #     return ["", symbol]
+#     # if pos > 0:
+#     #     return ["", symbol]
+#     # return [root_symbol, symbol[pos:]]

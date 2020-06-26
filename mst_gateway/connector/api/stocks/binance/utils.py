@@ -21,13 +21,38 @@ def load_symbol_data(raw_data: dict) -> dict:
         'symbol': symbol,
         'price': to_float(raw_data.get('lastPrice')),
         'price24': to_float(raw_data.get('weightedAvgPrice')),
-        'pair': _binance_pair(symbol),
+        # 'pair': _binance_pair(symbol),
         'tick': to_float(1e-8),
         'mark_price': mark_price,
         'face_price': face_price,
         'bid_price': to_float(raw_data.get('bidPrice')),
         'ask_price': to_float(raw_data.get('askPrice')),
         'reversed': _reversed
+    }
+
+
+def load_exchange_symbol_info(raw_data: dict) -> dict:
+    schema = []
+    if raw_data.get('isSpotTradingAllowed'):
+        schema.append('exchange')
+    if raw_data.get('isMarginTradingAllowed'):
+        schema.append('margin2')
+    return {
+        'symbol': raw_data.get('symbol'),
+        'base_asset': raw_data.get('baseAsset'),
+        'quote_asset': raw_data.get('quoteAsset'),
+        'schema': schema,
+        'tick': to_float(raw_data.get('filters', [{}])[0].get('tickSize'))
+    }
+
+
+def load_futures_exchange_symbol_info(raw_data: dict) -> dict:
+    return {
+        'symbol': raw_data.get('symbol'),
+        'base_asset': raw_data.get('baseAsset'),
+        'quote_asset': raw_data.get('quoteAsset'),
+        'schema': ['futures'],
+        'tick': to_float(raw_data.get('filters', [{}])[0].get('tickSize'))
     }
 
 
@@ -38,7 +63,7 @@ def _binance_pair(symbol):
     return symbol[:base], symbol[-quote:]
 
 
-def load_trade_data(raw_data: dict, symbol: str = None) -> dict:
+def load_trade_data(raw_data: dict, symbol: str) -> dict:
     """
     {
         "id": 28457,
@@ -142,11 +167,12 @@ def load_quote_data(raw_data: dict, symbol: str = None) -> dict:
     }
 
 
-def load_quote_bin_data(raw_data: list, symbol: str = None) -> dict:
+def load_quote_bin_data(raw_data: list, symbol: str = None, schema: str = None) -> dict:
     return {
         'time': to_date(raw_data[0]),
         'timestamp': raw_data[0],
         'symbol': symbol,
+        'schema': schema,
         'open': to_float(raw_data[1]),
         'close': to_float(raw_data[4]),
         'high': to_float(raw_data[2]),
