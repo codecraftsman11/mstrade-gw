@@ -146,3 +146,7 @@ class StockRestApi(Connector):
     @abstractmethod
     def get_wallet_summary(self, schemas: iter, **kwargs) -> dict:
         raise NotImplementedError
+
+    @abstractmethod
+    def get_commission(self, pair: Union[list, tuple]) -> dict:
+        raise NotImplementedError
