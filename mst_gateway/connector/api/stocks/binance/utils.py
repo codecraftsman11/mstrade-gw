@@ -466,7 +466,7 @@ def calc_face_price(symbol: str, price: float) -> Tuple[Optional[float],
     _symbol = symbol.lower()
     result = (None, None)
     try:
-        result = (1 / price, True)
+        result = (1 / price, False)
     except (ValueError, TypeError, ZeroDivisionError):
         pass
     return result
