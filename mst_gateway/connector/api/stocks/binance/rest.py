@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 from logging import Logger
 from datetime import datetime, timedelta
 from bravado.exception import HTTPError
@@ -7,7 +7,6 @@ from .lib import Client
 from . import utils, var
 from ...rest import StockRestApi
 from ...rest.throttle import ThrottleRest
-from ..... import exceptions
 from .....exceptions import ConnectorError
 
 
@@ -164,10 +163,13 @@ class BinanceRestApi(StockRestApi):
     def close_all_orders(self, symbol: str):
         raise NotImplementedError
 
-    def calc_face_price(self, symbol: str, price: float):
-        raise NotImplementedError
+    @classmethod
+    def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float],
+                                                                 Optional[bool]]:
+        return utils.calc_face_price(symbol, price)
 
-    def calc_price(self, symbol: str, face_price: float):
+    @classmethod
+    def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
         raise NotImplementedError
 
     def get_order_book(
@@ -313,6 +315,12 @@ class BinanceRestApi(StockRestApi):
                 total_balance[schema][asset] = utils.load_wallet_summary(currencies, balances, asset, fields)
             utils.load_total_wallet_summary(total_summary, total_balance, assets, fields)
         return total_summary
+
+    def get_commission(self, pair: Union[list, tuple]) -> dict:
+        symbol = ''.join(pair).upper()
+        commissions = self._binance_api(self._handler.get_trade_fee, symbol=symbol)
+        fee_tier = utils.get_vip(self._binance_api(self._handler.futures_account_v2))
+        return utils.load_commission(commissions, pair[0], fee_tier)
 
     def _binance_api(self, method: callable, **kwargs):
         try:
