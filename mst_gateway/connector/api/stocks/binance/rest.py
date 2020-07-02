@@ -170,7 +170,7 @@ class BinanceRestApi(StockRestApi):
 
     @classmethod
     def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
-        raise NotImplementedError
+        return utils.calc_price(symbol, face_price)
 
     def get_order_book(
             self, symbol: str, depth: int = None, side: int = None,
