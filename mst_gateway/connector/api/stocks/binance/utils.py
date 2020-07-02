@@ -447,12 +447,14 @@ def load_transaction_id(raw_data: dict) -> dict:
 
 
 def load_commission(commissions: dict, currency: str, fee_tier) -> dict:
-    try:
-        _c = commissions['tradeFee'][0]
-    except (KeyError, IndexError):
-        _c = dict()
-    maker = to_float(_c.get('maker'))
-    taker = to_float(_c.get('taker'))
+    commission = dict()
+    for _c in commissions:
+        if fee_tier == str(_c.get('level')):
+            commission = _c
+            break
+
+    maker = to_float(commission.get('makerCommission'))
+    taker = to_float(commission.get('takerCommission'))
     return dict(
         currency=currency.lower(),
         maker=maker,
