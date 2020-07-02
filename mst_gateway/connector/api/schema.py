@@ -118,6 +118,13 @@ USER_FIELDS = {
   'id': str
 }
 
+ORDER_COMMISSION = {
+    "currency": str,
+    "taker": float,
+    "maker": float,
+    "type": str
+}
+
 
 def data_valid(data, rules):
     if not isinstance(data, dict):
