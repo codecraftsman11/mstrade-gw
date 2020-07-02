@@ -310,7 +310,7 @@ class BitmexRestApi(StockRestApi):
             utils.load_total_wallet_summary(total_summary, total_balance, assets, fields)
         return total_summary
 
-    def get_commission(self, schema: str, pair: Union[list, tuple]) -> dict:
+    def get_order_commission(self, schema: str, pair: Union[list, tuple]) -> dict:
         if schema == 'margin1':
             symbol = ''.join(pair)
             commissions, _ = self._bitmex_api(self._handler.User.User_getCommission)

@@ -316,7 +316,7 @@ class BinanceRestApi(StockRestApi):
             utils.load_total_wallet_summary(total_summary, total_balance, assets, fields)
         return total_summary
 
-    def get_commission(self, schema: str, pair: Union[list, tuple]) -> dict:
+    def get_order_commission(self, schema: str, pair: Union[list, tuple]) -> dict:
         if schema in ('exchange', 'margin2'):
             commissions = self._binance_api(self._handler.get_trade_level)
         elif schema == 'futures':

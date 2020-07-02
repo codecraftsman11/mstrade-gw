@@ -148,5 +148,5 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def get_commission(self, schema: str, pair: Union[list, tuple]) -> dict:
+    def get_order_commission(self, schema: str, pair: Union[list, tuple]) -> dict:
         raise NotImplementedError
