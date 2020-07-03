@@ -1,5 +1,6 @@
 from binance.client import Client as BaseClient
 from binance.exceptions import BinanceAPIException
+import time
 
 
 class Client(BaseClient):
@@ -79,7 +80,7 @@ class Client(BaseClient):
         """
         uri = 'https://www.binance.com/gateway-api/v1/public/margin/vip/spec/list-all'
         signed = False
-        result = self._request('get', uri, signed, **params)
+        result = self._request('get', uri, signed)
         return result.get('data', [])
 
     def get_friendly_interest_rate(self, **params):
@@ -99,6 +100,54 @@ class Client(BaseClient):
         uri = 'https://www.binance.com/gateway-api/v1/friendly/margin/interest-rate'
         signed = False
         result = self._request('get', uri, signed, data=params)
+        return result.get('data', [])
+
+    def get_trade_level(self, **params):
+        """
+        :returns: API response
+
+        .. code-block:: python
+            [
+                {
+                    'level': 0,
+                    'bnbFloor': 0.0,
+                    'bnbCeil': 50.0,
+                    'btcFloor': 0.0,
+                    'btcCeil': 50.0,
+                    'makerCommission': 0.001,
+                    'takerCommission': 0.001,
+                    'buyerCommission': 0.0,
+                    'sellerCommission': 0.0
+                }
+            ]
+        """
+        uri = 'https://www.binance.com/gateway-api/v1/public/account/trade-level/get'
+        signed = False
+        result = self._request('get', uri, signed)
+        return result.get('data', [])
+
+    def futures_trade_level(self, **params):
+        """
+        :returns: API response
+
+        .. code-block:: python
+            [
+                {
+                    'level': 0,
+                    'bnbFloor': 0.0,
+                    'bnbCeil': 50.0,
+                    'btcFloor': 0.0,
+                    'btcCeil': 250.0,
+                    'makerCommission': 0.0002,
+                    'takerCommission': 0.0004,
+                    'buyerCommission': 0.0,
+                    'sellerCommission': 0.0
+                }
+            ]
+        """
+        uri = 'https://www.binance.com/gateway-api/v1/public/account/futures-trade-level/get'
+        signed = False
+        result = self._request('get', uri, signed)
         return result.get('data', [])
 
     def futures_account_v2(self, **params):

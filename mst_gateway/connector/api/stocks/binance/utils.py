@@ -446,6 +446,44 @@ def load_transaction_id(raw_data: dict) -> dict:
     return data
 
 
+def load_commission(commissions: dict, currency: str, fee_tier) -> dict:
+    commission = dict()
+    for _c in commissions:
+        if fee_tier == str(_c.get('level')):
+            commission = _c
+            break
+
+    maker = to_float(commission.get('makerCommission'))
+    taker = to_float(commission.get('takerCommission'))
+    return dict(
+        currency=currency.lower(),
+        maker=maker,
+        taker=taker,
+        type=f"VIP{fee_tier}"
+    )
+
+
+def calc_face_price(symbol: str, price: float) -> Tuple[Optional[float],
+                                                        Optional[bool]]:
+    _symbol = symbol.lower()
+    result = (None, None)
+    try:
+        result = (1 / price, False)
+    except (ValueError, TypeError, ZeroDivisionError):
+        pass
+    return result
+
+
+def calc_price(symbol: str, face_price: float) -> Optional[float]:
+    _symbol = symbol.lower()
+    result = None
+    try:
+        result = 1 / face_price
+    except (ValueError, TypeError, ZeroDivisionError):
+        pass
+    return result
+
+
 def to_date(token: Union[datetime, int]) -> Optional[datetime]:
     if isinstance(token, datetime):
         return token
