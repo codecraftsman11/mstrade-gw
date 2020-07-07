@@ -31,29 +31,50 @@ def load_symbol_data(raw_data: dict) -> dict:
     }
 
 
-def load_exchange_symbol_info(raw_data: dict) -> dict:
-    schema = []
-    if raw_data.get('isSpotTradingAllowed'):
-        schema.append('exchange')
-    if raw_data.get('isMarginTradingAllowed'):
-        schema.append('margin2')
-    return {
-        'symbol': raw_data.get('symbol'),
-        'base_asset': raw_data.get('baseAsset'),
-        'quote_asset': raw_data.get('quoteAsset'),
-        'schema': schema,
-        'tick': to_float(raw_data.get('filters', [{}])[0].get('tickSize'))
-    }
+def load_exchange_symbol_info(raw_data: list) -> list:
+    symbol_list = []
+    for d in raw_data:
+        if d.get('status') == 'TRADING':
+            if d.get('isSpotTradingAllowed'):
+                symbol_list.append(
+                    {
+                        'symbol': d.get('symbol'),
+                        'base_asset': d.get('baseAsset'),
+                        'quote_asset': d.get('quoteAsset'),
+                        'schema': 'exchange',
+                        'symbol_schema': 'exchange',
+                        'tick': to_float(d.get('filters', [{}])[0].get('tickSize'))
+                    }
+                )
+            if d.get('isMarginTradingAllowed'):
+                symbol_list.append(
+                    {
+                        'symbol': d.get('symbol'),
+                        'base_asset': d.get('baseAsset'),
+                        'quote_asset': d.get('quoteAsset'),
+                        'schema': 'margin2',
+                        'symbol_schema': 'margin2',
+                        'tick': to_float(d.get('filters', [{}])[0].get('tickSize'))
+                    }
+                )
+    return symbol_list
 
 
-def load_futures_exchange_symbol_info(raw_data: dict) -> dict:
-    return {
-        'symbol': raw_data.get('symbol'),
-        'base_asset': raw_data.get('baseAsset'),
-        'quote_asset': raw_data.get('quoteAsset'),
-        'schema': ['futures'],
-        'tick': to_float(raw_data.get('filters', [{}])[0].get('tickSize'))
-    }
+def load_futures_exchange_symbol_info(raw_data: list) -> list:
+    symbol_list = []
+    for d in raw_data:
+        if d.get('status') == 'TRADING':
+            symbol_list.append(
+                {
+                    'symbol': d.get('symbol'),
+                    'base_asset': d.get('baseAsset'),
+                    'quote_asset': d.get('quoteAsset'),
+                    'schema': 'futures',
+                    'symbol_schema': 'futures',
+                    'tick': to_float(d.get('filters', [{}])[0].get('tickSize'))
+                }
+            )
+    return symbol_list
 
 
 def _binance_pair(symbol):

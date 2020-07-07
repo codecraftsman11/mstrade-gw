@@ -52,21 +52,28 @@ def load_symbol_data(raw_data: dict) -> dict:
     }
 
 
-def load_exchange_symbol_info(raw_data: dict) -> dict:
-    symbol = raw_data.get('symbol')
-    base_asset = raw_data.get('rootSymbol')
+def load_exchange_symbol_info(raw_data: list) -> list:
+    symbol_list = []
+    for d in raw_data:
+        symbol = d.get('symbol')
+        base_asset = d.get('rootSymbol')
 
-    if re.search(r'\d{2}$', symbol):
-        schema = ['futures']
-    else:
-        schema = ['margin1']
-    return {
-        'symbol': symbol,
-        'base_asset': base_asset,
-        'quote_asset': _quote_asset(symbol, base_asset),
-        'schema': schema,
-        'tick': to_float(raw_data.get('tickSize'))
-    }
+        if re.search(r'\d{2}$', symbol):
+            symbol_schema = 'futures'
+        else:
+            symbol_schema = 'margin1'
+
+        symbol_list.append(
+            {
+                'symbol': symbol,
+                'base_asset': base_asset,
+                'quote_asset': _quote_asset(symbol, base_asset),
+                'schema': 'margin1',
+                'symbol_schema': symbol_schema,
+                'tick': to_float(d.get('tickSize'))
+            }
+        )
+    return symbol_list
 
 
 def _quote_asset(symbol, base_asset):
