@@ -23,6 +23,29 @@ class OrderSchema(ClassWithAttributes):
     exchange = 'exchange'
 
 
+class OrderSchemaTradeMode(ClassWithAttributes):
+    margin1 = ['margin', 'derivative']
+    margin2 = ['margin']
+    futures = ['futures']
+    exchange = ['trade', 'exchange']
+
+    @classmethod
+    def schema_pairs(cls):
+        return tuple((i[0], i[0]) for i in cls._attributes())
+
+    @classmethod
+    def trade_mode_pairs(cls):
+        _pairs = []
+        for i in cls._attributes():
+            _pairs.extend(i[1])
+        return tuple((p, p) for p in _pairs)
+
+    @classmethod
+    def trade_mode(cls, schema):
+        _d = {i[0]: i[1] for i in cls._attributes()}
+        return _d.get(schema)
+
+
 class OrderState(ClassWithAttributes):
     waiting = 'waiting'         # Algorithm is waiting for start
     started = 'started'         # Algorithm is strarted
