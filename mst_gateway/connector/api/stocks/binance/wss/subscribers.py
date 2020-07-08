@@ -26,7 +26,6 @@ class BinanceSubscriber(Subscriber):
 
 
 class BinanceOrderBookSubscriber(BinanceSubscriber):
-    # subscriptions = ("bookTicker",)
     subscriptions = ("depth",)
 
 

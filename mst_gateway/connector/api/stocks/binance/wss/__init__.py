@@ -3,10 +3,8 @@ from logging import Logger
 from websockets import client
 from ....wss import StockWssApi
 from ....wss.throttle import ThrottleWss
-from ....wss.subscriber import Subscriber
 from . import subscribers as subscr
 from .utils import is_auth_ok, make_cmd
-# from ..utils import bitmex_signature
 from .router import BinanceWssRouter
 bitmex_signature = 1
 
@@ -24,9 +22,6 @@ class BinanceWssApi(StockWssApi):
     }
 
     auth_subscribers = {
-        # 'order': subscr.BinanceOrderSubscriber(),
-        # 'position': subscr.BinancePositionSubscriber(),
-        # 'execution': subscr.BinanceExecutionSubscriber()
     }
 
     router_class = BinanceWssRouter
@@ -45,25 +40,11 @@ class BinanceWssApi(StockWssApi):
 
     async def _connect(self, **kwargs):
         _ws: client.WebSocketClientProtocol = await super()._connect(**kwargs)
-        # res = await _ws.recv()
-        self._logger.info('connected')
+        self._logger.info('Binance ws connected successful.')
         return _ws
 
     async def authenticate(self, auth: dict = None) -> bool:
-    #     if auth is None:
-    #         auth = self._auth
-    #     wss = self.handler
-    #     expires = int(time.time()) + self._options.get('timeout', BITMEX_WSS_DEFAULT_TIMEOUT)
-    #     signature = bitmex_signature(auth.get('api_secret', ""), "GET", "/realtime", expires)
-    #     await wss.send(make_cmd('authKeyExpires', [auth.get('api_key', ""), expires,
-    #                                                signature]))
-    #     return is_auth_ok(await wss.recv())
         return True
-
-    # def _get_subscriber(self, subscr_name: str) -> Subscriber:
-    #     if subscr_name.lower() == "trade":
-    #         return super()._get_subscriber("quote_bin")
-    #     return super()._get_subscriber(subscr_name)
 
     def __setstate__(self, state):
         self.__dict__ = state

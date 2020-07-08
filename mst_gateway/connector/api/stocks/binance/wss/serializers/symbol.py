@@ -1,6 +1,6 @@
 from __future__ import annotations
 from .base import BinanceSerializer
-from ..utils import load_trade_ws_data, load_symbol_ws_data
+from ..utils import load_symbol_ws_data
 
 
 class BinanceSymbolSerializer(BinanceSerializer):

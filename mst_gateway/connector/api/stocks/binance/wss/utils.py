@@ -1,5 +1,4 @@
 import json
-# from ..utils import symbol2stock
 from mst_gateway.connector.api.stocks.binance.utils import to_date, to_float, load_order_side, generate_order_book_id
 from mst_gateway.connector.api.stocks.bitmex.utils import calc_face_price
 from mst_gateway.connector.api.utils import time2timestamp
@@ -8,7 +7,6 @@ from mst_gateway.connector.api.utils import time2timestamp
 def make_cmd(cmd, args, symbol=None):
     if symbol is not None:
         symbol = symbol
-        # symbol = symbol2stock(symbol)
         args = f"{symbol}@{args}"
     if args == 'bookTicker':
         args = f'!bookTicker'
@@ -24,7 +22,7 @@ def cmd_subscribe(subscr_name, symbol=None):
 
 
 def cmd_unsubscribe(subscr_name, symbol=None):
-    return make_cmd("unsubscribe", subscr_name, symbol)
+    return make_cmd("UNSUBSCRIBE", subscr_name, symbol)
 
 
 def is_ok(response: str) -> bool:

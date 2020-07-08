@@ -7,7 +7,6 @@ from typing import (
 from ....wss.router import Router
 from ....wss.serializer import Serializer
 from .utils import parse_message
-# from ..utils import stock2symbol
 from . import serializers
 from .serializers.base import BinanceSerializer
 
@@ -33,21 +32,18 @@ class BinanceWssRouter(Router):
 
     def __init__(self, wss_api: BinanceWssApi):
         self._serializers = {}
-        self._use_trade_bin = bool(wss_api.options.get('use_trade_bin', True))
-        if self._use_trade_bin:
-            # use periodical quote_bin change events
-            self._quote_bin = 'quote_bin'
-        else:
-            # use realtime quote change events
-            self._quote_bin = 'quote_bin_trade'
         super().__init__(wss_api)
 
     def _get_serializers(self, message: str) -> Dict[str, Serializer]:
         self._routed_data = {}
         _serializers = {}
         data = parse_message(message)
-
-        table = data.get('e') if isinstance(data, dict) else data[0].get('e')
+        if isinstance(data, dict):
+            table = data.get('e')
+        elif isinstance(data, list) and data and isinstance(data[0], dict):
+            table = data[0].get('e')
+        else:
+            return _serializers
         if table not in self.table_route_map:
             return _serializers
         subscriptions = self.table_route_map[table]
@@ -72,7 +68,7 @@ class BinanceWssRouter(Router):
             'data': list()
         }
         serializer = self._subscr_serializer(subscr_name)
-        symbol = data['s'] if isinstance(data, dict) else None
+        symbol = data.get('s') if isinstance(data, dict) else None
         if self._wss_api.is_registered(subscr_name, symbol) \
            and serializer.is_item_valid(data, {}):
             self._routed_data[subscr_name]['data'].append(data)
