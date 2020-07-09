@@ -53,13 +53,10 @@ class BinanceRestApi(StockRestApi):
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_exchange_symbol_info(self) -> list:
-        f_data = self._binance_api(self._handler.futures_exchange_info)
         e_data = self._binance_api(self._handler.get_exchange_info)
-        data = [
-            utils.load_exchange_symbol_info(d) for d in e_data.get('symbols') if d.get('status') == 'TRADING'
-        ]
-        data.extend([
-            utils.load_futures_exchange_symbol_info(d) for d in f_data.get('symbols') if d.get('status') == 'TRADING'])
+        f_data = self._binance_api(self._handler.futures_exchange_info)
+        data = utils.load_exchange_symbol_info(e_data.get('symbols', []))
+        data.extend(utils.load_futures_exchange_symbol_info(f_data.get('symbols', [])))
         return data
 
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
