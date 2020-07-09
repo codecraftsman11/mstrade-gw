@@ -24,8 +24,8 @@ class OrderSchema(ClassWithAttributes):
 
 
 class OrderSchemaTradeMode(ClassWithAttributes):
-    margin1 = ['margin', 'derivative']
-    margin2 = ['margin']
+    margin1 = ['margin1']
+    margin2 = ['margin2']
     futures = ['futures']
     exchange = ['trade', 'exchange']
 
