@@ -172,8 +172,8 @@ class BitmexRestApi(StockRestApi):
         return [utils.load_symbol_data(data) for data in instruments]
 
     def get_exchange_symbol_info(self) -> list:
-        data = self._bitmex_api(self._handler.Instrument.Instrument_getActive)
-        return [utils.load_exchange_symbol_info(d) for d in data[0]]
+        data, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive)
+        return utils.load_exchange_symbol_info(data)
 
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
         quotes, _ = self._bitmex_api(self._handler.Trade.Trade_get,

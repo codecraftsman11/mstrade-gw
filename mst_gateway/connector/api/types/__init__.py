@@ -2,6 +2,7 @@
 from .order import (
     OrderType,
     OrderSchema,
+    OrderSchemaTradeMode,
     OrderState,
     OrderTTL,
     OrderExec,
