@@ -27,7 +27,8 @@ class BitmexWssApi(StockWssApi):
     auth_subscribers = {
         'order': subscr.BitmexOrderSubscriber(),
         'position': subscr.BitmexPositionSubscriber(),
-        'execution': subscr.BitmexExecutionSubscriber()
+        'execution': subscr.BitmexExecutionSubscriber(),
+        'wallet': subscr.BitmexWalletSubscriber()
     }
 
     router_class = BitmexWssRouter

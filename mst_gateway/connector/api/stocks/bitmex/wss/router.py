@@ -24,7 +24,8 @@ class BitmexWssRouter(Router):
         'order': "order",
         'orderBookL2_25': "order_book",
         'position': 'position',
-        'execution': 'execution'
+        'execution': 'execution',
+        'margin': 'wallet'
     }
 
     serializer_classes = {
@@ -35,7 +36,8 @@ class BitmexWssRouter(Router):
         'order': serializers.BitmexOrderSerializer,
         'trade': serializers.BitmexTradeSerializer,
         'position': serializers.BitmexPositionSerializer,
-        'execution': serializers.BitmexExecutionSerializer
+        'execution': serializers.BitmexExecutionSerializer,
+        'wallet': serializers.BitmexWalletSerializer
     }
 
     def __init__(self, wss_api: BitmexWssApi):
@@ -88,7 +90,7 @@ class BitmexWssRouter(Router):
         }
         serializer = self._subscr_serializer(subscr_name)
         for item in data['data']:
-            if self._wss_api.is_registered(subscr_name, stock2symbol(item['symbol'])) \
+            if self._wss_api.is_registered(subscr_name, stock2symbol(item.get('symbol'))) \
                and serializer.is_item_valid(data, item):
                 self._routed_data[subscr_name]['data'].append(item)
         if self._routed_data[subscr_name]['data']:
