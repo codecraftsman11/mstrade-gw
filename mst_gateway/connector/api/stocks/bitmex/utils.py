@@ -206,7 +206,7 @@ def load_wallet_data(raw_data: dict) -> dict:
             {
                 'currency': raw_data.get('currency', '').upper(),
                 'balance': to_xbt(raw_data.get('walletBalance')),
-                'withdraw_balance': None,
+                'withdraw_balance': to_xbt(raw_data.get('withdrawableMargin')),
                 'borrowed': None,
                 'available_borrow': None,
                 'interest': None,

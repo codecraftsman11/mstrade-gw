@@ -22,6 +22,8 @@ class BitmexWalletSerializer(BitmexSerializer):
                     item['availableMargin'] = balance['available_margin']
                 if not item.get('initMargin'):
                     item['initMargin'] = balance['init_margin']
+                if not item.get('withdrawableMargin'):
+                    item['withdrawableMargin'] = balance['withdraw_balance']
         return load_wallet_data(item)
 
     def _append_item(self, data: list, message: dict, item: dict):
