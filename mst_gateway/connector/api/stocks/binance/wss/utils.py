@@ -1,15 +1,14 @@
 import json
 from mst_gateway.connector.api.stocks.binance.utils import to_date, to_float, load_order_side, generate_order_book_id
-from mst_gateway.connector.api.stocks.bitmex.utils import calc_face_price
-from mst_gateway.connector.api.utils import time2timestamp
+from mst_gateway.connector.api.stocks.binance.utils import calc_face_price, symbol2stock
 
 
 def make_cmd(cmd, args, symbol=None):
     if symbol is not None:
-        symbol = symbol
-        args = f"{symbol}@{args}"
-    if args == 'bookTicker':
-        args = f'!bookTicker'
+        symbol = symbol2stock(symbol)
+        if args == '!ticker@arr':
+            args = 'ticker'
+        args = f'{symbol}@{args}'
     return json.dumps({
         'method': cmd,
         'params': [args],
@@ -63,7 +62,7 @@ def load_trade_ws_data(raw_data: dict, symbol: str) -> dict:
         'timestamp': raw_data.get('E'),
         'symbol': symbol,
         'price': to_float(raw_data.get('p')),
-        'volume': raw_data.get('q'),
+        'volume': to_float(raw_data.get('q')),
         'side': load_order_side(raw_data.get('m')),
     }
 
@@ -95,17 +94,16 @@ def load_quote_bin_ws_data(raw_data: dict, symbol: str) -> dict:
       }
     }
     """
-    quote_time = to_date(raw_data.get('E'))
     return {
-        'time': quote_time,
-        'timestamp': time2timestamp(quote_time),
+        'time': to_date(raw_data.get('E')),
+        'timestamp': raw_data.get('E'),
         'symbol': symbol,
         'schema': None,
         'open': to_float(raw_data.get('k', {}).get("o")),
         'close': to_float(raw_data.get('k', {}).get("c")),
         'high': to_float(raw_data.get('k', {}).get("h")),
         'low': to_float(raw_data.get('k', {}).get('l')),
-        'volume': raw_data.get('k', {}).get('v'),
+        'volume': to_float(raw_data.get('k', {}).get('v')),
     }
 
 
@@ -180,12 +178,11 @@ def load_symbol_ws_data(raw_data: dict) -> dict:
     }
     """
     symbol = raw_data.get('s')
-    symbol_time = to_date(raw_data.get('E'))
     mark_price = to_float(raw_data.get('o'))
     face_price, _reversed = calc_face_price(symbol, mark_price)
     return {
-        'time': symbol_time,
-        'timestamp': time2timestamp(symbol_time),
+        'time': to_date(raw_data.get('E')),
+        'timestamp': raw_data.get('E'),
         'symbol': symbol,
         'price': to_float(raw_data.get('c')),
         'price24': to_float(raw_data.get('w')),
