@@ -507,3 +507,11 @@ def to_float(token: Union[int, float, str, None]) -> Optional[float]:
         return float(token)
     except (ValueError, TypeError):
         return None
+
+
+def symbol2stock(symbol):
+    return symbol.upper() if isinstance(symbol, str) else None
+
+
+def stock2symbol(symbol):
+    return symbol.lower() if isinstance(symbol, str) else None
