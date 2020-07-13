@@ -1,4 +1,3 @@
-import time
 from typing import Dict
 from typing import Coroutine
 import asyncio
@@ -32,7 +31,8 @@ class StockWssApi(Connector):
                  logger: Logger = None,
                  options: dict = None,
                  name: str = None,
-                 throttle_rate: int = 30):
+                 throttle_rate: int = 30,
+                 throttle_storage=None):
         self._options = options or {}
         self._url = url or self.__class__.BASE_URL
         self._error = errors.ERROR_OK
@@ -41,6 +41,8 @@ class StockWssApi(Connector):
         self._throttle_rate = throttle_rate
         if name is not None:
             self.name = name
+        if throttle_storage:
+            self.throttle = ThrottleWss(throttle_storage)
         super().__init__(auth, logger)
 
     @property

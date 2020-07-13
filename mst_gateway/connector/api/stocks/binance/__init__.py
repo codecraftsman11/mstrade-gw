@@ -1,4 +1,5 @@
 from .rest import BinanceRestApi
+from .wss import BinanceWssApi
 
 
 def get_connector_class():
@@ -10,4 +11,4 @@ def get_rest_api_class():
 
 
 def get_ws_api_class():
-    raise NotImplementedError
+    return BinanceWssApi
