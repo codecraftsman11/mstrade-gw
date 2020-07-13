@@ -486,23 +486,11 @@ def load_commission(commissions: dict, currency: str, fee_tier) -> dict:
 
 def calc_face_price(symbol: str, price: float) -> Tuple[Optional[float],
                                                         Optional[bool]]:
-    _symbol = symbol.lower()
-    result = (None, None)
-    try:
-        result = (1 / price, False)
-    except (ValueError, TypeError, ZeroDivisionError):
-        pass
-    return result
+    return price, False
 
 
 def calc_price(symbol: str, face_price: float) -> Optional[float]:
-    _symbol = symbol.lower()
-    result = None
-    try:
-        result = 1 / face_price
-    except (ValueError, TypeError, ZeroDivisionError):
-        pass
-    return result
+    return face_price
 
 
 def to_date(token: Union[datetime, int]) -> Optional[datetime]:
