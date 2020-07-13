@@ -1,11 +1,13 @@
 import json
-from mst_gateway.connector.api.stocks.binance.utils import to_date, to_float, load_order_side, generate_order_book_id
-from mst_gateway.connector.api.stocks.binance.utils import calc_face_price, symbol2stock
+from mst_gateway.connector.api.stocks.binance.utils import (
+    to_date, to_float, load_order_side, generate_order_book_id,
+    stock2symbol, calc_face_price
+)
 
 
 def make_cmd(cmd, args, symbol=None):
     if symbol is not None:
-        symbol = symbol2stock(symbol)
+        symbol = stock2symbol(symbol)
         if args == '!ticker@arr':
             args = 'ticker'
         args = f'{symbol}@{args}'
