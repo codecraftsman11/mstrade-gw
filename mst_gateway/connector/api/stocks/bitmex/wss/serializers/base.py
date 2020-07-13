@@ -29,9 +29,9 @@ class BitmexSerializer(Serializer):
         data = []
         for item in message['data']:
             self._append_item(data, message, item)
-        return (self._get_data_action(message), data)
+        return self._get_data_action(message), data
 
     def _append_item(self, data: list, message: dict, item: dict):
         valid_item = self._load_data(message, item)
-        self._update_state(stock2symbol(valid_item['symbol']), valid_item)
+        self._update_state(stock2symbol(valid_item.get('symbol')), valid_item)
         self._update_data(data, valid_item)
