@@ -323,10 +323,6 @@ class BinanceRestApi(StockRestApi):
         fee_tier = utils.get_vip(self._binance_api(self._handler.futures_account_v2))
         return utils.load_commission(commissions, pair[0], fee_tier)
 
-    def test(self):
-        r = self._binance_api(self._handler.get_trade_level)
-        return r
-
     def _binance_api(self, method: callable, **kwargs):
         try:
             resp = method(**kwargs)

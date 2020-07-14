@@ -2,10 +2,9 @@ from typing import Tuple
 from abc import ABCMeta
 from abc import abstractmethod
 from .....wss.serializer import Serializer
-from ...utils import stock2symbol
 
 
-class BitmexSerializer(Serializer):
+class BinanceSerializer(Serializer):
     __metaclass__ = ABCMeta
     subscription = "base"
 
@@ -15,7 +14,9 @@ class BitmexSerializer(Serializer):
 
     @classmethod
     def _update_data(cls, data: list, item: dict):
-        data.append(item)
+        if not isinstance(item, list):
+            return data.append(item)
+        data.extend(item)
 
     @abstractmethod
     def _load_data(self, message: dict, item: dict) -> dict:
@@ -33,5 +34,8 @@ class BitmexSerializer(Serializer):
 
     def _append_item(self, data: list, message: dict, item: dict):
         valid_item = self._load_data(message, item)
-        self._update_state(stock2symbol(valid_item.get('symbol')), valid_item)
+        if isinstance(valid_item, dict):
+            self._update_state(valid_item['symbol'], valid_item)
+        else:
+            [self._update_state(itm['symbol'], itm) for itm in valid_item]
         self._update_data(data, valid_item)

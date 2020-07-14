@@ -51,3 +51,7 @@ class BitmexOrderBookSubscriber(BitmexSubscriber):
 
 class BitmexTradeSubscriber(BitmexSubscriber):
     subscriptions = ("trade",)
+
+
+class BitmexWalletSubscriber(BitmexSubscriber):
+    subscriptions = ("margin",)
