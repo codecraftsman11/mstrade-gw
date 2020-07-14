@@ -140,7 +140,7 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def currency_exchange_symbol(self, schema: str) -> list:
+    def currency_exchange_symbols(self, schema: str) -> list:
         raise NotImplementedError
 
     @abstractmethod

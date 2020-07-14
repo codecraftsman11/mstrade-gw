@@ -279,7 +279,7 @@ class BinanceRestApi(StockRestApi):
         data = self._binance_api(method, asset=asset.upper(), amount=str(amount))
         return utils.load_transaction_id(data)
 
-    def currency_exchange_symbol(self, schema: str) -> list:
+    def currency_exchange_symbols(self, schema: str) -> list:
         if schema.lower() in ('exchange', 'margin2'):
             currency = self._binance_api(self._handler.get_symbol_ticker)
         elif schema.lower() == 'futures':

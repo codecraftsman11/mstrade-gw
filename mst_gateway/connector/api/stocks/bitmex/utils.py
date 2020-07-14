@@ -52,6 +52,10 @@ def load_symbol_data(raw_data: dict) -> dict:
     }
 
 
+def load_currency_exchange_symbol(currency: list) -> list:
+    return [{'symbol': c.get('symbol'), 'price': to_float(c.get('lastPrice'))} for c in currency]
+
+
 def load_exchange_symbol_info(raw_data: list) -> list:
     symbol_list = []
     for d in raw_data:
