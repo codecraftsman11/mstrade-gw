@@ -279,11 +279,11 @@ class BinanceRestApi(StockRestApi):
         data = self._binance_api(method, asset=asset.upper(), amount=str(amount))
         return utils.load_transaction_id(data)
 
-    def currency_exchange_symbol(self, schema: str) -> list:
+    def currency_exchange_symbols(self, schema: str, symbol: str = None) -> list:
         if schema.lower() in ('exchange', 'margin2'):
-            currency = self._binance_api(self._handler.get_symbol_ticker)
+            currency = self._binance_api(self._handler.get_symbol_ticker, symbol=utils.symbol2stock(symbol))
         elif schema.lower() == 'futures':
-            currency = self._binance_api(self._handler.futures_symbol_ticker)
+            currency = self._binance_api(self._handler.futures_symbol_ticker, symbol=utils.symbol2stock(symbol))
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
         return utils.load_currency_exchange_symbol(currency)
