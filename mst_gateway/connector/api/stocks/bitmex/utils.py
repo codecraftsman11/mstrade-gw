@@ -85,7 +85,7 @@ def load_order_side(order_side: str) -> int:
     return api.BUY
 
 
-def load_order_data(raw_data: dict, skip_undef=False) -> dict:
+def load_order_data(raw_data: dict, state_data: dict, skip_undef=False) -> dict:
     data = {
         'order_id': raw_data.get('clOrdID'),
         'symbol': raw_data.get('symbol'),
@@ -96,7 +96,8 @@ def load_order_data(raw_data: dict, skip_undef=False) -> dict:
         'price': to_float(raw_data.get('price')),
         'created': to_date(raw_data.get('timestamp')),
         'active': raw_data.get('ordStatus') != "New",
-        'schema': api.OrderSchema.margin1
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema')
     }
     for k in data:
         if data[k] is None and skip_undef:

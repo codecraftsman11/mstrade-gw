@@ -171,7 +171,7 @@ def load_order_book_data(raw_data: dict, symbol: str, ent_side, split, offset, d
     return res
 
 
-def load_quote_data(raw_data: dict, symbol: str = None) -> dict:
+def load_quote_data(raw_data: dict, state_data: dict) -> dict:
     """
         {'id': 170622457,
         'isBestMatch': True,
@@ -184,28 +184,31 @@ def load_quote_data(raw_data: dict, symbol: str = None) -> dict:
     return {
         'time': to_date(raw_data.get('time')),
         'timestamp': raw_data.get('time'),
-        'symbol': symbol,
         'price': to_float(raw_data.get('price')),
         'volume': raw_data.get('qty'),
         'side': load_order_side(raw_data.get('isBuyerMaker')),
+        'symbol': state_data.get('symbol'),
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema'),
     }
 
 
-def load_quote_bin_data(raw_data: list, symbol: str = None, schema: str = None) -> dict:
+def load_quote_bin_data(raw_data: list, state_data: dict) -> dict:
     return {
         'time': to_date(raw_data[0]),
         'timestamp': raw_data[0],
-        'symbol': symbol,
-        'schema': schema,
         'open': to_float(raw_data[1]),
         'close': to_float(raw_data[4]),
         'high': to_float(raw_data[2]),
         'low': to_float(raw_data[3]),
         'volume': raw_data[5],
+        'symbol': state_data.get('symbol'),
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema'),
     }
 
 
-def load_order_data(raw_data: dict, skip_undef=False) -> dict:
+def load_order_data(raw_data: dict, state_data: dict) -> dict:
     data = {
         'order_id': raw_data.get('orderId') or raw_data.get('clientOrderId'),
         'symbol': raw_data.get('symbol'),
@@ -216,7 +219,8 @@ def load_order_data(raw_data: dict, skip_undef=False) -> dict:
         'price': to_float(raw_data.get('price')),
         'created': to_date(raw_data.get('time')),
         'active': raw_data.get('status') != "NEW",
-        # 'schema': api.OrderSchema.margin1
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema'),
     }
     return data
 
@@ -524,7 +528,7 @@ def load_trade_ws_data(raw_data: dict, symbol: str) -> dict:
     }
 
 
-def load_quote_bin_ws_data(raw_data: dict, symbol: str) -> dict:
+def load_quote_bin_ws_data(raw_data: dict, state_data: dict) -> dict:
     """
     {
       "e": "kline",     // Event type
@@ -554,13 +558,14 @@ def load_quote_bin_ws_data(raw_data: dict, symbol: str) -> dict:
     return {
         'time': to_date(raw_data.get('E')),
         'timestamp': raw_data.get('E'),
-        'symbol': symbol,
-        'schema': None,
         'open': to_float(raw_data.get('k', {}).get("o")),
         'close': to_float(raw_data.get('k', {}).get("c")),
         'high': to_float(raw_data.get('k', {}).get("h")),
         'low': to_float(raw_data.get('k', {}).get('l')),
         'volume': to_float(raw_data.get('k', {}).get('v')),
+        'symbol': state_data.get('symbol'),
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema'),
     }
 
 

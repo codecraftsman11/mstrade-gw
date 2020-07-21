@@ -19,4 +19,7 @@ class BinanceQuoteBinSerializer(BinanceSerializer):
         return message.get('e') == "kline"
 
     def _load_data(self, message: dict, item: dict) -> dict:
-        return load_quote_bin_ws_data(item, item['s'])
+        state_data = self._wss_api.storage.get(
+            'symbol', self._wss_api.name, self._wss_api.schema
+        ).get(item['s'].lower(), dict())
+        return load_quote_bin_ws_data(item, state_data)

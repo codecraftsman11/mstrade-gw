@@ -240,7 +240,10 @@ class BitmexRestApi(StockRestApi):
                                    }))
         if not data:
             return None
-        return utils.load_order_data(data[0])
+        state_data = self.storage.get(
+            'symbol', self.name, 'margin1'
+        ).get(data['symbol'].lower(), dict())
+        return utils.load_order_data(data[0], state_data)
 
     def list_orders(self, symbol: str,
                     active_only: bool = True,
@@ -262,14 +265,20 @@ class BitmexRestApi(StockRestApi):
                                      symbol=utils.symbol2stock(symbol),
                                      reverse=True,
                                      **options)
-        return [utils.load_order_data(data) for data in orders]
+        state_data = self.storage.get(
+            'symbol', self.name, 'margin1'
+        ).get(symbol.lower(), dict())
+        return [utils.load_order_data(data, state_data) for data in orders]
 
     def list_trades(self, symbol, **kwargs) -> list:
         trades, _ = self._bitmex_api(self._handler.Trade.Trade_get,
                                      symbol=utils.symbol2stock(symbol),
                                      reverse=True,
                                      **self._api_kwargs(kwargs))
-        return [utils.load_trade_data(data) for data in trades]
+        state_data = self.storage.get(
+            'symbol', self.name, 'margin1'
+        ).get(symbol.lower(), dict())
+        return [utils.load_trade_data(data, state_data) for data in trades]
 
     def close_order(self, order_id) -> bool:
         order = self.get_order(order_id)

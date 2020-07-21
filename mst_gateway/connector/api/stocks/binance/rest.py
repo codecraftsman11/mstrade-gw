@@ -69,23 +69,30 @@ class BinanceRestApi(StockRestApi):
 
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
         data = self._binance_api(self._handler.get_historical_trades, symbol=symbol.upper(), limit=1)
-        return utils.load_quote_data(data[0], symbol)
+        state_data = self.storage.get(
+            'symbol', self.name, kwargs.get('schema')
+        ).get(symbol.lower(), dict())
+        return utils.load_quote_data(data[0], state_data)
 
     def list_quotes(self, symbol: str, timeframe: str = None, **kwargs) -> list:
         data = self._binance_api(self._handler.get_historical_trades, symbol=symbol.upper())
-        return [utils.load_quote_data(d, symbol) for d in data]
+        state_data = self.storage.get(
+            'symbol', self.name, kwargs.get('schema')
+        ).get(symbol.lower(), dict())
+        return [utils.load_quote_data(d, state_data) for d in data]
 
     def _list_quote_bins_page(self, symbol, schema, binsize='1m', count=100, **kwargs):
+        state_data = kwargs.pop('state_data', dict())
         if schema == 'futures':
             data = self._binance_api(
                 self._handler.futures_klines, symbol=symbol.upper(), interval=binsize, limit=count, **kwargs
             )
-            return [utils.load_quote_bin_data(d, symbol.upper(), schema) for d in data]
+            return [utils.load_quote_bin_data(d, state_data) for d in data]
         elif schema in ('margin2', 'exchange'):
             data = self._binance_api(
                 self._handler.get_klines, symbol=symbol.upper(), interval=binsize, limit=count, **kwargs
             )
-            return [utils.load_quote_bin_data(d, symbol.upper(), schema) for d in data]
+            return [utils.load_quote_bin_data(d, state_data) for d in data]
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
 
@@ -94,6 +101,9 @@ class BinanceRestApi(StockRestApi):
         rest = count % var.BINANCE_MAX_QUOTE_BINS_COUNT
         quote_bins = []
         kwargs = self._api_kwargs(kwargs)
+        kwargs['state_data'] = self.storage.get(
+            'symbol', self.name, schema
+        ).get(symbol.lower(), dict())
         for i in range(pages):
             if i == pages - 1:
                 items_count = rest
@@ -141,7 +151,7 @@ class BinanceRestApi(StockRestApi):
         data = self._binance_api(self._handler.get_order, **params)
         if not data:
             return None
-        return utils.load_order_data(data)
+        return utils.load_order_data(data, dict())
 
     def list_orders(self, symbol: str,
                     active_only: bool = True,
@@ -152,11 +162,11 @@ class BinanceRestApi(StockRestApi):
             params = {}
         if active_only:
             data = self._binance_api(self._handler.get_open_orders, **params)
-            return [utils.load_order_data(d) for d in data]
+            return [utils.load_order_data(d, dict()) for d in data]
         if count is not None:
             params['limit'] = count
         data = self._binance_api(self._handler.get_all_orders, **params)
-        return [utils.load_order_data(d) for d in data][offset:count]
+        return [utils.load_order_data(d, dict()) for d in data][offset:count]
 
     def list_trades(self, symbol, **params) -> list:
         data = self._binance_api(self._handler.get_recent_trades, symbol=symbol.upper(), **self._api_kwargs(params))
