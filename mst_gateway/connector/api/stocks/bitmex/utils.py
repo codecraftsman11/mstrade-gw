@@ -118,11 +118,11 @@ def load_user_data(raw_data: dict) -> dict:
     return data
 
 
-def load_trade_data(raw_data: dict) -> dict:
-    return load_quote_data(raw_data)
+def load_trade_data(raw_data: dict, state_data: dict) -> dict:
+    return load_quote_data(raw_data, state_data)
 
 
-def load_quote_data(raw_data: dict) -> dict:
+def load_quote_data(raw_data: dict, state_data: dict) -> dict:
     quote_time = to_date(raw_data.get('timestamp'))
     return {
         'time': quote_time,
@@ -130,22 +130,25 @@ def load_quote_data(raw_data: dict) -> dict:
         'symbol': raw_data.get('symbol').lower(),
         'price': to_float(raw_data.get('price')),
         'volume': raw_data.get('size'),
-        'side': load_order_side(raw_data.get('side'))
+        'side': load_order_side(raw_data.get('side')),
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema')
     }
 
 
-def load_quote_bin_data(raw_data: dict, schema: str = None) -> dict:
+def load_quote_bin_data(raw_data: dict, state_data: dict) -> dict:
     quote_time = to_date(raw_data.get('timestamp'))
     return {
         'time': quote_time,
         'timestamp': time2timestamp(quote_time),
         'symbol': raw_data.get('symbol'),
-        'schema': schema,
         'open': to_float(raw_data.get("open")),
         'close': to_float(raw_data.get("close")),
         'high': to_float(raw_data.get("high")),
         'low': to_float(raw_data.get('low')),
         'volume': raw_data.get('volume'),
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema')
     }
 
 
@@ -168,7 +171,9 @@ def quote2bin(quote: dict) -> dict:
         'close': quote['price'],
         'high': quote['price'],
         'low': quote['price'],
-        'volume': quote['volume']
+        'volume': quote['volume'],
+        'system_symbol': quote.get('system_symbol'),
+        'schema': quote.get('scheme')
     }
 
 

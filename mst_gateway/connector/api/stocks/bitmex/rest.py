@@ -16,6 +16,7 @@ from .... import api
 from .....exceptions import ConnectorError
 from .....utils import j_dumps
 
+
 def _make_create_order_args(args, options):
     if not isinstance(options, dict):
         return False
@@ -96,16 +97,21 @@ class BitmexRestApi(StockRestApi):
         return api_kwargs
 
     def list_quotes(self, symbol, timeframe=None, **kwargs) -> list:
+        _symbol = symbol.lower()
         if timeframe is not None:
             symbol = symbol + ":" + timeframe
         quotes, _ = self._bitmex_api(self._handler.Trade.Trade_get,
                                      symbol=utils.symbol2stock(symbol),
                                      reverse=True,
                                      **self._api_kwargs(kwargs))
-        return [utils.load_quote_data(data) for data in quotes]
+        state_data = self.storage.get(
+            'symbol', self.name, 'margin1'
+        ).get(_symbol, dict())
+        return [utils.load_quote_data(data, state_data) for data in quotes]
 
     def _list_quote_bins_page(self, symbol, schema, binsize='1m', count=100, offset=0,
                               **kwargs):
+        state_data = kwargs.pop('state_data', dict())
         quote_bins, _ = self._bitmex_api(self._handler.Trade.Trade_getBucketed,
                                          symbol=utils.symbol2stock(symbol),
                                          binSize=binsize,
@@ -113,9 +119,12 @@ class BitmexRestApi(StockRestApi):
                                          start=offset,
                                          count=count,
                                          **self._api_kwargs(kwargs))
-        return [utils.load_quote_bin_data(data, schema) for data in quote_bins]
+        return [utils.load_quote_bin_data(data, state_data) for data in quote_bins]
 
     def list_quote_bins(self, symbol, schema, binsize='1m', count=100, **kwargs) -> list:
+        kwargs['state_data'] = self.storage.get(
+            'symbol', self.name, schema
+        ).get(symbol.lower(), dict())
         pages = int((count - 1) / var.BITMEX_MAX_QUOTE_BINS_COUNT) + 1
         rest = count % var.BITMEX_MAX_QUOTE_BINS_COUNT
         quote_bins = []
@@ -187,7 +196,10 @@ class BitmexRestApi(StockRestApi):
                                      symbol=utils.symbol2stock(symbol),
                                      reverse=True,
                                      count=1)
-        return utils.load_quote_data(quotes[0])
+        state_data = self.storage.get(
+            'symbol', self.name, 'margin1'
+        ).get(symbol.lower(), dict())
+        return utils.load_quote_data(quotes[0], state_data)
 
     def create_order(self, symbol: str,
                      side: int,
