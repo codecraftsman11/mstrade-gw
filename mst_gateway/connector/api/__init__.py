@@ -1,6 +1,7 @@
 # flake8: noqa
 from importlib import import_module
 from .types import *
+from .storage import StateStorage
 
 
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
@@ -19,9 +20,9 @@ def connect(params, auth, cls=None, logger=None):
     return connector
 
 
-def get_rest_api_class(path):
-    return import_module(path, __package__).get_rest_api_class()
+def get_rest_api_class(path, **kwargs):
+    return import_module(path, __package__).get_rest_api_class(**kwargs)
 
 
-def get_ws_api_class(path):
-    return import_module(path, __package__).get_ws_api_class()
+def get_ws_api_class(path, **kwargs):
+    return import_module(path, __package__).get_ws_api_class(**kwargs)

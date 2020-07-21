@@ -2,6 +2,7 @@ from abc import abstractmethod
 from typing import Optional, Tuple, Union, List
 from logging import Logger
 from ...base import Connector
+from ..storage import StateStorage
 from ..errors import ERROR_OK
 from .. import (
     OrderType,
@@ -13,13 +14,22 @@ from .throttle import ThrottleRest
 
 class StockRestApi(Connector):
     throttle = ThrottleRest()
+    storage = StateStorage()
     BASE_URL = None
+    name = 'Base'
 
-    def __init__(self, url: str = None, auth: dict = None, logger: Logger = None):
+    def __init__(self, name: str = None, url: str = None, auth: dict = None, logger: Logger = None,
+                 throttle_storage=None, state_storage=None):
+        if name is not None:
+            self.name = name.lower()
         self._keepalive: bool = False
         self._compress: bool = False
         self._url: str = url if url is not None else self.__class__.BASE_URL
         self._error: tuple = ERROR_OK
+        if throttle_storage:
+            self.throttle = ThrottleRest(storage=throttle_storage)
+        if state_storage:
+            self.storage = StateStorage(storage=state_storage)
         super().__init__(auth, logger)
 
     @abstractmethod
@@ -150,3 +160,12 @@ class StockRestApi(Connector):
     @abstractmethod
     def get_order_commission(self, schema: str, pair: Union[list, tuple]) -> dict:
         raise NotImplementedError
+
+    def __setstate__(self, state):
+        self.__dict__ = state
+        self.open()
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state.pop('_handler', None)
+        return state

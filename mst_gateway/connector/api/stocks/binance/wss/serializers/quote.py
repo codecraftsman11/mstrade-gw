@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from .base import BinanceSerializer
-from ..utils import load_quote_bin_ws_data
+from ...utils import load_quote_bin_ws_data
 
 if TYPE_CHECKING:
     from ... import BinanceWssApi

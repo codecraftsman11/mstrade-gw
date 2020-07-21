@@ -19,10 +19,10 @@ def connect(connector_type: str, params: dict, auth: dict, cls: type = None,
 
 def module(connector_type=None):
     try:
-        return import_module('.' + connector_type, __package__)
+        return import_module(f'.{connector_type}', __package__)
     except Exception:
-        raise ConnectorError('Invalid connector type (%s)' % (connector_type))
+        raise ConnectorError(f'Invalid connector type {connector_type}')
 
 
-def get_connector_class(path):
-    return import_module(path, __package__).get_connector_class()
+def get_connector_class(path, **kwargs):
+    return import_module(path, __package__).get_connector_class(**kwargs)

@@ -1,7 +1,7 @@
-from ..throttle import Throttle
+from ..base import BaseStorage
 
 
-class ThrottleRest(Throttle):
+class ThrottleRest(BaseStorage):
 
     def set(self, key, limit: int, reset: int, scope: str):
         self._set(self._key(key), {scope: [limit, reset]})

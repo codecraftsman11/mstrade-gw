@@ -65,6 +65,7 @@ class BinanceWssRouter(Router):
         self._routed_data[subscr_name] = {
             'table': table,
             'action': 'update',
+            'schema': self._wss_api.schema,
             'data': list()
         }
         serializer = self._subscr_serializer(subscr_name)
@@ -75,3 +76,7 @@ class BinanceWssRouter(Router):
         if self._routed_data[subscr_name]['data']:
             return serializer
         return None
+
+
+class BinanceFuturesWssRouter(BinanceWssRouter):
+    pass

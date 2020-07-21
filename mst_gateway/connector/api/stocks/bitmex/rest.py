@@ -12,7 +12,6 @@ from .lib import (
 )
 from . import utils, var
 from ...rest import StockRestApi
-from ...rest.throttle import ThrottleRest
 from .... import api
 from .....exceptions import ConnectorError
 from .....utils import j_dumps
@@ -53,13 +52,12 @@ class BitmexFactory:
 class BitmexRestApi(StockRestApi):
     BASE_URL = BitmexFactory.BASE_URL
     TEST_URL = BitmexFactory.TEST_URL
+    name = 'bitmex'
 
-    def __init__(self, url: str = None, auth: dict = None, logger: Logger = None,
-                 throttle_storage=None, throttle_hash_name: str = '*'):
-        super().__init__(url, auth, logger)
+    def __init__(self, name: str = None, url: str = None, auth: dict = None, logger: Logger = None,
+                 throttle_storage=None, throttle_hash_name: str = '*', state_storage=None):
+        super().__init__(name, url, auth, logger, throttle_storage, state_storage)
         self._throttle_hash_name = throttle_hash_name
-        if throttle_storage:
-            self.throttle = ThrottleRest(storage=throttle_storage)
 
     def _connect(self, **kwargs):
         self._keepalive = bool(kwargs.get('keepalive', False))
@@ -164,12 +162,22 @@ class BitmexRestApi(StockRestApi):
                                           symbol=utils.symbol2stock(symbol))
         if not instruments:
             return dict()
-        return utils.load_symbol_data(instruments[0])
+        state_data = self.storage.get(
+            'symbol', self.name, 'margin1'
+        ).get(utils.stock2symbol(symbol), dict())
+        return utils.load_symbol_data(instruments[0], state_data)
 
     def list_symbols(self, schema, **kwargs) -> list:
         instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive,
                                           **kwargs)
-        return [utils.load_symbol_data(data) for data in instruments]
+        state_data = self.storage.get(
+            'symbol', self.name, 'margin1'
+        )
+        return [
+            utils.load_symbol_data(
+                data, state_data.get(utils.stock2symbol(data.get('symbol')), dict())
+            ) for data in instruments
+        ]
 
     def get_exchange_symbol_info(self) -> list:
         data, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive)
@@ -353,12 +361,3 @@ class BitmexRestApi(StockRestApi):
     @classmethod
     def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
         return utils.calc_price(symbol, face_price)
-
-    def __setstate__(self, state):
-        self.__dict__ = state
-        self.open()
-
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        state.pop('_handler', None)
-        return state

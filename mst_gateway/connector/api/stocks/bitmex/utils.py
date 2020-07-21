@@ -1,7 +1,3 @@
-import urllib
-import json
-import hmac
-import hashlib
 import re
 from typing import Union, Optional, Tuple
 from datetime import datetime
@@ -10,27 +6,7 @@ from mst_gateway.connector.api.utils import time2timestamp
 from . import var
 
 
-# Generates an API signature.
-# A signature is HMAC_SHA256(secret, verb + path + nonce + data), hex encoded.
-# Verb must be uppercased, url is relative, nonce must be an increasing 64-bit integer
-# and the data, if present, must be JSON without whitespace between keys.
-def bitmex_signature(api_secret, verb, url, nonce, postdict=None):
-    """Given an API secret key and data, create a BitMEX-compatible signature."""
-    data = ''
-    if postdict:
-        # separators remove spaces from json
-        # BitMEX expects signatures from JSON built without spaces
-        data = json.dumps(postdict, separators=(',', ':'))
-    parsed_url = urllib.parse.urlparse(url)
-    path = parsed_url.path
-    if parsed_url.query:
-        path = path + '?' + parsed_url.query
-    message = (verb + path + str(nonce) + data).encode('utf-8')
-    signature = hmac.new(api_secret.encode('utf-8'), message, digestmod=hashlib.sha256).hexdigest()
-    return signature
-
-
-def load_symbol_data(raw_data: dict) -> dict:
+def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
     symbol = raw_data.get('symbol')
     symbol_time = to_date(raw_data.get('timestamp'))
     mark_price = to_float(raw_data.get('markPrice'))
@@ -41,14 +17,16 @@ def load_symbol_data(raw_data: dict) -> dict:
         'symbol': symbol,
         'price': to_float(raw_data.get('lastPrice')),
         'price24': to_float(raw_data.get('prevPrice24h')),
-        # 'pair': _get_symbol_pair(raw_data.get('symbol'),
-        #                          raw_data.get('rootSymbol')),
-        'tick': to_float(raw_data.get('tickSize')),
         'mark_price': mark_price,
         'face_price': face_price,
         'bid_price': to_float(raw_data.get('bidPrice')),
         'ask_price': to_float(raw_data.get('askPrice')),
-        'reversed': _reversed
+        'reversed': _reversed,
+        'pair': state_data.get('pair'),
+        'tick': state_data.get('tick'),
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema'),
+        'symbol_schema': state_data.get('symbol_schema'),
     }
 
 
@@ -89,7 +67,7 @@ def load_order_type(order_type: str) -> str:
     return var.ORDER_TYPE_READ_MAP.get(order_type)
 
 
-def store_order_side(order_side: int) -> str:
+def store_order_side(order_side: int) -> Optional[str]:
     if order_side is None:
         return None
     if order_side == api.SELL:
@@ -354,9 +332,9 @@ def calc_price(symbol: str, face_price: float) -> Optional[float]:
 
 def split_order_book(ob_items, side, offset):
     result = {}
+    buy_i = 0
     if side == var.BITMEX_BUY or side is None:
         result[api.BUY] = []
-        buy_i = 0
     if side == var.BITMEX_SELL or side is None:
         result[api.SELL] = []
     for _ob in ob_items:
@@ -372,17 +350,3 @@ def split_order_book(ob_items, side, offset):
     if offset and api.SELL in result:
         result[api.SELL] = result[api.SELL][:-offset]
     return result
-
-# def _get_symbol_pair(symbol: str, root_symbol: str) -> list:
-#     # pylint: disable=unused-argument,fixme
-#     return [symbol[:3], symbol[3:]]
-#     # TODO: For wss packets
-#     # if not root_symbol:
-#     #     return ["", symbol]
-#     # try:
-#     #     pos = symbol.index(root_symbol)
-#     # except ValueError:
-#     #     return ["", symbol]
-#     # if pos > 0:
-#     #     return ["", symbol]
-#     # return [root_symbol, symbol[pos:]]

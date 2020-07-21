@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from typing import Set
 from mst_gateway.connector import api
 from .base import BinanceSerializer
-from ..utils import load_order_book_ws_data
+from ...utils import load_order_book_ws_data
 
 if TYPE_CHECKING:
     from ... import BinanceWssApi

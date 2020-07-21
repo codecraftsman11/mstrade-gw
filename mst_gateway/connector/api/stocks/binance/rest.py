@@ -6,18 +6,16 @@ from binance.exceptions import BinanceAPIException, BinanceRequestException
 from .lib import Client
 from . import utils, var
 from ...rest import StockRestApi
-from ...rest.throttle import ThrottleRest
 from .....exceptions import ConnectorError
 
 
 class BinanceRestApi(StockRestApi):
+    name = 'binance'
 
-    def __init__(self, url: str = None, auth: dict = None, logger: Logger = None,
-                 throttle_storage=None, throttle_hash_name: str = '*'):
-        super().__init__(url, auth, logger)
+    def __init__(self, name: str = None, url: str = None, auth: dict = None, logger: Logger = None,
+                 throttle_storage=None, throttle_hash_name: str = '*', state_storage=None):
+        super().__init__(name, url, auth, logger, throttle_storage, state_storage)
         self._throttle_hash_name = throttle_hash_name
-        if throttle_storage:
-            self.throttle = ThrottleRest(storage=throttle_storage)
 
     def _connect(self, **kwargs):
         return Client(api_key=self._auth['api_key'],
@@ -41,15 +39,25 @@ class BinanceRestApi(StockRestApi):
             data = self._binance_api(self._handler.get_ticker, symbol=symbol.upper())
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
-        return utils.load_symbol_data(data)
+        state_data = self.storage.get(
+            'symbol', self.name, schema
+        ).get(utils.stock2symbol(symbol), dict())
+        return utils.load_symbol_data(data, state_data)
 
     def list_symbols(self, schema, **kwargs) -> list:
+        state_data = self.storage.get(
+            'symbol', self.name, schema
+        )
         if schema == 'futures':
             data = self._binance_api(self._handler.futures_ticker)
-            return [utils.load_symbol_data(d) for d in data]
+            return [utils.load_symbol_data(d, state_data.get(d.get('symbol').lower(), dict())) for d in data]
         elif schema in ('margin2', 'exchange'):
             data = self._binance_api(self._handler.get_ticker)
-            return [utils.load_symbol_data(d) for d in data if utils.to_float(d['weightedAvgPrice'])]
+            return [
+                utils.load_symbol_data(
+                    d, state_data.get(d.get('symbol').lower(), dict())
+                ) for d in data if utils.to_float(d['weightedAvgPrice'])
+            ]
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_exchange_symbol_info(self) -> list:
@@ -392,12 +400,3 @@ class BinanceRestApi(StockRestApi):
         period = rate[len(rate)-1:]
         duration = {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}.get(period.lower(), 60)
         return int((now + timedelta(seconds=((num * duration) - now.second))).timestamp())
-
-    def __setstate__(self, state):
-        self.__dict__ = state
-        self.open()
-
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        state.pop('_handler', None)
-        return state

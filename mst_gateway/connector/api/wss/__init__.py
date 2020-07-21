@@ -1,5 +1,5 @@
 from typing import Dict
-from typing import Coroutine
+from typing import Optional
 import asyncio
 from abc import ABCMeta
 from abc import abstractmethod
@@ -12,6 +12,7 @@ from .router import Router
 from ..schema import SUBSCRIPTIONS
 from ..schema import AUTH_SUBSCRIPTIONS
 from .throttle import ThrottleWss
+from ..storage import StateStorage
 
 
 class StockWssApi(Connector):
@@ -24,25 +25,31 @@ class StockWssApi(Connector):
     name = "Base"
     BASE_URL = None
     throttle = ThrottleWss()
+    storage = StateStorage()
 
     def __init__(self,
+                 name: str = None,
                  url: str = None,
                  auth: dict = None,
                  logger: Logger = None,
                  options: dict = None,
-                 name: str = None,
                  throttle_rate: int = 30,
-                 throttle_storage=None):
+                 throttle_storage=None,
+                 schema='margin1',
+                 state_storage=None):
+        if name is not None:
+            self.name = name
         self._options = options or {}
         self._url = url or self.__class__.BASE_URL
         self._error = errors.ERROR_OK
         self._subscriptions = {}
         self._router = self.__class__.router_class(self)
         self._throttle_rate = throttle_rate
-        if name is not None:
-            self.name = name
         if throttle_storage:
             self.throttle = ThrottleWss(throttle_storage)
+        self.schema = schema
+        if state_storage:
+            self.storage = StateStorage(state_storage)
         super().__init__(auth, logger)
 
     @property
@@ -192,7 +199,7 @@ class StockWssApi(Connector):
         await self._handler.close()
         self._handler = None
 
-    async def process_message(self, message, on_message: Coroutine = None):
+    async def process_message(self, message, on_message: Optional[callable] = None):
         try:
             data = self.get_data(message)
         except Exception as exc:
