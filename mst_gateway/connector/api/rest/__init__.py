@@ -116,7 +116,7 @@ class StockRestApi(Connector):
         return self.get_order_book(symbol, depth, side, split, offset, schema)
 
     @abstractmethod
-    def list_trades(self, symbol, **kwargs) -> list:
+    def list_trades(self, symbol: str, schema: str, **kwargs) -> list:
         raise NotImplementedError
 
     @abstractmethod

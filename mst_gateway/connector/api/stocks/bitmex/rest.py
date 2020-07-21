@@ -270,13 +270,13 @@ class BitmexRestApi(StockRestApi):
         ).get(symbol.lower(), dict())
         return [utils.load_order_data(data, state_data) for data in orders]
 
-    def list_trades(self, symbol, **kwargs) -> list:
+    def list_trades(self, symbol: str, schema: str, **kwargs) -> list:
         trades, _ = self._bitmex_api(self._handler.Trade.Trade_get,
                                      symbol=utils.symbol2stock(symbol),
                                      reverse=True,
                                      **self._api_kwargs(kwargs))
         state_data = self.storage.get(
-            'symbol', self.name, 'margin1'
+            'symbol', self.name, schema
         ).get(symbol.lower(), dict())
         return [utils.load_trade_data(data, state_data) for data in trades]
 
@@ -292,6 +292,9 @@ class BitmexRestApi(StockRestApi):
     def get_order_book(
             self, symbol: str, depth: int = None, side: int = None,
             split: bool = False, offset: int = 0, schema: str = None) -> Union[list, dict]:
+        state_data = self.storage.get(
+            'symbol', self.name, schema
+        ).get(symbol.lower(), dict())
         ob_depth = depth or 0
         if ob_depth:
             ob_depth += offset
@@ -301,13 +304,14 @@ class BitmexRestApi(StockRestApi):
         if not split \
            and side is None \
            and not offset:
-            return [utils.load_order_book_data(_ob)
+            return [utils.load_order_book_data(_ob, state_data)
                     for _ob in ob_items]
 
         splitted_ob = utils.split_order_book(
             ob_items,
             utils.store_order_side(side),
             offset,
+            state_data
         )
         if split:
             return splitted_ob

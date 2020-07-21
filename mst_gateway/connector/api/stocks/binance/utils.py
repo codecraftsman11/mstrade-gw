@@ -128,7 +128,8 @@ def generate_order_book_id(symbol: str, price: float) -> int:
     return result
 
 
-def load_order_book_data(raw_data: dict, symbol: str, ent_side, split, offset, depth) -> Union[list, dict]:
+def load_order_book_data(raw_data: dict, symbol: str, side, split,
+                         offset, depth, state_data: dict) -> Union[list, dict]:
     _raw_data = dict()
     if offset and depth:
         _raw_data['asks'] = raw_data['asks'][offset:depth + offset]
@@ -144,31 +145,35 @@ def load_order_book_data(raw_data: dict, symbol: str, ent_side, split, offset, d
         _raw_data['bids'] = raw_data['bids']
     _raw_data['asks'] = reversed(_raw_data.get('asks', []))
 
-    res = list() if not split else dict()
+    resp = list() if not split else dict()
     for k, v in _raw_data.items():
-        side = load_order_book_side(k)
-        if ent_side is not None and not ent_side == side:
+        _side = load_order_book_side(k)
+        if side is not None and not side == _side:
             continue
         if split:
-            res.update({side: list()})
+            resp.update({_side: list()})
             for item in v:
-                res[side].append(dict(
+                resp[_side].append(dict(
                     id=generate_order_book_id(symbol, to_float(item[0])),
                     symbol=symbol,
                     price=to_float(item[0]),
                     volume=to_float(item[1]),
-                    side=side
+                    side=_side,
+                    schema=state_data.get('schema'),
+                    system_symbol=state_data.get('system_symbol'),
                 ))
         else:
             for item in v:
-                res.append(dict(
+                resp.append(dict(
                     id=generate_order_book_id(symbol, to_float(item[0])),
                     symbol=symbol,
                     price=to_float(item[0]),
                     volume=to_float(item[1]),
-                    side=side
+                    side=_side,
+                    schema=state_data.get('schema'),
+                    system_symbol=state_data.get('system_symbol'),
                 ))
-    return res
+    return resp
 
 
 def load_quote_data(raw_data: dict, state_data: dict) -> dict:
@@ -569,7 +574,7 @@ def load_quote_bin_ws_data(raw_data: dict, state_data: dict) -> dict:
     }
 
 
-def load_order_book_ws_data(raw_data: dict, order: list, side: int) -> dict:
+def load_order_book_ws_data(raw_data: dict, order: list, side: int, state_data: dict) -> dict:
     """
     {
       "e": "depthUpdate",
@@ -607,7 +612,9 @@ def load_order_book_ws_data(raw_data: dict, order: list, side: int) -> dict:
         'symbol': symbol,
         'price': price,
         'volume': to_float(order[1]),
-        'side': side
+        'side': side,
+        'schema': state_data.get('schema'),
+        'system_symbol': state_data.get('system_symbol')
     }
 
 

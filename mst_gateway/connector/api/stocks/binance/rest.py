@@ -168,8 +168,13 @@ class BinanceRestApi(StockRestApi):
         data = self._binance_api(self._handler.get_all_orders, **params)
         return [utils.load_order_data(d, dict()) for d in data][offset:count]
 
-    def list_trades(self, symbol, **params) -> list:
-        data = self._binance_api(self._handler.get_recent_trades, symbol=symbol.upper(), **self._api_kwargs(params))
+    def list_trades(self, symbol: str, schema: str, **params) -> list:
+        if schema in ('exchange', 'margin2'):
+            data = self._binance_api(self._handler.get_recent_trades, symbol=symbol.upper(), **self._api_kwargs(params))
+        elif schema == 'futures':
+            data = dict()
+        else:
+            raise ConnectorError(f"Invalid schema {schema}.")
         return [utils.load_trade_data(d, symbol) for d in data]
 
     def close_order(self, order_id):
@@ -190,6 +195,9 @@ class BinanceRestApi(StockRestApi):
     def get_order_book(
             self, symbol: str, depth: int = None, side: int = None,
             split: bool = False, offset: int = 0, schema: str = None):
+        state_data = self.storage.get(
+            'symbol', self.name, schema
+        ).get(symbol.lower(), dict())
         limit = 100
         if depth:
             for _l in [100, 500, 1000, 5000]:
@@ -202,7 +210,7 @@ class BinanceRestApi(StockRestApi):
             data = self._binance_api(self._handler.get_order_book, symbol=symbol.upper(), limit=limit)
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
-        return utils.load_order_book_data(data, symbol, side, split, offset, depth)
+        return utils.load_order_book_data(data, symbol, side, split, offset, depth, state_data)
 
     def get_wallet(self, **kwargs) -> dict:
         schema = kwargs.pop('schema', '').lower()
