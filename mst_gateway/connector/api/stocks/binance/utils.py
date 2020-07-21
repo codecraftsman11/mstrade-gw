@@ -453,7 +453,9 @@ def load_total_wallet_summary(total: dict, summary: dict, assets: Union[list, tu
     return total
 
 
-def load_currency_exchange_symbol(currency: list) -> list:
+def load_currency_exchange_symbol(currency: Union[list, dict]) -> list:
+    if isinstance(currency, dict):
+        currency = [currency]
     return [{'symbol': c.get('symbol'), 'price': to_float(c.get('price'))} for c in currency]
 
 
