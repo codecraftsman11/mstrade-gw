@@ -29,6 +29,7 @@ class StockWssApi(Connector):
 
     def __init__(self,
                  name: str = None,
+                 account_name: str = None,
                  url: str = None,
                  auth: dict = None,
                  logger: Logger = None,
@@ -39,6 +40,7 @@ class StockWssApi(Connector):
                  state_storage=None):
         if name is not None:
             self.name = name
+        self.account_name = account_name or self.name
         self._options = options or {}
         self._url = url or self.__class__.BASE_URL
         self._error = errors.ERROR_OK

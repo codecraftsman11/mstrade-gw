@@ -44,7 +44,7 @@ class Serializer:
         if data is None:
             return None
         return {
-            'account': f"{self._wss_api}",
+            'account': self._wss_api.account_name,
             'table': self.__class__.subscription,
             'schema': self._wss_api.schema,
             'action': action,
@@ -56,7 +56,7 @@ class Serializer:
         if data is None:
             return None
         return {
-            'account': f"{self._wss_api}",
+            'account': self._wss_api.account_name,
             'table': self.__class__.subscription,
             'schema': self._wss_api.schema,
             'action': "partial",

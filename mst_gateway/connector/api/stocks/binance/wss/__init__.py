@@ -38,6 +38,7 @@ class BinanceFuturesWssApi(BinanceWssApi):
 
     def __init__(self,
                  name: str = None,
+                 account_name: str = None,
                  url: str = None,
                  auth: dict = None,
                  logger: Logger = None,
@@ -47,4 +48,5 @@ class BinanceFuturesWssApi(BinanceWssApi):
                  schema='futures',
                  state_storage=None):
         self.url = self.BASE_URL
-        super().__init__(name, self.url, auth, logger, options, throttle_rate, throttle_storage, schema, state_storage)
+        super().__init__(name, account_name, self.url, auth, logger, options,
+                         throttle_rate, throttle_storage, schema, state_storage)
