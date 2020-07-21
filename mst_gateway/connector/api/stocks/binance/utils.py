@@ -87,7 +87,7 @@ def _binance_pair(symbol):
     return symbol[:base], symbol[-quote:]
 
 
-def load_trade_data(raw_data: dict, symbol: str) -> dict:
+def load_trade_data(raw_data: dict, state_data: dict) -> dict:
     """
     {
         "id": 28457,
@@ -102,10 +102,12 @@ def load_trade_data(raw_data: dict, symbol: str) -> dict:
     return {
         'time': to_date(raw_data.get('time')),
         'timestamp': raw_data.get('time'),
-        'symbol': symbol,
         'price': to_float(raw_data.get('price')),
         'volume': raw_data.get('qty'),
         'side': load_order_side(raw_data.get('isBuyerMaker')),
+        'symbol': state_data.get('symbol'),
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema'),
     }
 
 
@@ -507,7 +509,7 @@ def calc_price(symbol: str, face_price: float) -> Optional[float]:
     return face_price
 
 
-def load_trade_ws_data(raw_data: dict, symbol: str) -> dict:
+def load_trade_ws_data(raw_data: dict, state_data: dict) -> dict:
     """
     {
         "e":"trade",
@@ -526,10 +528,12 @@ def load_trade_ws_data(raw_data: dict, symbol: str) -> dict:
     return {
         'time': to_date(raw_data.get('E')),
         'timestamp': raw_data.get('E'),
-        'symbol': symbol,
         'price': to_float(raw_data.get('p')),
         'volume': to_float(raw_data.get('q')),
         'side': load_order_side(raw_data.get('m')),
+        'symbol': state_data.get('symbol'),
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema'),
     }
 
 
