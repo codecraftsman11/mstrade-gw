@@ -176,16 +176,17 @@ class BitmexRestApi(StockRestApi):
         return utils.load_symbol_data(instruments[0], state_data)
 
     def list_symbols(self, schema, **kwargs) -> list:
-        instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive,
-                                          **kwargs)
+        data, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive,
+                                   **kwargs)
         state_data = self.storage.get(
             'symbol', self.name, 'margin1'
         )
-        return [
-            utils.load_symbol_data(
-                data, state_data.get(utils.stock2symbol(data.get('symbol')), dict())
-            ) for data in instruments
-        ]
+        symbols = []
+        for d in data:
+            symbol_state = state_data.get(utils.stock2symbol(d.get('symbol')))
+            if symbol_state:
+                symbols.append(utils.load_symbol_data(d, symbol_state))
+        return symbols
 
     def get_exchange_symbol_info(self) -> list:
         data, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive)

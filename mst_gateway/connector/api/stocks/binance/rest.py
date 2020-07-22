@@ -49,16 +49,19 @@ class BinanceRestApi(StockRestApi):
             'symbol', self.name, schema
         )
         if schema == 'futures':
+            _param = None
             data = self._binance_api(self._handler.futures_ticker)
-            return [utils.load_symbol_data(d, state_data.get(d.get('symbol').lower(), dict())) for d in data]
         elif schema in ('margin2', 'exchange'):
+            _param = 'weightedAvgPrice'
             data = self._binance_api(self._handler.get_ticker)
-            return [
-                utils.load_symbol_data(
-                    d, state_data.get(d.get('symbol').lower(), dict())
-                ) for d in data if utils.to_float(d['weightedAvgPrice'])
-            ]
-        raise ConnectorError(f"Invalid schema {schema}.")
+        else:
+            raise ConnectorError(f"Invalid schema {schema}.")
+        symbols = []
+        for d in data:
+            symbol_state = state_data.get(d.get('symbol').lower())
+            if symbol_state and (not _param or (_param and utils.to_float(d[_param]))):
+                symbols.append(utils.load_symbol_data(d, symbol_state))
+        return symbols
 
     def get_exchange_symbol_info(self) -> list:
         e_data = self._binance_api(self._handler.get_exchange_info)
