@@ -128,7 +128,7 @@ def load_quote_data(raw_data: dict, state_data: dict) -> dict:
     return {
         'time': quote_time,
         'timestamp': time2timestamp(quote_time),
-        'symbol': raw_data.get('symbol').lower(),
+        'symbol': raw_data.get('symbol'),
         'price': to_float(raw_data.get('price')),
         'volume': raw_data.get('size'),
         'side': load_order_side(raw_data.get('side')),
@@ -156,7 +156,7 @@ def load_quote_bin_data(raw_data: dict, state_data: dict) -> dict:
 def load_order_book_data(raw_data: dict, state_data: dict) -> dict:
     return {
         'id': raw_data.get('id'),
-        'symbol': raw_data.get('symbol').lower(),
+        'symbol': raw_data.get('symbol'),
         'price': to_float(raw_data.get("price")),
         'volume': raw_data.get('size'),
         'side': load_order_side(raw_data.get('side')),
@@ -176,7 +176,7 @@ def quote2bin(quote: dict) -> dict:
         'low': quote['price'],
         'volume': quote['volume'],
         'system_symbol': quote.get('system_symbol'),
-        'schema': quote.get('scheme')
+        'schema': quote.get('schema')
     }
 
 
@@ -187,6 +187,8 @@ def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
     quote_bin['high'] = max(quote_bin['high'], quote['price'])
     quote_bin['low'] = min(quote_bin['low'], quote['price'])
     quote_bin['volume'] += quote['volume']
+    quote_bin['system_symbol'] = quote['system_symbol']
+    quote_bin['schema'] = quote['schema']
     return quote_bin
 
 

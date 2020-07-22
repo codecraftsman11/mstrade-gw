@@ -15,6 +15,7 @@ from mst_gateway.connector.api.stocks.bitmex.utils import (
     calc_price
 )
 import tests.config as cfg
+from .data.storage import STORAGE_DATA
 
 
 TEST_FROM_DATE = datetime.now(tz=timezone.utc) - timedelta(days=2)
@@ -24,12 +25,14 @@ TEST_TO_DATE = datetime.now(tz=timezone.utc)
 
 @pytest.fixture
 def _bitmex(_debug) -> BitmexRestApi:
-    with BitmexRestApi(url=cfg.BITMEX_URL,
+    with BitmexRestApi(name=cfg.BITMEX_NAME,
+                       url=cfg.BITMEX_URL,
                        auth={
                            'api_key': cfg.BITMEX_API_KEY,
                            'api_secret': cfg.BITMEX_API_SECRET
                        },
-                       logger=_debug['logger']) as bitmex:
+                       logger=_debug['logger'],
+                       state_storage=STORAGE_DATA) as bitmex:
         bitmex.open()
         yield bitmex
         bitmex.cancel_all_orders()
@@ -38,12 +41,14 @@ def _bitmex(_debug) -> BitmexRestApi:
 
 @pytest.fixture
 def _bitmex_keepalive_compress(_debug) -> BitmexRestApi:
-    with BitmexRestApi(url=cfg.BITMEX_URL,
+    with BitmexRestApi(name=cfg.BITMEX_NAME,
+                       url=cfg.BITMEX_URL,
                        auth={
                            'api_key': cfg.BITMEX_API_KEY,
                            'api_secret': cfg.BITMEX_API_SECRET
                        },
-                       logger=_debug) as bitmex:
+                       logger=_debug,
+                       state_storage=STORAGE_DATA) as bitmex:
         bitmex.open(keepalive=True, compress=True)
         yield bitmex
         bitmex.cancel_all_orders()
@@ -52,12 +57,14 @@ def _bitmex_keepalive_compress(_debug) -> BitmexRestApi:
 
 @pytest.fixture
 def _bitmex_keepalive(_debug) -> BitmexRestApi:
-    with BitmexRestApi(url=cfg.BITMEX_URL,
+    with BitmexRestApi(name=cfg.BITMEX_NAME,
+                       url=cfg.BITMEX_URL,
                        auth={
                            'api_key': cfg.BITMEX_API_KEY,
                            'api_secret': cfg.BITMEX_API_SECRET
                        },
-                       logger=_debug) as bitmex:
+                       logger=_debug,
+                       state_storage=STORAGE_DATA) as bitmex:
         bitmex.open(keepalive=True)
         yield bitmex
         bitmex.cancel_all_orders()
@@ -66,12 +73,14 @@ def _bitmex_keepalive(_debug) -> BitmexRestApi:
 
 @pytest.fixture
 def _bitmex_compress(_debug) -> BitmexRestApi:
-    with BitmexRestApi(url=cfg.BITMEX_URL,
+    with BitmexRestApi(name=cfg.BITMEX_NAME,
+                       url=cfg.BITMEX_URL,
                        auth={
                            'api_key': cfg.BITMEX_API_KEY,
                            'api_secret': cfg.BITMEX_API_SECRET
                        },
-                       logger=_debug) as bitmex:
+                       logger=_debug,
+                       state_storage=STORAGE_DATA) as bitmex:
         bitmex.open(compress=True)
         yield bitmex
         bitmex.cancel_all_orders()
@@ -80,12 +89,14 @@ def _bitmex_compress(_debug) -> BitmexRestApi:
 
 @pytest.fixture
 def _bitmex_unauth(_debug) -> BitmexRestApi:
-    with BitmexRestApi(url=cfg.BITMEX_URL,
+    with BitmexRestApi(name=cfg.BITMEX_NAME,
+                       url=cfg.BITMEX_URL,
                        auth={
                            'api_key': None,
                            'api_secret': None
                        },
-                       logger=_debug) as bitmex:
+                       logger=_debug,
+                       state_storage=STORAGE_DATA) as bitmex:
         bitmex.open()
         yield bitmex
 
@@ -111,8 +122,17 @@ class TestBitmexRestApi:
 
     def test_bitmex_rest_list_symbols(self, _bitmex: BitmexRestApi,
                                       _bitmex_unauth: BitmexRestApi):
-        assert schema.data_valid(_bitmex.list_symbols().pop(), schema.SYMBOL_FIELDS)
-        assert schema.data_valid(_bitmex_unauth.list_symbols().pop(), schema.SYMBOL_FIELDS)
+        _symbol = None
+        for symbol in _bitmex.list_symbols(schema=cfg.BITMEX_SCHEMA):
+            if symbol.get('symbol').lower() == cfg.BITMEX_SYMBOL.lower():
+                _symbol = symbol
+                break
+        assert schema.data_valid(_symbol, schema.SYMBOL_FIELDS)
+        for symbol in _bitmex_unauth.list_symbols(schema=cfg.BITMEX_SCHEMA):
+            if symbol.get('symbol').lower() == cfg.BITMEX_SYMBOL.lower():
+                _symbol = symbol
+                break
+        assert schema.data_valid(_symbol, schema.SYMBOL_FIELDS)
 
     def test_bitmex_rest_list_quotes(self, _bitmex: BitmexRestApi,
                                      _bitmex_unauth: BitmexRestApi):
@@ -129,13 +149,13 @@ class TestBitmexRestApi:
             count=10
         )
         assert len(res_data) == 10
-        print(res_data[0])
         assert res_data[0]['time'] > TEST_FROM_DATE
         assert res_data[-1]['time'] < TEST_TO_DATE
 
     def test_bitmex_rest_list_quote_bins(self, _bitmex: BitmexRestApi):
         quote_bins = _bitmex.list_quote_bins(symbol=cfg.BITMEX_SYMBOL,
-                                             binsize='1m', count=1000)
+                                             schema=cfg.BITMEX_SCHEMA,
+                                             binsize='1m', count=1000, state_data=STORAGE_DATA)
         assert quote_bins
         assert isinstance(quote_bins, list)
         assert len(quote_bins) == 1000
@@ -144,10 +164,12 @@ class TestBitmexRestApi:
     def test_bitmex_rest_list_quote_bins_range(self, _bitmex: BitmexRestApi):
         res_data = _bitmex.list_quote_bins(
             symbol=cfg.BITMEX_SYMBOL,
+            schema=cfg.BITMEX_SCHEMA,
             binsize='1m',
             count=1000,
             date_from=TEST_FROM_DATE,
             date_to=TEST_RANGE_TO_DATE,
+            state_data=STORAGE_DATA
         )
         assert len(res_data) < 1000
         assert res_data[0]['time'] > TEST_FROM_DATE
@@ -155,8 +177,10 @@ class TestBitmexRestApi:
 
     def test_bitmex_rest_list_quote_bins_keepalive_compress(self, _bitmex_keepalive_compress: BitmexRestApi):
         quote_bins = _bitmex_keepalive_compress.list_quote_bins(symbol=cfg.BITMEX_SYMBOL,
+                                                                schema=cfg.BITMEX_SCHEMA,
                                                                 binsize='1m',
-                                                                count=1000)
+                                                                count=1000,
+                                                                state_data=STORAGE_DATA)
         assert quote_bins
         assert isinstance(quote_bins, list)
         assert len(quote_bins) == 1000
@@ -164,7 +188,9 @@ class TestBitmexRestApi:
 
     def test_bitmex_rest_list_quote_bins_keepalive(self, _bitmex_keepalive: BitmexRestApi):
         quote_bins = _bitmex_keepalive.list_quote_bins(symbol=cfg.BITMEX_SYMBOL,
-                                                       binsize='1m', count=1000)
+                                                       schema=cfg.BITMEX_SCHEMA,
+                                                       binsize='1m', count=1000,
+                                                       state_data=STORAGE_DATA)
         assert quote_bins
         assert isinstance(quote_bins, list)
         assert len(quote_bins) == 1000
@@ -172,7 +198,9 @@ class TestBitmexRestApi:
 
     def test_bitmex_rest_list_quote_bins_compress(self, _bitmex_compress: BitmexRestApi):
         quote_bins = _bitmex_compress.list_quote_bins(symbol=cfg.BITMEX_SYMBOL,
-                                                      binsize='1m', count=1000)
+                                                      schema=cfg.BITMEX_SCHEMA,
+                                                      binsize='1m', count=1000,
+                                                      state_data=STORAGE_DATA)
         assert quote_bins
         assert isinstance(quote_bins, list)
         assert len(quote_bins) == 1000
@@ -235,7 +263,7 @@ class TestBitmexRestApi:
         assert _bitmex.list_orders(symbol=cfg.BITMEX_SYMBOL) == []
 
     def test_bitmex_rest_list_order_book(self, _bitmex: BitmexRestApi):
-        ob_items = _bitmex.list_order_book(symbol=cfg.BITMEX_SYMBOL)
+        ob_items = _bitmex.list_order_book(symbol=cfg.BITMEX_SYMBOL, schema=cfg.BITMEX_SCHEMA)
         assert ob_items
         assert isinstance(ob_items, list)
         assert schema.data_valid(ob_items[0], schema.ORDER_BOOK_FIELDS)
@@ -243,6 +271,7 @@ class TestBitmexRestApi:
     def test_bitmex_rest_list_order_book_range(self, _bitmex: BitmexRestApi):
         ob_items = _bitmex.list_order_book(
             symbol=cfg.BITMEX_SYMBOL,
+            schema=cfg.BITMEX_SCHEMA,
             depth=5
         )
         assert len(ob_items) == 10
@@ -252,6 +281,7 @@ class TestBitmexRestApi:
     def test_bitmex_rest_list_order_book_split(self, _bitmex: BitmexRestApi):
         ob_items = _bitmex.list_order_book(
             symbol=cfg.BITMEX_SYMBOL,
+            schema=cfg.BITMEX_SCHEMA,
             depth=5,
             split=True
         )
@@ -263,6 +293,7 @@ class TestBitmexRestApi:
     def test_bitmex_rest_list_order_book_offset(self, _bitmex: BitmexRestApi):
         ob_items = _bitmex.list_order_book(
             symbol=cfg.BITMEX_SYMBOL,
+            schema=cfg.BITMEX_SCHEMA,
             depth=1,
             split=True,
             offset=10
@@ -277,14 +308,14 @@ class TestBitmexRestApi:
 
     def test_bitmex_rest_list_trades(self, _bitmex: BitmexRestApi,
                                      _bitmex_unauth: BitmexRestApi):
-        assert schema.data_valid(_bitmex.list_trades(symbol=cfg.BITMEX_SYMBOL).pop(),
+        assert schema.data_valid(_bitmex.list_trades(symbol=cfg.BITMEX_SYMBOL, schema=cfg.BITMEX_SCHEMA).pop(),
                                  schema.TRADE_FIELDS)
-        assert schema.data_valid(_bitmex_unauth.list_trades(symbol=cfg.BITMEX_SYMBOL).pop(),
+        assert schema.data_valid(_bitmex_unauth.list_trades(symbol=cfg.BITMEX_SYMBOL, schema=cfg.BITMEX_SCHEMA).pop(),
                                  schema.TRADE_FIELDS)
 
     def test_bitmex_rest_get_wallet(self, _bitmex: BitmexRestApi):
         data = _bitmex.get_wallet()
-        assert schema.data_valid(data['balances'].pop(), schema.WALLET_FIELDS)
+        assert schema.data_valid(data['balances'].pop(), schema.WALLET_MARGIN1_FIELDS)
 
     def test_bitmex_calc_face_price(self):
         price = 3

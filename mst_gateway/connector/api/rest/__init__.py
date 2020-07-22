@@ -29,7 +29,6 @@ class StockRestApi(Connector):
         if throttle_storage is not None:
             self.throttle = ThrottleRest(storage=throttle_storage)
         if state_storage is not None:
-            print('here state_storage', state_storage, id(state_storage))
             self.storage = StateStorage(storage=state_storage)
         super().__init__(auth, logger)
 

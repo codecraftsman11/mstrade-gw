@@ -242,7 +242,7 @@ class BitmexRestApi(StockRestApi):
             return None
         state_data = self.storage.get(
             'symbol', self.name, 'margin1'
-        ).get(data['symbol'].lower(), dict())
+        ).get(data[0]['symbol'].lower(), dict())
         return utils.load_order_data(data[0], state_data)
 
     def list_orders(self, symbol: str,
