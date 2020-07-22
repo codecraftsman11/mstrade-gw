@@ -3,8 +3,7 @@ from hashlib import sha1
 
 
 class BaseStorage:
-    duration = 60  # in sec
-    timeout = 60  # in sec
+    timeout = None
 
     def __init__(self, storage=None):
         self._storage = storage or dict()

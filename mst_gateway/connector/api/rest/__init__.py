@@ -1,8 +1,8 @@
 from abc import abstractmethod
-from typing import Optional, Tuple, Union, List
+from typing import Optional, Tuple, Union
 from logging import Logger
 from ...base import Connector
-from ..storage import StateStorage
+from mst_gateway.storage import StateStorage
 from ..errors import ERROR_OK
 from .. import (
     OrderType,
@@ -26,9 +26,10 @@ class StockRestApi(Connector):
         self._compress: bool = False
         self._url: str = url if url is not None else self.__class__.BASE_URL
         self._error: tuple = ERROR_OK
-        if throttle_storage:
+        if throttle_storage is not None:
             self.throttle = ThrottleRest(storage=throttle_storage)
-        if state_storage:
+        if state_storage is not None:
+            print('here state_storage', state_storage, id(state_storage))
             self.storage = StateStorage(storage=state_storage)
         super().__init__(auth, logger)
 

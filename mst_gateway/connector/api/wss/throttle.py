@@ -1,5 +1,5 @@
 from datetime import datetime
-from ..base import BaseStorage
+from mst_gateway.storage import BaseStorage
 
 
 class ThrottleWss(BaseStorage):

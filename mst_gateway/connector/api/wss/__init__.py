@@ -12,7 +12,7 @@ from .router import Router
 from ..schema import SUBSCRIPTIONS
 from ..schema import AUTH_SUBSCRIPTIONS
 from .throttle import ThrottleWss
-from ..storage import StateStorage
+from mst_gateway.storage import StateStorage
 
 
 class StockWssApi(Connector):
@@ -47,10 +47,10 @@ class StockWssApi(Connector):
         self._subscriptions = {}
         self._router = self.__class__.router_class(self)
         self._throttle_rate = throttle_rate
-        if throttle_storage:
+        if throttle_storage is not None:
             self.throttle = ThrottleWss(throttle_storage)
         self.schema = schema
-        if state_storage:
+        if state_storage is not None:
             self.storage = StateStorage(state_storage)
         super().__init__(auth, logger)
 

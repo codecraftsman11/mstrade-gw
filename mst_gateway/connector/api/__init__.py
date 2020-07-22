@@ -1,7 +1,6 @@
 # flake8: noqa
 from importlib import import_module
 from .types import *
-from .storage import StateStorage
 
 
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"

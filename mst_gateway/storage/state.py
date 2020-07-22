@@ -2,7 +2,6 @@ from .base import BaseStorage
 
 
 class StateStorage(BaseStorage):
-    timeout = 24 * 60 * 60
 
     def set(self, key, value: dict):
         self._set(self._key(key), value)
