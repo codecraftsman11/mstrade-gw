@@ -12,6 +12,10 @@ class BaseStorage:
     def storage(self):
         return self._storage
 
+    @storage.setter
+    def storage(self, _storage):
+        self._storage = _storage
+
     @abstractmethod
     def set(self, *args, **kwargs):
         raise NotImplementedError
