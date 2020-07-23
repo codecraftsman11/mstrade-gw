@@ -1,6 +1,7 @@
 from mst_gateway.connector.api.stocks.bitmex.utils import to_date
 from mst_gateway.connector.api.utils import time2timestamp
 from mst_gateway.connector import api
+import tests.config as cfg
 
 
 TEST_TRADE_MESSAGES = [
@@ -14,6 +15,7 @@ TEST_TRADE_MESSAGES = [
         'data': {
             'account': "bitmex.test",
             'table': "trade",
+            'schema': cfg.BITMEX_SCHEMA,
             'action': "partial",
             'data': [
                 {
@@ -22,7 +24,9 @@ TEST_TRADE_MESSAGES = [
                     'symbol': "XBTUSD",
                     'volume': 10,
                     'price': 11397.5,
-                    'side': api.BUY
+                    'side': api.BUY,
+                    'schema': "margin1",
+                    'system_symbol': "btcusd"
                 }
             ]
         },
@@ -34,6 +38,7 @@ TEST_TRADE_MESSAGES = [
         'data_quote': {
             'account': "bitmex.test",
             'table': "quote_bin",
+            'schema': cfg.BITMEX_SCHEMA,
             'action': "partial",
             'data': [
                 {
@@ -45,6 +50,8 @@ TEST_TRADE_MESSAGES = [
                     'close': 11321,
                     'low': 11319.5,
                     'high': 11331,
+                    'schema': "margin1",
+                    'system_symbol': "btcusd"
                 }
             ]
         },
@@ -54,6 +61,7 @@ TEST_TRADE_MESSAGES = [
         'data': {
             'account': "bitmex.test",
             'table': "trade",
+            'schema': cfg.BITMEX_SCHEMA,
             'action': "insert",
             'data': [
                 {
@@ -62,13 +70,16 @@ TEST_TRADE_MESSAGES = [
                     'symbol': "XBTUSD",
                     'volume': 10,
                     'price': 11397.5,
-                    'side': api.BUY
+                    'side': api.BUY,
+                    'schema': "margin1",
+                    'system_symbol': "btcusd"
                 }
             ]
         },
         'data_quote': {
             'account': "bitmex.test",
             'table': "quote_bin",
+            'schema': cfg.BITMEX_SCHEMA,
             'action': "update",
             'data': [
                 {
@@ -80,6 +91,8 @@ TEST_TRADE_MESSAGES = [
                     'close': 11397.5,
                     'low': 11397.5,
                     'high': 11397.5,
+                    'schema': "margin1",
+                    'system_symbol': "btcusd"
                 }
             ]
         },
@@ -90,6 +103,7 @@ TEST_TRADE_MESSAGES = [
         'data_quote': {
             'account': "bitmex.test",
             'table': "quote_bin",
+            'schema': cfg.BITMEX_SCHEMA,
             'action': "update",
             'data': [
                 {
@@ -101,6 +115,8 @@ TEST_TRADE_MESSAGES = [
                     'close': 11321,
                     'low': 11319.5,
                     'high': 11331,
+                    'schema': "margin1",
+                    'system_symbol': "btcusd"
                 }
             ]
         },
@@ -110,6 +126,7 @@ TEST_TRADE_MESSAGES = [
         'data': {
             'account': "bitmex.test",
             'table': "trade",
+            'schema': cfg.BITMEX_SCHEMA,
             'action': "insert",
             'data': [
                 {
@@ -118,13 +135,16 @@ TEST_TRADE_MESSAGES = [
                     'symbol': "XBTUSD",
                     'volume': 100,
                     'price': 11329,
-                    'side': api.SELL
+                    'side': api.SELL,
+                    'schema': "margin1",
+                    'system_symbol': "btcusd"
                 }
             ]
         },
         'data_quote': {
             'account': "bitmex.test",
             'table': "quote_bin",
+            'schema': cfg.BITMEX_SCHEMA,
             'action': "update",
             'data': [
                 {
@@ -135,7 +155,9 @@ TEST_TRADE_MESSAGES = [
                     'open': 11329,
                     'close': 11329,
                     'low': 11329,
-                    'high': 11329
+                    'high': 11329,
+                    'schema': "margin1",
+                    'system_symbol': "btcusd"
                 }
             ]
         },
@@ -145,6 +167,7 @@ TEST_TRADE_MESSAGES = [
         'data': {
             'account': "bitmex.test",
             'table': "trade",
+            'schema': cfg.BITMEX_SCHEMA,
             'action': "insert",
             'data': [
                 {
@@ -153,13 +176,16 @@ TEST_TRADE_MESSAGES = [
                     'symbol': "XBTUSD",
                     'volume': 5,
                     'price': 11339,
-                    'side': api.SELL
+                    'side': api.SELL,
+                    'schema': "margin1",
+                    'system_symbol': "btcusd"
                 }
             ]
         },
         'data_quote': {
             'account': "bitmex.test",
             'table': "quote_bin",
+            'schema': cfg.BITMEX_SCHEMA,
             'action': "update",
             'data': [
                 {
@@ -170,9 +196,30 @@ TEST_TRADE_MESSAGES = [
                     'open': 11329,
                     'close': 11339,
                     'low': 11329,
-                    'high': 11339
+                    'high': 11339,
+                    'schema': "margin1",
+                    'system_symbol': "btcusd"
                 }
             ]
         },
     }
 ]
+
+TEST_TRADE_STATE = {
+    'account': "bitmex.test",
+    'table': "trade",
+    'schema': cfg.BITMEX_SCHEMA,
+    'action': "partial",
+    'data': [
+        {
+            'time': to_date("2019-07-01T11:59:38.326Z"),
+            'timestamp': time2timestamp(to_date("2019-07-01T11:59:38.326Z")),
+            'symbol': "XBTUSD",
+            'volume': 5,
+            'price': 11339,
+            'side': api.SELL,
+            'schema': "margin1",
+            'system_symbol': "btcusd"
+        }
+    ]
+}

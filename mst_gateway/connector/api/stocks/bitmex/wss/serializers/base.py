@@ -7,7 +7,7 @@ from ...utils import stock2symbol
 
 class BitmexSerializer(Serializer):
     __metaclass__ = ABCMeta
-    subscription = "base"
+    subscription = "bitmex"
 
     @classmethod
     def _get_data_action(cls, message) -> str:

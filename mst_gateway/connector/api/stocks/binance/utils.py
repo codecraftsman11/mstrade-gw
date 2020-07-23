@@ -10,7 +10,7 @@ def _face_price(symbol, mark_price):
     return mark_price, True
 
 
-def load_symbol_data(raw_data: dict) -> dict:
+def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
     symbol = raw_data.get('symbol')
     symbol_time = to_date(raw_data.get('closeTime'))
     mark_price = to_float(raw_data.get('lastPrice'))
@@ -21,13 +21,16 @@ def load_symbol_data(raw_data: dict) -> dict:
         'symbol': symbol,
         'price': to_float(raw_data.get('lastPrice')),
         'price24': to_float(raw_data.get('weightedAvgPrice')),
-        # 'pair': _binance_pair(symbol),
-        'tick': to_float(1e-8),
         'mark_price': mark_price,
         'face_price': face_price,
         'bid_price': to_float(raw_data.get('bidPrice')),
         'ask_price': to_float(raw_data.get('askPrice')),
-        'reversed': _reversed
+        'reversed': _reversed,
+        'pair': state_data.get('pair'),
+        'tick': state_data.get('tick'),
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema'),
+        'symbol_schema': state_data.get('symbol_schema'),
     }
 
 
@@ -84,7 +87,7 @@ def _binance_pair(symbol):
     return symbol[:base], symbol[-quote:]
 
 
-def load_trade_data(raw_data: dict, symbol: str) -> dict:
+def load_trade_data(raw_data: dict, state_data: dict) -> dict:
     """
     {
         "id": 28457,
@@ -99,10 +102,12 @@ def load_trade_data(raw_data: dict, symbol: str) -> dict:
     return {
         'time': to_date(raw_data.get('time')),
         'timestamp': raw_data.get('time'),
-        'symbol': symbol,
         'price': to_float(raw_data.get('price')),
         'volume': raw_data.get('qty'),
         'side': load_order_side(raw_data.get('isBuyerMaker')),
+        'symbol': state_data.get('symbol'),
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema'),
     }
 
 
@@ -125,7 +130,8 @@ def generate_order_book_id(symbol: str, price: float) -> int:
     return result
 
 
-def load_order_book_data(raw_data: dict, symbol: str, ent_side, split, offset, depth) -> Union[list, dict]:
+def load_order_book_data(raw_data: dict, symbol: str, side, split,
+                         offset, depth, state_data: dict) -> Union[list, dict]:
     _raw_data = dict()
     if offset and depth:
         _raw_data['asks'] = raw_data['asks'][offset:depth + offset]
@@ -141,34 +147,38 @@ def load_order_book_data(raw_data: dict, symbol: str, ent_side, split, offset, d
         _raw_data['bids'] = raw_data['bids']
     _raw_data['asks'] = reversed(_raw_data.get('asks', []))
 
-    res = list() if not split else dict()
+    resp = list() if not split else dict()
     for k, v in _raw_data.items():
-        side = load_order_book_side(k)
-        if ent_side is not None and not ent_side == side:
+        _side = load_order_book_side(k)
+        if side is not None and not side == _side:
             continue
         if split:
-            res.update({side: list()})
+            resp.update({_side: list()})
             for item in v:
-                res[side].append(dict(
+                resp[_side].append(dict(
                     id=generate_order_book_id(symbol, to_float(item[0])),
                     symbol=symbol,
                     price=to_float(item[0]),
                     volume=to_float(item[1]),
-                    side=side
+                    side=_side,
+                    schema=state_data.get('schema'),
+                    system_symbol=state_data.get('system_symbol'),
                 ))
         else:
             for item in v:
-                res.append(dict(
+                resp.append(dict(
                     id=generate_order_book_id(symbol, to_float(item[0])),
                     symbol=symbol,
                     price=to_float(item[0]),
                     volume=to_float(item[1]),
-                    side=side
+                    side=_side,
+                    schema=state_data.get('schema'),
+                    system_symbol=state_data.get('system_symbol'),
                 ))
-    return res
+    return resp
 
 
-def load_quote_data(raw_data: dict, symbol: str = None) -> dict:
+def load_quote_data(raw_data: dict, state_data: dict) -> dict:
     """
         {'id': 170622457,
         'isBestMatch': True,
@@ -181,28 +191,31 @@ def load_quote_data(raw_data: dict, symbol: str = None) -> dict:
     return {
         'time': to_date(raw_data.get('time')),
         'timestamp': raw_data.get('time'),
-        'symbol': symbol,
         'price': to_float(raw_data.get('price')),
         'volume': raw_data.get('qty'),
         'side': load_order_side(raw_data.get('isBuyerMaker')),
+        'symbol': state_data.get('symbol'),
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema'),
     }
 
 
-def load_quote_bin_data(raw_data: list, symbol: str = None, schema: str = None) -> dict:
+def load_quote_bin_data(raw_data: list, state_data: dict) -> dict:
     return {
         'time': to_date(raw_data[0]),
         'timestamp': raw_data[0],
-        'symbol': symbol,
-        'schema': schema,
         'open': to_float(raw_data[1]),
         'close': to_float(raw_data[4]),
         'high': to_float(raw_data[2]),
         'low': to_float(raw_data[3]),
         'volume': raw_data[5],
+        'symbol': state_data.get('symbol'),
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema'),
     }
 
 
-def load_order_data(raw_data: dict, skip_undef=False) -> dict:
+def load_order_data(raw_data: dict, state_data: dict) -> dict:
     data = {
         'order_id': raw_data.get('orderId') or raw_data.get('clientOrderId'),
         'symbol': raw_data.get('symbol'),
@@ -213,7 +226,8 @@ def load_order_data(raw_data: dict, skip_undef=False) -> dict:
         'price': to_float(raw_data.get('price')),
         'created': to_date(raw_data.get('time')),
         'active': raw_data.get('status') != "NEW",
-        # 'schema': api.OrderSchema.margin1
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema'),
     }
     return data
 
@@ -493,6 +507,169 @@ def calc_face_price(symbol: str, price: float) -> Tuple[Optional[float],
 
 def calc_price(symbol: str, face_price: float) -> Optional[float]:
     return face_price
+
+
+def load_trade_ws_data(raw_data: dict, state_data: dict) -> dict:
+    """
+    {
+        "e":"trade",
+        "E":1593708058756,
+        "s":"BTCUSDT",
+        "t":349533703,
+        "p":"8958.09000000",
+        "q":"0.05827000",
+        "b":2606312924,
+        "a":2606312902,
+        "T":1593708058754,
+        "m":false,
+        "M":true
+    }
+    """
+    return {
+        'time': to_date(raw_data.get('E')),
+        'timestamp': raw_data.get('E'),
+        'price': to_float(raw_data.get('p')),
+        'volume': to_float(raw_data.get('q')),
+        'side': load_order_side(raw_data.get('m')),
+        'symbol': state_data.get('symbol'),
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema'),
+    }
+
+
+def load_quote_bin_ws_data(raw_data: dict, state_data: dict) -> dict:
+    """
+    {
+      "e": "kline",     // Event type
+      "E": 123456789,   // Event time
+      "s": "BNBBTC",    // Symbol
+      "k": {
+        "t": 123400000, // Kline start time
+        "T": 123460000, // Kline close time
+        "s": "BNBBTC",  // Symbol
+        "i": "1m",      // Interval
+        "f": 100,       // First trade ID
+        "L": 200,       // Last trade ID
+        "o": "0.0010",  // Open price
+        "c": "0.0020",  // Close price
+        "h": "0.0025",  // High price
+        "l": "0.0015",  // Low price
+        "v": "1000",    // Base asset volume
+        "n": 100,       // Number of trades
+        "x": false,     // Is this kline closed?
+        "q": "1.0000",  // Quote asset volume
+        "V": "500",     // Taker buy base asset volume
+        "Q": "0.500",   // Taker buy quote asset volume
+        "B": "123456"   // Ignore
+      }
+    }
+    """
+    return {
+        'time': to_date(raw_data.get('E')),
+        'timestamp': raw_data.get('E'),
+        'open': to_float(raw_data.get('k', {}).get("o")),
+        'close': to_float(raw_data.get('k', {}).get("c")),
+        'high': to_float(raw_data.get('k', {}).get("h")),
+        'low': to_float(raw_data.get('k', {}).get('l')),
+        'volume': to_float(raw_data.get('k', {}).get('v')),
+        'symbol': state_data.get('symbol'),
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema'),
+    }
+
+
+def load_order_book_ws_data(raw_data: dict, order: list, side: int, state_data: dict) -> dict:
+    """
+    {
+      "e": "depthUpdate",
+      "E": 1594200464954,
+      "s": "BTCUSDT",
+      "U": 4862390979,
+      "u": 4862391096,
+      "b": [
+        [
+          "9270.04000000",
+          "0.00000000"
+        ],
+        [
+          "9270.03000000",
+          "0.00000000"
+        ]
+      ],
+      "a": [
+        [
+          "9270.01000000",
+          "1.26026600"
+        ],
+        [
+          "9270.02000000",
+          "0.00000000"
+        ]
+      ]
+    }
+    """
+    symbol = raw_data.get('s', '').lower()
+    price = to_float(order[0])
+
+    return {
+        'id': generate_order_book_id(symbol, price),
+        'symbol': symbol,
+        'price': price,
+        'volume': to_float(order[1]),
+        'side': side,
+        'schema': state_data.get('schema'),
+        'system_symbol': state_data.get('system_symbol')
+    }
+
+
+def load_symbol_ws_data(raw_data: dict, state_data: dict) -> dict:
+    """
+    {
+      "e": "24hrTicker",  // Event type
+      "E": 123456789,     // Event time
+      "s": "BNBBTC",      // Symbol
+      "p": "0.0015",      // Price change
+      "P": "250.00",      // Price change percent
+      "w": "0.0018",      // Weighted average price
+      "x": "0.0009",      // First trade(F)-1 price (first trade before the 24hr rolling window)
+      "c": "0.0025",      // Last price
+      "Q": "10",          // Last quantity
+      "b": "0.0024",      // Best bid price
+      "B": "10",          // Best bid quantity
+      "a": "0.0026",      // Best ask price
+      "A": "100",         // Best ask quantity
+      "o": "0.0010",      // Open price
+      "h": "0.0025",      // High price
+      "l": "0.0010",      // Low price
+      "v": "10000",       // Total traded base asset volume
+      "q": "18",          // Total traded quote asset volume
+      "O": 0,             // Statistics open time
+      "C": 86400000,      // Statistics close time
+      "F": 0,             // First trade ID
+      "L": 18150,         // Last trade Id
+      "n": 18151          // Total number of trades
+    }
+    """
+    symbol = raw_data.get('s')
+    mark_price = to_float(raw_data.get('o'))
+    face_price, _reversed = calc_face_price(symbol, mark_price)
+    return {
+        'time': to_date(raw_data.get('E')),
+        'timestamp': raw_data.get('E'),
+        'symbol': symbol,
+        'price': to_float(raw_data.get('c')),
+        'price24': to_float(raw_data.get('w')),
+        'mark_price': mark_price,
+        'face_price': face_price,
+        'bid_price': to_float(raw_data.get('b')),
+        'ask_price': to_float(raw_data.get('a')),
+        'reversed': _reversed,
+        'pair': state_data.get('pair'),
+        'tick': state_data.get('tick'),
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema'),
+        'symbol_schema': state_data.get('symbol_schema'),
+    }
 
 
 def to_date(token: Union[datetime, int]) -> Optional[datetime]:

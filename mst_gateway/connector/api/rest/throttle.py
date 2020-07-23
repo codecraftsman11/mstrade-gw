@@ -1,7 +1,8 @@
-from ..throttle import Throttle
+from mst_gateway.storage import BaseStorage
 
 
-class ThrottleRest(Throttle):
+class ThrottleRest(BaseStorage):
+    timeout = 60
 
     def set(self, key, limit: int, reset: int, scope: str):
         self._set(self._key(key), {scope: [limit, reset]})

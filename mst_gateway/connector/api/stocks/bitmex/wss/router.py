@@ -86,6 +86,7 @@ class BitmexWssRouter(Router):
         self._routed_data[subscr_name] = {
             'table': data['table'],
             'action': data.get('action'),
+            'schema': self._wss_api.schema,
             'data': list()
         }
         serializer = self._subscr_serializer(subscr_name)

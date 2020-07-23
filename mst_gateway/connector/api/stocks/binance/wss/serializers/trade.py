@@ -1,6 +1,6 @@
 from __future__ import annotations
 from .base import BinanceSerializer
-from ..utils import load_trade_ws_data
+from ...utils import load_trade_ws_data
 
 
 class BinanceTradeSerializer(BinanceSerializer):
@@ -10,4 +10,7 @@ class BinanceTradeSerializer(BinanceSerializer):
         return message.get('e') == "trade"
 
     def _load_data(self, message: dict, item: dict = None) -> dict:
-        return load_trade_ws_data(item, item['s'])
+        state_data = self._wss_api.storage.get(
+            'symbol', self._wss_api.name, self._wss_api.schema
+        ).get(item['s'].lower(), dict())
+        return load_trade_ws_data(item, state_data)

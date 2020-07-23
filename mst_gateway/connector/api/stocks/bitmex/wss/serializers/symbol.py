@@ -23,6 +23,9 @@ class BitmexSymbolSerializer(BitmexSerializer):
         return item['symbol'] in self._symbols and 'lastPrice' in item
 
     def _load_data(self, message: dict, item: dict) -> dict:
+        state_data = self._wss_api.storage.get(
+            'symbol', self._wss_api.name, self._wss_api.schema
+        ).get(item['symbol'].lower(), dict())
         state = self._get_state(item['symbol'])
         if state:
             if item.get('prevPrice24h') is None:
@@ -37,4 +40,4 @@ class BitmexSymbolSerializer(BitmexSerializer):
                 item['askPrice'] = state[0]['ask_price']
             if item.get('bidPrice') is None:
                 item['bidPrice'] = state[0]['bid_price']
-        return load_symbol_data(item)
+        return load_symbol_data(item, state_data)

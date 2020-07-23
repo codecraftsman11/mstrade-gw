@@ -10,23 +10,27 @@ from ..api.validators import (
 
 
 QUOTE_FIELDS = {
-    "time": datetime_valid,
-    "timestamp": int,
-    "symbol": str,
-    "volume": int,
-    "price": float,
-    "side": side_valid,
+    'time': datetime_valid,
+    'timestamp': int,
+    'symbol': str,
+    'volume': int,
+    'price': float,
+    'side': side_valid,
+    'schema': schema_valid,
+    'system_symbol': str,
 }
 
 QUOTE_BIN_FIELDS = {
-    "time": datetime_valid,
-    "timestamp": int,
-    "symbol": str,
-    "volume": int,
-    "open": float,
-    "high": float,
-    "low": float,
-    "close": float,
+    'time': datetime_valid,
+    'timestamp': int,
+    'symbol': str,
+    'volume': int,
+    'open': float,
+    'high': float,
+    'low': float,
+    'close': float,
+    'schema': schema_valid,
+    'system_symbol': str,
 }
 
 SYMBOL_FIELDS = {
@@ -41,7 +45,10 @@ SYMBOL_FIELDS = {
     'face_price': float,
     'bid_price': float,
     'ask_price': float,
-    'reversed': bool
+    'reversed': bool,
+    'schema': schema_valid,
+    'system_symbol': str,
+    'symbol_schema': schema_valid
 }
 
 ORDER_FIELDS = {
@@ -55,6 +62,7 @@ ORDER_FIELDS = {
     'created': datetime_valid,
     'active': bool,
     'schema': schema_valid,
+    'system_symbol': str,
 }
 
 ORDER_BOOK_FIELDS = {
@@ -62,16 +70,20 @@ ORDER_BOOK_FIELDS = {
     'symbol': str,
     'price': float,
     'volume': int,
-    'side': side_valid
+    'side': side_valid,
+    'schema': schema_valid,
+    'system_symbol': str,
 }
 
 TRADE_FIELDS = {
-    "time": datetime_valid,
-    "timestamp": int,
-    "symbol": str,
-    "volume": int,
-    "price": float,
-    "side": side_valid,
+    'time': datetime_valid,
+    'timestamp': int,
+    'symbol': str,
+    'volume': int,
+    'price': float,
+    'side': side_valid,
+    'schema': schema_valid,
+    'system_symbol': str,
 }
 
 WALLET_FIELDS = {
@@ -89,6 +101,19 @@ WALLET_FIELDS = {
     'available_margin': float,
     'type': str
 }
+
+WALLET_MARGIN1_FIELDS = {
+    'currency': str,
+    'balance': float,
+    'withdraw_balance': float,
+    'unrealised_pnl': float,
+    'margin_balance': float,
+    'maint_margin': float,
+    'init_margin': float,
+    'available_margin': float,
+    'type': str
+}
+
 
 SUBSCRIPTIONS = {
     'symbol': {
@@ -115,7 +140,7 @@ AUTH_SUBSCRIPTIONS = {
 }
 
 USER_FIELDS = {
-  'id': str
+    'id': str
 }
 
 ORDER_COMMISSION = {

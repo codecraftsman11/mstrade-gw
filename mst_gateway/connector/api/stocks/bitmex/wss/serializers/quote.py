@@ -40,7 +40,10 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
         return copy(self._update_quote_bin(item))
 
     def _get_quote_bin(self, item: dict) -> dict:
-        quote = load_quote_data(item)
+        state_data = self._wss_api.storage.get(
+            'symbol', self._wss_api.name, self._wss_api.schema
+        ).get(item['symbol'].lower(), dict())
+        quote = load_quote_data(item, state_data)
         quote_bin = self._bins.get(item['symbol'])
         if not quote_bin:
             return quote2bin(quote)
@@ -52,8 +55,11 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
 
     def _reset_quote_bin(self, message: dict, item: dict) -> dict:
         # pylint: disable=unused-argument
+        state_data = self._wss_api.storage.get(
+            'symbol', self._wss_api.name, self._wss_api.schema
+        ).get(item['symbol'].lower(), dict())
         self._bins[item['symbol']] = None
-        return load_quote_bin_data(item)
+        return load_quote_bin_data(item, state_data)
 
     def _update_data(self, data: list, item: dict):
         for ditem in data:
@@ -77,7 +83,10 @@ class BitmexQuoteBinFromTradeSerializer(BitmexQuoteBinSerializer):
         if message['table'] == 'tradeBin1m':
             return True
         if message['table'] == 'trade':
-            new = load_quote_data(item)
+            state_data = self._wss_api.storage.get(
+                'symbol', self._wss_api.name, self._wss_api.schema
+            ).get(item['symbol'].lower(), dict())
+            new = load_quote_data(item, state_data)
             old = self._bins.get(item['symbol'])
             if not old:
                 return False
@@ -85,8 +94,11 @@ class BitmexQuoteBinFromTradeSerializer(BitmexQuoteBinSerializer):
         return False
 
     def _reset_quote_bin(self, message: dict, item: dict) -> dict:
+        state_data = self._wss_api.storage.get(
+            'symbol', self._wss_api.name, self._wss_api.schema
+        ).get(item['symbol'].lower(), dict())
         if message['table'] == 'tradeBin1m':
-            self._bins[item['symbol']] = load_quote_bin_data(item)
+            self._bins[item['symbol']] = load_quote_bin_data(item, state_data)
         else:
-            self._bins[item['symbol']] = quote2bin(load_quote_data(item))
+            self._bins[item['symbol']] = quote2bin(load_quote_data(item, state_data))
         return self._bins[item['symbol']]
