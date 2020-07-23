@@ -275,7 +275,13 @@ class TestBitmexWssApi:
         self.reset()
         await subscribe()
         assert self.data
-        assert schema.data_update_valid(self.data[-1]['symbol']['data'][0], schema.SYMBOL_FIELDS)
+        symbol_message = None
+        for d in self.data[-1]['symbol']['data']:
+            if d.get('symbol').lower() == cfg.BITMEX_SYMBOL.lower():
+                symbol_message = d
+                break
+        assert symbol_message
+        assert schema.data_update_valid(symbol_message, schema.SYMBOL_FIELDS)
 
     @pytest.mark.asyncio
     async def test_bitmex_wss_order_book(self, _wss_api: BitmexWssApi):
@@ -317,7 +323,13 @@ class TestBitmexWssApi:
         self.reset()
         await subscribe()
         assert self.data
-        assert schema.data_update_valid(self.data[-1]['symbol']['data'][0], schema.SYMBOL_FIELDS)
+        symbol_message = None
+        for d in self.data[-1]['symbol']['data']:
+            if d.get('symbol').lower() == cfg.BITMEX_SYMBOL.lower():
+                symbol_message = d
+                break
+        assert symbol_message
+        assert schema.data_update_valid(symbol_message, schema.SYMBOL_FIELDS)
 
     def on_message(self, data):
         self.data.append(data)
