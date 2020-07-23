@@ -62,9 +62,10 @@ class BinanceWssRouter(Router):
         return self._serializers[subscr_name]
 
     def _lookup_serializer(self, subscr_name, data: dict, table) -> Optional[Serializer]:
+        action = data.get('action', 'update') if isinstance(data, dict) else 'update'
         self._routed_data[subscr_name] = {
             'table': table,
-            'action': 'update',
+            'action': action,
             'schema': self._wss_api.schema,
             'data': list()
         }

@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Union
 from abc import ABCMeta
 from abc import abstractmethod
 from .....wss.serializer import Serializer
@@ -13,7 +13,7 @@ class BinanceSerializer(Serializer):
         return message.get('action', 'update')
 
     @classmethod
-    def _update_data(cls, data: list, item: dict):
+    def _update_data(cls, data: list, item: Union[dict, list]):
         if not isinstance(item, list):
             return data.append(item)
         data.extend(item)
