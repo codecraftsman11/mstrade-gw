@@ -8,6 +8,10 @@ class BitmexPositionSerializer(BitmexSerializer):
         return True
 
     def _load_data(self, message: dict, item: dict) -> dict:
+        state_data = self._wss_api.storage.get(
+            'symbol', self._wss_api.name, self._wss_api.schema
+        ).get(item['symbol'].lower(), dict())
+
         state = self._get_state(item.get('symbol'))
         if not item.get('avgEntryPrice'):
             item['avgEntryPrice'] = state[0]['entry_price']
@@ -21,6 +25,8 @@ class BitmexPositionSerializer(BitmexSerializer):
                 last_price=item.get('lastPrice'),
                 volume=item.get('currentQty'),
                 liquidation_price=item.get('liquidationPrice'),
-                entry_price=item.get('avgEntryPrice')
+                entry_price=item.get('avgEntryPrice'),
+                schema=state_data.get('schema'),
+                system_symbol=state_data.get('system_symbol')
             )
         return data

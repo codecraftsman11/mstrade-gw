@@ -1,7 +1,3 @@
-import urllib
-import json
-import hmac
-import hashlib
 import re
 from typing import Union, Optional, Tuple
 from datetime import datetime
@@ -10,27 +6,7 @@ from mst_gateway.connector.api.utils import time2timestamp
 from . import var
 
 
-# Generates an API signature.
-# A signature is HMAC_SHA256(secret, verb + path + nonce + data), hex encoded.
-# Verb must be uppercased, url is relative, nonce must be an increasing 64-bit integer
-# and the data, if present, must be JSON without whitespace between keys.
-def bitmex_signature(api_secret, verb, url, nonce, postdict=None):
-    """Given an API secret key and data, create a BitMEX-compatible signature."""
-    data = ''
-    if postdict:
-        # separators remove spaces from json
-        # BitMEX expects signatures from JSON built without spaces
-        data = json.dumps(postdict, separators=(',', ':'))
-    parsed_url = urllib.parse.urlparse(url)
-    path = parsed_url.path
-    if parsed_url.query:
-        path = path + '?' + parsed_url.query
-    message = (verb + path + str(nonce) + data).encode('utf-8')
-    signature = hmac.new(api_secret.encode('utf-8'), message, digestmod=hashlib.sha256).hexdigest()
-    return signature
-
-
-def load_symbol_data(raw_data: dict) -> dict:
+def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
     symbol = raw_data.get('symbol')
     symbol_time = to_date(raw_data.get('timestamp'))
     mark_price = to_float(raw_data.get('markPrice'))
@@ -41,14 +17,16 @@ def load_symbol_data(raw_data: dict) -> dict:
         'symbol': symbol,
         'price': to_float(raw_data.get('lastPrice')),
         'price24': to_float(raw_data.get('prevPrice24h')),
-        # 'pair': _get_symbol_pair(raw_data.get('symbol'),
-        #                          raw_data.get('rootSymbol')),
-        'tick': to_float(raw_data.get('tickSize')),
         'mark_price': mark_price,
         'face_price': face_price,
         'bid_price': to_float(raw_data.get('bidPrice')),
         'ask_price': to_float(raw_data.get('askPrice')),
-        'reversed': _reversed
+        'reversed': _reversed,
+        'pair': state_data.get('pair'),
+        'tick': state_data.get('tick'),
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema'),
+        'symbol_schema': state_data.get('symbol_schema'),
     }
 
 
@@ -93,7 +71,7 @@ def load_order_type(order_type: str) -> str:
     return var.ORDER_TYPE_READ_MAP.get(order_type)
 
 
-def store_order_side(order_side: int) -> str:
+def store_order_side(order_side: int) -> Optional[str]:
     if order_side is None:
         return None
     if order_side == api.SELL:
@@ -107,7 +85,7 @@ def load_order_side(order_side: str) -> int:
     return api.BUY
 
 
-def load_order_data(raw_data: dict, skip_undef=False) -> dict:
+def load_order_data(raw_data: dict, state_data: dict, skip_undef=False) -> dict:
     data = {
         'order_id': raw_data.get('clOrdID'),
         'symbol': raw_data.get('symbol'),
@@ -118,7 +96,8 @@ def load_order_data(raw_data: dict, skip_undef=False) -> dict:
         'price': to_float(raw_data.get('price')),
         'created': to_date(raw_data.get('timestamp')),
         'active': raw_data.get('ordStatus') != "New",
-        'schema': api.OrderSchema.margin1
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema')
     }
     for k in data:
         if data[k] is None and skip_undef:
@@ -140,44 +119,49 @@ def load_user_data(raw_data: dict) -> dict:
     return data
 
 
-def load_trade_data(raw_data: dict) -> dict:
-    return load_quote_data(raw_data)
+def load_trade_data(raw_data: dict, state_data: dict) -> dict:
+    return load_quote_data(raw_data, state_data)
 
 
-def load_quote_data(raw_data: dict) -> dict:
-    quote_time = to_date(raw_data.get('timestamp'))
-    return {
-        'time': quote_time,
-        'timestamp': time2timestamp(quote_time),
-        'symbol': raw_data.get('symbol').lower(),
-        'price': to_float(raw_data.get('price')),
-        'volume': raw_data.get('size'),
-        'side': load_order_side(raw_data.get('side'))
-    }
-
-
-def load_quote_bin_data(raw_data: dict, schema: str = None) -> dict:
+def load_quote_data(raw_data: dict, state_data: dict) -> dict:
     quote_time = to_date(raw_data.get('timestamp'))
     return {
         'time': quote_time,
         'timestamp': time2timestamp(quote_time),
         'symbol': raw_data.get('symbol'),
-        'schema': schema,
+        'price': to_float(raw_data.get('price')),
+        'volume': raw_data.get('size'),
+        'side': load_order_side(raw_data.get('side')),
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema')
+    }
+
+
+def load_quote_bin_data(raw_data: dict, state_data: dict) -> dict:
+    quote_time = to_date(raw_data.get('timestamp'))
+    return {
+        'time': quote_time,
+        'timestamp': time2timestamp(quote_time),
+        'symbol': raw_data.get('symbol'),
         'open': to_float(raw_data.get("open")),
         'close': to_float(raw_data.get("close")),
         'high': to_float(raw_data.get("high")),
         'low': to_float(raw_data.get('low')),
         'volume': raw_data.get('volume'),
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema')
     }
 
 
-def load_order_book_data(raw_data: dict) -> dict:
+def load_order_book_data(raw_data: dict, state_data: dict) -> dict:
     return {
         'id': raw_data.get('id'),
-        'symbol': raw_data.get('symbol').lower(),
+        'symbol': raw_data.get('symbol'),
         'price': to_float(raw_data.get("price")),
         'volume': raw_data.get('size'),
-        'side': load_order_side(raw_data.get('side'))
+        'side': load_order_side(raw_data.get('side')),
+        'schema': state_data.get('schema'),
+        'system_symbol': state_data.get('system_symbol'),
     }
 
 
@@ -190,7 +174,9 @@ def quote2bin(quote: dict) -> dict:
         'close': quote['price'],
         'high': quote['price'],
         'low': quote['price'],
-        'volume': quote['volume']
+        'volume': quote['volume'],
+        'system_symbol': quote.get('system_symbol'),
+        'schema': quote.get('schema')
     }
 
 
@@ -201,6 +187,8 @@ def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
     quote_bin['high'] = max(quote_bin['high'], quote['price'])
     quote_bin['low'] = min(quote_bin['low'], quote['price'])
     quote_bin['volume'] += quote['volume']
+    quote_bin['system_symbol'] = quote['system_symbol']
+    quote_bin['schema'] = quote['schema']
     return quote_bin
 
 
@@ -356,17 +344,17 @@ def calc_price(symbol: str, face_price: float) -> Optional[float]:
     return result
 
 
-def split_order_book(ob_items, side, offset):
+def split_order_book(ob_items, side, offset, state_data: dict):
     result = {}
+    buy_i = 0
     if side == var.BITMEX_BUY or side is None:
         result[api.BUY] = []
-        buy_i = 0
     if side == var.BITMEX_SELL or side is None:
         result[api.SELL] = []
     for _ob in ob_items:
         if side and _ob['side'] != side:
             continue
-        data = load_order_book_data(_ob)
+        data = load_order_book_data(_ob, state_data)
         if _ob['side'] == var.BITMEX_BUY:
             buy_i += 1
             if buy_i > offset:
@@ -376,17 +364,3 @@ def split_order_book(ob_items, side, offset):
     if offset and api.SELL in result:
         result[api.SELL] = result[api.SELL][:-offset]
     return result
-
-# def _get_symbol_pair(symbol: str, root_symbol: str) -> list:
-#     # pylint: disable=unused-argument,fixme
-#     return [symbol[:3], symbol[3:]]
-#     # TODO: For wss packets
-#     # if not root_symbol:
-#     #     return ["", symbol]
-#     # try:
-#     #     pos = symbol.index(root_symbol)
-#     # except ValueError:
-#     #     return ["", symbol]
-#     # if pos > 0:
-#     #     return ["", symbol]
-#     # return [root_symbol, symbol[pos:]]

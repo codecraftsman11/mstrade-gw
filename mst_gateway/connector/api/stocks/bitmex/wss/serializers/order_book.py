@@ -19,7 +19,10 @@ class BitmexOrderBookSerializer(BitmexSerializer):
         return True
 
     def _load_data(self, message: dict, item: dict) -> dict:
-        data = load_order_book_data(item)
+        state_data = self._wss_api.storage.get(
+            'symbol', self._wss_api.name, self._wss_api.schema
+        ).get(item['symbol'].lower(), dict())
+        data = load_order_book_data(item, state_data)
         if message['action'] in ("partial", "insert"):
             return data
-        return {key: data[key] for key in data if data[key] is not None}
+        return {k: v for k, v in data.items() if v is not None}

@@ -6,18 +6,16 @@ from binance.exceptions import BinanceAPIException, BinanceRequestException
 from .lib import Client
 from . import utils, var
 from ...rest import StockRestApi
-from ...rest.throttle import ThrottleRest
 from .....exceptions import ConnectorError
 
 
 class BinanceRestApi(StockRestApi):
+    name = 'binance'
 
-    def __init__(self, url: str = None, auth: dict = None, logger: Logger = None,
-                 throttle_storage=None, throttle_hash_name: str = '*'):
-        super().__init__(url, auth, logger)
+    def __init__(self, name: str = None, url: str = None, auth: dict = None, logger: Logger = None,
+                 throttle_storage=None, throttle_hash_name: str = '*', state_storage=None):
+        super().__init__(name, url, auth, logger, throttle_storage, state_storage)
         self._throttle_hash_name = throttle_hash_name
-        if throttle_storage:
-            self.throttle = ThrottleRest(storage=throttle_storage)
 
     def _connect(self, **kwargs):
         return Client(api_key=self._auth['api_key'],
@@ -41,16 +39,29 @@ class BinanceRestApi(StockRestApi):
             data = self._binance_api(self._handler.get_ticker, symbol=symbol.upper())
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
-        return utils.load_symbol_data(data)
+        state_data = self.storage.get(
+            'symbol', self.name, schema
+        ).get(utils.stock2symbol(symbol), dict())
+        return utils.load_symbol_data(data, state_data)
 
     def list_symbols(self, schema, **kwargs) -> list:
+        state_data = self.storage.get(
+            'symbol', self.name, schema
+        )
         if schema == 'futures':
+            _param = None
             data = self._binance_api(self._handler.futures_ticker)
-            return [utils.load_symbol_data(d) for d in data]
         elif schema in ('margin2', 'exchange'):
+            _param = 'weightedAvgPrice'
             data = self._binance_api(self._handler.get_ticker)
-            return [utils.load_symbol_data(d) for d in data if utils.to_float(d['weightedAvgPrice'])]
-        raise ConnectorError(f"Invalid schema {schema}.")
+        else:
+            raise ConnectorError(f"Invalid schema {schema}.")
+        symbols = []
+        for d in data:
+            symbol_state = state_data.get(d.get('symbol').lower())
+            if symbol_state and (not _param or (_param and utils.to_float(d[_param]))):
+                symbols.append(utils.load_symbol_data(d, symbol_state))
+        return symbols
 
     def get_exchange_symbol_info(self) -> list:
         e_data = self._binance_api(self._handler.get_exchange_info)
@@ -61,23 +72,30 @@ class BinanceRestApi(StockRestApi):
 
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
         data = self._binance_api(self._handler.get_historical_trades, symbol=symbol.upper(), limit=1)
-        return utils.load_quote_data(data[0], symbol)
+        state_data = self.storage.get(
+            'symbol', self.name, kwargs.get('schema')
+        ).get(symbol.lower(), dict())
+        return utils.load_quote_data(data[0], state_data)
 
     def list_quotes(self, symbol: str, timeframe: str = None, **kwargs) -> list:
         data = self._binance_api(self._handler.get_historical_trades, symbol=symbol.upper())
-        return [utils.load_quote_data(d, symbol) for d in data]
+        state_data = self.storage.get(
+            'symbol', self.name, kwargs.get('schema')
+        ).get(symbol.lower(), dict())
+        return [utils.load_quote_data(d, state_data) for d in data]
 
     def _list_quote_bins_page(self, symbol, schema, binsize='1m', count=100, **kwargs):
+        state_data = kwargs.pop('state_data', dict())
         if schema == 'futures':
             data = self._binance_api(
                 self._handler.futures_klines, symbol=symbol.upper(), interval=binsize, limit=count, **kwargs
             )
-            return [utils.load_quote_bin_data(d, symbol.upper(), schema) for d in data]
+            return [utils.load_quote_bin_data(d, state_data) for d in data]
         elif schema in ('margin2', 'exchange'):
             data = self._binance_api(
                 self._handler.get_klines, symbol=symbol.upper(), interval=binsize, limit=count, **kwargs
             )
-            return [utils.load_quote_bin_data(d, symbol.upper(), schema) for d in data]
+            return [utils.load_quote_bin_data(d, state_data) for d in data]
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
 
@@ -86,6 +104,9 @@ class BinanceRestApi(StockRestApi):
         rest = count % var.BINANCE_MAX_QUOTE_BINS_COUNT
         quote_bins = []
         kwargs = self._api_kwargs(kwargs)
+        kwargs['state_data'] = self.storage.get(
+            'symbol', self.name, schema
+        ).get(symbol.lower(), dict())
         for i in range(pages):
             if i == pages - 1:
                 items_count = rest
@@ -133,7 +154,7 @@ class BinanceRestApi(StockRestApi):
         data = self._binance_api(self._handler.get_order, **params)
         if not data:
             return None
-        return utils.load_order_data(data)
+        return utils.load_order_data(data, dict())
 
     def list_orders(self, symbol: str,
                     active_only: bool = True,
@@ -144,15 +165,25 @@ class BinanceRestApi(StockRestApi):
             params = {}
         if active_only:
             data = self._binance_api(self._handler.get_open_orders, **params)
-            return [utils.load_order_data(d) for d in data]
+            return [utils.load_order_data(d, dict()) for d in data]
         if count is not None:
             params['limit'] = count
         data = self._binance_api(self._handler.get_all_orders, **params)
-        return [utils.load_order_data(d) for d in data][offset:count]
+        return [utils.load_order_data(d, dict()) for d in data][offset:count]
 
-    def list_trades(self, symbol, **params) -> list:
-        data = self._binance_api(self._handler.get_recent_trades, symbol=symbol.upper(), **self._api_kwargs(params))
-        return [utils.load_trade_data(d, symbol) for d in data]
+    def list_trades(self, symbol: str, schema: str, **params) -> list:
+        state_data = self.storage.get(
+            'symbol', self.name, schema
+        ).get(symbol.lower(), dict())
+        if schema in ('exchange', 'margin2'):
+            data = self._binance_api(self._handler.get_recent_trades, symbol=symbol.upper(),
+                                     **self._api_kwargs(params))
+        elif schema == 'futures':
+            data = self._binance_api(self._handler.futures_recent_trades, symbol=symbol.upper(),
+                                     **self._api_kwargs(params))
+        else:
+            raise ConnectorError(f"Invalid schema {schema}.")
+        return [utils.load_trade_data(d, state_data) for d in data]
 
     def close_order(self, order_id):
         raise NotImplementedError
@@ -172,6 +203,9 @@ class BinanceRestApi(StockRestApi):
     def get_order_book(
             self, symbol: str, depth: int = None, side: int = None,
             split: bool = False, offset: int = 0, schema: str = None):
+        state_data = self.storage.get(
+            'symbol', self.name, schema
+        ).get(symbol.lower(), dict())
         limit = 100
         if depth:
             for _l in [100, 500, 1000, 5000]:
@@ -184,7 +218,7 @@ class BinanceRestApi(StockRestApi):
             data = self._binance_api(self._handler.get_order_book, symbol=symbol.upper(), limit=limit)
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
-        return utils.load_order_book_data(data, symbol, side, split, offset, depth)
+        return utils.load_order_book_data(data, symbol, side, split, offset, depth, state_data)
 
     def get_wallet(self, **kwargs) -> dict:
         schema = kwargs.pop('schema', '').lower()
@@ -392,12 +426,3 @@ class BinanceRestApi(StockRestApi):
         period = rate[len(rate)-1:]
         duration = {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}.get(period.lower(), 60)
         return int((now + timedelta(seconds=((num * duration) - now.second))).timestamp())
-
-    def __setstate__(self, state):
-        self.__dict__ = state
-        self.open()
-
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        state.pop('_handler', None)
-        return state

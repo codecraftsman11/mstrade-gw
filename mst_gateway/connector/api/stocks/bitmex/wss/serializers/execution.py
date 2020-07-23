@@ -10,6 +10,9 @@ class BitmexExecutionSerializer(BitmexSerializer):
         return True
 
     def _load_data(self, message: dict, item: dict) -> dict:
+        state_data = self._wss_api.storage.get(
+            'symbol', self._wss_api.name, self._wss_api.schema
+        ).get(item['symbol'].lower(), dict())
         data = dict(
             exchange_order_id=item.get('orderID'),
             order_id=item.get('clOrdID'),
@@ -26,6 +29,8 @@ class BitmexExecutionSerializer(BitmexSerializer):
             filled_volume=item.get('cumQty'),
             avg_price=item.get('avgPx'),
             timestamp=item.get('timestamp'),
+            schema=state_data.get('schema'),
+            system_symbol=state_data.get('system_symbol'),
         )
         return data
 

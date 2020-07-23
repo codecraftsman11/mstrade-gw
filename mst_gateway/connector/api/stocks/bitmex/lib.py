@@ -1,3 +1,7 @@
+from urllib import parse
+import json
+import hmac
+import hashlib
 from bravado.client import (
     construct_request,
     ResourceDecorator as BaseResourceDecorator,
@@ -94,3 +98,23 @@ def bitmex_connector(test=True, config=None, api_key=None, api_secret=None):
     request_client = RequestsClient()
     request_client.authenticator = APIKeyAuthenticator(host, api_key, api_secret)
     return SwaggerClient.from_url(spec_uri, config=config, http_client=request_client)
+
+
+# Generates an API signature.
+# A signature is HMAC_SHA256(secret, verb + path + nonce + data), hex encoded.
+# Verb must be uppercased, url is relative, nonce must be an increasing 64-bit integer
+# and the data, if present, must be JSON without whitespace between keys.
+def bitmex_signature(api_secret, verb, url, nonce, postdict=None):
+    """Given an API secret key and data, create a BitMEX-compatible signature."""
+    data = ''
+    if postdict:
+        # separators remove spaces from json
+        # BitMEX expects signatures from JSON built without spaces
+        data = json.dumps(postdict, separators=(',', ':'))
+    parsed_url = parse.urlparse(url)
+    path = parsed_url.path
+    if parsed_url.query:
+        path = path + '?' + parsed_url.query
+    message = (verb + path + str(nonce) + data).encode('utf-8')
+    signature = hmac.new(api_secret.encode('utf-8'), message, digestmod=hashlib.sha256).hexdigest()
+    return signature

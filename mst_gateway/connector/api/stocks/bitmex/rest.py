@@ -12,10 +12,10 @@ from .lib import (
 )
 from . import utils, var
 from ...rest import StockRestApi
-from ...rest.throttle import ThrottleRest
 from .... import api
 from .....exceptions import ConnectorError
 from .....utils import j_dumps
+
 
 def _make_create_order_args(args, options):
     if not isinstance(options, dict):
@@ -52,13 +52,12 @@ class BitmexFactory:
 class BitmexRestApi(StockRestApi):
     BASE_URL = BitmexFactory.BASE_URL
     TEST_URL = BitmexFactory.TEST_URL
+    name = 'bitmex'
 
-    def __init__(self, url: str = None, auth: dict = None, logger: Logger = None,
-                 throttle_storage=None, throttle_hash_name: str = '*'):
-        super().__init__(url, auth, logger)
+    def __init__(self, name: str = None, url: str = None, auth: dict = None, logger: Logger = None,
+                 throttle_storage=None, throttle_hash_name: str = '*', state_storage=None):
+        super().__init__(name, url, auth, logger, throttle_storage, state_storage)
         self._throttle_hash_name = throttle_hash_name
-        if throttle_storage:
-            self.throttle = ThrottleRest(storage=throttle_storage)
 
     def _connect(self, **kwargs):
         self._keepalive = bool(kwargs.get('keepalive', False))
@@ -98,16 +97,21 @@ class BitmexRestApi(StockRestApi):
         return api_kwargs
 
     def list_quotes(self, symbol, timeframe=None, **kwargs) -> list:
+        _symbol = symbol.lower()
         if timeframe is not None:
             symbol = symbol + ":" + timeframe
         quotes, _ = self._bitmex_api(self._handler.Trade.Trade_get,
                                      symbol=utils.symbol2stock(symbol),
                                      reverse=True,
                                      **self._api_kwargs(kwargs))
-        return [utils.load_quote_data(data) for data in quotes]
+        state_data = self.storage.get(
+            'symbol', self.name, 'margin1'
+        ).get(_symbol, dict())
+        return [utils.load_quote_data(data, state_data) for data in quotes]
 
     def _list_quote_bins_page(self, symbol, schema, binsize='1m', count=100, offset=0,
                               **kwargs):
+        state_data = kwargs.pop('state_data', dict())
         quote_bins, _ = self._bitmex_api(self._handler.Trade.Trade_getBucketed,
                                          symbol=utils.symbol2stock(symbol),
                                          binSize=binsize,
@@ -115,9 +119,12 @@ class BitmexRestApi(StockRestApi):
                                          start=offset,
                                          count=count,
                                          **self._api_kwargs(kwargs))
-        return [utils.load_quote_bin_data(data, schema) for data in quote_bins]
+        return [utils.load_quote_bin_data(data, state_data) for data in quote_bins]
 
     def list_quote_bins(self, symbol, schema, binsize='1m', count=100, **kwargs) -> list:
+        kwargs['state_data'] = self.storage.get(
+            'symbol', self.name, schema
+        ).get(symbol.lower(), dict())
         pages = int((count - 1) / var.BITMEX_MAX_QUOTE_BINS_COUNT) + 1
         rest = count % var.BITMEX_MAX_QUOTE_BINS_COUNT
         quote_bins = []
@@ -163,12 +170,23 @@ class BitmexRestApi(StockRestApi):
                                           symbol=utils.symbol2stock(symbol))
         if not instruments:
             return dict()
-        return utils.load_symbol_data(instruments[0])
+        state_data = self.storage.get(
+            'symbol', self.name, 'margin1'
+        ).get(utils.stock2symbol(symbol), dict())
+        return utils.load_symbol_data(instruments[0], state_data)
 
     def list_symbols(self, schema, **kwargs) -> list:
-        instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive,
-                                          **kwargs)
-        return [utils.load_symbol_data(data) for data in instruments]
+        data, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive,
+                                   **kwargs)
+        state_data = self.storage.get(
+            'symbol', self.name, 'margin1'
+        )
+        symbols = []
+        for d in data:
+            symbol_state = state_data.get(utils.stock2symbol(d.get('symbol')))
+            if symbol_state:
+                symbols.append(utils.load_symbol_data(d, symbol_state))
+        return symbols
 
     def get_exchange_symbol_info(self) -> list:
         data, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive)
@@ -179,7 +197,10 @@ class BitmexRestApi(StockRestApi):
                                      symbol=utils.symbol2stock(symbol),
                                      reverse=True,
                                      count=1)
-        return utils.load_quote_data(quotes[0])
+        state_data = self.storage.get(
+            'symbol', self.name, 'margin1'
+        ).get(symbol.lower(), dict())
+        return utils.load_quote_data(quotes[0], state_data)
 
     def create_order(self, symbol: str,
                      side: int,
@@ -220,7 +241,10 @@ class BitmexRestApi(StockRestApi):
                                    }))
         if not data:
             return None
-        return utils.load_order_data(data[0])
+        state_data = self.storage.get(
+            'symbol', self.name, 'margin1'
+        ).get(data[0]['symbol'].lower(), dict())
+        return utils.load_order_data(data[0], state_data)
 
     def list_orders(self, symbol: str,
                     active_only: bool = True,
@@ -242,14 +266,20 @@ class BitmexRestApi(StockRestApi):
                                      symbol=utils.symbol2stock(symbol),
                                      reverse=True,
                                      **options)
-        return [utils.load_order_data(data) for data in orders]
+        state_data = self.storage.get(
+            'symbol', self.name, 'margin1'
+        ).get(symbol.lower(), dict())
+        return [utils.load_order_data(data, state_data) for data in orders]
 
-    def list_trades(self, symbol, **kwargs) -> list:
+    def list_trades(self, symbol: str, schema: str, **kwargs) -> list:
         trades, _ = self._bitmex_api(self._handler.Trade.Trade_get,
                                      symbol=utils.symbol2stock(symbol),
                                      reverse=True,
                                      **self._api_kwargs(kwargs))
-        return [utils.load_trade_data(data) for data in trades]
+        state_data = self.storage.get(
+            'symbol', self.name, schema
+        ).get(symbol.lower(), dict())
+        return [utils.load_trade_data(data, state_data) for data in trades]
 
     def close_order(self, order_id) -> bool:
         order = self.get_order(order_id)
@@ -263,6 +293,9 @@ class BitmexRestApi(StockRestApi):
     def get_order_book(
             self, symbol: str, depth: int = None, side: int = None,
             split: bool = False, offset: int = 0, schema: str = None) -> Union[list, dict]:
+        state_data = self.storage.get(
+            'symbol', self.name, schema
+        ).get(symbol.lower(), dict())
         ob_depth = depth or 0
         if ob_depth:
             ob_depth += offset
@@ -272,13 +305,14 @@ class BitmexRestApi(StockRestApi):
         if not split \
            and side is None \
            and not offset:
-            return [utils.load_order_book_data(_ob)
+            return [utils.load_order_book_data(_ob, state_data)
                     for _ob in ob_items]
 
         splitted_ob = utils.split_order_book(
             ob_items,
             utils.store_order_side(side),
             offset,
+            state_data
         )
         if split:
             return splitted_ob
@@ -359,12 +393,3 @@ class BitmexRestApi(StockRestApi):
     @classmethod
     def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
         return utils.calc_price(symbol, face_price)
-
-    def __setstate__(self, state):
-        self.__dict__ = state
-        self.open()
-
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        state.pop('_handler', None)
-        return state

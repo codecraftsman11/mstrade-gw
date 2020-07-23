@@ -6,31 +6,30 @@ import pytest
 from websockets.client import WebSocketClientProtocol
 from websockets.exceptions import ConnectionClosed
 from mst_gateway.logging import init_logger
-from mst_gateway.connector import api
 from mst_gateway.connector.api import schema
-from mst_gateway.connector.api.utils import time2timestamp
 from mst_gateway.connector.api.stocks.bitmex import BitmexWssApi
 from mst_gateway.connector.api.stocks.bitmex import BitmexRestApi
-from mst_gateway.connector.api.stocks.bitmex.utils import to_date
 from mst_gateway.connector.api.stocks.bitmex.wss import utils
 from mst_gateway.connector.api.stocks.bitmex.wss import serializers
 from mst_gateway.connector.api.stocks.bitmex.wss.router import BitmexWssRouter
 import tests.config as cfg
-from .data import TEST_QUOTE_BIN_MESSAGES
-from .data import TEST_TRADE_MESSAGES
+from .data import TEST_QUOTE_BIN_MESSAGES, TEST_QUOTE_BIN_STATE
+from .data import TEST_TRADE_MESSAGES, TEST_TRADE_STATE
 from .data import TEST_ORDER_BOOK_MESSAGES
-from .data import TEST_SYMBOL_MESSAGES
-from .data import RESULT_SYMBOL_STATE
+from .data import TEST_SYMBOL_MESSAGES, RESULT_SYMBOL_STATE
+from .data.storage import STORAGE_DATA
 
 
 @pytest.fixture
 def _rest(_debug) -> BitmexRestApi:
-    with BitmexRestApi(url=cfg.BITMEX_URL,
+    with BitmexRestApi(name=cfg.BITMEX_NAME,
+                       url=cfg.BITMEX_URL,
                        auth={
                            'api_key': cfg.BITMEX_API_KEY,
                            'api_secret': cfg.BITMEX_API_SECRET
                        },
-                       logger=_debug['logger']) as rest:
+                       logger=_debug['logger'],
+                       state_storage=STORAGE_DATA) as rest:
         rest.open()
         yield rest
         rest.cancel_all_orders()
@@ -39,26 +38,32 @@ def _rest(_debug) -> BitmexRestApi:
 
 @pytest.fixture
 def _wss_api(_debug) -> BitmexWssApi:
-    with BitmexWssApi(url=cfg.BITMEX_WSS_URL,
-                      name='bitmex.test',
-                      auth={
-                          'api_key': cfg.BITMEX_API_KEY,
-                          'api_secret': cfg.BITMEX_API_SECRET
-                      },
-                      logger=_debug['logger']) as wss:
-        yield wss
-
-
-@pytest.fixture
-def _wss_trade_api(_debug) -> BitmexWssApi:
-    with BitmexWssApi(url=cfg.BITMEX_WSS_URL,
-                      name='bitmex.test',
+    with BitmexWssApi(name=cfg.BITMEX_NAME,
+                      account_name='bitmex.test',
+                      url=cfg.BITMEX_WSS_URL,
                       auth={
                           'api_key': cfg.BITMEX_API_KEY,
                           'api_secret': cfg.BITMEX_API_SECRET
                       },
                       logger=_debug['logger'],
-                      options={'use_trade_bin': False}) as wss:
+                      schema=cfg.BITMEX_SCHEMA,
+                      state_storage=STORAGE_DATA) as wss:
+        yield wss
+
+
+@pytest.fixture
+def _wss_trade_api(_debug) -> BitmexWssApi:
+    with BitmexWssApi(name=cfg.BITMEX_NAME,
+                      account_name='bitmex.test',
+                      url=cfg.BITMEX_WSS_URL,
+                      auth={
+                          'api_key': cfg.BITMEX_API_KEY,
+                          'api_secret': cfg.BITMEX_API_SECRET
+                      },
+                      logger=_debug['logger'],
+                      options={'use_trade_bin': False},
+                      schema=cfg.BITMEX_SCHEMA,
+                      state_storage=STORAGE_DATA) as wss:
         yield wss
 
 
@@ -171,23 +176,7 @@ class TestBitmexWssApi:
         _wss_api.register("quote_bin")
         for test in TEST_QUOTE_BIN_MESSAGES:
             _wss_api.get_data(test['message'])
-        assert _wss_api.get_state("quote_bin") == {
-            'account': "bitmex.test",
-            'table': "quote_bin",
-            'action': "partial",
-            'data': [
-                {
-                    'time': to_date("2019-07-01T11:59:38.326Z"),
-                    'timestamp': time2timestamp(to_date("2019-07-01T11:59:38.326Z")),
-                    'symbol': "XBTUSD",
-                    'volume': 105,
-                    'open': 11329,
-                    'close': 11339,
-                    'low': 11329,
-                    'high': 11339
-                }
-            ]
-        }
+        assert _wss_api.get_state("quote_bin") == TEST_QUOTE_BIN_STATE
 
     def test_bitmex_wss_router_get_order_book_serializer(self, _wss_api: BitmexWssApi):
         # pylint: disable=protected-access
@@ -227,21 +216,7 @@ class TestBitmexWssApi:
         _wss_api.register("trade")
         for test in TEST_TRADE_MESSAGES:
             _wss_api.get_data(test['message'])
-        assert _wss_api.get_state("trade") == {
-            'account': "bitmex.test",
-            'table': "trade",
-            'action': "partial",
-            'data': [
-                {
-                    'time': to_date("2019-07-01T11:59:38.326Z"),
-                    'timestamp': time2timestamp(to_date("2019-07-01T11:59:38.326Z")),
-                    'symbol': "XBTUSD",
-                    'volume': 5,
-                    'price': 11339,
-                    'side': api.SELL
-                }
-            ]
-        }
+        assert _wss_api.get_state("trade") == TEST_TRADE_STATE
 
     def test_bitmex_wss_router_get_mixed_serializers(self, _wss_api: BitmexWssApi):
         # pylint: disable=protected-access
@@ -300,7 +275,13 @@ class TestBitmexWssApi:
         self.reset()
         await subscribe()
         assert self.data
-        assert schema.data_update_valid(self.data[-1]['symbol']['data'][0], schema.SYMBOL_FIELDS)
+        symbol_message = None
+        for d in self.data[-1]['symbol']['data']:
+            if d.get('symbol').lower() == cfg.BITMEX_SYMBOL.lower():
+                symbol_message = d
+                break
+        assert symbol_message
+        assert schema.data_update_valid(symbol_message, schema.SYMBOL_FIELDS)
 
     @pytest.mark.asyncio
     async def test_bitmex_wss_order_book(self, _wss_api: BitmexWssApi):
@@ -342,7 +323,13 @@ class TestBitmexWssApi:
         self.reset()
         await subscribe()
         assert self.data
-        assert schema.data_update_valid(self.data[-1]['symbol']['data'][0], schema.SYMBOL_FIELDS)
+        symbol_message = None
+        for d in self.data[-1]['symbol']['data']:
+            if d.get('symbol').lower() == cfg.BITMEX_SYMBOL.lower():
+                symbol_message = d
+                break
+        assert symbol_message
+        assert schema.data_update_valid(symbol_message, schema.SYMBOL_FIELDS)
 
     def on_message(self, data):
         self.data.append(data)

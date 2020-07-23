@@ -4,7 +4,7 @@ from ....wss import StockWssApi
 from ....wss.subscriber import Subscriber
 from . import subscribers as subscr
 from .utils import is_auth_ok, make_cmd
-from ..utils import bitmex_signature
+from ..lib import bitmex_signature
 from .router import BitmexWssRouter
 
 

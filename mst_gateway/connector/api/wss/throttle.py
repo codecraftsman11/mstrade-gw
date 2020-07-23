@@ -1,8 +1,8 @@
 from datetime import datetime
-from ..throttle import Throttle
+from mst_gateway.storage import BaseStorage
 
 
-class ThrottleWss(Throttle):
+class ThrottleWss(BaseStorage):
     duration = 60
     timeout = None
 
