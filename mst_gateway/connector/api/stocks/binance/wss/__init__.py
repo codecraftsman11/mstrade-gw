@@ -1,14 +1,15 @@
 import asyncio
 import json
-from typing import Optional, Union
 from logging import Logger
+from typing import Optional, Union
 from websockets import client
-from ....wss import StockWssApi
 from . import subscribers as subscr
-from .utils import is_auth_ok, make_cmd, parse_message, to_float
 from .router import BinanceWssRouter
-from .... import errors
 from .router import BinanceWssRouter, BinanceFuturesWssRouter
+from .utils import is_auth_ok, make_cmd, parse_message
+from ..utils import to_float
+from .... import errors
+from ....wss import StockWssApi
 
 
 class BinanceWssApi(StockWssApi):
