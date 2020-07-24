@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from typing import Set
+from typing import Set, Optional
 from .base import BitmexSerializer
 from ...utils import load_symbol_data
 
@@ -22,10 +22,12 @@ class BitmexSymbolSerializer(BitmexSerializer):
             self._symbols.remove(item['symbol'])
         return item['symbol'] in self._symbols and 'lastPrice' in item
 
-    def _load_data(self, message: dict, item: dict) -> dict:
+    def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         state_data = self._wss_api.storage.get(
             'symbol', self._wss_api.name, self._wss_api.schema
         ).get(item['symbol'].lower(), dict())
+        if not state_data:
+            return None
         state = self._get_state(item['symbol'])
         if state:
             if item.get('prevPrice24h') is None:

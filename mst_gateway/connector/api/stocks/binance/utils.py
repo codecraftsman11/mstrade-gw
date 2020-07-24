@@ -135,13 +135,13 @@ def load_order_book_data(raw_data: dict, symbol: str, side, split,
     _raw_data = dict()
     if offset and depth:
         _raw_data['asks'] = raw_data['asks'][offset:depth + offset]
-        _raw_data['bids'] = raw_data['bids'][-depth - offset:-offset]
+        _raw_data['bids'] = raw_data['bids'][offset:depth + offset]
     elif offset and depth is None:
         _raw_data['asks'] = raw_data['asks'][offset:]
-        _raw_data['bids'] = raw_data['bids'][:-offset]
+        _raw_data['bids'] = raw_data['bids'][offset:]
     elif depth:
         _raw_data['asks'] = raw_data['asks'][:depth]
-        _raw_data['bids'] = raw_data['bids'][-depth:]
+        _raw_data['bids'] = raw_data['bids'][:depth]
     else:
         _raw_data['asks'] = raw_data['asks']
         _raw_data['bids'] = raw_data['bids']

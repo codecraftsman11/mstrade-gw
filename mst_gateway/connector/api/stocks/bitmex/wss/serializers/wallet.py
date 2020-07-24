@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Optional
 from .base import BitmexSerializer
 from ...utils import load_wallet_data
 
@@ -9,7 +10,7 @@ class BitmexWalletSerializer(BitmexSerializer):
     def is_item_valid(self, message: dict, item: dict) -> bool:
         return message.get('table') == "margin"
 
-    def _load_data(self, message: dict, item: dict) -> dict:
+    def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         state = self._get_state('wallet')
         balances = state[0]['balances'] if state else list()
         for balance in balances:

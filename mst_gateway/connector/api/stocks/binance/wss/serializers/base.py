@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import Tuple, Union, Optional
 from abc import ABCMeta
 from abc import abstractmethod
 from .....wss.serializer import Serializer
@@ -19,7 +19,7 @@ class BinanceSerializer(Serializer):
         data.extend(item)
 
     @abstractmethod
-    def _load_data(self, message: dict, item: dict) -> dict:
+    def _load_data(self, message: dict, item: dict) -> Union[dict, list, None]:
         return item
 
     @abstractmethod
@@ -34,6 +34,8 @@ class BinanceSerializer(Serializer):
 
     def _append_item(self, data: list, message: dict, item: dict):
         valid_item = self._load_data(message, item)
+        if not valid_item:
+            return None
         if isinstance(valid_item, dict):
             self._update_state(valid_item['symbol'], valid_item)
         else:
