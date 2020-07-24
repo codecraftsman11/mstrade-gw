@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from typing import Set
+from typing import Set, Optional
 from mst_gateway.connector import api
 from .base import BinanceSerializer
 from ...utils import load_order_book_ws_data
@@ -19,10 +19,12 @@ class BinanceOrderBookSerializer(BinanceSerializer):
     def is_item_valid(self, message: dict, item: dict) -> bool:
         return message.keys() >= {'a', 'b'}
 
-    def _load_data(self, message: dict, item: dict) -> list:
+    def _load_data(self, message: dict, item: dict) -> Optional[list]:
         state_data = self._wss_api.storage.get(
             'symbol', self._wss_api.name, self._wss_api.schema
-        ).get(item['s'].lower(), dict())
+        ).get(item['s'].lower())
+        if not state_data:
+            return None
         data = list()
         bid = item.pop('b')
         ask = item.pop('a')

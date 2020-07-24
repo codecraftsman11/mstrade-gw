@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Optional
 from abc import ABCMeta
 from abc import abstractmethod
 from .....wss.serializer import Serializer
@@ -18,7 +18,7 @@ class BitmexSerializer(Serializer):
         data.append(item)
 
     @abstractmethod
-    def _load_data(self, message: dict, item: dict) -> dict:
+    def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         return item
 
     @abstractmethod
@@ -33,5 +33,7 @@ class BitmexSerializer(Serializer):
 
     def _append_item(self, data: list, message: dict, item: dict):
         valid_item = self._load_data(message, item)
+        if not valid_item:
+            return None
         self._update_state(stock2symbol(valid_item.get('symbol')), valid_item)
         self._update_data(data, valid_item)

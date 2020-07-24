@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from datetime import datetime
 from copy import copy
 from .base import BitmexSerializer
@@ -34,30 +34,29 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
             return True
         return message['table'] in ("trade", "tradeBin1m")
 
-    def _load_data(self, message: dict, item: dict) -> dict:
-        if self._bin_closed(message, item):
-            return copy(self._reset_quote_bin(message, item))
-        return copy(self._update_quote_bin(item))
-
-    def _get_quote_bin(self, item: dict) -> dict:
+    def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         state_data = self._wss_api.storage.get(
             'symbol', self._wss_api.name, self._wss_api.schema
-        ).get(item['symbol'].lower(), dict())
+        ).get(item['symbol'].lower())
+        if not state_data:
+            return None
+        if self._bin_closed(message, item, state_data):
+            return copy(self._reset_quote_bin(message, item, state_data))
+        return copy(self._update_quote_bin(item, state_data))
+
+    def _get_quote_bin(self, item: dict, state_data: dict) -> dict:
         quote = load_quote_data(item, state_data)
         quote_bin = self._bins.get(item['symbol'])
         if not quote_bin:
             return quote2bin(quote)
         return update_quote_bin(quote_bin, quote)
 
-    def _update_quote_bin(self, item) -> dict:
-        self._bins[item['symbol']] = self._get_quote_bin(item)
+    def _update_quote_bin(self, item, state_data: dict) -> dict:
+        self._bins[item['symbol']] = self._get_quote_bin(item, state_data)
         return self._bins[item['symbol']]
 
-    def _reset_quote_bin(self, message: dict, item: dict) -> dict:
+    def _reset_quote_bin(self, message: dict, item: dict, state_data: dict) -> dict:
         # pylint: disable=unused-argument
-        state_data = self._wss_api.storage.get(
-            'symbol', self._wss_api.name, self._wss_api.schema
-        ).get(item['symbol'].lower(), dict())
         self._bins[item['symbol']] = None
         return load_quote_bin_data(item, state_data)
 
@@ -67,7 +66,7 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
                 return
         data.append(item)
 
-    def _bin_closed(self, message: dict, item: dict) -> bool:
+    def _bin_closed(self, message: dict, item: dict, state_data: dict) -> bool:
         # pylint:disable=no-self-use,unused-argument
         return message['table'] == 'tradeBin1m'
 
@@ -79,13 +78,10 @@ class BitmexQuoteBinFromTradeSerializer(BitmexQuoteBinSerializer):
             return True
         return ts_new.minute > ts_old.minute
 
-    def _bin_closed(self, message: dict, item: dict) -> bool:
+    def _bin_closed(self, message: dict, item: dict, state_data: dict) -> bool:
         if message['table'] == 'tradeBin1m':
             return True
         if message['table'] == 'trade':
-            state_data = self._wss_api.storage.get(
-                'symbol', self._wss_api.name, self._wss_api.schema
-            ).get(item['symbol'].lower(), dict())
             new = load_quote_data(item, state_data)
             old = self._bins.get(item['symbol'])
             if not old:
@@ -93,10 +89,7 @@ class BitmexQuoteBinFromTradeSerializer(BitmexQuoteBinSerializer):
             return self._minute_updated(old['time'], new['time'])
         return False
 
-    def _reset_quote_bin(self, message: dict, item: dict) -> dict:
-        state_data = self._wss_api.storage.get(
-            'symbol', self._wss_api.name, self._wss_api.schema
-        ).get(item['symbol'].lower(), dict())
+    def _reset_quote_bin(self, message: dict, item: dict, state_data: dict) -> dict:
         if message['table'] == 'tradeBin1m':
             self._bins[item['symbol']] = load_quote_bin_data(item, state_data)
         else:

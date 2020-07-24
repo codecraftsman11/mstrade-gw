@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from typing import Set
+from typing import Set, Optional
 from .base import BitmexSerializer
 from ...utils import load_order_book_data
 
@@ -18,10 +18,12 @@ class BitmexOrderBookSerializer(BitmexSerializer):
     def is_item_valid(self, message: dict, item: dict) -> bool:
         return True
 
-    def _load_data(self, message: dict, item: dict) -> dict:
+    def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         state_data = self._wss_api.storage.get(
             'symbol', self._wss_api.name, self._wss_api.schema
-        ).get(item['symbol'].lower(), dict())
+        ).get(item['symbol'].lower())
+        if not state_data:
+            return None
         data = load_order_book_data(item, state_data)
         if message['action'] in ("partial", "insert"):
             return data
