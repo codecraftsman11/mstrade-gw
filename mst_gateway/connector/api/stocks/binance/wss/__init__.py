@@ -1,10 +1,11 @@
 import asyncio
 import json
+import requests
 from logging import Logger
 from typing import Optional, Union
+from mst_gateway.exceptions import ConnectorError
 from websockets import client
 from . import subscribers as subscr
-from .router import BinanceWssRouter
 from .router import BinanceWssRouter, BinanceFuturesWssRouter
 from .utils import is_auth_ok, make_cmd, parse_message
 from ..utils import to_float
@@ -23,9 +24,43 @@ class BinanceWssApi(StockWssApi):
     }
 
     auth_subscribers = {
+        'wallet': subscr.BinanceWalletSubscriber()
     }
 
     router_class = BinanceWssRouter
+
+    async def open(self, **kwargs):
+        self._auth_url(kwargs.get('is_auth'))
+        return await super().open()
+
+    def _auth_url(self, is_auth):
+        if is_auth:
+            key = self._generate_listen_key()
+            self._url = f"{self._url}/{key}"
+
+    def _generate_listen_key(self):
+        if self.schema == 'exchange':
+            url = 'https://api.binance.com/api/v3/userDataStream'
+        elif self.schema == 'margin2':
+            url = 'https://api.binance.com/sapi/v1/userDataStream'
+        elif self.schema == 'futures':
+            url = 'https://fapi.binance.com/sapi/v1/userDataStream'
+        else:
+            raise ConnectorError(f"Invalid schema {self.schema}.")
+        session = requests.session()
+        session.headers.update({'Accept': 'application/json',
+                                'User-Agent': 'binance/python',
+                                'X-MBX-APIKEY': self.auth.get('api_key')})
+        try:
+            response = session.post(url).json()
+        except requests.RequestException as exc:
+            raise ConnectorError(f"Binance api error. Details: {exc.status_code}, {exc.message}")
+        except (TypeError, ValueError):
+            raise ConnectorError(f"Binance api error. Details: Invalid listen key")
+        key = response.get('listenKey')
+        if not key:
+            raise ConnectorError(f"Binance api error. Details: Invalid listen key")
+        return key
 
     async def _connect(self, **kwargs):
         _ws: client.WebSocketClientProtocol = await super()._connect(**kwargs)
