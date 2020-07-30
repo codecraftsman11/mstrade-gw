@@ -39,3 +39,7 @@ class BinanceQuoteBinSubscriber(BinanceSubscriber):
 
 class BinanceSymbolSubscriber(BinanceSubscriber):
     subscriptions = ("!ticker@arr",)
+
+
+class BinanceFuturesSymbolSubscriber(BinanceSymbolSubscriber):
+    subscriptions = ("!ticker@arr", "!bookTicker")

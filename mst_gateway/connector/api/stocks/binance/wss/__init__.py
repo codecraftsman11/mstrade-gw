@@ -77,6 +77,15 @@ class BinanceWssApi(StockWssApi):
 class BinanceFuturesWssApi(BinanceWssApi):
     BASE_URL = 'wss://fstream.binance.com/ws'
     name = 'binance'
+    subscribers = {
+        'order_book': subscr.BinanceOrderBookSubscriber(),
+        'trade': subscr.BinanceTradeSubscriber(),
+        'quote_bin': subscr.BinanceQuoteBinSubscriber(),
+        'symbol': subscr.BinanceFuturesSymbolSubscriber()
+    }
+
+    auth_subscribers = {
+    }
 
     router_class = BinanceFuturesWssRouter
 
