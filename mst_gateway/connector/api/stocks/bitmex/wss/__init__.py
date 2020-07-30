@@ -45,7 +45,8 @@ class BitmexWssApi(StockWssApi):
         signature = bitmex_signature(auth.get('api_secret', ""), "GET", "/realtime", expires)
         await wss.send(make_cmd('authKeyExpires', [auth.get('api_key', ""), expires,
                                                    signature]))
-        return is_auth_ok(await wss.recv())
+        self.auth_connect = is_auth_ok(await wss.recv())
+        return self.auth_connect
 
     def _get_subscriber(self, subscr_name: str) -> Subscriber:
         if subscr_name.lower() == "trade":

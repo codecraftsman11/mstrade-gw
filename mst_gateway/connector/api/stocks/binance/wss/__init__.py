@@ -1,6 +1,5 @@
 import asyncio
 import json
-import requests
 from logging import Logger
 from typing import Optional, Union
 from mst_gateway.exceptions import ConnectorError
@@ -8,6 +7,7 @@ from websockets import client
 from . import subscribers as subscr
 from .router import BinanceWssRouter, BinanceFuturesWssRouter
 from .utils import is_auth_ok, make_cmd, parse_message
+from ..lib import Client
 from ..utils import to_float
 from .... import errors
 from ....wss import StockWssApi
@@ -30,34 +30,25 @@ class BinanceWssApi(StockWssApi):
     router_class = BinanceWssRouter
 
     async def open(self, **kwargs):
-        self._auth_url(kwargs.get('is_auth'))
+        if kwargs.get('is_auth') or self.auth_connect:
+            self.auth_connect = True
+            self._generate_auth_url()
         return await super().open()
 
-    def _auth_url(self, is_auth):
-        if is_auth:
-            key = self._generate_listen_key()
-            self._url = f"{self._url}/{key}"
+    def _generate_auth_url(self):
+        key = self._generate_listen_key()
+        self._url = f"{self._url}/{key}"
 
     def _generate_listen_key(self):
+        bin_client = Client(api_key=self.auth.get('api_key'), api_secret=self.auth.get('api_secret'))
         if self.schema == 'exchange':
-            url = 'https://api.binance.com/api/v3/userDataStream'
+            key = bin_client.stream_get_listen_key()
         elif self.schema == 'margin2':
-            url = 'https://api.binance.com/sapi/v1/userDataStream'
+            key = bin_client.margin_stream_get_listen_key()
         elif self.schema == 'futures':
-            url = 'https://fapi.binance.com/sapi/v1/userDataStream'
+            key = bin_client.futures_stream_get_listen_key()
         else:
             raise ConnectorError(f"Invalid schema {self.schema}.")
-        session = requests.session()
-        session.headers.update({'Accept': 'application/json',
-                                'User-Agent': 'binance/python',
-                                'X-MBX-APIKEY': self.auth.get('api_key')})
-        try:
-            response = session.post(url).json()
-        except requests.RequestException as exc:
-            raise ConnectorError(f"Binance api error. Details: {exc.status_code}, {exc.message}")
-        except (TypeError, ValueError):
-            raise ConnectorError(f"Binance api error. Details: Invalid listen key")
-        key = response.get('listenKey')
         if not key:
             raise ConnectorError(f"Binance api error. Details: Invalid listen key")
         return key
@@ -68,7 +59,7 @@ class BinanceWssApi(StockWssApi):
         return _ws
 
     async def authenticate(self, auth: dict = None) -> bool:
-        return True
+        return self.auth_connect
 
     async def process_message(self, message, on_message: Optional[callable] = None):
         messages = self.split_order_book(message)
