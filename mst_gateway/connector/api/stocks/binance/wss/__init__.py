@@ -35,6 +35,9 @@ class BinanceWssApi(StockWssApi):
     async def authenticate(self, auth: dict = None) -> bool:
         return True
 
+    def get_state(self, subscr_name: str, symbol: str = None) -> Optional[dict]:
+        return None
+
     async def process_message(self, message, on_message: Optional[callable] = None):
         messages = self.split_order_book(message)
         if not isinstance(messages, list):
