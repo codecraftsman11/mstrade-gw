@@ -161,6 +161,25 @@ class StockRestApi(Connector):
     def get_order_commission(self, schema: str, pair: Union[list, tuple]) -> dict:
         raise NotImplementedError
 
+    @classmethod
+    @abstractmethod
+    def calc_liquidation_isolated_price(cls, entry_price: float, leverage: float, maint_margin: float,
+                                        taker_fee: float, funding_rate: float, position: str = 'short'):
+        raise NotImplementedError
+
+    @classmethod
+    @abstractmethod
+    def calc_liquidation_cross_price(cls, quantity: Union[int, float], entry_price: float, margin_balance: float,
+                                     maint_margin: float, taker_fee: float, funding_rate: float,
+                                     position: str = 'short'):
+        raise NotImplementedError
+
+    @classmethod
+    @abstractmethod
+    def calc_leverage_level(cls, quantity: Union[int, float], entry_price: float, wallet_balance: float,
+                            liquidation_price: float = None):
+        raise NotImplementedError
+
     def __setstate__(self, state):
         self.__dict__ = state
         self.open()

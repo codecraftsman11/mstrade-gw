@@ -12,6 +12,7 @@ from .lib import (
 )
 from . import utils, var
 from ...rest import StockRestApi
+from ...types import OrderLeverageType
 from .... import api
 from .....exceptions import ConnectorError
 from .....utils import j_dumps
@@ -393,3 +394,34 @@ class BitmexRestApi(StockRestApi):
     @classmethod
     def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
         return utils.calc_price(symbol, face_price)
+
+    @classmethod
+    def calc_liquidation_isolated_price(cls, entry_price: float, leverage: float, maint_margin: float,
+                                        taker_fee: float, funding_rate: float, position: str = 'short'):
+        p = 1 if position == 'short' else -1
+        result = round(
+            entry_price / (
+                    1 +
+                    (-p * ((100 / leverage / 100) + 2 * taker_fee / 100)) +
+                    (p * (maint_margin + taker_fee + funding_rate) / 100)
+            ), 8)
+        return result
+
+    @classmethod
+    def calc_liquidation_cross_price(cls, quantity: Union[int, float], entry_price: float, margin_balance: float,
+                                     maint_margin: float, taker_fee: float, funding_rate: float,
+                                     position: str = 'short'):
+        p = 1 if position == 'short' else -1
+        result = round(
+            (p * quantity * entry_price) / (
+                (-margin_balance * entry_price) +
+                ((maint_margin + taker_fee + funding_rate) / 100 * quantity) +
+                (p * quantity)
+            ), 8)
+        return result
+
+    @classmethod
+    def calc_leverage_level(cls, quantity: Union[int, float], entry_price: float, wallet_balance: float,
+                            liquidation_price: float = None):
+        result = round(quantity / (wallet_balance * 100 * entry_price) * 100**2, 8)
+        return result

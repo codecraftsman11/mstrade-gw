@@ -357,6 +357,22 @@ class BinanceRestApi(StockRestApi):
         fee_tier = utils.get_vip(self._binance_api(self._handler.futures_account_v2))
         return utils.load_commission(commissions, pair[0], fee_tier)
 
+    @classmethod
+    def calc_liquidation_isolated_price(cls, entry_price: float, leverage: float, maint_margin: float,
+                                        taker_fee: float, funding_rate: float, position: str = 'short'):
+        raise NotImplementedError
+
+    @classmethod
+    def calc_liquidation_cross_price(cls, quantity: Union[int, float], entry_price: float, margin_balance: float,
+                                     maint_margin: float, taker_fee: float, funding_rate: float,
+                                     position: str = 'short'):
+        raise NotImplementedError
+
+    @classmethod
+    def calc_leverage_level(cls, quantity: Union[int, float], entry_price: float, wallet_balance: float,
+                            liquidation_price: float = None):
+        raise NotImplementedError
+
     def _binance_api(self, method: callable, **kwargs):
         try:
             resp = method(**kwargs)
