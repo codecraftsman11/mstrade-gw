@@ -32,12 +32,13 @@ class BinanceWssApi(StockWssApi):
 
     async def _refresh_key(self):
         while True:
-            self._generate_auth_url()
             await asyncio.sleep(self.refresh_key_time)
+            self._generate_auth_url()
 
     async def open(self, **kwargs):
         if kwargs.get('is_auth') or self.auth_connect:
             self.auth_connect = True
+            self._generate_auth_url()
             asyncio.ensure_future(self._refresh_key())
         return await super().open()
 

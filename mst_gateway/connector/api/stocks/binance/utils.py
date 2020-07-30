@@ -244,7 +244,7 @@ def load_spot_wallet_data(raw_data: dict, currencies: dict,
     balances = _spot_balance_data(raw_data.get('balances'))
     total_balance = dict()
     for asset in assets:
-        total_balance[asset] = load_wallet_summary(currencies, balances, asset, ['balance'])
+        total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
     return {
         'balances': balances,
         **_load_total_wallet_summary_list(total_balance, ['balance'])
@@ -352,7 +352,7 @@ def _ws_load_spot_wallet_data(raw_data: dict, currencies: dict,
     balances = _ws_spot_balance_data(raw_data.get('B'))
     total_balance = dict()
     for asset in assets:
-        total_balance[asset] = load_wallet_summary(currencies, balances, asset, ['balance'])
+        total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
     return {
         **_load_total_wallet_summary_list(total_balance, ['balance']),
         'balances': balances
@@ -391,8 +391,8 @@ def _ws_load_margin_wallet_data(raw_data: dict, currencies: dict,
     return {
         'trade_enabled': raw_data.get('T'),
         'transfer_enabled': raw_data.get('W'),
-        'borrow_enabled': raw_data.get('borrowEnabled'),
-        'margin_level': raw_data.get('marginLevel'),
+        'borrow_enabled': None,
+        'margin_level': None,
         'balances': balances,
         **_load_total_wallet_summary_list(total_balance, fields)
     }
@@ -430,12 +430,12 @@ def _ws_load_futures_wallet_data(raw_data: dict, currencies: dict,
     for asset in assets:
         total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
     return {
-        'trade_enabled': raw_data.get('canTrade'),
-        'total_initial_margin': to_float(raw_data.get('totalInitialMargin')),
-        'total_maint_margin': to_float(raw_data.get('totalMaintMargin')),
-        'total_open_order_initial_margin': to_float(raw_data.get('totalOpenOrderInitialMargin')),
-        'total_position_initial_margin': to_float(raw_data.get('totalPositionInitialMargin')),
-        'total_unrealised_pnl': to_float(raw_data.get('totalUnrealizedProfit')),
+        'trade_enabled': None,
+        'total_initial_margin': None,
+        'total_maint_margin': None,
+        'total_open_order_initial_margin': None,
+        'total_position_initial_margin': None,
+        'total_unrealised_pnl': None,
         'balances': balances,
         **_load_total_wallet_summary_list(total_balance, fields)
     }
