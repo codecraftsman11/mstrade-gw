@@ -12,7 +12,6 @@ from .lib import (
 )
 from . import utils, var
 from ...rest import StockRestApi
-from ...types import OrderLeverageType
 from .... import api
 from .....exceptions import ConnectorError
 from .....utils import j_dumps
