@@ -404,8 +404,8 @@ def _ws_margin_balance_data(balances: list):
             'currency': b['a'],
             'balance': to_float(b['f']),
             'unrealised_pnl': 0,
-            'margin_balance': to_float(b['f']),
-            'maint_margin': to_float(b['l']),
+            'margin_balance': None,
+            'maint_margin': None,
             'init_margin': None,
             'available_margin': round(to_float(b['f']) - to_float(b['l']), 8),
             'type': to_wallet_state_type(to_float(b['l'])),
@@ -425,7 +425,7 @@ def ws_futures_wallet(**kwargs):
 
 def _ws_load_futures_wallet_data(raw_data: dict, currencies: dict,
                                  assets: Union[list, tuple], fields: Union[list, tuple]) -> dict:
-    balances = _ws_futures_balance_data(raw_data.get('a', {}).get('B'))
+    balances = _ws_futures_balance_data(raw_data.get('a', {}).get('B'), raw_data.get('a', {}).get('P'))
     total_balance = dict()
     for asset in assets:
         total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
@@ -441,17 +441,18 @@ def _ws_load_futures_wallet_data(raw_data: dict, currencies: dict,
     }
 
 
-def _ws_futures_balance_data(balances: list):
+def _ws_futures_balance_data(balances: list, position: list):
+    unrealised_pnl = sum([to_float(p['up']) for p in position]) if position else 0
     return [
         {
             'currency': b['a'],
             'balance': to_float(b['wb']),
-            'unrealised_pnl': 0,
-            'margin_balance': None,
+            'unrealised_pnl': unrealised_pnl,
+            'margin_balance': to_float(b['wb']) + unrealised_pnl,
             'maint_margin': None,
             'init_margin': None,
             'available_margin': None,
-            'type': None,
+            'type': to_wallet_state_type(position),
             'borrowed': None,
             'interest': None,
         } for b in balances
