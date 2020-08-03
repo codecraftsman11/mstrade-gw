@@ -22,7 +22,6 @@ class BinanceWssRouter(Router):
         'kline': "quote_bin",
         '24hrTicker': "symbol",
         'outboundAccountInfo': 'wallet',
-        'ACCOUNT_UPDATE': 'wallet'
     }
 
     serializer_classes = {
@@ -96,6 +95,7 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
         'kline': "quote_bin",
         '24hrTicker': "symbol",
         'bookTicker': "symbol",
+        'ACCOUNT_UPDATE': 'wallet'
     }
 
     serializer_classes = {
@@ -103,4 +103,5 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
         'order_book': serializers.BinanceOrderBookSerializer,
         'quote_bin': serializers.BinanceQuoteBinSerializer,
         'symbol': serializers.BinanceFuturesSymbolSerializer,
+        'wallet': serializers.BinanceWalletSerializer
     }
