@@ -21,6 +21,8 @@ class BinanceWssRouter(Router):
         'depthUpdate': "order_book",
         'kline': "quote_bin",
         '24hrTicker': "symbol",
+        'outboundAccountInfo': 'wallet',
+        'ACCOUNT_UPDATE': 'wallet'
     }
 
     serializer_classes = {
@@ -28,6 +30,7 @@ class BinanceWssRouter(Router):
         'order_book': serializers.BinanceOrderBookSerializer,
         'quote_bin': serializers.BinanceQuoteBinSerializer,
         'symbol': serializers.BinanceSymbolSerializer,
+        'wallet': serializers.BinanceWalletSerializer
     }
 
     def __init__(self, wss_api: BinanceWssApi):

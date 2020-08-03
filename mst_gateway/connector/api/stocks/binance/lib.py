@@ -157,3 +157,12 @@ class Client(BaseClient):
 
         """
         return self._request_futures_api_v2('get', 'account', True, data=params)
+
+    def futures_stream_get_listen_key(self, **params):
+        """Get current account information.
+
+        https://binance-docs.github.io/apidocs/futures/en/#start-user-data-stream-user_stream
+
+        """
+        res = self._request_futures_api('post', 'listenKey', True, data=params)
+        return res['listenKey']
