@@ -2,11 +2,12 @@ import asyncio
 import json
 from logging import Logger
 from typing import Optional, Union
+from mst_gateway.exceptions import ConnectorError
 from websockets import client
 from . import subscribers as subscr
-from .router import BinanceWssRouter
 from .router import BinanceWssRouter, BinanceFuturesWssRouter
 from .utils import is_auth_ok, make_cmd, parse_message
+from ..lib import Client
 from ..utils import to_float
 from .... import errors
 from ....wss import StockWssApi
@@ -23,9 +24,41 @@ class BinanceWssApi(StockWssApi):
     }
 
     auth_subscribers = {
+        'wallet': subscr.BinanceWalletSubscriber()
     }
 
     router_class = BinanceWssRouter
+    refresh_key_time = 1800
+
+    async def _refresh_key(self):
+        while True:
+            await asyncio.sleep(self.refresh_key_time)
+            self._generate_auth_url()
+
+    async def open(self, **kwargs):
+        if kwargs.get('is_auth') or self.auth_connect:
+            self.auth_connect = True
+            self._generate_auth_url()
+            asyncio.create_task(self._refresh_key())
+        return await super().open()
+
+    def _generate_auth_url(self):
+        key = self._generate_listen_key()
+        self._url = f"{self._url}/{key}"
+
+    def _generate_listen_key(self):
+        bin_client = Client(api_key=self.auth.get('api_key'), api_secret=self.auth.get('api_secret'))
+        if self.schema == 'exchange':
+            key = bin_client.stream_get_listen_key()
+        elif self.schema == 'margin2':
+            key = bin_client.margin_stream_get_listen_key()
+        elif self.schema == 'futures':
+            key = bin_client.futures_stream_get_listen_key()
+        else:
+            raise ConnectorError(f"Invalid schema {self.schema}.")
+        if not key:
+            raise ConnectorError(f"Binance api error. Details: Invalid listen key")
+        return key
 
     async def _connect(self, **kwargs):
         _ws: client.WebSocketClientProtocol = await super()._connect(**kwargs)
@@ -33,7 +66,7 @@ class BinanceWssApi(StockWssApi):
         return _ws
 
     async def authenticate(self, auth: dict = None) -> bool:
-        return True
+        return self.auth_connect
 
     async def process_message(self, message, on_message: Optional[callable] = None):
         messages = self.split_order_book(message)
