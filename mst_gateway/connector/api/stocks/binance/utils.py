@@ -244,10 +244,10 @@ def load_spot_wallet_data(raw_data: dict, currencies: dict,
     balances = _spot_balance_data(raw_data.get('balances'))
     total_balance = dict()
     for asset in assets:
-        total_balance[asset] = load_wallet_summary(currencies, balances, asset, ['balance'])
+        total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
     return {
         'balances': balances,
-        **_load_total_wallet_summary_list(total_balance, ['balance'])
+        **_load_total_wallet_summary_list(total_balance, fields)
     }
 
 
@@ -337,6 +337,126 @@ def load_futures_wallet_detail_data(raw_data: dict, asset: str) -> dict:
         if a.get('asset', '').upper() == asset.upper():
             return _futures_balance_data([a])[0]
     raise ConnectorError(f"Invalid asset {asset}.")
+
+
+def ws_spot_wallet(**kwargs):
+    assets = kwargs.get('assets', ('btc', 'usd'))
+    fields = ('balance',)
+    data = kwargs.get('item', dict())
+    currencies = dict()
+    return _ws_load_spot_wallet_data(data, currencies, assets, fields)
+
+
+def _ws_load_spot_wallet_data(raw_data: dict, currencies: dict,
+                              assets: Union[list, tuple], fields: Union[list, tuple]) -> dict:
+    balances = _ws_spot_balance_data(raw_data.get('B'))
+    total_balance = dict()
+    for asset in assets:
+        total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
+    return {
+        **_load_total_wallet_summary_list(total_balance, fields),
+        'balances': balances
+    }
+
+
+def _ws_spot_balance_data(balances: list):
+    return [
+        {
+            'currency': b['a'],
+            'balance': to_float(b['f']),
+            'unrealised_pnl': 0,
+            'margin_balance': to_float(b['f']),
+            'maint_margin': to_float(b['l']),
+            'init_margin': None,
+            'available_margin': round(to_float(b['f']) - to_float(b['l']), 8),
+            'type': to_wallet_state_type(to_float(b['l'])),
+        } for b in balances
+    ]
+
+
+def ws_margin_wallet(**kwargs):
+    assets = kwargs.get('assets', ('btc', 'usd'))
+    fields = ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed')
+    data = kwargs.get('item', dict())
+    currencies = dict()
+    return _ws_load_margin_wallet_data(data, currencies, assets, fields)
+
+
+def _ws_load_margin_wallet_data(raw_data: dict, currencies: dict,
+                                assets: Union[list, tuple], fields: Union[list, tuple]) -> dict:
+    balances = _ws_margin_balance_data(raw_data.get('B'))
+    total_balance = dict()
+    for asset in assets:
+        total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
+    return {
+        'trade_enabled': raw_data.get('T'),
+        'transfer_enabled': raw_data.get('W'),
+        'borrow_enabled': None,
+        'margin_level': None,
+        'balances': balances,
+        **_load_total_wallet_summary_list(total_balance, fields)
+    }
+
+
+def _ws_margin_balance_data(balances: list):
+    return [
+        {
+            'currency': b['a'],
+            'balance': to_float(b['f']),
+            'unrealised_pnl': 0,
+            'margin_balance': None,
+            'maint_margin': None,
+            'init_margin': None,
+            'available_margin': round(to_float(b['f']) - to_float(b['l']), 8),
+            'type': to_wallet_state_type(to_float(b['l'])),
+            'borrowed': None,
+            'interest': None,
+        } for b in balances
+    ]
+
+
+def ws_futures_wallet(**kwargs):
+    assets = kwargs.get('assets', ('btc', 'usd'))
+    fields = ('balance', 'unrealised_pnl', 'margin_balance')
+    data = kwargs.get('item', dict())
+    currencies = dict()
+    return _ws_load_futures_wallet_data(data, currencies, assets, fields)
+
+
+def _ws_load_futures_wallet_data(raw_data: dict, currencies: dict,
+                                 assets: Union[list, tuple], fields: Union[list, tuple]) -> dict:
+    balances = _ws_futures_balance_data(raw_data.get('a', {}).get('B'), raw_data.get('a', {}).get('P'))
+    total_balance = dict()
+    for asset in assets:
+        total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
+    return {
+        'trade_enabled': None,
+        'total_initial_margin': None,
+        'total_maint_margin': None,
+        'total_open_order_initial_margin': None,
+        'total_position_initial_margin': None,
+        'total_unrealised_pnl': None,
+        'balances': balances,
+        **_load_total_wallet_summary_list(total_balance, fields)
+    }
+
+
+def _ws_futures_balance_data(balances: list, position: list):
+    unrealised_pnl = sum([to_float(p['up']) for p in position]) if position else 0
+    return [
+        {
+            'currency': b['a'],
+            'balance': to_float(b['wb']),
+            'unrealised_pnl': unrealised_pnl,
+            'margin_balance': to_float(b['wb']) + unrealised_pnl,
+            'maint_margin': None,
+            'init_margin': None,
+            'available_margin': None,
+            'type': to_wallet_state_type(position),
+            'borrowed': None,
+            'interest': None,
+        } for b in balances
+    ]
 
 
 def _spot_balance_data(balances: list):

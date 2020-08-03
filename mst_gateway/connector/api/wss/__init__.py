@@ -47,6 +47,7 @@ class StockWssApi(Connector):
         self._subscriptions = {}
         self._router = self.__class__.router_class(self)
         self._throttle_rate = throttle_rate
+        self.auth_connect = False
         if throttle_storage is not None:
             self.throttle = ThrottleWss(throttle_storage)
         self.schema = schema
