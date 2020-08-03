@@ -247,7 +247,7 @@ def load_spot_wallet_data(raw_data: dict, currencies: dict,
         total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
     return {
         'balances': balances,
-        **_load_total_wallet_summary_list(total_balance, ['balance'])
+        **_load_total_wallet_summary_list(total_balance, fields)
     }
 
 
@@ -354,7 +354,7 @@ def _ws_load_spot_wallet_data(raw_data: dict, currencies: dict,
     for asset in assets:
         total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
     return {
-        **_load_total_wallet_summary_list(total_balance, ['balance']),
+        **_load_total_wallet_summary_list(total_balance, fields),
         'balances': balances
     }
 
