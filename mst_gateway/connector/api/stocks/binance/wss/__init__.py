@@ -117,10 +117,11 @@ class BinanceFuturesWssApi(BinanceWssApi):
         'order_book': subscr.BinanceOrderBookSubscriber(),
         'trade': subscr.BinanceTradeSubscriber(),
         'quote_bin': subscr.BinanceQuoteBinSubscriber(),
-        'symbol': subscr.BinanceFuturesSymbolSubscriber()
+        'symbol': subscr.BinanceSymbolSubscriber()
     }
 
     auth_subscribers = {
+        'wallet': subscr.BinanceWalletSubscriber()
     }
 
     router_class = BinanceFuturesWssRouter
