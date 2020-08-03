@@ -39,7 +39,7 @@ class BinanceWssApi(StockWssApi):
         if kwargs.get('is_auth') or self.auth_connect:
             self.auth_connect = True
             self._generate_auth_url()
-            asyncio.ensure_future(self._refresh_key())
+            asyncio.create_task(self._refresh_key())
         return await super().open()
 
     def _generate_auth_url(self):
