@@ -50,3 +50,15 @@ class ClassWithAttributes:
             if value == attr[1]:
                 return True
         return False
+
+    @classmethod
+    def keys(cls) -> tuple:
+        return tuple(i[0] for i in cls._attributes())
+
+    @classmethod
+    def values(cls) -> tuple:
+        return tuple(i[1] for i in cls._attributes())
+
+    @classmethod
+    def items(cls) -> dict:
+        return {i[0]: i[1] for i in cls._attributes()}
