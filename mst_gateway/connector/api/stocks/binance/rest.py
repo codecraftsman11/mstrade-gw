@@ -322,6 +322,15 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(f"Invalid schema {schema}.")
         return utils.load_currency_exchange_symbol(currency)
 
+    def get_symbols_currencies(self, schema: str) -> dict:
+        if schema.lower() in ('exchange', 'margin2'):
+            currency = self._binance_api(self._handler.get_symbol_ticker)
+        elif schema.lower() == 'futures':
+            currency = self._binance_api(self._handler.futures_symbol_ticker)
+        else:
+            raise ConnectorError(f"Invalid schema {schema}.")
+        return utils.load_symbols_currencies(currency)
+
     def get_wallet_summary(self, schemas: iter, **kwargs) -> dict:
         if not schemas:
             schemas = ('exchange', 'margin2', 'futures')
