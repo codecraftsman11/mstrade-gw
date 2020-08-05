@@ -256,6 +256,8 @@ def load_spot_wallet_balances(raw_data: dict) -> list:
 
 
 def load_spot_wallet_detail_data(raw_data: dict, asset: str) -> dict:
+    if not raw_data.get('balances'):
+        return _mock_balance_data(asset)
     for a in raw_data.get('balances'):
         if a.get('asset', '').upper() == asset.upper():
             return _spot_balance_data([a])[0]
@@ -457,6 +459,24 @@ def _ws_futures_balance_data(balances: list, position: list):
             'interest': None,
         } for b in balances
     ]
+
+
+def _mock_balance_data(asset) -> dict:
+    return {
+        'currency': asset.upper(),
+        'balance': 0,
+        'withdraw_balance': 0,
+        'borrowed': None,
+        'available_borrow': None,
+        'interest': None,
+        'interest_rate': None,
+        'unrealised_pnl': 0,
+        'margin_balance': 0,
+        'maint_margin': 0,
+        'init_margin': None,
+        'available_margin': 0,
+        'type': to_wallet_state_type(0),
+    }
 
 
 def _spot_balance_data(balances: list):

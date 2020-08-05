@@ -258,21 +258,24 @@ class BinanceRestApi(StockRestApi):
                 'exchange': utils.load_spot_wallet_detail_data(_spot, asset),
             }
         if schema.lower() == 'margin2':
-            _spot = self._binance_api(self._handler.get_account, **kwargs)
             _margin = self._binance_api(self._handler.get_margin_account, **kwargs)
             _borrow = self._binance_api(self._handler.get_max_margin_loan, asset=asset.upper())
+            try:
+                _vip = utils.get_vip(self._binance_api(self._handler.futures_account_v2))
+            except ConnectorError:
+                _vip = '0'
             _interest_rate = utils.get_interest_rate(
                 self._binance_api(self._handler.get_public_interest_rate, **kwargs),
-                utils.get_vip(self._binance_api(self._handler.futures_account_v2)),
-                asset
+                _vip, asset
             )
+            _spot = self._binance_api(self._handler.get_account, **kwargs)
             return {
                 'exchange': utils.load_spot_wallet_detail_data(_spot, asset),
                 'margin2': utils.load_margin_wallet_detail_data(_margin, asset, _borrow, _interest_rate)
             }
         if schema.lower() == 'futures':
-            _spot = self._binance_api(self._handler.get_account, **kwargs)
             _futures = self._binance_api(self._handler.futures_account, **kwargs)
+            _spot = self._binance_api(self._handler.get_account, **kwargs)
             return {
                 'exchange': utils.load_spot_wallet_detail_data(_spot, asset),
                 'futures': utils.load_futures_wallet_detail_data(_futures, asset)
