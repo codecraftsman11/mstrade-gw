@@ -68,6 +68,9 @@ class BinanceWssApi(StockWssApi):
     async def authenticate(self, auth: dict = None) -> bool:
         return self.auth_connect
 
+    def get_state(self, subscr_name: str, symbol: str = None) -> Optional[dict]:
+        return None
+
     async def process_message(self, message, on_message: Optional[callable] = None):
         messages = self.split_order_book(message)
         if not isinstance(messages, list):
@@ -110,6 +113,16 @@ class BinanceWssApi(StockWssApi):
 class BinanceFuturesWssApi(BinanceWssApi):
     BASE_URL = 'wss://fstream.binance.com/ws'
     name = 'binance'
+    subscribers = {
+        'order_book': subscr.BinanceOrderBookSubscriber(),
+        'trade': subscr.BinanceTradeSubscriber(),
+        'quote_bin': subscr.BinanceQuoteBinSubscriber(),
+        'symbol': subscr.BinanceSymbolSubscriber()
+    }
+
+    auth_subscribers = {
+        'wallet': subscr.BinanceWalletSubscriber()
+    }
 
     router_class = BinanceFuturesWssRouter
 

@@ -7,6 +7,8 @@ def make_cmd(cmd, args, symbol=None):
         symbol = stock2symbol(symbol)
         if args == '!ticker@arr':
             args = 'ticker'
+        elif args == '!bookTicker':
+            args = 'bookTicker'
         args = f'{symbol}@{args}'
     return json.dumps({
         'method': cmd,
