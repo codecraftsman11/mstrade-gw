@@ -22,7 +22,6 @@ class BinanceWssRouter(Router):
         'kline': "quote_bin",
         '24hrTicker': "symbol",
         'outboundAccountInfo': 'wallet',
-        'ACCOUNT_UPDATE': 'wallet'
     }
 
     serializer_classes = {
@@ -42,7 +41,7 @@ class BinanceWssRouter(Router):
         _serializers = {}
         data = parse_message(message)
         if isinstance(data, dict):
-            table = data.get('e')
+            table = data.get('e') or self._book_ticker_table(data)
         elif isinstance(data, list) and data and isinstance(data[0], dict):
             table = data[0].get('e')
         else:
@@ -57,6 +56,13 @@ class BinanceWssRouter(Router):
             if serializer:
                 _serializers[subscr_name] = serializer
         return _serializers
+
+    def _book_ticker_table(self, data):
+        _table = None
+        if {'u', 'E', 'T', 's', 'b', 'B', 'a', 'A'} >= data.keys():
+            _table = 'bookTicker'
+            data.update({'e': _table})
+        return _table
 
     def _subscr_serializer(self, subscr_name) -> BinanceSerializer:
         if subscr_name not in self._serializers:
@@ -83,4 +89,19 @@ class BinanceWssRouter(Router):
 
 
 class BinanceFuturesWssRouter(BinanceWssRouter):
-    pass
+    table_route_map = {
+        'trade': "trade",
+        'depthUpdate': "order_book",
+        'kline': "quote_bin",
+        '24hrTicker': "symbol",
+        'bookTicker': "symbol",
+        'ACCOUNT_UPDATE': 'wallet'
+    }
+
+    serializer_classes = {
+        'trade': serializers.BinanceTradeSerializer,
+        'order_book': serializers.BinanceOrderBookSerializer,
+        'quote_bin': serializers.BinanceQuoteBinSerializer,
+        'symbol': serializers.BinanceFuturesSymbolSerializer,
+        'wallet': serializers.BinanceWalletSerializer
+    }
