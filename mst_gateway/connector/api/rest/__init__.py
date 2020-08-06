@@ -3,6 +3,7 @@ from typing import Optional, Tuple, Union
 from logging import Logger
 from ...base import Connector
 from mst_gateway.storage import StateStorage
+from mst_gateway.calculator import FinFactory
 from ..errors import ERROR_OK
 from .. import (
     OrderType,
@@ -15,6 +16,7 @@ from .throttle import ThrottleRest
 class StockRestApi(Connector):
     throttle = ThrottleRest()
     storage = StateStorage()
+    fin_factory = FinFactory()
     BASE_URL = None
     name = 'Base'
 
@@ -138,17 +140,6 @@ class StockRestApi(Connector):
     def wallet_repay(self, schema: str, asset: str, amount: Union[float, str]) -> Optional[dict]:
         raise NotImplementedError
 
-    @classmethod
-    @abstractmethod
-    def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float],
-                                                                 Optional[bool]]:
-        raise NotImplementedError
-
-    @classmethod
-    @abstractmethod
-    def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
-        raise NotImplementedError
-
     @abstractmethod
     def currency_exchange_symbols(self, schema: str, symbol: str = None) -> list:
         raise NotImplementedError
@@ -159,25 +150,6 @@ class StockRestApi(Connector):
 
     @abstractmethod
     def get_order_commission(self, schema: str, pair: Union[list, tuple]) -> dict:
-        raise NotImplementedError
-
-    @classmethod
-    @abstractmethod
-    def calc_liquidation_isolated_price(cls, entry_price: float, leverage: float, maint_margin: float,
-                                        taker_fee: float, funding_rate: float, position: str = 'short'):
-        raise NotImplementedError
-
-    @classmethod
-    @abstractmethod
-    def calc_liquidation_cross_price(cls, quantity: Union[int, float], entry_price: float, margin_balance: float,
-                                     maint_margin: float, taker_fee: float, funding_rate: float,
-                                     position: str = 'short'):
-        raise NotImplementedError
-
-    @classmethod
-    @abstractmethod
-    def calc_leverage_level(cls, quantity: Union[int, float], entry_price: float, wallet_balance: float,
-                            liquidation_price: float = None):
         raise NotImplementedError
 
     def __setstate__(self, state):

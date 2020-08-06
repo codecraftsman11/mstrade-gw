@@ -10,6 +10,7 @@ from bravado.exception import HTTPError
 from .lib import (
     bitmex_connector, APIKeyAuthenticator, SwaggerClient
 )
+from mst_gateway.calculator import BitmexFinFactory
 from . import utils, var
 from ...rest import StockRestApi
 from .... import api
@@ -53,6 +54,7 @@ class BitmexRestApi(StockRestApi):
     BASE_URL = BitmexFactory.BASE_URL
     TEST_URL = BitmexFactory.TEST_URL
     name = 'bitmex'
+    fin_factory = BitmexFinFactory()
 
     def __init__(self, name: str = None, url: str = None, auth: dict = None, logger: Logger = None,
                  throttle_storage=None, throttle_hash_name: str = '*', state_storage=None):
@@ -385,42 +387,3 @@ class BitmexRestApi(StockRestApi):
                 else ''
             raise ConnectorError(f"Bitmex api error. Details: {exc.status_code}, {exc.message or message}")
 
-    @classmethod
-    def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float],
-                                                                 Optional[bool]]:
-        return utils.calc_face_price(symbol, price)
-
-    @classmethod
-    def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
-        return utils.calc_price(symbol, face_price)
-
-    @classmethod
-    def calc_liquidation_isolated_price(cls, entry_price: float, leverage: float, maint_margin: float,
-                                        taker_fee: float, funding_rate: float, position: str = 'short'):
-        p = 1 if position == 'short' else -1
-        result = round(
-            entry_price / (
-                    1 +
-                    (-p * ((100 / leverage / 100) + 2 * taker_fee / 100)) +
-                    (p * (maint_margin + taker_fee + funding_rate) / 100)
-            ), 8)
-        return result
-
-    @classmethod
-    def calc_liquidation_cross_price(cls, quantity: Union[int, float], entry_price: float, margin_balance: float,
-                                     maint_margin: float, taker_fee: float, funding_rate: float,
-                                     position: str = 'short'):
-        p = 1 if position == 'short' else -1
-        result = round(
-            (p * quantity * entry_price) / (
-                (-margin_balance * entry_price) +
-                ((maint_margin + taker_fee + funding_rate) / 100 * quantity) +
-                (p * quantity)
-            ), 8)
-        return result
-
-    @classmethod
-    def calc_leverage_level(cls, quantity: Union[int, float], entry_price: float, wallet_balance: float,
-                            liquidation_price: float = None):
-        result = round(quantity / (wallet_balance * 100 * entry_price) * 100**2, 8)
-        return result
