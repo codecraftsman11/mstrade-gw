@@ -38,6 +38,7 @@ class StockWssApi(Connector):
                  throttle_storage=None,
                  schema='margin1',
                  state_storage=None):
+        self.tasks = list()
         if name is not None:
             self.name = name
         self.account_name = account_name or self.name
@@ -142,12 +143,19 @@ class StockWssApi(Connector):
         return self._handler
 
     def create_task(self, recv_callback, **kwargs):
-        return asyncio.create_task(
+        _task = asyncio.create_task(
             self.consume(
                 recv_callback,
                 **kwargs
             )
         )
+        self.tasks.append(_task)
+        return _task
+
+    def cancel_task(self):
+        for t in self.tasks:
+            t.cancel()
+        return True
 
     def run(self, recv_callback, loop=None, **kwargs):
         if not loop:

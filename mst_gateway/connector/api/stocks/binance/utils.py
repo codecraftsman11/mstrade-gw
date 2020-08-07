@@ -3,6 +3,7 @@ import re
 from datetime import datetime
 from typing import Union, Optional, Tuple
 from mst_gateway.connector import api
+from mst_gateway.calculator.bitmex import BitmexFinFactory
 from .....exceptions import ConnectorError
 
 
@@ -256,6 +257,8 @@ def load_spot_wallet_balances(raw_data: dict) -> list:
 
 
 def load_spot_wallet_detail_data(raw_data: dict, asset: str) -> dict:
+    if not raw_data.get('balances'):
+        return _mock_balance_data(asset)
     for a in raw_data.get('balances'):
         if a.get('asset', '').upper() == asset.upper():
             return _spot_balance_data([a])[0]
@@ -322,7 +325,6 @@ def load_futures_wallet_data(raw_data: dict, currencies: dict,
         'total_maint_margin': to_float(raw_data.get('totalMaintMargin')),
         'total_open_order_initial_margin': to_float(raw_data.get('totalOpenOrderInitialMargin')),
         'total_position_initial_margin': to_float(raw_data.get('totalPositionInitialMargin')),
-        'total_unrealised_pnl': to_float(raw_data.get('totalUnrealizedProfit')),
         'balances': balances,
         **_load_total_wallet_summary_list(total_balance, fields)
     }
@@ -391,8 +393,8 @@ def _ws_load_margin_wallet_data(raw_data: dict, currencies: dict,
     return {
         'trade_enabled': raw_data.get('T'),
         'transfer_enabled': raw_data.get('W'),
-        'borrow_enabled': None,
-        'margin_level': None,
+        'borrow_enabled': True,  # mock data
+        'margin_level': 999,  # mock data
         'balances': balances,
         **_load_total_wallet_summary_list(total_balance, fields)
     }
@@ -404,13 +406,13 @@ def _ws_margin_balance_data(balances: list):
             'currency': b['a'],
             'balance': to_float(b['f']),
             'unrealised_pnl': 0,
-            'margin_balance': None,
-            'maint_margin': None,
+            'margin_balance': to_float(b['f']),  # mock data
+            'maint_margin': to_float(b['l']),  # mock data
             'init_margin': None,
             'available_margin': round(to_float(b['f']) - to_float(b['l']), 8),
             'type': to_wallet_state_type(to_float(b['l'])),
-            'borrowed': None,
-            'interest': None,
+            'borrowed': 0,  # mock data
+            'interest': 0.0008333,  # mock data
         } for b in balances
     ]
 
@@ -430,12 +432,11 @@ def _ws_load_futures_wallet_data(raw_data: dict, currencies: dict,
     for asset in assets:
         total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
     return {
-        'trade_enabled': None,
-        'total_initial_margin': None,
-        'total_maint_margin': None,
-        'total_open_order_initial_margin': None,
-        'total_position_initial_margin': None,
-        'total_unrealised_pnl': None,
+        'trade_enabled': True,  # mock data
+        'total_initial_margin': 0,  # mock data
+        'total_maint_margin': 0,  # mock data
+        'total_open_order_initial_margin': 0,  # mock data
+        'total_position_initial_margin': 0,  # mock data
         'balances': balances,
         **_load_total_wallet_summary_list(total_balance, fields)
     }
@@ -449,14 +450,32 @@ def _ws_futures_balance_data(balances: list, position: list):
             'balance': to_float(b['wb']),
             'unrealised_pnl': unrealised_pnl,
             'margin_balance': to_float(b['wb']) + unrealised_pnl,
-            'maint_margin': None,
-            'init_margin': None,
-            'available_margin': None,
+            'maint_margin': 0,  # mock data
+            'init_margin': 0,  # mock data
+            'available_margin': to_float(b['wb']) + unrealised_pnl - 0,  # mock data
             'type': to_wallet_state_type(position),
             'borrowed': None,
             'interest': None,
         } for b in balances
     ]
+
+
+def _mock_balance_data(asset) -> dict:
+    return {
+        'currency': asset.upper(),
+        'balance': 0,
+        'withdraw_balance': 0,
+        'borrowed': 0,
+        'available_borrow': 0,
+        'interest': 0,
+        'interest_rate': 0,
+        'unrealised_pnl': 0,
+        'margin_balance': 0,
+        'maint_margin': 0,
+        'init_margin': 0,
+        'available_margin': 0,
+        'type': to_wallet_state_type(0),
+    }
 
 
 def _spot_balance_data(balances: list):
@@ -624,15 +643,6 @@ def load_commission(commissions: dict, currency: str, fee_tier) -> dict:
     )
 
 
-def calc_face_price(symbol: str, price: float) -> Tuple[Optional[float],
-                                                        Optional[bool]]:
-    return price, False
-
-
-def calc_price(symbol: str, face_price: float) -> Optional[float]:
-    return face_price
-
-
 def load_trade_ws_data(raw_data: dict, state_data: dict) -> dict:
     """
     {
@@ -776,7 +786,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: dict) -> dict:
     """
     symbol = raw_data.get('s')
     mark_price = to_float(raw_data.get('o'))
-    face_price, _reversed = calc_face_price(symbol, mark_price)
+    face_price, _reversed = BitmexFinFactory.calc_face_price(symbol, mark_price)
     return {
         'time': to_date(raw_data.get('E')),
         'timestamp': raw_data.get('E'),
