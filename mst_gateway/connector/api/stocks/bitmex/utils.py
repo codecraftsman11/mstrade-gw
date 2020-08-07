@@ -1,6 +1,7 @@
 import re
 from typing import Union, Optional, Tuple
 from datetime import datetime
+from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
 from mst_gateway.connector.api.utils import time2timestamp
 from mst_gateway.exceptions import ConnectorError
@@ -11,7 +12,7 @@ def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
     symbol = raw_data.get('symbol')
     symbol_time = to_date(raw_data.get('timestamp'))
     mark_price = to_float(raw_data.get('markPrice'))
-    face_price, _reversed = calc_face_price(symbol, mark_price)
+    face_price, _reversed = BitmexFinFactory.calc_face_price(symbol, mark_price)
     return {
         'time': symbol_time,
         'timestamp': time2timestamp(symbol_time),
@@ -304,51 +305,6 @@ def symbol2stock(symbol):
 
 def stock2symbol(symbol):
     return symbol.lower() if symbol is not None else None
-
-
-def calc_face_price(symbol: str, price: float) -> Tuple[Optional[float],
-                                                        Optional[bool]]:
-    _symbol = symbol.lower()
-    result = (None, None)
-    try:
-        if _symbol == "xbtusd":
-            result = (1 / price, True)
-        elif re.match(r'xbt[fghjkmnquvxz]\d{2}$', _symbol):
-            result = (1 / price, True)
-        elif _symbol in ('xbt7d_u105', 'xbt7d_d95'):
-            result = (0.1 * price, False)
-        elif _symbol == 'ethusd':
-            result = (1e-6 * price, False)
-        elif _symbol == 'xrpusd':
-            result = (0.0002 * price, False)
-        elif re.match(r'(ada|bch|eos|eth|ltc|trx|xrp)[fghjkmnquvxz]\d{2}',
-                      _symbol):
-            result = (price, False)
-    except (ValueError, TypeError, ZeroDivisionError):
-        pass
-    return result
-
-
-def calc_price(symbol: str, face_price: float) -> Optional[float]:
-    _symbol = symbol.lower()
-    result = None
-    try:
-        if _symbol == "xbtusd":
-            result = 1 / face_price
-        elif re.match(r'xbt[fghjkmnquvxz]\d{2}$', _symbol):
-            result = 1 / face_price
-        elif _symbol in ('xbt7d_u105', 'xbt7d_d95'):
-            result = 10 * face_price
-        elif _symbol == 'ethusd':
-            result = 1e+6 * face_price
-        elif _symbol == 'xrpusd':
-            result = face_price / 0.0002
-        elif re.match(r'(ada|bch|eos|eth|ltc|trx|xrp)[fghjkmnquvxz]\d{2}$',
-                      _symbol):
-            result = face_price
-    except (ValueError, TypeError, ZeroDivisionError):
-        pass
-    return result
 
 
 def split_order_book(ob_items, side, offset, state_data: dict):

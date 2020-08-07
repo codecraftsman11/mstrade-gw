@@ -3,6 +3,7 @@ import re
 from datetime import datetime
 from typing import Union, Optional, Tuple
 from mst_gateway.connector import api
+from mst_gateway.calculator.bitmex import BitmexFinFactory
 from .....exceptions import ConnectorError
 
 
@@ -638,15 +639,6 @@ def load_commission(commissions: dict, currency: str, fee_tier) -> dict:
     )
 
 
-def calc_face_price(symbol: str, price: float) -> Tuple[Optional[float],
-                                                        Optional[bool]]:
-    return price, False
-
-
-def calc_price(symbol: str, face_price: float) -> Optional[float]:
-    return face_price
-
-
 def load_trade_ws_data(raw_data: dict, state_data: dict) -> dict:
     """
     {
@@ -790,7 +782,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: dict) -> dict:
     """
     symbol = raw_data.get('s')
     mark_price = to_float(raw_data.get('o'))
-    face_price, _reversed = calc_face_price(symbol, mark_price)
+    face_price, _reversed = BitmexFinFactory.calc_face_price(symbol, mark_price)
     return {
         'time': to_date(raw_data.get('E')),
         'timestamp': raw_data.get('E'),

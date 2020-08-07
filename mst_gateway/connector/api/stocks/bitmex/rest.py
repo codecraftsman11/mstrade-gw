@@ -10,6 +10,7 @@ from bravado.exception import HTTPError
 from .lib import (
     bitmex_connector, APIKeyAuthenticator, SwaggerClient
 )
+from mst_gateway.calculator import BitmexFinFactory
 from . import utils, var
 from ...rest import StockRestApi
 from .... import api
@@ -53,6 +54,7 @@ class BitmexRestApi(StockRestApi):
     BASE_URL = BitmexFactory.BASE_URL
     TEST_URL = BitmexFactory.TEST_URL
     name = 'bitmex'
+    fin_factory = BitmexFinFactory()
 
     def __init__(self, name: str = None, url: str = None, auth: dict = None, logger: Logger = None,
                  throttle_storage=None, throttle_hash_name: str = '*', state_storage=None):
@@ -390,11 +392,3 @@ class BitmexRestApi(StockRestApi):
                 else ''
             raise ConnectorError(f"Bitmex api error. Details: {exc.status_code}, {exc.message or message}")
 
-    @classmethod
-    def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float],
-                                                                 Optional[bool]]:
-        return utils.calc_face_price(symbol, price)
-
-    @classmethod
-    def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
-        return utils.calc_price(symbol, face_price)
