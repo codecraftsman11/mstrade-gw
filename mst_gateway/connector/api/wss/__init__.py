@@ -59,6 +59,10 @@ class StockWssApi(Connector):
     def options(self):
         return self._options
 
+    @property
+    def subscriptions(self):
+        return self._subscriptions
+
     def __str__(self):
         return self.name
 

@@ -55,3 +55,11 @@ class BitmexTradeSubscriber(BitmexSubscriber):
 
 class BitmexWalletSubscriber(BitmexSubscriber):
     subscriptions = ("margin",)
+
+    async def _subscribe(self, api: BitmexWssApi, symbol=None):
+        wss: client = api.handler
+        for subscription in self.__class__.subscriptions:
+            if subscription in api.subscriptions:
+                return True
+            await wss.send(cmd_subscribe(subscription, None))
+        return True
