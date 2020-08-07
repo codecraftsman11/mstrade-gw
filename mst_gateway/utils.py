@@ -46,7 +46,16 @@ class ClassWithAttributes:
 
     @classmethod
     def is_valid(cls, value) -> bool:
-        for attr in cls._attributes():
-            if value == attr[1]:
-                return True
-        return False
+        return value in cls.values()
+
+    @classmethod
+    def keys(cls) -> list:
+        return [i[0] for i in cls._attributes()]
+
+    @classmethod
+    def values(cls) -> list:
+        return [i[1] for i in cls._attributes()]
+
+    @classmethod
+    def items(cls) -> dict:
+        return {i[0]: i[1] for i in cls._attributes()}

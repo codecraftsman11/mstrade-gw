@@ -3,6 +3,7 @@ from typing import Union, Optional, Tuple
 from datetime import datetime
 from mst_gateway.connector import api
 from mst_gateway.connector.api.utils import time2timestamp
+from mst_gateway.exceptions import ConnectorError
 from . import var
 
 
@@ -195,18 +196,24 @@ def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
 def load_wallet_data(raw_data: dict) -> dict:
     return {
         'balances': [
-            {
-                'currency': raw_data.get('currency', '').upper(),
-                'balance': to_xbt(raw_data.get('walletBalance')),
-                'withdraw_balance': to_xbt(raw_data.get('withdrawableMargin')),
-                'unrealised_pnl': to_xbt(raw_data.get('unrealisedPnl')),
-                'margin_balance': to_xbt(raw_data.get('marginBalance')),
-                'maint_margin': to_xbt(raw_data.get('maintMargin')),
-                'init_margin': to_xbt(raw_data.get('initMargin')),
-                'available_margin': to_xbt(raw_data.get('availableMargin')),
-                'type': to_wallet_state_type(to_xbt(raw_data.get('maintMargin')))
-            }
+            load_wallet_detail_data(raw_data)
         ]
+    }
+
+
+def load_wallet_detail_data(raw_data: dict, asset: str = None) -> dict:
+    if asset and asset.lower() != raw_data.get('currency', '').lower():
+        raise ConnectorError(f"Invalid asset {asset}.")
+    return {
+        'currency': raw_data.get('currency', '').upper(),
+        'balance': to_xbt(raw_data.get('walletBalance')),
+        'withdraw_balance': to_xbt(raw_data.get('withdrawableMargin')),
+        'unrealised_pnl': to_xbt(raw_data.get('unrealisedPnl')),
+        'margin_balance': to_xbt(raw_data.get('marginBalance')),
+        'maint_margin': to_xbt(raw_data.get('maintMargin')),
+        'init_margin': to_xbt(raw_data.get('initMargin')),
+        'available_margin': to_xbt(raw_data.get('availableMargin')),
+        'type': to_wallet_state_type(to_xbt(raw_data.get('maintMargin')))
     }
 
 
