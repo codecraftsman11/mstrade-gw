@@ -338,6 +338,10 @@ class BitmexRestApi(StockRestApi):
                                               **kwargs)
         return utils.load_currency_exchange_symbol(instruments)
 
+    def get_symbols_currencies(self, schema: str) -> dict:
+        instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive)
+        return utils.load_symbols_currencies(instruments)
+
     def get_wallet_summary(self, schemas: iter, **kwargs) -> dict:
         if not schemas:
             schemas = ('margin1',)

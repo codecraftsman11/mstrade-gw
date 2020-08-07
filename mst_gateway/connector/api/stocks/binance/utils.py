@@ -609,6 +609,10 @@ def load_currency_exchange_symbol(currency: Union[list, dict]) -> list:
     return [{'symbol': c.get('symbol'), 'price': to_float(c.get('price'))} for c in currency]
 
 
+def load_symbols_currencies(currency: list) -> dict:
+    return {c.get('symbol', '').lower(): to_float(c.get('price')) for c in currency}
+
+
 def to_wallet_state_type(value):
     if bool(value):
         return 'trade'
