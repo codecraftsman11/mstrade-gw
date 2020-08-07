@@ -3,6 +3,7 @@ from logging import Logger
 from datetime import datetime, timedelta
 from bravado.exception import HTTPError
 from binance.exceptions import BinanceAPIException, BinanceRequestException
+from mst_gateway.calculator import BinanceFinFactory
 from .lib import Client
 from . import utils, var
 from ...rest import StockRestApi
@@ -11,6 +12,7 @@ from .....exceptions import ConnectorError
 
 class BinanceRestApi(StockRestApi):
     name = 'binance'
+    fin_factory = BinanceFinFactory()
 
     def __init__(self, name: str = None, url: str = None, auth: dict = None, logger: Logger = None,
                  throttle_storage=None, throttle_hash_name: str = '*', state_storage=None):
@@ -191,15 +193,6 @@ class BinanceRestApi(StockRestApi):
     def close_all_orders(self, symbol: str):
         raise NotImplementedError
 
-    @classmethod
-    def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float],
-                                                                 Optional[bool]]:
-        return utils.calc_face_price(symbol, price)
-
-    @classmethod
-    def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
-        return utils.calc_price(symbol, face_price)
-
     def get_order_book(
             self, symbol: str, depth: int = None, side: int = None,
             split: bool = False, offset: int = 0, schema: str = None):
@@ -258,21 +251,24 @@ class BinanceRestApi(StockRestApi):
                 'exchange': utils.load_spot_wallet_detail_data(_spot, asset),
             }
         if schema.lower() == 'margin2':
-            _spot = self._binance_api(self._handler.get_account, **kwargs)
             _margin = self._binance_api(self._handler.get_margin_account, **kwargs)
             _borrow = self._binance_api(self._handler.get_max_margin_loan, asset=asset.upper())
+            try:
+                _vip = utils.get_vip(self._binance_api(self._handler.futures_account_v2))
+            except ConnectorError:
+                _vip = '0'
             _interest_rate = utils.get_interest_rate(
                 self._binance_api(self._handler.get_public_interest_rate, **kwargs),
-                utils.get_vip(self._binance_api(self._handler.futures_account_v2)),
-                asset
+                _vip, asset
             )
+            _spot = self._binance_api(self._handler.get_account, **kwargs)
             return {
                 'exchange': utils.load_spot_wallet_detail_data(_spot, asset),
                 'margin2': utils.load_margin_wallet_detail_data(_margin, asset, _borrow, _interest_rate)
             }
         if schema.lower() == 'futures':
-            _spot = self._binance_api(self._handler.get_account, **kwargs)
             _futures = self._binance_api(self._handler.futures_account, **kwargs)
+            _spot = self._binance_api(self._handler.get_account, **kwargs)
             return {
                 'exchange': utils.load_spot_wallet_detail_data(_spot, asset),
                 'futures': utils.load_futures_wallet_detail_data(_futures, asset)
@@ -321,6 +317,15 @@ class BinanceRestApi(StockRestApi):
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
         return utils.load_currency_exchange_symbol(currency)
+
+    def get_symbols_currencies(self, schema: str) -> dict:
+        if schema.lower() in ('exchange', 'margin2'):
+            currency = self._binance_api(self._handler.get_symbol_ticker)
+        elif schema.lower() == 'futures':
+            currency = self._binance_api(self._handler.futures_symbol_ticker)
+        else:
+            raise ConnectorError(f"Invalid schema {schema}.")
+        return utils.load_symbols_currencies(currency)
 
     def get_wallet_summary(self, schemas: iter, **kwargs) -> dict:
         if not schemas:

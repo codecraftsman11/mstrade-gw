@@ -3,6 +3,7 @@ from typing import Optional, Tuple, Union
 from logging import Logger
 from ...base import Connector
 from mst_gateway.storage import StateStorage
+from mst_gateway.calculator import FinFactory
 from ..errors import ERROR_OK
 from .. import (
     OrderType,
@@ -15,6 +16,7 @@ from .throttle import ThrottleRest
 class StockRestApi(Connector):
     throttle = ThrottleRest()
     storage = StateStorage()
+    fin_factory = FinFactory()
     BASE_URL = None
     name = 'Base'
 
@@ -138,19 +140,12 @@ class StockRestApi(Connector):
     def wallet_repay(self, schema: str, asset: str, amount: Union[float, str]) -> Optional[dict]:
         raise NotImplementedError
 
-    @classmethod
-    @abstractmethod
-    def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float],
-                                                                 Optional[bool]]:
-        raise NotImplementedError
-
-    @classmethod
-    @abstractmethod
-    def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
-        raise NotImplementedError
-
     @abstractmethod
     def currency_exchange_symbols(self, schema: str, symbol: str = None) -> list:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_symbols_currencies(self, schema: str) -> dict:
         raise NotImplementedError
 
     @abstractmethod

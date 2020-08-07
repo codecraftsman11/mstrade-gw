@@ -10,6 +10,7 @@ from bravado.exception import HTTPError
 from .lib import (
     bitmex_connector, APIKeyAuthenticator, SwaggerClient
 )
+from mst_gateway.calculator import BitmexFinFactory
 from . import utils, var
 from ...rest import StockRestApi
 from .... import api
@@ -53,6 +54,7 @@ class BitmexRestApi(StockRestApi):
     BASE_URL = BitmexFactory.BASE_URL
     TEST_URL = BitmexFactory.TEST_URL
     name = 'bitmex'
+    fin_factory = BitmexFinFactory()
 
     def __init__(self, name: str = None, url: str = None, auth: dict = None, logger: Logger = None,
                  throttle_storage=None, throttle_hash_name: str = '*', state_storage=None):
@@ -154,7 +156,12 @@ class BitmexRestApi(StockRestApi):
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
-        raise ConnectorError('Bitmex api error. Details: Invalid method.')
+        if schema == 'margin1':
+            data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
+            return {
+                'margin1': utils.load_wallet_detail_data(data, asset)
+            }
+        raise ConnectorError(f"Invalid schema {schema}.")
 
     def wallet_transfer(self, from_wallet: str, to_wallet: str, asset: str, amount: float):
         raise ConnectorError('Bitmex api error. Details: Invalid method.')
@@ -331,6 +338,10 @@ class BitmexRestApi(StockRestApi):
                                               **kwargs)
         return utils.load_currency_exchange_symbol(instruments)
 
+    def get_symbols_currencies(self, schema: str) -> dict:
+        instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive)
+        return utils.load_symbols_currencies(instruments)
+
     def get_wallet_summary(self, schemas: iter, **kwargs) -> dict:
         if not schemas:
             schemas = ('margin1',)
@@ -385,11 +396,3 @@ class BitmexRestApi(StockRestApi):
                 else ''
             raise ConnectorError(f"Bitmex api error. Details: {exc.status_code}, {exc.message or message}")
 
-    @classmethod
-    def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float],
-                                                                 Optional[bool]]:
-        return utils.calc_face_price(symbol, price)
-
-    @classmethod
-    def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
-        return utils.calc_price(symbol, face_price)
