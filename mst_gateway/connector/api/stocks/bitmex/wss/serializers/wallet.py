@@ -12,15 +12,10 @@ class BitmexWalletSerializer(BitmexSerializer):
 
     def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         state = self._get_state('wallet')
-        if isinstance(self._wss_api.subscriptions.get(self.subscription), dict):
-            balance = state[0].get('margin1') if state else dict()
+        balances = state[0].get('balances') if state else list()
+        for balance in balances:
             self._check_balances_data(balance, item)
-            return load_wallet_detail_data(item, self._wss_api.schema)
-        else:
-            balances = state[0].get('balances') if state and state[0].get('balances') else list()
-            for balance in balances:
-                self._check_balances_data(balance, item)
-            return load_wallet_data(item)
+        return load_wallet_data(item)
 
     def _check_balances_data(self, balance, item):
         if balance.get('currency', '').lower() == item.get('currency').lower():

@@ -53,7 +53,6 @@ class BitmexWssApi(StockWssApi):
         return self.auth_connect
 
     async def process_message(self, message, on_message: Optional[callable] = None):
-        # TODO: split wallet message to assets
         messages = self.split_wallet(message)
         if not isinstance(messages, list):
             messages = [messages]
@@ -73,7 +72,6 @@ class BitmexWssApi(StockWssApi):
             return data
 
     def split_wallet(self, message):
-        # TODO: split wallet message to assets
         data = parse_message(message)
         if data.get('table') != 'margin':
             return message

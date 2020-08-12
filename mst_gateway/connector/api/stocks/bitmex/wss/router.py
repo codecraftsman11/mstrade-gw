@@ -91,7 +91,6 @@ class BitmexWssRouter(Router):
         }
         serializer = self._subscr_serializer(subscr_name)
         for item in data['data']:
-            # TODO: validate subscription is_registered
             symbol = item.get('currency') or item.get('symbol')
             if self._wss_api.is_registered(subscr_name, stock2symbol(symbol)) \
                and serializer.is_item_valid(data, item):
