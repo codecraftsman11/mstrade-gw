@@ -351,7 +351,7 @@ def ws_spot_wallet(**kwargs):
 
 def _ws_load_spot_wallet_data(raw_data: dict, currencies: dict,
                               assets: Union[list, tuple], fields: Union[list, tuple]) -> dict:
-    balances = _ws_spot_balance_data(raw_data.get('B'))
+    balances = ws_spot_balance_data(raw_data.get('B'))
     total_balance = dict()
     for asset in assets:
         total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
@@ -361,7 +361,7 @@ def _ws_load_spot_wallet_data(raw_data: dict, currencies: dict,
     }
 
 
-def _ws_spot_balance_data(balances: list):
+def ws_spot_balance_data(balances: list):
     return [
         {
             'currency': b['a'],
@@ -386,7 +386,7 @@ def ws_margin_wallet(**kwargs):
 
 def _ws_load_margin_wallet_data(raw_data: dict, currencies: dict,
                                 assets: Union[list, tuple], fields: Union[list, tuple]) -> dict:
-    balances = _ws_margin_balance_data(raw_data.get('B'))
+    balances = ws_margin_balance_data(raw_data.get('B'))
     total_balance = dict()
     for asset in assets:
         total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
@@ -400,7 +400,7 @@ def _ws_load_margin_wallet_data(raw_data: dict, currencies: dict,
     }
 
 
-def _ws_margin_balance_data(balances: list):
+def ws_margin_balance_data(balances: list):
     return [
         {
             'currency': b['a'],
@@ -427,7 +427,7 @@ def ws_futures_wallet(**kwargs):
 
 def _ws_load_futures_wallet_data(raw_data: dict, currencies: dict,
                                  assets: Union[list, tuple], fields: Union[list, tuple]) -> dict:
-    balances = _ws_futures_balance_data(raw_data.get('a', {}).get('B'), raw_data.get('a', {}).get('P'))
+    balances = ws_futures_balance_data(raw_data.get('a', {}).get('B'), raw_data.get('a', {}).get('P'))
     total_balance = dict()
     for asset in assets:
         total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
@@ -442,7 +442,7 @@ def _ws_load_futures_wallet_data(raw_data: dict, currencies: dict,
     }
 
 
-def _ws_futures_balance_data(balances: list, position: list):
+def ws_futures_balance_data(balances: list, position: list):
     unrealised_pnl = sum([to_float(p['up']) for p in position]) if position else 0
     return [
         {

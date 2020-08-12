@@ -72,7 +72,7 @@ class BinanceWssApi(StockWssApi):
         return None
 
     async def process_message(self, message, on_message: Optional[callable] = None):
-        messages = self.split_order_book(message)
+        messages = self._split_message(message)
         if not isinstance(messages, list):
             messages = [messages]
         for message in messages:
@@ -90,6 +90,10 @@ class BinanceWssApi(StockWssApi):
                 else:
                     on_message(data)
         return None
+
+    def _split_message(self, message):
+        message = self.split_order_book(message)
+        return message
 
     def split_order_book(self, message) -> Union[str, list]:
         data = parse_message(message)
@@ -140,3 +144,21 @@ class BinanceFuturesWssApi(BinanceWssApi):
         self.url = self.BASE_URL
         super().__init__(name, account_name, self.url, auth, logger, options,
                          throttle_rate, throttle_storage, schema, state_storage)
+
+    def _split_message(self, message):
+        message = self.split_wallet(message)
+        return super()._split_message(message)
+
+    def split_wallet(self, message) -> Union[str, list]:
+        data = parse_message(message)
+        if data.get('e') != 'ACCOUNT_UPDATE':
+            return message
+        if isinstance(self._subscriptions.get('wallet'), dict):
+            message = list()
+            balances = data.get('a').pop('B')
+            for asset in self._subscriptions.get('wallet').keys():
+                for b in balances:
+                    if b.get('a', '').lower() == asset:
+                        data['a']['B'] = [b]
+                        message.append(json.dumps(data))
+        return message
