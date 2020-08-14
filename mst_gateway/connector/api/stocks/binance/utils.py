@@ -24,8 +24,8 @@ def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
         'price24': to_float(raw_data.get('weightedAvgPrice')),
         'mark_price': mark_price,
         'face_price': face_price,
-        'bid_price': to_float(raw_data.get('bidPrice')),
-        'ask_price': to_float(raw_data.get('askPrice')),
+        'bid_price': to_float(raw_data.get('bidPrice') or mark_price),
+        'ask_price': to_float(raw_data.get('askPrice') or mark_price),
         'reversed': _reversed,
         'pair': state_data.get('pair'),
         'tick': state_data.get('tick'),
@@ -566,18 +566,17 @@ def load_wallet_summary(currencies: dict, balances: list, asset: str,
         fields = ('balance',)
     if asset.lower() == 'usd':
         asset = 'usdt'
-    if asset.lower() == 'xbt':
-        asset = 'btc'
     total_balance = dict()
     for f in fields:
         total_balance[f] = 0
+    _asset_price = (currencies.get(f"{asset}usdt".lower()) or 1)
     for b in balances:
-        if b['currency'].lower() == asset.lower():
+        if b['currency'].lower() == asset.lower() or b['currency'].lower() == 'usdt':
             _price = 1
         else:
-            _price = currencies.get(f"{b['currency']}{asset}".lower()) or 0
+            _price = currencies.get(f"{b['currency']}usdt".lower()) or 0
         for f in fields:
-            total_balance[f] += _price * (b[f] or 0)
+            total_balance[f] += _price * (b[f] or 0) / _asset_price
     return total_balance
 
 
@@ -795,8 +794,8 @@ def load_symbol_ws_data(raw_data: dict, state_data: dict) -> dict:
         'price24': to_float(raw_data.get('w')),
         'mark_price': mark_price,
         'face_price': face_price,
-        'bid_price': to_float(raw_data.get('b')),
-        'ask_price': to_float(raw_data.get('a')),
+        'bid_price': to_float(raw_data.get('b') or mark_price),
+        'ask_price': to_float(raw_data.get('a') or mark_price),
         'reversed': _reversed,
         'pair': state_data.get('pair'),
         'tick': state_data.get('tick'),

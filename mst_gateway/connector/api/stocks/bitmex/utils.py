@@ -237,13 +237,14 @@ def load_wallet_summary(currencies: dict, balances: list, asset: str,
     total_balance = dict()
     for f in fields:
         total_balance[f] = 0
+    _asset_price = (currencies.get(f"{asset}usd".lower()) or 1)
     for b in balances:
-        if b['currency'].lower() == asset.lower():
+        if b['currency'].lower() == asset.lower() or b['currency'].lower() == 'usd':
             _price = 1
         else:
-            _price = currencies.get(f"{b['currency']}{asset}".lower()) or 0
+            _price = currencies.get(f"{b['currency']}usd".lower()) or 0
         for f in fields:
-            total_balance[f] += _price * (b[f] or 0)
+            total_balance[f] += _price * (b[f] or 0) / _asset_price
     return total_balance
 
 
