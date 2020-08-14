@@ -11,6 +11,7 @@ from .....exceptions import ConnectorError
 
 
 class BinanceRestApi(StockRestApi):
+    BASE_URL = 'https://api.binance.com'
     name = 'binance'
     fin_factory = BinanceFinFactory()
 
@@ -18,10 +19,15 @@ class BinanceRestApi(StockRestApi):
                  throttle_storage=None, throttle_hash_name: str = '*', state_storage=None):
         super().__init__(name, url, auth, logger, throttle_storage, state_storage)
         self._throttle_hash_name = throttle_hash_name
+        self.test = self._is_test(self._url)
 
     def _connect(self, **kwargs):
         return Client(api_key=self._auth['api_key'],
-                      api_secret=self._auth['api_secret'])
+                      api_secret=self._auth['api_secret'],
+                      test=self.test)
+
+    def _is_test(self, url):
+        return url != self.BASE_URL
 
     def ping(self) -> bool:
         try:
