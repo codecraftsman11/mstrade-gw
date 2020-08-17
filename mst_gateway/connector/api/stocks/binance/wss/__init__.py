@@ -30,6 +30,24 @@ class BinanceWssApi(StockWssApi):
     router_class = BinanceWssRouter
     refresh_key_time = 1800
 
+    def __init__(self,
+                 name: str = None,
+                 account_name: str = None,
+                 url: str = None,
+                 auth: dict = None,
+                 logger: Logger = None,
+                 options: dict = None,
+                 throttle_rate: int = 30,
+                 throttle_storage=None,
+                 schema='exchange',
+                 state_storage=None):
+        self.test = self._is_test(url)
+        super().__init__(name, account_name, url, auth, logger, options, throttle_rate,
+                         throttle_storage, schema, state_storage)
+
+    def _is_test(self, url):
+        return url != self.BASE_URL
+
     async def _refresh_key(self):
         while True:
             await asyncio.sleep(self.refresh_key_time)
@@ -47,7 +65,7 @@ class BinanceWssApi(StockWssApi):
         self._url = f"{self._url}/{key}"
 
     def _generate_listen_key(self):
-        bin_client = Client(api_key=self.auth.get('api_key'), api_secret=self.auth.get('api_secret'))
+        bin_client = Client(api_key=self.auth.get('api_key'), api_secret=self.auth.get('api_secret'), test=self.test)
         if self.schema == 'exchange':
             key = bin_client.stream_get_listen_key()
         elif self.schema == 'margin2':
@@ -116,6 +134,7 @@ class BinanceWssApi(StockWssApi):
 
 class BinanceFuturesWssApi(BinanceWssApi):
     BASE_URL = 'wss://fstream.binance.com/ws'
+    TEST_URL = 'wss://stream.binancefuture.com/ws'
     name = 'binance'
     subscribers = {
         'order_book': subscr.BinanceOrderBookSubscriber(),
@@ -141,9 +160,14 @@ class BinanceFuturesWssApi(BinanceWssApi):
                  throttle_storage=None,
                  schema='futures',
                  state_storage=None):
-        self.url = self.BASE_URL
-        super().__init__(name, account_name, self.url, auth, logger, options,
+        super().__init__(name, account_name, url, auth, logger, options,
                          throttle_rate, throttle_storage, schema, state_storage)
+        self.url = self._generate_url()
+
+    def _generate_url(self):
+        if self.test:
+            return self.TEST_URL
+        return self.BASE_URL
 
     def _split_message(self, message):
         message = self.split_wallet(message)

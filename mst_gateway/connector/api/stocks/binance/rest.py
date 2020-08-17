@@ -1,3 +1,4 @@
+from uuid import uuid4
 from typing import Optional, Union, Tuple
 from logging import Logger
 from datetime import datetime, timedelta
@@ -11,6 +12,7 @@ from .....exceptions import ConnectorError
 
 
 class BinanceRestApi(StockRestApi):
+    BASE_URL = 'https://api.binance.com'
     name = 'binance'
     fin_factory = BinanceFinFactory()
 
@@ -18,10 +20,15 @@ class BinanceRestApi(StockRestApi):
                  throttle_storage=None, throttle_hash_name: str = '*', state_storage=None):
         super().__init__(name, url, auth, logger, throttle_storage, state_storage)
         self._throttle_hash_name = throttle_hash_name
+        self.test = self._is_test(self._url)
 
     def _connect(self, **kwargs):
         return Client(api_key=self._auth['api_key'],
-                      api_secret=self._auth['api_secret'])
+                      api_secret=self._auth['api_secret'],
+                      test=self.test)
+
+    def _is_test(self, url):
+        return url != self.BASE_URL
 
     def ping(self) -> bool:
         try:
@@ -31,7 +38,12 @@ class BinanceRestApi(StockRestApi):
         return True
 
     def get_user(self) -> dict:
-        data = self._binance_api(self._handler.get_deposit_address, asset='eth')
+        try:
+            data = self._binance_api(self._handler.get_deposit_address, asset='eth')
+        except ConnectorError as e:
+            if not self.name.startswith('t'):
+                raise ConnectorError(e)
+            data = {'address': uuid4()}
         return utils.load_user_data(data)
 
     def get_symbol(self, symbol, schema) -> dict:

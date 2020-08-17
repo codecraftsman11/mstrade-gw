@@ -1,10 +1,10 @@
 repos:
-    - repo: https://github.com/PyCQA/bandit
-      rev: 1.6.0 # Update me!
-      hooks:
-        - id: bandit
-          name: bandit
-          exclude: tests
+    # - repo: https://github.com/PyCQA/bandit
+    #   rev: 1.6.0 # Update me!
+    #   hooks:
+    #     - id: bandit
+    #       name: bandit
+    #       exclude: tests
     - repo: https://github.com/pre-commit/pre-commit-hooks
       rev: d4b887a69e6c8ae4666acc848f3dbba595a2bdf9
       hooks:
