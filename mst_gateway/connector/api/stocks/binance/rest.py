@@ -1,3 +1,4 @@
+from uuid import uuid4
 from typing import Optional, Union, Tuple
 from logging import Logger
 from datetime import datetime, timedelta
@@ -37,7 +38,12 @@ class BinanceRestApi(StockRestApi):
         return True
 
     def get_user(self) -> dict:
-        data = self._binance_api(self._handler.get_deposit_address, asset='eth')
+        try:
+            data = self._binance_api(self._handler.get_deposit_address, asset='eth')
+        except ConnectorError as e:
+            if not self.name.startswith('t'):
+                raise ConnectorError(e)
+            data = {'address': uuid4()}
         return utils.load_user_data(data)
 
     def get_symbol(self, symbol, schema) -> dict:
