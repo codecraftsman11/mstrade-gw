@@ -4,7 +4,40 @@ import time
 
 
 class Client(BaseClient):
+    TEST_API_URL = 'https://testnet.binance.vision/api'
+    TEST_WITHDRAW_API_URL = 'https://testnet.binance.vision/wapi'
+    TEST_MARGIN_API_URL = 'https://testnet.binance.vision/sapi'  # margin api does not exist
+    WEBSITE_URL = 'https://www.binance.{}'
+    TEST_FUTURES_URL = 'https://testnet.binancefuture.com/fapi'
     FUTURES_API_V2_VERSION = 'v2'
+
+    def __init__(self, api_key=None, api_secret=None, requests_params=None, tld='com', test=False):
+        super().__init__(api_key=api_key, api_secret=api_secret, requests_params=requests_params, tld=tld)
+        self.test = test
+        self.API_URL = self._api_url(test, tld)
+        self.WITHDRAW_API_URL = self._withdraw_api_url(test, tld)
+        self.MARGIN_API_URL = self._margin_api_url(test, tld)
+        self.FUTURES_URL = self._futures_api_url(test, tld)
+
+    def _api_url(self, test, tld):
+        if test:
+            return self.TEST_API_URL
+        return self.API_URL.format(tld)
+
+    def _withdraw_api_url(self, test, tld):
+        if test:
+            return self.TEST_WITHDRAW_API_URL
+        return self.WITHDRAW_API_URL.format(tld)
+
+    def _margin_api_url(self, test, tld):
+        if test:
+            return self.TEST_MARGIN_API_URL
+        return self.MARGIN_API_URL.format(tld)
+
+    def _futures_api_url(self, test, tld):
+        if test:
+            return self.TEST_FUTURES_URL
+        return self.FUTURES_URL.format(tld)
 
     def _create_futures_api_v2_uri(self, path):
         return self.FUTURES_URL + '/' + self.FUTURES_API_V2_VERSION + '/' + path
