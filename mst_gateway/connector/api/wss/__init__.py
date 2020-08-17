@@ -108,9 +108,10 @@ class StockWssApi(Connector):
     def is_registered(self, subscr_name, symbol: str = None) -> bool:
         if subscr_name.lower() not in self._subscriptions:
             return False
-        if isinstance(self._subscriptions[subscr_name.lower()], bool):
+        if not symbol and isinstance(self._subscriptions[subscr_name.lower()], bool):
             return True
-        if symbol is not None and symbol.lower() in self._subscriptions[subscr_name.lower()]:
+        if symbol is not None and isinstance(self._subscriptions[subscr_name.lower()], dict)\
+                and symbol.lower() in self._subscriptions[subscr_name.lower()]:
             return True
         return False
 
@@ -120,6 +121,8 @@ class StockWssApi(Connector):
         elif subscr_name.lower() not in self._subscriptions:
             self._subscriptions[subscr_name.lower()] = {symbol.lower(): True}
         else:
+            if isinstance(self._subscriptions[subscr_name.lower()], bool):
+                self._subscriptions[subscr_name.lower()] = {}
             self._subscriptions[subscr_name.lower()][symbol.lower()] = True
 
     def unregister(self, subscr_name, symbol: str = None):

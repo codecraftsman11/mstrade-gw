@@ -89,9 +89,9 @@ class BinanceWssRouter(Router):
         return None
 
     def _get_route_key(self, data):
-        if not isinstance(data, dict):
+        if not isinstance(data, dict) or data.get('e') in ('outboundAccountInfo',):
             return None
-        if data.get('e') in ('outboundAccountPosition', 'outboundAccountInfo') and data.get('B'):
+        if data.get('e') in ('outboundAccountPosition',) and data.get('B'):
             try:
                 return data['B'][0]['a']
             except (KeyError, IndexError):
