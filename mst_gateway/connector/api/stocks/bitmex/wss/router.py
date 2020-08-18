@@ -80,21 +80,27 @@ class BitmexWssRouter(Router):
         return self._serializers[subscr_name]
 
     def _lookup_serializer(self, subscr_name, data: dict) -> Optional[Serializer]:
-        if data['table'] == "tradeBin1m":
+        table = data['table']
+        if table == "tradeBin1m":
             if not self._use_trade_bin and data['action'] != 'partial':
                 return None
         self._routed_data[subscr_name] = {
-            'table': data['table'],
+            'table': table,
             'action': data.get('action'),
             'schema': self._wss_api.schema,
             'data': list()
         }
         serializer = self._subscr_serializer(subscr_name)
         for item in data['data']:
-            symbol = item.get('currency') or item.get('symbol')
-            if self._wss_api.is_registered(subscr_name, stock2symbol(symbol)) \
+            route_key = self._get_route_key(item, table)
+            if self._wss_api.is_registered(subscr_name, stock2symbol(route_key)) \
                and serializer.is_item_valid(data, item):
                 self._routed_data[subscr_name]['data'].append(item)
         if self._routed_data[subscr_name]['data']:
             return serializer
         return None
+
+    def _get_route_key(self, data, table):
+        if isinstance(self._wss_api.subscriptions.get(self.table_route_map.get(table)), bool):
+            return None
+        return data.get('currency') or data.get('symbol')
