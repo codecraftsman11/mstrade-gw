@@ -140,6 +140,17 @@ def generate_order_book_id(symbol: str, price: float) -> int:
     return result
 
 
+def filter_order_book_data(data: dict, min_volume_buy: float = None, min_volume_sell: float = None) -> dict:
+    if min_volume_buy is not None and min_volume_sell is not None:
+        data['bids'] = [bid for bid in data.get('bids', []) if to_float(bid[1]) >= min_volume_buy]
+        data['asks'] = [ask for ask in data.get('asks', []) if to_float(ask[1]) >= min_volume_sell]
+    elif min_volume_buy is not None:
+        data['bids'] = [bid for bid in data.get('bids', []) if to_float(bid[1]) >= min_volume_buy]
+    elif min_volume_sell is not None:
+        data['asks'] = [ask for ask in data.get('asks', []) if to_float(ask[1]) >= min_volume_sell]
+    return data
+
+
 def load_order_book_data(raw_data: dict, symbol: str, side, split,
                          offset, depth, state_data: dict) -> Union[list, dict]:
     _raw_data = dict()
