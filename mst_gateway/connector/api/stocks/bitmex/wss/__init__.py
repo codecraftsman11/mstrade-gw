@@ -1,12 +1,11 @@
 import time
 from websockets import client
+from . import subscribers as subscr
+from .router import BitmexWssRouter
+from .utils import is_auth_ok, make_cmd, parse_message
+from ..lib import bitmex_signature
 from ....wss import StockWssApi
 from ....wss.subscriber import Subscriber
-from . import subscribers as subscr
-from .utils import is_auth_ok, make_cmd
-from ..lib import bitmex_signature
-from .router import BitmexWssRouter
-
 
 BITMEX_WSS_DEFAULT_TIMEOUT = 5
 

@@ -1,9 +1,9 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from websockets import client
-from ....wss.subscriber import Subscriber
 from .utils import cmd_subscribe
 from .utils import cmd_unsubscribe
+from ....wss.subscriber import Subscriber
 
 if TYPE_CHECKING:
     from . import BitmexWssApi
@@ -55,3 +55,8 @@ class BitmexTradeSubscriber(BitmexSubscriber):
 
 class BitmexWalletSubscriber(BitmexSubscriber):
     subscriptions = ("margin",)
+
+    async def _subscribe(self, api: BitmexWssApi, symbol=None):
+        if 'wallet' in api.subscriptions:
+            return True
+        return await super()._subscribe(api)

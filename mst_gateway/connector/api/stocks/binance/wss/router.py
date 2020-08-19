@@ -22,6 +22,7 @@ class BinanceWssRouter(Router):
         'kline': "quote_bin",
         '24hrTicker': "symbol",
         'outboundAccountInfo': 'wallet',
+        'outboundAccountPosition': 'wallet',
     }
 
     serializer_classes = {
@@ -79,13 +80,23 @@ class BinanceWssRouter(Router):
             'data': list()
         }
         serializer = self._subscr_serializer(subscr_name)
-        symbol = data.get('s') if isinstance(data, dict) else None
-        if self._wss_api.is_registered(subscr_name, symbol) \
+        route_key = self._get_route_key(data)
+        if self._wss_api.is_registered(subscr_name, route_key) \
            and serializer.is_item_valid(data, {}):
             self._routed_data[subscr_name]['data'].append(data)
         if self._routed_data[subscr_name]['data']:
             return serializer
         return None
+
+    def _get_route_key(self, data):
+        if not isinstance(data, dict) or data.get('e') in ('outboundAccountInfo',):
+            return None
+        if data.get('e') in ('outboundAccountPosition',) and data.get('B'):
+            try:
+                return data['B'][0]['a']
+            except (KeyError, IndexError):
+                return None
+        return data.get('s')
 
 
 class BinanceFuturesWssRouter(BinanceWssRouter):
@@ -103,5 +114,15 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
         'order_book': serializers.BinanceOrderBookSerializer,
         'quote_bin': serializers.BinanceQuoteBinSerializer,
         'symbol': serializers.BinanceFuturesSymbolSerializer,
-        'wallet': serializers.BinanceWalletSerializer
+        'wallet': serializers.BinanceFuturesWalletSerializer
     }
+
+    def _get_route_key(self, data):
+        if not isinstance(data, dict):
+            return None
+        if data.get('e') in ('ACCOUNT_UPDATE',) and isinstance(self._wss_api.subscriptions.get('wallet'), dict):
+            try:
+                return data['a']['B'][0]['a']
+            except (KeyError, IndexError):
+                return None
+        return data.get('s')

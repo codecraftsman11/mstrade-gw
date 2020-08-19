@@ -1,18 +1,15 @@
-from typing import Dict
-from typing import Optional
 import asyncio
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from logging import Logger
+from typing import Dict, Optional
 import websockets
-from ...base import Connector
-from .. import errors
-from .subscriber import Subscriber
-from .router import Router
-from ..schema import SUBSCRIPTIONS
-from ..schema import AUTH_SUBSCRIPTIONS
-from .throttle import ThrottleWss
 from mst_gateway.storage import StateStorage
+from .router import Router
+from .subscriber import Subscriber
+from .throttle import ThrottleWss
+from .. import errors
+from ..schema import AUTH_SUBSCRIPTIONS, SUBSCRIPTIONS
+from ...base import Connector
 
 
 class StockWssApi(Connector):
@@ -60,6 +57,10 @@ class StockWssApi(Connector):
     def options(self):
         return self._options
 
+    @property
+    def subscriptions(self):
+        return self._subscriptions
+
     def __str__(self):
         return self.name
 
@@ -104,9 +105,10 @@ class StockWssApi(Connector):
     def is_registered(self, subscr_name, symbol: str = None) -> bool:
         if subscr_name.lower() not in self._subscriptions:
             return False
-        if isinstance(self._subscriptions[subscr_name.lower()], bool):
+        if not symbol and isinstance(self._subscriptions[subscr_name.lower()], bool):
             return True
-        if symbol is not None and symbol.lower() in self._subscriptions[subscr_name.lower()]:
+        if symbol is not None and isinstance(self._subscriptions[subscr_name.lower()], dict)\
+                and symbol.lower() in self._subscriptions[subscr_name.lower()]:
             return True
         return False
 
@@ -116,6 +118,8 @@ class StockWssApi(Connector):
         elif subscr_name.lower() not in self._subscriptions:
             self._subscriptions[subscr_name.lower()] = {symbol.lower(): True}
         else:
+            if isinstance(self._subscriptions[subscr_name.lower()], bool):
+                self._subscriptions[subscr_name.lower()] = {}
             self._subscriptions[subscr_name.lower()][symbol.lower()] = True
 
     def unregister(self, subscr_name, symbol: str = None):
