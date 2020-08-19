@@ -158,7 +158,10 @@ class BinanceFuturesWssApi(BinanceWssApi):
                  state_storage=None):
         super().__init__(name, account_name, url, auth, logger, options,
                          throttle_rate, throttle_storage, schema, state_storage)
-        self.url = self._generate_url()
+        self._url = self._generate_url()
+
+    def _is_test(self, url):
+        return url != super().BASE_URL
 
     def _generate_url(self):
         if self.test:
