@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 class BitmexWssRouter(Router):
     table_route_map = {
         'instrument': "symbol",
+        'quote': "symbol",
         'trade': ["quote_bin", "trade"],
         'tradeBin1m': "quote_bin",
         'order': "order",
@@ -90,6 +91,7 @@ class BitmexWssRouter(Router):
             'data': list()
         }
         serializer = self._subscr_serializer(subscr_name)
+        serializer.prefetch(data)
         for item in data['data']:
             route_key = self._get_route_key(item, subscr_name)
             if self._wss_api.is_registered(subscr_name, stock2symbol(route_key)) \
