@@ -4,13 +4,12 @@ from typing import (
     Dict,
     TYPE_CHECKING
 )
-from ....wss.router import Router
-from ....wss.serializer import Serializer
-from .utils import parse_message
-from ..utils import stock2symbol
 from . import serializers
 from .serializers.base import BitmexSerializer
-
+from .utils import parse_message
+from ..utils import stock2symbol
+from ....wss.router import Router
+from ....wss.serializer import Serializer
 
 if TYPE_CHECKING:
     from . import BitmexWssApi
@@ -92,7 +91,7 @@ class BitmexWssRouter(Router):
         }
         serializer = self._subscr_serializer(subscr_name)
         for item in data['data']:
-            route_key = self._get_route_key(item, table)
+            route_key = self._get_route_key(item, subscr_name)
             if self._wss_api.is_registered(subscr_name, stock2symbol(route_key)) \
                and serializer.is_item_valid(data, item):
                 self._routed_data[subscr_name]['data'].append(item)
@@ -100,7 +99,7 @@ class BitmexWssRouter(Router):
             return serializer
         return None
 
-    def _get_route_key(self, data, table):
-        if isinstance(self._wss_api.subscriptions.get(self.table_route_map.get(table)), bool):
+    def _get_route_key(self, data, subscr_name):
+        if isinstance(self._wss_api.subscriptions.get(subscr_name), bool):
             return None
         return data.get('currency') or data.get('symbol')
