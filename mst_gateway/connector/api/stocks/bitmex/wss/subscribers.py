@@ -1,9 +1,9 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from websockets import client
-from ....wss.subscriber import Subscriber
 from .utils import cmd_subscribe
 from .utils import cmd_unsubscribe
+from ....wss.subscriber import Subscriber
 
 if TYPE_CHECKING:
     from . import BitmexWssApi
