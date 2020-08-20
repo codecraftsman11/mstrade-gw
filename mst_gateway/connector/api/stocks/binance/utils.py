@@ -218,18 +218,21 @@ def load_quote_bin_data(raw_data: list, state_data: dict) -> dict:
 
 
 def load_order_data(raw_data: dict, state_data: dict) -> dict:
+    order_type_and_exec = var.BINANCE_ORDER_TYPE_AND_EXECUTION_MAP.get(
+        raw_data.get('type', '').upper()
+    ) or {'type': None, 'execution': None}
     data = {
         'order_id': raw_data.get('orderId') or raw_data.get('clientOrderId'),
         'symbol': raw_data.get('symbol'),
         'origQty': raw_data.get('orderQty'),
         'stop': raw_data.get('stopPrice'),
-        'type': raw_data.get('type'),
         'side': raw_data.get('side'),
         'price': to_float(raw_data.get('price')),
         'created': to_date(raw_data.get('time')),
         'active': raw_data.get('status') != "NEW",
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema'),
+        **order_type_and_exec,
     }
     return data
 
