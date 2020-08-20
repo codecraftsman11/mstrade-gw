@@ -1,12 +1,11 @@
 import asyncio
-import json
 from logging import Logger
 from typing import Optional, Union
 from mst_gateway.exceptions import ConnectorError
 from websockets import client
 from . import subscribers as subscr
 from .router import BinanceWssRouter, BinanceFuturesWssRouter
-from .utils import is_auth_ok, make_cmd, parse_message
+from .utils import is_auth_ok, make_cmd, parse_message, dump_message
 from ..lib import Client
 from ..utils import to_float
 from .... import errors
@@ -113,13 +112,18 @@ class BinanceWssApi(StockWssApi):
 
     def _split_message(self, message):
         data = parse_message(message)
-        data = self.split_order_book(data)
-        data = self.split_order(data)
-        return json.dumps(data)
+        for method in (
+            self.split_order_book,
+            self.split_order
+        ):
+            _tmp = method(data)
+            if _tmp:
+                return _tmp
+        return message
 
-    def split_order_book(self, data: dict) -> Union[dict, list]:
+    def split_order_book(self, data):
         if isinstance(data, list) or (isinstance(data, dict) and data.get('e') != 'depthUpdate'):
-            return data
+            return None
         bids = data.pop('b')
         asks = data.pop('a')
         bid_u, bid_d = list(), list()
@@ -129,8 +133,8 @@ class BinanceWssApi(StockWssApi):
         for ask in asks:
             ask_d.append(ask) if to_float(ask[1]) else ask_u.append(ask)
         _data = [
-            dict(b=bid_d, a=ask_d, action='delete', **data),
-            dict(b=bid_u, a=ask_u, action='update', **data)
+            dump_message(dict(b=bid_d, a=ask_d, action='delete', **data)),
+            dump_message(dict(b=bid_u, a=ask_u, action='update', **data))
         ]
         return _data
 
@@ -141,11 +145,11 @@ class BinanceWssApi(StockWssApi):
             return 'delete'
         return 'update'
 
-    def split_order(self, data) -> Union[dict, list]:
-        if isinstance(data, list) or data.get('e') != 'executionReport':
-            return data
+    def split_order(self, data):
+        if isinstance(data, list) or (isinstance(data, dict) and data.get('e') != 'executionReport'):
+            return None
         action = self.define_action_by_order_status(data.get('X'))
-        return dict(action=action, **data)
+        return dump_message(dict(action=action, **data))
 
 
 class BinanceFuturesWssApi(BinanceWssApi):
@@ -179,28 +183,30 @@ class BinanceFuturesWssApi(BinanceWssApi):
 
     def _split_message(self, message):
         data = parse_message(message)
-        data = self.split_order_book(data)
-        data = self.split_wallet(data)
-        data = self.split_order(data)
-        return json.dumps(data)
+        for method in (
+            self.split_order_book,
+            self.split_order,
+            self.split_wallet
+        ):
+            _tmp = method(data)
+            if _tmp:
+                return _tmp
+        return message
 
-    def split_wallet(self, data) -> Union[dict, list]:
+    def split_wallet(self, data):
         if isinstance(data, list) or (isinstance(data, dict) and data.get('e') != 'ACCOUNT_UPDATE'):
-            return data
+            return None
         if isinstance(self._subscriptions.get('wallet'), dict):
             _data = list()
             balances = data.get('a').pop('B')
-            for asset in self._subscriptions.get('wallet').keys():
-                for b in balances:
-                    if b.get('a', '').lower() == asset:
-                        data['a']['B'] = [b]
-                        _data.append(data)
+            for b in balances:
+                if b.get('a', '').lower() in self._subscriptions.get('wallet').keys():
+                    data['a']['B'] = [b]
+                    _data.append(dump_message(data))
             return _data
-        return data
 
-    def split_order(self, data) -> Union[dict, list]:
+    def split_order(self, data):
         if isinstance(data, list) or (isinstance(data, dict) and data.get('e') != 'ORDER_TRADE_UPDATE'):
-            return data
-        raw_data = data.get('o')
-        action = self.define_action_by_order_status(raw_data.get('X'))
-        return dict(action=action, **data)
+            return None
+        action = self.define_action_by_order_status(data.get('o', dict()).get('X'))
+        return dump_message(dict(action=action, **data))

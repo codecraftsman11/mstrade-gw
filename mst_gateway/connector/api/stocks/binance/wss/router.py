@@ -95,7 +95,7 @@ class BinanceWssRouter(Router):
             return None
         if data.get('e') in ('outboundAccountInfo',):
             return None
-        elif data.get('e') in ('executionReport',) and isinstance(
+        if data.get('e') in ('executionReport',) and isinstance(
                 self._wss_api.subscriptions.get(self.table_route_map.get(data['e'])), bool):
             return None
         if data.get('e') in ('outboundAccountPosition',) and data.get('B'):
@@ -135,11 +135,13 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
                 return data['a']['B'][0]['a']
             except (KeyError, IndexError):
                 return None
-        elif data.get('e') in ('ORDER_TRADE_UPDATE',):
+        if data.get('e') in ('ORDER_TRADE_UPDATE',):
             if isinstance(self._wss_api.subscriptions.get(self.table_route_map.get(data['e'])), bool):
                 return None
-            try:
-                return data['o']['s']
-            except KeyError:
-                return None
+            else:
+                try:
+                    return data['o']['s']
+                except KeyError:
+                    pass
+            return None
         return data.get('s')
