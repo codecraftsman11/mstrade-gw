@@ -187,7 +187,7 @@ class BinanceFuturesWssApi(BinanceWssApi):
 
     def split_wallet(self, message) -> Union[str, list]:
         data = parse_message(message)
-        if data.get('e') != 'ACCOUNT_UPDATE':
+        if isinstance(data, list) or data.get('e') != 'ACCOUNT_UPDATE':
             return message
         if isinstance(self._subscriptions.get('wallet'), dict):
             message = list()
