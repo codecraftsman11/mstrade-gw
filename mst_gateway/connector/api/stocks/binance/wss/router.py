@@ -23,6 +23,7 @@ class BinanceWssRouter(Router):
         '24hrTicker': "symbol",
         'outboundAccountInfo': 'wallet',
         'outboundAccountPosition': 'wallet',
+        'executionReport': 'order',
     }
 
     serializer_classes = {
@@ -30,7 +31,8 @@ class BinanceWssRouter(Router):
         'order_book': serializers.BinanceOrderBookSerializer,
         'quote_bin': serializers.BinanceQuoteBinSerializer,
         'symbol': serializers.BinanceSymbolSerializer,
-        'wallet': serializers.BinanceWalletSerializer
+        'wallet': serializers.BinanceWalletSerializer,
+        'order': serializers.BinanceOrderSerializer,
     }
 
     def __init__(self, wss_api: BinanceWssApi):
@@ -106,7 +108,8 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
         'kline': "quote_bin",
         '24hrTicker': "symbol",
         'bookTicker': "symbol",
-        'ACCOUNT_UPDATE': 'wallet'
+        'ACCOUNT_UPDATE': 'wallet',
+        'ORDER_TRADE_UPDATE': 'order',
     }
 
     serializer_classes = {
@@ -114,7 +117,8 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
         'order_book': serializers.BinanceOrderBookSerializer,
         'quote_bin': serializers.BinanceQuoteBinSerializer,
         'symbol': serializers.BinanceFuturesSymbolSerializer,
-        'wallet': serializers.BinanceFuturesWalletSerializer
+        'wallet': serializers.BinanceFuturesWalletSerializer,
+        'order': serializers.BinanceOrderSerializer,
     }
 
     def _get_route_key(self, data):
@@ -125,4 +129,6 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
                 return data['a']['B'][0]['a']
             except (KeyError, IndexError):
                 return None
+        if data.get('e') == "ORDER_TRADE_UPDATE":
+            data = data.get('o')
         return data.get('s')

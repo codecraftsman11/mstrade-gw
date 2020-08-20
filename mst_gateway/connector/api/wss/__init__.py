@@ -107,6 +107,8 @@ class StockWssApi(Connector):
             return False
         if not symbol and isinstance(self._subscriptions[subscr_name.lower()], bool):
             return True
+        if subscr_name == 'order' and isinstance(self._subscriptions[subscr_name.lower()], bool):
+            return True
         if symbol is not None and isinstance(self._subscriptions[subscr_name.lower()], dict)\
                 and symbol.lower() in self._subscriptions[subscr_name.lower()]:
             return True

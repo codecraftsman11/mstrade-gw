@@ -1,10 +1,11 @@
 import hashlib
 import re
 from datetime import datetime
-from typing import Union, Optional, Tuple
+from typing import Union, Optional
 from mst_gateway.connector import api
 from mst_gateway.calculator.bitmex import BitmexFinFactory
 from .....exceptions import ConnectorError
+from . import var
 
 
 def _face_price(symbol, mark_price):
@@ -810,7 +811,7 @@ def to_date(token: Union[datetime, int]) -> Optional[datetime]:
         return token
     try:
         return datetime.fromtimestamp(token/1000)
-    except ValueError:
+    except (ValueError, TypeError):
         return None
 
 
@@ -827,3 +828,32 @@ def symbol2stock(symbol):
 
 def stock2symbol(symbol):
     return symbol.lower() if isinstance(symbol, str) else None
+
+
+def load_ws_order_side(order_side: Optional[str]) -> Optional[int]:
+    if order_side == var.BINANCE_ORDER_SIDE_BUY:
+        return api.BUY
+    elif order_side == var.BINANCE_ORDER_SIDE_SELL:
+        return api.SELL
+    else:
+        return None
+
+
+def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
+    order_type_and_exec = var.BINANCE_ORDER_TYPE_AND_EXECUTION_MAP.get(
+        raw_data.get('o', '').upper()
+    ) or {'type': None, 'execution': None}
+    data = {
+        'order_id': raw_data.get('c'),
+        'symbol': raw_data.get('s'),
+        'value': to_float(raw_data.get('q')),
+        'stop': to_float(raw_data['P']) if raw_data.get('P') else to_float(raw_data.get('sp')),
+        'side': load_ws_order_side(raw_data.get('S')),
+        'price': to_float(raw_data.get('p')),
+        'created': to_date(raw_data['O']) if raw_data.get('O') else to_date(raw_data.get('T')),
+        'active': raw_data.get('X') != var.BINANCE_ORDER_STATUS_NEW,
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema'),
+        **order_type_and_exec,
+    }
+    return data

@@ -11,6 +11,7 @@ from ..lib import Client
 from ..utils import to_float
 from .... import errors
 from ....wss import StockWssApi
+from .. import var
 
 
 class BinanceWssApi(StockWssApi):
@@ -24,7 +25,8 @@ class BinanceWssApi(StockWssApi):
     }
 
     auth_subscribers = {
-        'wallet': subscr.BinanceWalletSubscriber()
+        'wallet': subscr.BinanceWalletSubscriber(),
+        'order': subscr.BinanceOrderSubscriber()
     }
 
     router_class = BinanceWssRouter
@@ -110,6 +112,7 @@ class BinanceWssApi(StockWssApi):
         return None
 
     def _split_message(self, message):
+        message = self.split_order(message)
         message = self.split_order_book(message)
         return message
 
@@ -131,21 +134,25 @@ class BinanceWssApi(StockWssApi):
         ]
         return messages
 
+    def define_action_by_order_status(self, order_status: str) -> str:
+        if order_status == var.BINANCE_ORDER_STATUS_NEW:
+            return 'insert'
+        elif order_status in var.BINANCE_ORDER_DELETE_ACTION_STATUSES:
+            return 'delete'
+        else:
+            return 'update'
+
+    def split_order(self, message) -> Union[str, dict]:
+        data = parse_message(message)
+        if isinstance(data, list) or data.get('e') != 'executionReport':
+            return message
+        action = self.define_action_by_order_status(data.get('X'))
+        return json.dumps(dict(action=action, **data))
+
 
 class BinanceFuturesWssApi(BinanceWssApi):
     BASE_URL = 'wss://fstream.binance.com/ws'
     TEST_URL = 'wss://stream.binancefuture.com/ws'
-    name = 'binance'
-    subscribers = {
-        'order_book': subscr.BinanceOrderBookSubscriber(),
-        'trade': subscr.BinanceTradeSubscriber(),
-        'quote_bin': subscr.BinanceQuoteBinSubscriber(),
-        'symbol': subscr.BinanceSymbolSubscriber()
-    }
-
-    auth_subscribers = {
-        'wallet': subscr.BinanceWalletSubscriber()
-    }
 
     router_class = BinanceFuturesWssRouter
 
@@ -173,8 +180,10 @@ class BinanceFuturesWssApi(BinanceWssApi):
         return self.BASE_URL
 
     def _split_message(self, message):
+        message = self.split_order(message)
+        message = self.split_order_book(message)
         message = self.split_wallet(message)
-        return super()._split_message(message)
+        return message
 
     def split_wallet(self, message) -> Union[str, list]:
         data = parse_message(message)
@@ -189,3 +198,11 @@ class BinanceFuturesWssApi(BinanceWssApi):
                         data['a']['B'] = [b]
                         message.append(json.dumps(data))
         return message
+
+    def split_order(self, message) -> Union[str, dict]:
+        data = parse_message(message)
+        if isinstance(data, list) or data.get('e') != 'ORDER_TRADE_UPDATE':
+            return message
+        raw_data = data.get('o')
+        action = self.define_action_by_order_status(raw_data.get('X'))
+        return json.dumps(dict(action=action, **data))
