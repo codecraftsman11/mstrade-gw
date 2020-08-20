@@ -54,9 +54,9 @@ class BinanceFuturesSymbolSerializer(BinanceSymbolSerializer):
         for itm in item:
             state = self._get_state(itm.get('s'))
             itm.update(**self._book_ticker.get(itm.get('s').lower(), dict()))
-            if not itm.get('b'):
+            if not itm.get('b') and state:
                 itm['b'] = state[0]['bid_price']
-            if not itm.get('a'):
+            if not itm.get('a') and state:
                 itm['a'] = state[0]['ask_price']
 
             _symbol = state_data.get(itm['s'].lower())

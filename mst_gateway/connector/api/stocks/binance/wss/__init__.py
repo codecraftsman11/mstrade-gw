@@ -110,13 +110,13 @@ class BinanceWssApi(StockWssApi):
         return None
 
     def _split_message(self, message):
-        message = self.split_order_book(message)
-        return message
-
-    def split_order_book(self, message) -> Union[str, list]:
         data = parse_message(message)
+        data = self.split_order_book(data)
+        return json.dumps(data)
+
+    def split_order_book(self, data: dict) -> Union[dict, list]:
         if isinstance(data, list) or (isinstance(data, dict) and data.get('e') != 'depthUpdate'):
-            return message
+            return data
         bids = data.pop('b')
         asks = data.pop('a')
         bid_u, bid_d = list(), list()
@@ -125,11 +125,11 @@ class BinanceWssApi(StockWssApi):
             bid_d.append(bid) if to_float(bid[1]) else bid_u.append(bid)
         for ask in asks:
             ask_d.append(ask) if to_float(ask[1]) else ask_u.append(ask)
-        messages = [
-            json.dumps(dict(b=bid_d, a=ask_d, action='delete', **data)),
-            json.dumps(dict(b=bid_u, a=ask_u, action='update', **data))
+        _data = [
+            dict(b=bid_d, a=ask_d, action='delete', **data),
+            dict(b=bid_u, a=ask_u, action='update', **data)
         ]
-        return messages
+        return _data
 
 
 class BinanceFuturesWssApi(BinanceWssApi):
@@ -173,19 +173,21 @@ class BinanceFuturesWssApi(BinanceWssApi):
         return self.BASE_URL
 
     def _split_message(self, message):
-        message = self.split_wallet(message)
-        return super()._split_message(message)
-
-    def split_wallet(self, message) -> Union[str, list]:
         data = parse_message(message)
-        if data.get('e') != 'ACCOUNT_UPDATE':
-            return message
+        data = self.split_order_book(data)
+        data = self.split_wallet(data)
+        return json.dumps(data)
+
+    def split_wallet(self, data) -> Union[dict, list]:
+        if isinstance(data, list) or (isinstance(data, dict) and data.get('e') != 'ACCOUNT_UPDATE'):
+            return data
         if isinstance(self._subscriptions.get('wallet'), dict):
-            message = list()
+            _data = list()
             balances = data.get('a').pop('B')
             for asset in self._subscriptions.get('wallet').keys():
                 for b in balances:
                     if b.get('a', '').lower() == asset:
                         data['a']['B'] = [b]
-                        message.append(json.dumps(data))
-        return message
+                        _data.append(data)
+            return _data
+        return data
