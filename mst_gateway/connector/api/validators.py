@@ -24,6 +24,10 @@ def schema_valid(value):
     return api.OrderSchema.is_valid(value)
 
 
+def execution_valid(value):
+    return api.OrderExec.is_valid(value)
+
+
 def datetime_valid(value):
     if isinstance(value, datetime):
         return True
