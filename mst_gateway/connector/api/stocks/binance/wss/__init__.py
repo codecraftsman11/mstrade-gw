@@ -20,12 +20,13 @@ class BinanceWssApi(StockWssApi):
         'order_book': subscr.BinanceOrderBookSubscriber(),
         'trade': subscr.BinanceTradeSubscriber(),
         'quote_bin': subscr.BinanceQuoteBinSubscriber(),
-        'symbol': subscr.BinanceSymbolSubscriber()
+        'symbol': subscr.BinanceSymbolSubscriber(),
     }
 
     auth_subscribers = {
         'wallet': subscr.BinanceWalletSubscriber(),
-        'order': subscr.BinanceOrderSubscriber()
+        'order': subscr.BinanceOrderSubscriber(),
+        'execution': subscr.BinanceExecutionSubscriber(),
     }
 
     router_class = BinanceWssRouter
