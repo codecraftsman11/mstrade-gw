@@ -43,3 +43,7 @@ class BinanceSymbolSubscriber(BinanceSubscriber):
 
 class BinanceWalletSubscriber(BinanceSubscriber):
     subscriptions = ()
+
+
+class BinanceOrderSubscriber(BinanceSubscriber):
+    subscriptions = ()

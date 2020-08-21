@@ -1,6 +1,4 @@
 from binance.client import Client as BaseClient
-from binance.exceptions import BinanceAPIException
-import time
 
 
 class Client(BaseClient):
