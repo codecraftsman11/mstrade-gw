@@ -92,25 +92,26 @@ def load_order_side(order_side: str) -> int:
 
 
 def load_order_data(raw_data: dict, state_data: dict, skip_undef=False) -> dict:
+    order_type_and_exec = var.ORDER_TYPE_AND_EXECUTION_READ_MAP.get(
+        raw_data.get('ordType')
+    ) or {'type': None, 'execution': None}
     data = {
         'order_id': raw_data.get('clOrdID'),
         'symbol': raw_data.get('symbol'),
         'value': raw_data.get('orderQty'),
         'stop': raw_data.get('stopPx'),
-        'type': raw_data.get('ordType'),
         'side': raw_data.get('side'),
         'price': to_float(raw_data.get('price')),
         'created': to_date(raw_data.get('timestamp')),
         'active': raw_data.get('ordStatus') != "New",
         'system_symbol': state_data.get('system_symbol'),
-        'schema': state_data.get('schema')
+        'schema': state_data.get('schema'),
+        **order_type_and_exec,
     }
     for k in data:
         if data[k] is None and skip_undef:
             del data[k]
             continue
-        if k == 'type':
-            data[k] = load_order_type(data[k])
         elif k == 'side':
             data[k] = load_order_side(data[k])
         elif k == 'active':

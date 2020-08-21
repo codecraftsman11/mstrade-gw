@@ -21,5 +21,11 @@ ORDER_TYPE_READ_MAP = {
 }
 
 
+ORDER_TYPE_AND_EXECUTION_READ_MAP = {
+    'Market': {'type': api.OrderType.market, 'execution': api.OrderExec.market},
+    'Limit': {'type': api.OrderType.limit, 'execution': api.OrderExec.limit},
+}
+
+
 BITMEX_BUY = "Buy"
 BITMEX_SELL = "Sell"

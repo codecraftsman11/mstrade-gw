@@ -1,4 +1,5 @@
 import json
+from typing import Union
 from mst_gateway.connector.api.stocks.binance.utils import stock2symbol
 
 
@@ -40,3 +41,7 @@ def parse_message(message: str) -> dict:
         return json.loads(message)
     except json.JSONDecodeError:
         return {'raw': message}
+
+
+def dump_message(data: Union[dict, list]) -> str:
+    return json.dumps(data)
