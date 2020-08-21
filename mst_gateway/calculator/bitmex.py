@@ -50,8 +50,10 @@ class BitmexFinFactory(FinFactory):
                 result = (1 / price, True)
             elif _symbol in ('xbt7d_u105', 'xbt7d_d95'):
                 result = (0.1 * price, False)
-            elif _symbol == 'ethusd':
+            elif _symbol in ('ethusd', 'ethusdu20', 'bchusd'):
                 result = (1e-6 * price, False)
+            elif _symbol == 'ltcusd':
+                result = (2e-6 * price, False)
             elif _symbol == 'xrpusd':
                 result = (0.0002 * price, False)
             elif re.match(r'(ada|bch|eos|eth|ltc|trx|xrp)[fghjkmnquvxz]\d{2}',
@@ -72,8 +74,10 @@ class BitmexFinFactory(FinFactory):
                 result = 1 / face_price
             elif _symbol in ('xbt7d_u105', 'xbt7d_d95'):
                 result = 10 * face_price
-            elif _symbol == 'ethusd':
+            elif _symbol in ('ethusd', 'ethusdu20', 'bchusd'):
                 result = 1e+6 * face_price
+            elif _symbol == 'ltcusd':
+                result = 2e+6 * face_price
             elif _symbol == 'xrpusd':
                 result = face_price / 0.0002
             elif re.match(r'(ada|bch|eos|eth|ltc|trx|xrp)[fghjkmnquvxz]\d{2}$',
