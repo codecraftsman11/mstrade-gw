@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Union, Optional
 from mst_gateway.connector import api
 from mst_gateway.calculator.bitmex import BitmexFinFactory
+from mst_gateway.connector.api.types.order import OrderSchema
 from .....exceptions import ConnectorError
 from . import var
 
@@ -28,6 +29,7 @@ def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
         'bid_price': to_float(raw_data.get('bidPrice') or mark_price),
         'ask_price': to_float(raw_data.get('askPrice') or mark_price),
         'reversed': _reversed,
+        'expiration': state_data.get('expiration'),
         'pair': state_data.get('pair'),
         'tick': state_data.get('tick'),
         'system_symbol': state_data.get('system_symbol'),
@@ -46,8 +48,10 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                         'symbol': d.get('symbol'),
                         'base_asset': d.get('baseAsset'),
                         'quote_asset': d.get('quoteAsset'),
-                        'schema': 'exchange',
-                        'symbol_schema': 'exchange',
+                        'expiration': None,
+                        'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
+                        'schema': OrderSchema.exchange,
+                        'symbol_schema': OrderSchema.exchange,
                         'tick': to_float(d.get('filters', [{}])[0].get('tickSize'))
                     }
                 )
@@ -57,8 +61,10 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                         'symbol': d.get('symbol'),
                         'base_asset': d.get('baseAsset'),
                         'quote_asset': d.get('quoteAsset'),
-                        'schema': 'margin2',
-                        'symbol_schema': 'margin2',
+                        'expiration': None,
+                        'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
+                        'schema': OrderSchema.margin2,
+                        'symbol_schema': OrderSchema.margin2,
                         'tick': to_float(d.get('filters', [{}])[0].get('tickSize'))
                     }
                 )
@@ -74,8 +80,10 @@ def load_futures_exchange_symbol_info(raw_data: list) -> list:
                     'symbol': d.get('symbol'),
                     'base_asset': d.get('baseAsset'),
                     'quote_asset': d.get('quoteAsset'),
-                    'schema': 'futures',
-                    'symbol_schema': 'futures',
+                    'expiration': None,
+                    'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
+                    'schema': OrderSchema.futures,
+                    'symbol_schema': OrderSchema.futures,
                     'tick': to_float(d.get('filters', [{}])[0].get('tickSize'))
                 }
             )
@@ -801,6 +809,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: dict) -> dict:
         'bid_price': to_float(raw_data.get('b') or mark_price),
         'ask_price': to_float(raw_data.get('a') or mark_price),
         'reversed': _reversed,
+        'expiration': state_data.get('expiration'),
         'pair': state_data.get('pair'),
         'tick': state_data.get('tick'),
         'system_symbol': state_data.get('system_symbol'),
