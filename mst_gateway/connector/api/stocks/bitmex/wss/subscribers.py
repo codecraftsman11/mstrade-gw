@@ -26,7 +26,7 @@ class BitmexSubscriber(Subscriber):
 
 
 class BitmexSymbolSubscriber(BitmexSubscriber):
-    subscriptions = ("instrument",)
+    subscriptions = ("instrument", "quote")
 
 
 class BitmexQuoteBinSubscriber(BitmexSubscriber):
