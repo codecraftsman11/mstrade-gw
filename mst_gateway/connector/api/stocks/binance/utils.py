@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 from typing import Union, Optional
 from mst_gateway.connector import api
-from mst_gateway.calculator.bitmex import BitmexFinFactory
+from mst_gateway.calculator.binance import BinanceFinFactory
 from mst_gateway.connector.api.types.order import OrderSchema
 from .....exceptions import ConnectorError
 from . import var
@@ -797,7 +797,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: dict) -> dict:
     """
     symbol = raw_data.get('s')
     mark_price = to_float(raw_data.get('o'))
-    face_price, _reversed = BitmexFinFactory.calc_face_price(symbol, mark_price)
+    face_price, _reversed = BinanceFinFactory.calc_face_price(symbol, mark_price)
     return {
         'time': to_date(raw_data.get('E')),
         'timestamp': raw_data.get('E'),
