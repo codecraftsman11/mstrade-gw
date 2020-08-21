@@ -1,16 +1,15 @@
 import json
 from logging import Logger
 from typing import (
-    Tuple,
     Optional,
     Union,
-    List
 )
 from bravado.exception import HTTPError
 from .lib import (
     bitmex_connector, APIKeyAuthenticator, SwaggerClient
 )
 from mst_gateway.calculator import BitmexFinFactory
+from mst_gateway.connector.api.types import OrderSchema
 from . import utils, var
 from ...rest import StockRestApi
 from .... import api
@@ -107,7 +106,7 @@ class BitmexRestApi(StockRestApi):
                                      reverse=True,
                                      **self._api_kwargs(kwargs))
         state_data = self.storage.get(
-            'symbol', self.name, 'margin1'
+            'symbol', self.name, OrderSchema.margin1
         ).get(_symbol, dict())
         return [utils.load_quote_data(data, state_data) for data in quotes]
 
@@ -149,17 +148,17 @@ class BitmexRestApi(StockRestApi):
         return utils.load_user_data(data)
 
     def get_wallet(self, **kwargs) -> dict:
-        schema = kwargs.pop('schema', 'margin1').lower()
-        if schema == 'margin1':
+        schema = kwargs.pop('schema', OrderSchema.margin1).lower()
+        if schema == OrderSchema.margin1:
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
             return utils.load_wallet_data(data)
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
-        if schema == 'margin1':
+        if schema == OrderSchema.margin1:
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
             return {
-                'margin1': utils.load_wallet_detail_data(data, asset)
+                OrderSchema.margin1: utils.load_wallet_detail_data(data, asset)
             }
         raise ConnectorError(f"Invalid schema {schema}.")
 
@@ -178,7 +177,7 @@ class BitmexRestApi(StockRestApi):
         if not instruments:
             return dict()
         state_data = self.storage.get(
-            'symbol', self.name, 'margin1'
+            'symbol', self.name, OrderSchema.margin1
         ).get(utils.stock2symbol(symbol), dict())
         return utils.load_symbol_data(instruments[0], state_data)
 
@@ -186,7 +185,7 @@ class BitmexRestApi(StockRestApi):
         data, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive,
                                    **kwargs)
         state_data = self.storage.get(
-            'symbol', self.name, 'margin1'
+            'symbol', self.name, OrderSchema.margin1
         )
         symbols = []
         for d in data:
@@ -205,7 +204,7 @@ class BitmexRestApi(StockRestApi):
                                      reverse=True,
                                      count=1)
         state_data = self.storage.get(
-            'symbol', self.name, 'margin1'
+            'symbol', self.name, OrderSchema.margin1
         ).get(symbol.lower(), dict())
         return utils.load_quote_data(quotes[0], state_data)
 
@@ -249,7 +248,7 @@ class BitmexRestApi(StockRestApi):
         if not data:
             return None
         state_data = self.storage.get(
-            'symbol', self.name, 'margin1'
+            'symbol', self.name, OrderSchema.margin1
         ).get(data[0]['symbol'].lower(), dict())
         return utils.load_order_data(data[0], state_data)
 
@@ -274,7 +273,7 @@ class BitmexRestApi(StockRestApi):
                                      reverse=True,
                                      **options)
         state_data = self.storage.get(
-            'symbol', self.name, 'margin1'
+            'symbol', self.name, OrderSchema.margin1
         ).get(symbol.lower(), dict())
         return [utils.load_order_data(data, state_data) for data in orders]
 
@@ -344,14 +343,14 @@ class BitmexRestApi(StockRestApi):
 
     def get_wallet_summary(self, schemas: iter, **kwargs) -> dict:
         if not schemas:
-            schemas = ('margin1',)
+            schemas = (OrderSchema.margin1,)
         assets = kwargs.get('assets', ('btc', 'usd'))
         fields = ('balance', 'unrealised_pnl', 'margin_balance')
 
         total_summary = dict()
         for schema in schemas:
             total_balance = {schema: {}}
-            if schema == 'margin1':
+            if schema == OrderSchema.margin1:
                 balances = self.get_wallet(schema=schema)['balances']
                 currencies = utils.load_currencies_as_dict(self.list_symbols(schema))
             else:
@@ -362,7 +361,7 @@ class BitmexRestApi(StockRestApi):
         return total_summary
 
     def get_order_commission(self, schema: str, pair: Union[list, tuple]) -> dict:
-        if schema == 'margin1':
+        if schema == OrderSchema.margin1:
             symbol = ''.join(pair)
             commissions, _ = self._bitmex_api(self._handler.User.User_getCommission)
             return utils.load_commission(commissions, pair[0], symbol)
