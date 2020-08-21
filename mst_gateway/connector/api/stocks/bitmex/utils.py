@@ -5,6 +5,7 @@ from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
 from mst_gateway.connector.api.utils import time2timestamp
 from mst_gateway.exceptions import ConnectorError
+from mst_gateway.connector.api.types.order import OrderSchema
 from . import var
 
 
@@ -24,6 +25,7 @@ def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
         'bid_price': to_float(raw_data.get('bidPrice')),
         'ask_price': to_float(raw_data.get('askPrice')),
         'reversed': _reversed,
+        'expiration': state_data.get('expiration'),
         'pair': state_data.get('pair'),
         'tick': state_data.get('tick'),
         'system_symbol': state_data.get('system_symbol'),
@@ -47,16 +49,19 @@ def load_exchange_symbol_info(raw_data: list) -> list:
         base_asset = d.get('rootSymbol')
 
         if re.search(r'\d{2}$', symbol):
-            symbol_schema = 'futures'
+            symbol_schema = OrderSchema.futures
         else:
-            symbol_schema = 'margin1'
+            symbol_schema = OrderSchema.margin1
 
+        quote_asset, expiration = _quote_asset(symbol, base_asset, symbol_schema)
         symbol_list.append(
             {
                 'symbol': symbol,
                 'base_asset': base_asset,
-                'quote_asset': _quote_asset(symbol, base_asset),
-                'schema': 'margin1',
+                'quote_asset': quote_asset,
+                'expiration': expiration,
+                'pair': [base_asset.upper(), quote_asset.upper()],
+                'schema': OrderSchema.margin1,
                 'symbol_schema': symbol_schema,
                 'tick': to_float(d.get('tickSize'))
             }
@@ -64,9 +69,11 @@ def load_exchange_symbol_info(raw_data: list) -> list:
     return symbol_list
 
 
-def _quote_asset(symbol, base_asset):
-    quote_asset = symbol[len(base_asset):]
-    return quote_asset
+def _quote_asset(symbol, base_asset, symbol_schema):
+    quote_asset = symbol[len(base_asset):].upper()
+    if symbol_schema == OrderSchema.futures:
+        return 'USD', quote_asset
+    return quote_asset, None
 
 
 def store_order_type(order_type: str) -> str:

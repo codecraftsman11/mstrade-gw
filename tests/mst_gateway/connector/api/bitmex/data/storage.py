@@ -8,6 +8,7 @@ STORAGE_DATA = {
                         'ETH',
                         'USD'
                     ],
+                    'expiration': None,
                     'schema': 'margin1',
                     'symbol_schema': 'margin1',
                     'system_symbol': 'ethusd',
@@ -20,6 +21,7 @@ STORAGE_DATA = {
                         'XBT',
                         'USD'
                     ],
+                    'expiration': None,
                     'schema': 'margin1',
                     'symbol_schema': 'margin1',
                     'system_symbol': 'btcusd',
@@ -36,6 +38,7 @@ STORAGE_DATA = {
                         'ETH',
                         'USD'
                     ],
+                    'expiration': None,
                     'schema': 'margin1',
                     'symbol_schema': 'margin1',
                     'system_symbol': 'ethusd',
@@ -48,6 +51,7 @@ STORAGE_DATA = {
                         'XBT',
                         'USD'
                     ],
+                    'expiration': None,
                     'schema': 'margin1',
                     'symbol_schema': 'margin1',
                     'system_symbol': 'btcusd',

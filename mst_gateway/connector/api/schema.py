@@ -38,6 +38,7 @@ SYMBOL_FIELDS = {
     'timestamp': int,
     'pair': pair_valid,
     'symbol': str,
+    'expiration': str,
     'price': float,
     'price24': float,
     'tick': float,
