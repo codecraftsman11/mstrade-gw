@@ -21,6 +21,9 @@ class Serializer:
         self._wss_api = wss_api
         self._state = None
 
+    def prefetch(self, message: dict) -> None:
+        pass
+
     @abstractmethod
     def _get_data(self, message: any) -> Tuple[str, list]:
         raise NotImplementedError
