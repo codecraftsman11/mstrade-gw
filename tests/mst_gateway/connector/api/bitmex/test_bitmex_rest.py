@@ -240,7 +240,6 @@ class TestBitmexRestApi:
                              order_type=api.OrderType.market,
                              order_id=order_id)
         order = _bitmex.get_order(order_id=order_id)
-        print(order, schema.ORDER_FIELDS)
         assert schema.data_valid(order, schema.ORDER_FIELDS)
         assert order['symbol'] == cfg.BITMEX_SYMBOL
 
