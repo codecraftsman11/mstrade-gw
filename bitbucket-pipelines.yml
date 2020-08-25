@@ -43,20 +43,20 @@ definitions:
          - declare -a STAGES="(${!tmp_stg})"
 
          - for stg in "${STAGES[@]}"; do
-         -  tmp_env="ENV_INFR_${stg}"
-         -  if [ ! -z ${!tmp_env} ]; then
+         -  if [ -f "./pipeline/proj_${stg,,}.sh" ]; then
+         -   tmp_env="ENV_INFR_${stg}"
+         -   if [ ! -z ${!tmp_env} ]; then
          -    venv=$(env -0 | grep -z -E "${!tmp_env}" | xargs -0 -n 1 echo)
          -    echo "$venv" >> run.sh
          -    unset venv
-         -  fi
-         -  tmp_env="ENV_VAR_${stg}"
-         -  if [ ! -z ${!tmp_env} ]; then
+         -   fi
+         -   tmp_env="ENV_VAR_${stg}"
+         -   if [ ! -z ${!tmp_env} ]; then
          -    venv=$(env -0 | grep -z -E "${!tmp_env}" | sed -z 's/^\([a-zA-Z0-9_]*\)=\(.*\)/EVAR[\1]=\x27\2\x27\n/')
          -    echo "declare -A EVAR" >> run.sh
          -    echo "$venv" >> run.sh
          -    unset venv
-         -  fi
-         -  if [ -f "./pipeline/proj_${stg,,}.sh" ]; then
+         -   fi
          -   cat ./pipeline/proj_${stg,,}.sh >> run.sh
          -  fi
          - done
@@ -64,7 +64,7 @@ definitions:
          - echo "EOF" >> run.sh
          
 #         - if [ $BITBUCKET_BRANCH != "feature/pipeline" ]; then
-#         -  echo ". ./local_run_$BITBUCKET_DEPLOYMENT_ENVIRONMENT.sh" >> run.sh
+         - echo ". ./local_run_$BITBUCKET_DEPLOYMENT_ENVIRONMENT.sh" >> run.sh
 #         - fi
 
          - cat run.sh
