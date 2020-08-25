@@ -1,4 +1,5 @@
 # pylint: disable=no-self-use
+import time
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
@@ -18,6 +19,7 @@ from .data.storage import STORAGE_DATA
 TEST_FROM_DATE = datetime.now(tz=timezone.utc) - timedelta(days=2)
 TEST_RANGE_TO_DATE = TEST_FROM_DATE + timedelta(minutes=1)
 TEST_TO_DATE = datetime.now(tz=timezone.utc)
+TEST_INTERVAL = 3
 
 
 @pytest.fixture
@@ -34,6 +36,7 @@ def _bitmex(_debug) -> BitmexRestApi:
         yield bitmex
         bitmex.cancel_all_orders()
         bitmex.close_all_orders(symbol=cfg.BITMEX_SYMBOL)
+        time.sleep(TEST_INTERVAL)
 
 
 @pytest.fixture

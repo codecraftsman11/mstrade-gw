@@ -5,7 +5,8 @@ from ..api.validators import (
     side_valid,
     order_id_valid,
     type_valid,
-    schema_valid
+    schema_valid,
+    execution_valid
 )
 
 
@@ -63,6 +64,7 @@ ORDER_FIELDS = {
     'created': datetime_valid,
     'active': bool,
     'schema': schema_valid,
+    'execution': execution_valid,
     'system_symbol': str,
 }
 
