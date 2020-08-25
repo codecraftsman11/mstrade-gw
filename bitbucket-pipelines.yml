@@ -1,14 +1,105 @@
-# This is a sample build configuration for Python.
-# Check our guides at https://confluence.atlassian.com/x/x4UWN for more examples.
-# Only use spaces to indent your .yml configuration.
-# -----
-# You can specify a custom docker image from Docker Hub as your build environment.
-image: python:3.7.3
+definitions:
+ steps:
+   - step: &Delete_test_branch
+        name: Delete test branch from poject
+        script:
+         - destfolder="$BITBUCKET_WORKSPACE/$BITBUCKET_DEPLOYMENT_ENVIRONMENT/$BITBUCKET_REPO_SLUG"
+         - echo "[[ -d $destfolder ]] || exit 0; cd $destfolder" > run.sh
+         - echo "cat > local_run_$BITBUCKET_DEPLOYMENT_ENVIRONMENT.sh << 'EOF'" >> run.sh
+         - venv=$(env -0 | grep -z -E "^BITBUCKET_" | xargs -0 -n 1 echo)
+         - echo "$venv" >> run.sh
+
+         - cat ./pipeline/funcs.sh >> run.sh
+
+         - cat ./pipeline/proj_drop_test_branch.sh >> run.sh
+         - cat ./pipeline/proj_exit.sh >> run.sh
+         - echo "EOF" >> run.sh
+         - echo ". ./local_run_$BITBUCKET_DEPLOYMENT_ENVIRONMENT.sh" >> run.sh
+         - cat run.sh
+         - pipe:  atlassian/ssh-run:0.2.4
+           variables:
+            SSH_USER: $DEV_HOST_SSH_USER
+            SSH_KEY: $DEV_KEY
+            SERVER: $DEV_HOST
+            PORT: $DEV_HOST_SSH_PORT
+            MODE: 'script'
+            COMMAND: "run.sh" 
+
+
+   - step: &PRDeploy
+        name: Pull Request Deployment 
+        deployment: Test
+
+        script: 
+         - destfolder="$BITBUCKET_WORKSPACE/$BITBUCKET_DEPLOYMENT_ENVIRONMENT/$BITBUCKET_REPO_SLUG"
+         - echo "[[ -d $destfolder ]] || mkdir $destfolder; cd $destfolder" > run.sh
+         - echo "cat > local_run_$BITBUCKET_DEPLOYMENT_ENVIRONMENT.sh << 'EOF'" >> run.sh
+         - venv=$(env -0 | grep -z -E "^BITBUCKET_" | xargs -0 -n 1 echo)
+         - echo "$venv" >> run.sh
+
+         - cat ./pipeline/funcs.sh >> run.sh
+
+         - tmp_stg="STAGE_${BITBUCKET_DEPLOYMENT_ENVIRONMENT^^}"
+         - declare -a STAGES="(${!tmp_stg})"
+
+         - for stg in "${STAGES[@]}"; do
+         -  tmp_env="ENV_INFR_${stg}"
+         -  if [ ! -z ${!tmp_env} ]; then
+         -    venv=$(env -0 | grep -z -E "${!tmp_env}" | xargs -0 -n 1 echo)
+         -    echo "$venv" >> run.sh
+         -    unset venv
+         -  fi
+         -  tmp_env="ENV_VAR_${stg}"
+         -  if [ ! -z ${!tmp_env} ]; then
+         -    venv=$(env -0 | grep -z -E "${!tmp_env}" | sed -z 's/^\([a-zA-Z0-9_]*\)=\(.*\)/EVAR[\1]=\x27\2\x27\n/')
+         -    echo "declare -A EVAR" >> run.sh
+         -    echo "$venv" >> run.sh
+         -    unset venv
+         -  fi
+         -  cat ./pipeline/proj_${stg,,}.sh >> run.sh
+         - done
+
+         - echo "EOF" >> run.sh
+         
+#         - if [ $BITBUCKET_BRANCH != "feature/pipeline" ]; then
+#         -  echo ". ./local_run_$BITBUCKET_DEPLOYMENT_ENVIRONMENT.sh" >> run.sh
+#         - fi
+
+         - cat run.sh
+         - pipe:  atlassian/ssh-run:0.2.4
+           variables:
+            SSH_USER: $DEV_HOST_SSH_USER
+            SSH_KEY: $DEV_KEY
+            SERVER: $DEV_HOST
+            PORT: $DEV_HOST_SSH_PORT
+            MODE: 'script'
+            COMMAND: "run.sh" 
+
 
 pipelines:
-  default:
+# default: 
+#  - step:
+#     script:
+#       - echo "run default, to do some work of CI"
+#       - echo "nothing to do"
+
+ pull-requests:
+#    feature/pipeline: 
+   '**':
+    - step: 
+       <<: *PRDeploy
+       name: Merge PR & Build 
+       deployment: Test
+
+ branches: 
+   master:
     - step:
-        caches:
-          - pip
-        script: # Modify the commands below to build your repository.
-          - pip install -r requirements.txt
+       <<: *Delete_test_branch
+       name: Drop test branch
+       deployment: Test
+    - step: 
+       <<: *PRDeploy
+       name: Deployment master branch to Production
+       deployment: Production
+
+
