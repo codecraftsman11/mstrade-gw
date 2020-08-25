@@ -207,23 +207,34 @@ class BinanceRestApi(StockRestApi):
         raise NotImplementedError
 
     def get_order_book(
-            self, symbol: str, depth: int = None, side: int = None,
-            split: bool = False, offset: int = 0, schema: str = None):
+        self,
+        symbol: str,
+        depth: int = None,
+        side: int = None,
+        split: bool = False,
+        offset: int = 0,
+        schema: str = None,
+        min_volume_buy: float = None,
+        min_volume_sell: float = None,
+    ):
         state_data = self.storage.get(
             'symbol', self.name, schema
         ).get(symbol.lower(), dict())
-        limit = 100
-        if depth:
-            for _l in [100, 500, 1000, 5000]:
-                if _l >= offset+depth:
-                    limit = _l
-                    break
+        limit = None
+        if min_volume_buy is None and min_volume_sell is None:
+            limit = 100
+            if depth:
+                for _l in [100, 500, 1000]:
+                    if _l >= offset + depth:
+                        limit = _l
+                        break
         if schema == OrderSchema.futures:
-            data = self._binance_api(self._handler.futures_order_book, symbol=symbol.upper(), limit=limit)
+            data = self._binance_api(self._handler.futures_order_book, symbol=symbol.upper(), limit=limit or 5000)
         elif schema in (OrderSchema.margin2, OrderSchema.exchange):
-            data = self._binance_api(self._handler.get_order_book, symbol=symbol.upper(), limit=limit)
+            data = self._binance_api(self._handler.get_order_book, symbol=symbol.upper(), limit=limit or 1000)
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
+        data = utils.filter_order_book_data(data, min_volume_buy, min_volume_sell)
         return utils.load_order_book_data(data, symbol, side, split, offset, depth, state_data)
 
     def get_wallet(self, **kwargs) -> dict:

@@ -110,12 +110,22 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     def list_order_book(
-            self, symbol: str, depth: int = None, side: int = None,
-            split: bool = False, offset: int = 0, schema: str = None) -> Union[list, dict]:
+        self,
+        symbol: str,
+        depth: int = None,
+        side: int = None,
+        split: bool = False,
+        offset: int = 0,
+        schema: str = None,
+        min_volume_buy: float = None,
+        min_volume_sell: float = None,
+    ) -> Union[list, dict]:
         if side is not None \
            and side not in (BUY, SELL):
             return [] if split else {BUY: [], SELL: []}
-        return self.get_order_book(symbol, depth, side, split, offset, schema)
+        return self.get_order_book(
+            symbol, depth, side, split, offset, schema, min_volume_buy, min_volume_sell,
+        )
 
     @abstractmethod
     def list_trades(self, symbol: str, schema: str, **kwargs) -> list:
@@ -123,8 +133,16 @@ class StockRestApi(Connector):
 
     @abstractmethod
     def get_order_book(
-            self, symbol: str, depth: int = None, side: int = None,
-            split: bool = False, offset: int = 0, schema: str = None) -> Union[list, dict]:
+        self,
+        symbol: str,
+        depth: int = None,
+        side: int = None,
+        split: bool = False,
+        offset: int = 0,
+        schema: str = None,
+        min_volume_buy: float = None,
+        min_volume_sell: float = None,
+    ) -> Union[list, dict]:
         raise NotImplementedError
 
     @abstractmethod
