@@ -56,7 +56,9 @@ definitions:
          -    echo "$venv" >> run.sh
          -    unset venv
          -  fi
-         -  cat ./pipeline/proj_${stg,,}.sh >> run.sh
+         -  if [ -f "./pipeline/proj_${stg,,}.sh" ]; then
+         -   cat ./pipeline/proj_${stg,,}.sh >> run.sh
+         -  fi
          - done
 
          - echo "EOF" >> run.sh
