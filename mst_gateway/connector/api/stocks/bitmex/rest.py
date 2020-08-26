@@ -317,7 +317,7 @@ class BitmexRestApi(StockRestApi):
         state_data = self.storage.get('symbol', self.name, schema).get(symbol.lower(), dict())
         splitted_ob = utils.split_order_book(ob_items, state_data)
         filtered_ob = utils.filter_order_book(splitted_ob, min_volume_buy, min_volume_sell)
-        offset_ob = utils.order_book_offset(filtered_ob, offset)
+        offset_ob = utils.order_book_offset(filtered_ob, depth, offset)
         depth_ob = utils.order_book_in_depth(
             offset_ob, depth=depth
         ) if min_volume_buy is not None or min_volume_sell is not None else offset_ob
