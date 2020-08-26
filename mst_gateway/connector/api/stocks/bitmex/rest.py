@@ -310,24 +310,22 @@ class BitmexRestApi(StockRestApi):
         ob_depth = depth or 0
         if ob_depth:
             ob_depth += offset
+        _depth = ob_depth if min_volume_buy is None and min_volume_sell is None else 0
         ob_items, _ = self._bitmex_api(
             self._handler.OrderBook.OrderBook_getL2, symbol=utils.symbol2stock(symbol),
-            depth=ob_depth if min_volume_buy is None and min_volume_sell is None else 0,
+            depth=_depth,
         )
         state_data = self.storage.get('symbol', self.name, schema).get(symbol.lower(), dict())
         splitted_ob = utils.split_order_book(ob_items, state_data)
         filtered_ob = utils.filter_order_book(splitted_ob, min_volume_buy, min_volume_sell)
-        offset_ob = utils.order_book_offset(filtered_ob, offset)
-        depth_ob = utils.order_book_in_depth(
-            offset_ob, depth=depth
-        ) if min_volume_buy is not None or min_volume_sell is not None else offset_ob
+        data_ob = utils.slice_order_book(filtered_ob, depth, offset)
         if side is not None and split:
-            return {side: depth_ob.get(side, [])}
+            return {side: data_ob[side]}
         elif side is not None:
-            return depth_ob.get(side, [])
+            return data_ob[side]
         elif split:
-            return depth_ob
-        return depth_ob.get(api.SELL, []) + depth_ob.get(api.BUY, [])
+            return data_ob
+        return data_ob[api.SELL] + data_ob[api.BUY]
 
     def currency_exchange_symbols(self, schema: str, symbol: str = None, **kwargs) -> list:
         if symbol:

@@ -1,5 +1,4 @@
 from mst_gateway.connector.api.stocks.bitmex.utils import to_date
-from mst_gateway.connector.api.utils import time2timestamp
 import tests.config as cfg
 
 
@@ -30,7 +29,8 @@ TEST_SYMBOL_MESSAGES = [
                     "tick": 0.5,
                     "system_symbol": "btcusd",
                     "schema": "margin1",
-                    "symbol_schema": "margin1"
+                    "symbol_schema": "margin1",
+                    "expiration": None
                 }
             ]
         }
@@ -65,7 +65,8 @@ TEST_SYMBOL_MESSAGES = [
                     "tick": 0.5,
                     "system_symbol": "btcusd",
                     "schema": "margin1",
-                    "symbol_schema": "margin1"
+                    "symbol_schema": "margin1",
+                    "expiration": None
                 }
             ]
         }
@@ -96,7 +97,8 @@ RESULT_SYMBOL_STATE = {
             "tick": 0.5,
             "system_symbol": "btcusd",
             "schema": "margin1",
-            "symbol_schema": "margin1"
+            "symbol_schema": "margin1",
+            "expiration": None
         }
     ]
 }

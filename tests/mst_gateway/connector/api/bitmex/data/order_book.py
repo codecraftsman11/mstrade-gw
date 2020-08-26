@@ -1,5 +1,96 @@
+from copy import deepcopy
 from mst_gateway.connector.api import BUY, SELL
+from mst_gateway.connector.api.stocks.bitmex.var import (
+    BITMEX_BUY,
+    BITMEX_SELL
+)
 import tests.config as cfg
+
+
+TEST_ORDER_BOOK_DATA = [
+    {
+        "id": 8799067200,
+        "symbol": "XBTUSD",
+        "price": 9328.0,
+        "size": 4694,
+        "side": BITMEX_SELL,
+        "schema": "margin1",
+        "system_symbol": "btcusd"
+    },
+    {
+        "id": 8799067250,
+        "symbol": "XBTUSD",
+        "price": 9327.5,
+        "size": 10000,
+        "side": BITMEX_SELL,
+        "schema": "margin1",
+        "system_symbol": "btcusd"
+    },
+    {
+        "id": 8799067300,
+        "symbol": "XBTUSD",
+        "price": 9327.0,
+        "size": 830005,
+        "side": BITMEX_SELL,
+    },
+    {
+        "id": 8799067350,
+        "symbol": "XBTUSD",
+        "price": 9326.5,
+        "size": 110123,
+        "side": BITMEX_SELL,
+    },
+    {
+        "id": 8799067400,
+        "symbol": "XBTUSD",
+        "price": 9326.0,
+        "size": 4694,
+        "side": BITMEX_BUY,
+    },
+    {
+        "id": 8799067450,
+        "symbol": "XBTUSD",
+        "price": 9325.5,
+        "size": 84436,
+        "side": BITMEX_BUY,
+    },
+    {
+        "id": 8799067500,
+        "symbol": "XBTUSD",
+        "price": 9325.0,
+        "size": 10000,
+        "side": BITMEX_BUY,
+    },
+    {
+        "id": 8799067550,
+        "symbol": "XBTUSD",
+        "price": 9324.5,
+        "size": 10123,
+        "side": BITMEX_BUY,
+    }
+]
+
+
+TEST_ORDER_BOOK_STATE_DATA = {
+    'system_symbol': "btcusd",
+    'schema': "margin1"
+}
+
+
+TEST_ORDER_BOOK_SPLIT_DATA = {
+    SELL: [{
+        **{'volume': _v.pop('size')},
+        **_v,
+        **TEST_ORDER_BOOK_STATE_DATA,
+        **{'side': SELL}
+    } for _v in deepcopy(TEST_ORDER_BOOK_DATA[0:4])],
+    BUY: [{
+        **{'volume': _v.pop('size')},
+        **_v,
+        **TEST_ORDER_BOOK_STATE_DATA,
+        **{'side': BUY}
+    } for _v in deepcopy(TEST_ORDER_BOOK_DATA[4:8])],
+}
 
 
 TEST_ORDER_BOOK_MESSAGES = [

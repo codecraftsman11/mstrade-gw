@@ -327,7 +327,7 @@ def split_order_book(ob_items, state_data: dict):
         data = load_order_book_data(_ob, state_data)
         if _ob['side'] == var.BITMEX_BUY:
             result[api.BUY].append(data)
-        if _ob['side'] == var.BITMEX_SELL:
+        elif _ob['side'] == var.BITMEX_SELL:
             result[api.SELL].append(data)
     return result
 
@@ -360,25 +360,18 @@ def filter_order_book(
     return filtered_ob
 
 
-def order_book_in_depth(splitted_ob: Dict[int, list],  depth: int) -> Dict[int, list]:
-    if depth:
-        depth_ob = {api.BUY: [], api.SELL: []}
-        buy_counter = 0
-        for buy_ob in splitted_ob[api.BUY]:
-            if buy_counter < depth:
-                depth_ob[api.BUY].append(buy_ob)
-            buy_counter += 1
-        sell_counter = 0
-        for sell_ob in splitted_ob[api.SELL]:
-            if sell_counter < depth:
-                depth_ob[api.SELL].append(sell_ob)
-            sell_counter += 1
-        return depth_ob
-    return splitted_ob
-
-
-def order_book_offset(splitted_ob: Dict[int, list], offset: int) -> Dict[int, list]:
-    if offset:
+def slice_order_book(splitted_ob: Dict[int, list], depth: int, offset: int) -> Dict[int, list]:
+    if offset and depth:
+        return {
+            api.BUY: splitted_ob[api.BUY][offset:depth + offset],
+            api.SELL: splitted_ob[api.SELL][-offset-depth:-offset]
+        }
+    elif depth:
+        return {
+            api.BUY: splitted_ob[api.BUY][:depth],
+            api.SELL: splitted_ob[api.SELL][-depth:]
+        }
+    elif offset:
         return {
             api.BUY: splitted_ob[api.BUY][offset:],
             api.SELL: splitted_ob[api.SELL][:-offset]
