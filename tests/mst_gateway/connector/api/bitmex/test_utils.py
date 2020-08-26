@@ -47,6 +47,8 @@ class TestBitmexUtils:
         } == utils.filter_order_book(data.TEST_ORDER_BOOK_SPLIT_DATA,
                                      min_volume_sell=TEST_VOLUME)
 
+        assert data.TEST_ORDER_BOOK_SPLIT_DATA == utils.filter_order_book(data.TEST_ORDER_BOOK_SPLIT_DATA)
+
     def test_bitmex_utils_slice_order_book(self):
         assert {
             BUY: data.TEST_ORDER_BOOK_SPLIT_DATA[BUY][2:],

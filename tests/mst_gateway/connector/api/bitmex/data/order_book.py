@@ -12,7 +12,7 @@ TEST_ORDER_BOOK_DATA = [
         "id": 8799067200,
         "symbol": "XBTUSD",
         "price": 9328.0,
-        "size": 244694,
+        "size": 4694,
         "side": BITMEX_SELL,
         "schema": "margin1",
         "system_symbol": "btcusd"
@@ -21,7 +21,7 @@ TEST_ORDER_BOOK_DATA = [
         "id": 8799067250,
         "symbol": "XBTUSD",
         "price": 9327.5,
-        "size": 284436,
+        "size": 10000,
         "side": BITMEX_SELL,
         "schema": "margin1",
         "system_symbol": "btcusd"
@@ -44,7 +44,7 @@ TEST_ORDER_BOOK_DATA = [
         "id": 8799067400,
         "symbol": "XBTUSD",
         "price": 9326.0,
-        "size": 44694,
+        "size": 4694,
         "side": BITMEX_BUY,
     },
     {
@@ -58,7 +58,7 @@ TEST_ORDER_BOOK_DATA = [
         "id": 8799067500,
         "symbol": "XBTUSD",
         "price": 9325.0,
-        "size": 30005,
+        "size": 10000,
         "side": BITMEX_BUY,
     },
     {
