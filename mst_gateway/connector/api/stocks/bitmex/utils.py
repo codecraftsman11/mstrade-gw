@@ -361,18 +361,16 @@ def filter_order_book(
     return filtered_ob
 
 
-def order_book_in_depth(splitted_ob: Dict[int, list],  depth: int) -> Dict[int, list]:
-    if depth:
-        splitted_ob[api.BUY] = splitted_ob[api.BUY][:depth]
-        splitted_ob[api.SELL] = splitted_ob[api.SELL][:depth]
-    return splitted_ob
-
-
-def order_book_offset(splitted_ob: Dict[int, list], depth: int, offset: int) -> Dict[int, list]:
+def slice_order_book(splitted_ob: Dict[int, list], depth: int, offset: int) -> Dict[int, list]:
     if offset and depth:
         return {
             api.BUY: splitted_ob[api.BUY][offset:depth + offset],
             api.SELL: splitted_ob[api.SELL][offset:depth + offset]
+        }
+    elif depth:
+        return {
+            api.BUY: splitted_ob[api.BUY][:depth],
+            api.SELL: splitted_ob[api.SELL][:depth]
         }
     elif offset:
         return {
