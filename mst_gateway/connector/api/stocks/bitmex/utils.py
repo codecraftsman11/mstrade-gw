@@ -327,9 +327,8 @@ def split_order_book(ob_items, state_data: dict):
         data = load_order_book_data(_ob, state_data)
         if _ob['side'] == var.BITMEX_BUY:
             result[api.BUY].append(data)
-        if _ob['side'] == var.BITMEX_SELL:
+        elif _ob['side'] == var.BITMEX_SELL:
             result[api.SELL].append(data)
-    result[api.SELL] = list(reversed(result[api.SELL]))
     return result
 
 
@@ -365,16 +364,16 @@ def slice_order_book(splitted_ob: Dict[int, list], depth: int, offset: int) -> D
     if offset and depth:
         return {
             api.BUY: splitted_ob[api.BUY][offset:depth + offset],
-            api.SELL: splitted_ob[api.SELL][offset:depth + offset]
+            api.SELL: splitted_ob[api.SELL][-offset-depth:-offset]
         }
     elif depth:
         return {
             api.BUY: splitted_ob[api.BUY][:depth],
-            api.SELL: splitted_ob[api.SELL][:depth]
+            api.SELL: splitted_ob[api.SELL][-depth:]
         }
     elif offset:
         return {
             api.BUY: splitted_ob[api.BUY][offset:],
-            api.SELL: splitted_ob[api.SELL][offset:]
+            api.SELL: splitted_ob[api.SELL][:-offset]
         }
     return splitted_ob
