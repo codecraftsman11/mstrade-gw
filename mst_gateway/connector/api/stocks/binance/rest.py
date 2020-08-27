@@ -431,7 +431,7 @@ class BinanceRestApi(StockRestApi):
 
     def __get_limit_header(self, headers):
         for h in headers:
-            if str(h).startswith('X-MBX-USED-WEIGHT-'):
+            if str(h).upper().startswith('X-MBX-USED-WEIGHT-'):
                 rate = h[len('X-MBX-USED-WEIGHT-'):]
                 try:
                     return dict(
@@ -441,7 +441,7 @@ class BinanceRestApi(StockRestApi):
                     )
                 except ValueError:
                     pass
-            elif str(h).startswith('X-MBX-ORDER-COUNT-'):
+            elif str(h).upper().startswith('X-MBX-ORDER-COUNT-'):
                 rate = h[len('X-MBX-ORDER-COUNT-'):]
                 try:
                     return dict(
