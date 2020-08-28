@@ -1,5 +1,5 @@
 import re
-from typing import Union, Optional, Tuple
+from typing import Dict, Union, Optional
 from datetime import datetime
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
@@ -321,23 +321,59 @@ def stock2symbol(symbol):
     return symbol.lower() if symbol is not None else None
 
 
-def split_order_book(ob_items, side, offset, state_data: dict):
-    result = {}
-    buy_i = 0
-    if side == var.BITMEX_BUY or side is None:
-        result[api.BUY] = []
-    if side == var.BITMEX_SELL or side is None:
-        result[api.SELL] = []
+def split_order_book(ob_items, state_data: dict):
+    result = {api.BUY: [], api.SELL: []}
     for _ob in ob_items:
-        if side and _ob['side'] != side:
-            continue
         data = load_order_book_data(_ob, state_data)
         if _ob['side'] == var.BITMEX_BUY:
-            buy_i += 1
-            if buy_i > offset:
-                result[api.BUY].append(data)
-        if _ob['side'] == var.BITMEX_SELL:
+            result[api.BUY].append(data)
+        elif _ob['side'] == var.BITMEX_SELL:
             result[api.SELL].append(data)
-    if offset and api.SELL in result:
-        result[api.SELL] = result[api.SELL][:-offset]
     return result
+
+
+def filter_order_book(
+    splitted_ob: Dict[int, list],
+    min_volume_buy: float = None,
+    min_volume_sell: float = None,
+) -> Dict[int, list]:
+    filtered_ob = splitted_ob
+    if min_volume_buy is not None and min_volume_sell is not None:
+        filtered_ob[api.BUY] = [
+            buy_ob for buy_ob in filtered_ob[api.BUY]
+            if buy_ob.get('volume') >= min_volume_buy
+        ]
+        filtered_ob[api.SELL] = [
+            sell_ob for sell_ob in filtered_ob[api.SELL]
+            if sell_ob.get('volume') >= min_volume_sell
+        ]
+    elif min_volume_buy is not None:
+        filtered_ob[api.BUY] = [
+            buy_ob for buy_ob in filtered_ob[api.BUY]
+            if buy_ob.get('volume') >= min_volume_buy
+        ]
+    elif min_volume_sell is not None:
+        filtered_ob[api.SELL] = [
+            sell_ob for sell_ob in filtered_ob[api.SELL]
+            if sell_ob.get('volume') >= min_volume_sell
+        ]
+    return filtered_ob
+
+
+def slice_order_book(splitted_ob: Dict[int, list], depth: int, offset: int) -> Dict[int, list]:
+    if offset and depth:
+        return {
+            api.BUY: splitted_ob[api.BUY][offset:depth + offset],
+            api.SELL: splitted_ob[api.SELL][-offset-depth:-offset]
+        }
+    elif depth:
+        return {
+            api.BUY: splitted_ob[api.BUY][:depth],
+            api.SELL: splitted_ob[api.SELL][-depth:]
+        }
+    elif offset:
+        return {
+            api.BUY: splitted_ob[api.BUY][offset:],
+            api.SELL: splitted_ob[api.SELL][:-offset]
+        }
+    return splitted_ob

@@ -17,7 +17,6 @@ class BitmexExecutionSerializer(BitmexSerializer):
         if not state_data:
             return None
         data = dict(
-            exchange_order_id=item.get('orderID'),
             order_id=item.get('clOrdID'),
             symbol=item.get('symbol'),
             side=load_order_side(item.get('side')),
