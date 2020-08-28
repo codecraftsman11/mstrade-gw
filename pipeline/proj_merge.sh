@@ -2,7 +2,7 @@ echo "------------------------ [ Merge PR ]"
 br_with_pq=${PROJ_BRANCH_TEST:-"test_master"}
 wip_for_merge=${PROJ_WIP_MERGE:-"true"}
 
-scmd="'rm -f ./package-lock.json'"
+scmd="'pip install -q -r requirements.txt'"
 [[ -z $(git branch | grep ${br_with_pq}) ]] \
  && swbranch="'git checkout -b ${br_with_pq}'" \
  || swbranch="'git checkout ${br_with_pq}'"
@@ -11,7 +11,7 @@ pr=$(curl -s -u "${PROJ_UKEY}:${PROJ_PKEY}" "https://api.bitbucket.org/2.0/repos
 
 [[ -z $pr ]] && exit 1
 
-declare -a prarray="(${swbranch} ${scmd} ${pr})"
+declare -a prarray="(${swbranch} ${pr} ${scmd})"
 runCommands "${prarray[@]}"
 unset prarray
 unset swbranch
