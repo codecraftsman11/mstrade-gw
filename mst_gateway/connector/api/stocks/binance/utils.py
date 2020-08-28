@@ -901,7 +901,6 @@ def calculate_ws_execution_avg_price(raw_data: dict) -> Optional[float]:
 
 def load_execution_ws_data(message_data: dict, raw_data: dict, state_data: dict) -> Optional[dict]:
     return {
-        'exchange_order_id': raw_data.get('i'),
         'order_id': raw_data.get('c'),
         'side': load_ws_order_side(raw_data.get('S')),
         'tick_volume': to_float(raw_data.get('l')),
