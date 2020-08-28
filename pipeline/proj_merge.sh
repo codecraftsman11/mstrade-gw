@@ -2,7 +2,7 @@ echo "------------------------ [ Merge PR ]"
 br_with_pq=${PROJ_BRANCH_TEST:-"test_master"}
 wip_for_merge=${PROJ_WIP_MERGE:-"true"}
 
-scmd="'rm -f ./package-lock.json'"
+scmd="'pip install -q -r requirements.txt'"
 [[ -z $(git branch | grep ${br_with_pq}) ]] \
  && swbranch="'git checkout -b ${br_with_pq}'" \
  || swbranch="'git checkout ${br_with_pq}'"

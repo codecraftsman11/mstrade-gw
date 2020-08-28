@@ -63,9 +63,9 @@ definitions:
 
          - echo "EOF" >> run.sh
          
-#         - if [ $BITBUCKET_BRANCH != "feature/pipeline" ]; then
-         - echo ". ./local_run_$BITBUCKET_DEPLOYMENT_ENVIRONMENT.sh" >> run.sh
-#         - fi
+         - if [ ! -z $PR_NOT_LAUNCH -a $BITBUCKET_BRANCH != $PR_NOT_LAUNCH ]; then
+         -  echo ". ./local_run_$BITBUCKET_DEPLOYMENT_ENVIRONMENT.sh" >> run.sh
+         - fi
 
          - cat run.sh
          - pipe:  atlassian/ssh-run:0.2.4
