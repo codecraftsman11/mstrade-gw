@@ -23,7 +23,7 @@ class BinanceWssRouter(Router):
         '24hrTicker': "symbol",
         'outboundAccountInfo': 'wallet',
         'outboundAccountPosition': 'wallet',
-        'executionReport': 'order',
+        'executionReport': ['order', 'execution'],
     }
 
     serializer_classes = {
@@ -33,6 +33,7 @@ class BinanceWssRouter(Router):
         'symbol': serializers.BinanceSymbolSerializer,
         'wallet': serializers.BinanceWalletSerializer,
         'order': serializers.BinanceOrderSerializer,
+        'execution': serializers.BinanceExecutionSerializer,
     }
 
     def __init__(self, wss_api: BinanceWssApi):
@@ -82,7 +83,7 @@ class BinanceWssRouter(Router):
             'data': list()
         }
         serializer = self._subscr_serializer(subscr_name)
-        route_key = self._get_route_key(data)
+        route_key = self._get_route_key(data, subscr_name)
         if self._wss_api.is_registered(subscr_name, route_key) \
            and serializer.is_item_valid(data, {}):
             self._routed_data[subscr_name]['data'].append(data)
@@ -90,14 +91,17 @@ class BinanceWssRouter(Router):
             return serializer
         return None
 
-    def _get_route_key(self, data):
+    def _get_route_key(self, data, subscr_name):
         if not isinstance(data, dict):
             return None
         if data.get('e') in ('outboundAccountInfo',):
             return None
-        if data.get('e') in ('executionReport',) and isinstance(
-                self._wss_api.subscriptions.get(self.table_route_map.get(data['e'])), bool):
-            return None
+        if data.get('e') in ('executionReport',):
+            table_routes = self.table_route_map.get(data['e'])
+            if isinstance(
+                self._wss_api.subscriptions.get(table_routes[table_routes.index(subscr_name)]), bool
+            ):
+                return None
         if data.get('e') in ('outboundAccountPosition',) and data.get('B'):
             try:
                 return data['B'][0]['a']
@@ -114,7 +118,7 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
         '24hrTicker': "symbol",
         'bookTicker': "symbol",
         'ACCOUNT_UPDATE': 'wallet',
-        'ORDER_TRADE_UPDATE': 'order',
+        'ORDER_TRADE_UPDATE': ['order', 'execution'],
     }
 
     serializer_classes = {
@@ -124,9 +128,10 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
         'symbol': serializers.BinanceFuturesSymbolSerializer,
         'wallet': serializers.BinanceFuturesWalletSerializer,
         'order': serializers.BinanceOrderSerializer,
+        'execution': serializers.BinanceExecutionSerializer,
     }
 
-    def _get_route_key(self, data):
+    def _get_route_key(self, data, subscr_name):
         if not isinstance(data, dict):
             return None
         if data.get('e') in ('ACCOUNT_UPDATE',) and isinstance(
@@ -136,7 +141,10 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
             except (KeyError, IndexError):
                 return None
         if data.get('e') in ('ORDER_TRADE_UPDATE',):
-            if isinstance(self._wss_api.subscriptions.get(self.table_route_map.get(data['e'])), bool):
+            table_routes = self.table_route_map.get(data['e'])
+            if isinstance(
+                self._wss_api.subscriptions.get(table_routes[table_routes.index(subscr_name)]), bool
+            ):
                 return None
             else:
                 try:

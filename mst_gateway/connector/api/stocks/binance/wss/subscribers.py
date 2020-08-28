@@ -47,3 +47,7 @@ class BinanceWalletSubscriber(BinanceSubscriber):
 
 class BinanceOrderSubscriber(BinanceSubscriber):
     subscriptions = ()
+
+
+class BinanceExecutionSubscriber(BinanceSubscriber):
+    subscriptions = ()
