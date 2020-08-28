@@ -11,7 +11,7 @@ pr=$(curl -s -u "${PROJ_UKEY}:${PROJ_PKEY}" "https://api.bitbucket.org/2.0/repos
 
 [[ -z $pr ]] && exit 1
 
-declare -a prarray="(${swbranch} ${scmd} ${pr})"
+declare -a prarray="(${swbranch} ${pr} ${scmd})"
 runCommands "${prarray[@]}"
 unset prarray
 unset swbranch
