@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from logging import Logger
 from typing import (
     Optional,
@@ -366,6 +367,18 @@ class BitmexRestApi(StockRestApi):
             commissions, _ = self._bitmex_api(self._handler.User.User_getCommission)
             return utils.load_commission(commissions, pair[0], symbol)
         raise ConnectorError(f"Invalid schema {schema}.")
+
+    def get_funding_rate(self) -> dict:
+        funding_rates, _ = self._bitmex_api(
+            method=self._handler.Funding.Funding_get,
+            reverse=True,
+            startTime=str(
+                datetime.now().replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                )
+            ),
+        )
+        return utils.load_funding_rates(funding_rates)
 
     def _bitmex_api(self, method: callable, **kwargs):
         headers = {}
