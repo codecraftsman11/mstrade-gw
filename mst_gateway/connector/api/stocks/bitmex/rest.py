@@ -372,10 +372,8 @@ class BitmexRestApi(StockRestApi):
         funding_rates, _ = self._bitmex_api(
             method=self._handler.Funding.Funding_get,
             reverse=True,
-            startTime=str(
-                datetime.now().replace(
-                    hour=0, minute=0, second=0, microsecond=0
-                )
+            startTime=datetime.now().replace(
+                hour=0, minute=0, second=0, microsecond=0
             ),
         )
         return utils.load_funding_rates(funding_rates)
