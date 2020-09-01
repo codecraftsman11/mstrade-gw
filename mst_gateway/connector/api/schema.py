@@ -48,6 +48,7 @@ SYMBOL_FIELDS = {
     'bid_price': float,
     'ask_price': float,
     'reversed': bool,
+    'volume24': float,
     'schema': schema_valid,
     'system_symbol': str,
     'symbol_schema': schema_valid
