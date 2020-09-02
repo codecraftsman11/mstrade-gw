@@ -45,10 +45,11 @@ def load_symbols_currencies(currency: list) -> dict:
 def load_funding_rates(funding_rates: list) -> dict:
     result = dict()
     for fr in funding_rates:
-        if fr.get('symbol', '').lower() not in result.keys():
-            result[
-                fr.get('symbol', '').lower()
-            ] = to_float(fr.get('fundingRate'))
+        symbol = fr.get('symbol', '').lower()
+        if symbol not in result.keys():
+            result[symbol] = {
+                'symbol': symbol, 'funding_rate': to_float(fr.get('fundingRate'))
+            }
     return result
 
 
