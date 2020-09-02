@@ -22,6 +22,7 @@ TEST_SYMBOL_MESSAGES = [
                     "bid_price": 9339.0,
                     "ask_price": 9339.5,
                     "reversed": True,
+                    "volume24": 997235816,
                     "pair": [
                         "XBT",
                         "USD"
@@ -58,6 +59,7 @@ TEST_SYMBOL_MESSAGES = [
                     "bid_price": 9339.0,
                     "ask_price": 9339.5,
                     "reversed": True,
+                    "volume24": 997235816,
                     "pair": [
                         "XBT",
                         "USD"
@@ -90,6 +92,7 @@ RESULT_SYMBOL_STATE = {
             "bid_price": 9339.0,
             "ask_price": 9339.5,
             "reversed": True,
+            "volume24": 997235816,
             "pair": [
                 "XBT",
                 "USD"
