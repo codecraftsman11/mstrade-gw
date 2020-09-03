@@ -396,7 +396,7 @@ class BinanceRestApi(StockRestApi):
         return utils.load_commission(commissions, pair[0], fee_tier)
 
     def get_funding_rate(self, schema: str) -> dict:
-        return {}
+        raise NotImplementedError
 
     def _binance_api(self, method: callable, **kwargs):
         try:
