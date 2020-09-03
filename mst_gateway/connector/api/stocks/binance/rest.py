@@ -395,7 +395,7 @@ class BinanceRestApi(StockRestApi):
         fee_tier = utils.get_vip(self._binance_api(self._handler.futures_account_v2))
         return utils.load_commission(commissions, pair[0], fee_tier)
 
-    def get_funding_rate(self) -> dict:
+    def get_funding_rate(self, schema: str) -> dict:
         return {}
 
     def _binance_api(self, method: callable, **kwargs):

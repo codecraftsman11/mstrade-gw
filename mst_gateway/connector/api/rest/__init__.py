@@ -175,7 +175,7 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def get_funding_rate(self) -> dict:
+    def get_funding_rate(self, schema: str) -> dict:
         raise NotImplementedError
 
     def __setstate__(self, state):
