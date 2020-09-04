@@ -20,8 +20,19 @@ class StateStorage(BaseStorage):
                 pass
         return result
 
+    def get_pattern(self, key):
+        if isinstance(self._storage, dict):
+            return self._get_pattern(key)
+        return self._get_pattern(key)
+
     def remove(self, key):
         try:
             self._remove(self._key(key))
+        except KeyError:
+            pass
+
+    def remove_pattern(self, key):
+        try:
+            return self._remove_pattern(key)
         except KeyError:
             pass

@@ -25,6 +25,10 @@ class BaseStorage:
         raise NotImplementedError
 
     @abstractmethod
+    def get_pattern(self, *args, **kwargs):
+        raise NotImplementedError
+
+    @abstractmethod
     def remove(self, *args, **kwargs):
         raise NotImplementedError
 
@@ -47,8 +51,16 @@ class BaseStorage:
         return self._get_dict if isinstance(self._storage, dict) else self._get_cache
 
     @property
+    def _get_pattern(self):
+        return self._get_dict if isinstance(self._storage, dict) else self._get_cache_pattern
+
+    @property
     def _remove(self):
         return self._remove_dict if isinstance(self._storage, dict) else self._remove_cache
+
+    @property
+    def _remove_pattern(self):
+        return self._remove_dict if isinstance(self._storage, dict) else self._remove_cache_pattern
 
     @property
     def _set_dict(self):
@@ -77,6 +89,14 @@ class BaseStorage:
     @property
     def _get_cache(self):
         return self._storage.get
+
+    @property
+    def _get_cache_pattern(self):
+        return self._storage.get_pattern
+
+    @property
+    def _remove_cache_pattern(self):
+        return self._storage.delete_pattern
 
     @property
     def _remove_cache(self):
