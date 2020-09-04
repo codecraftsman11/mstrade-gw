@@ -174,6 +174,10 @@ class StockRestApi(Connector):
     def get_order_commission(self, schema: str, pair: Union[list, tuple]) -> dict:
         raise NotImplementedError
 
+    @abstractmethod
+    def get_funding_rate(self, schema: str) -> dict:
+        raise NotImplementedError
+
     def __setstate__(self, state):
         self.__dict__ = state
         self.open()
