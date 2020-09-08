@@ -14,6 +14,7 @@ class OrderType(ClassWithAttributes):
     stop_turn = 'stop_turn'
     squeeze = 'squeeze'
     limit_smart = 'limit_smart'
+    position = 'position'
 
 
 class OrderSchema(ClassWithAttributes):
@@ -102,6 +103,10 @@ ORDER_CLOSE_TYPES = (
     OrderType.trailing_stop,
     OrderType.trailing_trigger_stop
 )
+
+
+ORDER_POSITION_TYPES = (OrderType.position)
+
 
 # Sides
 BUY = 0
