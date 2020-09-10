@@ -32,6 +32,11 @@ class BaseStorage:
     def remove(self, *args, **kwargs):
         raise NotImplementedError
 
+    def get_keys(self, key):
+        if isinstance(self._storage, dict):
+            return [key] if key in self._storage else list()
+        return self._get_cache_keys(key)
+
     def _set(self, key: str, data):
         if isinstance(self._storage, dict):
             if isinstance(self._get_dict(key), dict):
@@ -93,6 +98,10 @@ class BaseStorage:
     @property
     def _get_cache_pattern(self):
         return self._storage.get_pattern
+
+    @property
+    def _get_cache_keys(self):
+        return self._storage.get_keys
 
     @property
     def _remove_cache_pattern(self):

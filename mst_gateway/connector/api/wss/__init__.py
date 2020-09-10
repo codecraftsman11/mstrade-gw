@@ -78,11 +78,11 @@ class StockWssApi(Connector):
                         force: bool = False) -> bool:
         if not force and self.is_registered(subscr_name, symbol):
             return True
-        subscriber = self._get_subscriber(subscr_name)
-        if not subscriber:
+        _subscriber = self._get_subscriber(subscr_name)
+        if not _subscriber:
             self._logger.error("There is no subscriber in %s for %s", self, subscr_name)
             return False
-        if not await subscriber.subscribe(self, symbol):
+        if not await _subscriber.subscribe(self, symbol):
             self._logger.error("Error subscribing %s to %s", self, subscr_name)
             return False
         self.register(subscr_name, symbol)
@@ -91,12 +91,12 @@ class StockWssApi(Connector):
     async def unsubscribe(self, subscr_name: str, symbol: str = None) -> bool:
         if not self.is_registered(subscr_name, symbol):
             return True
-        subscriber = self._get_subscriber(subscr_name)
-        if not subscriber:
+        _subscriber = self._get_subscriber(subscr_name)
+        if not _subscriber:
             self._logger.error("There is no subscriber in %s to unsubscribe"
                                " from %s", self, subscr_name)
             return False
-        if not await subscriber.unsubscribe(self, symbol):
+        if not await _subscriber.unsubscribe(self, symbol):
             self._logger.error("Error unsubscribing from %s in %s", subscr_name, self)
             return False
         self.unregister(subscr_name, symbol)

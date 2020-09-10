@@ -1,6 +1,6 @@
 import asyncio
 from logging import Logger
-from typing import Optional, Union
+from typing import Optional
 from mst_gateway.exceptions import ConnectorError
 from websockets import client
 from . import subscribers as subscr
@@ -28,6 +28,9 @@ class BinanceWssApi(StockWssApi):
         'order': subscr.BinanceOrderSubscriber(),
         'execution': subscr.BinanceExecutionSubscriber(),
     }
+    register_state_groups = [
+        'wallet'
+    ]
 
     router_class = BinanceWssRouter
     refresh_key_time = 1800
@@ -92,6 +95,16 @@ class BinanceWssApi(StockWssApi):
     def get_state(self, subscr_name: str, symbol: str = None) -> Optional[dict]:
         return None
 
+    def register(self, subscr_name, symbol: str = None):
+        if subscr_name in self.register_state_groups:
+            self.storage.set(f'{subscr_name}.{self.account_name}', {'*': '*'})
+        return super().register(subscr_name, symbol)
+
+    def unregister(self, subscr_name, symbol: str = None):
+        if subscr_name in self.register_state_groups:
+            self.storage.remove(f'{subscr_name}.{self.account_name}')
+        return super().register(subscr_name, symbol)
+
     async def process_message(self, message, on_message: Optional[callable] = None):
         messages = self._split_message(message)
         if not isinstance(messages, list):
@@ -139,6 +152,18 @@ class BinanceWssApi(StockWssApi):
             dump_message(dict(b=bid_u, a=ask_u, action='update', **data))
         ]
         return _data
+
+    def split_wallet(self, data):
+        if isinstance(data, list) or (isinstance(data, dict) and data.get('e') != 'outboundAccountPosition'):
+            return None
+        if isinstance(self._subscriptions.get('wallet'), dict):
+            _data = list()
+            balances = data.pop('B')
+            for b in balances:
+                if b.get('a', '').lower() in self._subscriptions['wallet'].keys():
+                    data['B'] = [b]
+                    _data.append(dump_message(data))
+            return _data
 
     def define_action_by_order_status(self, order_status: str) -> str:
         if order_status == var.BINANCE_ORDER_STATUS_NEW:
@@ -202,7 +227,7 @@ class BinanceFuturesWssApi(BinanceWssApi):
             _data = list()
             balances = data.get('a').pop('B')
             for b in balances:
-                if b.get('a', '').lower() in self._subscriptions.get('wallet').keys():
+                if b.get('a', '').lower() in self._subscriptions['wallet'].keys():
                     data['a']['B'] = [b]
                     _data.append(dump_message(data))
             return _data

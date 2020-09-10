@@ -21,7 +21,6 @@ class BinanceWssRouter(Router):
         'depthUpdate': "order_book",
         'kline': "quote_bin",
         '24hrTicker': "symbol",
-        'outboundAccountInfo': 'wallet',
         'outboundAccountPosition': 'wallet',
         'executionReport': ['order', 'execution'],
     }
@@ -94,18 +93,16 @@ class BinanceWssRouter(Router):
     def _get_route_key(self, data, subscr_name):
         if not isinstance(data, dict):
             return None
-        if data.get('e') in ('outboundAccountInfo',):
+        if data.get('e') in ('outboundAccountPosition',):
+            if isinstance(self._wss_api.subscriptions.get(self.table_route_map.get(data['e'])), dict):
+                try:
+                    return data['B'][0]['a']
+                except (KeyError, IndexError):
+                    return None
             return None
         if data.get('e') in ('executionReport',):
             table_routes = self.table_route_map.get(data['e'])
-            if isinstance(
-                self._wss_api.subscriptions.get(table_routes[table_routes.index(subscr_name)]), bool
-            ):
-                return None
-        if data.get('e') in ('outboundAccountPosition',) and data.get('B'):
-            try:
-                return data['B'][0]['a']
-            except (KeyError, IndexError):
+            if isinstance(self._wss_api.subscriptions.get(table_routes[table_routes.index(subscr_name)]), bool):
                 return None
         return data.get('s')
 
@@ -134,22 +131,19 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
     def _get_route_key(self, data, subscr_name):
         if not isinstance(data, dict):
             return None
-        if data.get('e') in ('ACCOUNT_UPDATE',) and isinstance(
-                self._wss_api.subscriptions.get(self.table_route_map.get(data['e'])), dict):
-            try:
-                return data['a']['B'][0]['a']
-            except (KeyError, IndexError):
-                return None
+        if data.get('e') in ('ACCOUNT_UPDATE',):
+            if isinstance(self._wss_api.subscriptions.get(self.table_route_map.get(data['e'])), dict):
+                try:
+                    return data['a']['B'][0]['a']
+                except (KeyError, IndexError):
+                    return None
+            return None
         if data.get('e') in ('ORDER_TRADE_UPDATE',):
             table_routes = self.table_route_map.get(data['e'])
-            if isinstance(
-                self._wss_api.subscriptions.get(table_routes[table_routes.index(subscr_name)]), bool
-            ):
-                return None
-            else:
+            if isinstance(self._wss_api.subscriptions.get(table_routes[table_routes.index(subscr_name)]), dict):
                 try:
                     return data['o']['s']
                 except KeyError:
-                    pass
+                    return None
             return None
         return data.get('s')
