@@ -105,7 +105,9 @@ ORDER_CLOSE_TYPES = (
 )
 
 
-ORDER_POSITION_TYPES = (OrderType.position)
+ORDER_POSITION_TYPES = (
+    OrderType.position,
+)
 
 
 # Sides
