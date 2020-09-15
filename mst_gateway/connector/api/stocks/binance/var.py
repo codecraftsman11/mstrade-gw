@@ -35,3 +35,12 @@ BINANCE_EXECUTION_STATUS_MAP = {
     'FILLED': api.OrderState.closed,
     'EXPIRED': api.OrderState.closed,
 }
+
+BINANCE_PARAMETER_NAMES_MAP = {
+    'order_id': 'newClientOrderId',
+    'exchange_order_id': 'orderId',
+    'volume': 'quantity',
+    'iceberg_volume': 'icebergQty',
+    'stop_price': 'stopPrice',
+    'ttl': 'timeInForce',
+}

@@ -919,3 +919,15 @@ def load_execution_ws_data(message_data: dict, raw_data: dict, state_data: dict)
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema')
     }
+
+def map_api_parameters(params: dict) -> Optional[dict]:
+    """
+    Changes the name (key) of any parameters that have a different name in the Binance API.
+    Example: 'ttl' becomes 'timeInForce'
+
+    """
+    mapped_names = var.BINANCE_PARAMETER_NAMES_MAP
+    for name, binance_name  in mapped_names.items():
+        if name in params:
+            params[binance_name] = params.pop(name)
+    return params
