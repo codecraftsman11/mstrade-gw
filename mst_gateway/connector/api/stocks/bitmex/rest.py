@@ -238,7 +238,7 @@ class BitmexRestApi(StockRestApi):
 
     def cancel_order(self, order_id):
         data, _ = self._bitmex_api(self._handler.Order.Order_cancel,
-                                   orderID=order_id)
+                                   clOrdID=order_id)
         return bool(data)
 
     def get_order(self, order_id: str) -> Optional[dict]:
