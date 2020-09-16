@@ -243,6 +243,7 @@ class BitmexRestApi(StockRestApi):
 
     def get_order(self, order_id: str) -> Optional[dict]:
         data, _ = self._bitmex_api(self._handler.Order.Order_getOrders,
+                                   reverse=True,
                                    filter=j_dumps({
                                        'clOrdID': order_id
                                    }))
