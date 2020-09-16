@@ -242,7 +242,7 @@ def load_order_data(raw_data: dict, state_data: dict) -> dict:
         raw_data.get('type', '').upper()
     ) or {'type': None, 'execution': None}
     data = {
-        'order_id': raw_data.get('orderId') or raw_data.get('clientOrderId'),
+        'order_id': raw_data.get('clientOrderId'),
         'symbol': raw_data.get('symbol'),
         'origQty': raw_data.get('orderQty'),
         'stop': raw_data.get('stopPrice'),
