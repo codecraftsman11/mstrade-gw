@@ -76,6 +76,7 @@ class StockRestApi(Connector):
 
     @abstractmethod
     def create_order(self, symbol: str,
+                     schema: str,
                      side: int,
                      value: float = 1,
                      order_type: str = OrderType.market,
@@ -85,7 +86,7 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def cancel_order(self, order_id: str) -> bool:
+    def cancel_order(self, order_id: str, schema: str) -> bool:
         raise NotImplementedError
 
     @abstractmethod
