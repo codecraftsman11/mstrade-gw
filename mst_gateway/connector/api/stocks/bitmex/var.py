@@ -29,3 +29,11 @@ ORDER_TYPE_AND_EXECUTION_READ_MAP = {
 
 BITMEX_BUY = "Buy"
 BITMEX_SELL = "Sell"
+
+
+BITMEX_EXECUTION_STATUS_MAP = {
+    'PartiallyFilled': api.OrderState.active,
+    'New': api.OrderState.pending,
+    'Filled': api.OrderState.closed,
+    'Canceled': api.OrderState.closed,
+}

@@ -23,7 +23,7 @@ class BinanceWssRouter(Router):
         '24hrTicker': "symbol",
         'outboundAccountInfo': 'wallet',
         'outboundAccountPosition': 'wallet',
-        'executionReport': ['order', 'execution'],
+        'executionReport': 'order'
     }
 
     serializer_classes = {
@@ -33,7 +33,6 @@ class BinanceWssRouter(Router):
         'symbol': serializers.BinanceSymbolSerializer,
         'wallet': serializers.BinanceWalletSerializer,
         'order': serializers.BinanceOrderSerializer,
-        'execution': serializers.BinanceExecutionSerializer,
     }
 
     def __init__(self, wss_api: BinanceWssApi):
@@ -99,7 +98,7 @@ class BinanceWssRouter(Router):
         if data.get('e') in ('executionReport',):
             table_routes = self.table_route_map.get(data['e'])
             if isinstance(
-                self._wss_api.subscriptions.get(table_routes[table_routes.index(subscr_name)]), bool
+                self._wss_api.subscriptions.get(table_routes), bool
             ):
                 return None
         if data.get('e') in ('outboundAccountPosition',) and data.get('B'):
@@ -118,7 +117,7 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
         '24hrTicker': "symbol",
         'bookTicker': "symbol",
         'ACCOUNT_UPDATE': 'wallet',
-        'ORDER_TRADE_UPDATE': ['order', 'execution'],
+        'ORDER_TRADE_UPDATE': 'order'
     }
 
     serializer_classes = {
@@ -128,7 +127,6 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
         'symbol': serializers.BinanceFuturesSymbolSerializer,
         'wallet': serializers.BinanceFuturesWalletSerializer,
         'order': serializers.BinanceOrderSerializer,
-        'execution': serializers.BinanceExecutionSerializer,
     }
 
     def _get_route_key(self, data, subscr_name):
@@ -143,7 +141,7 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
         if data.get('e') in ('ORDER_TRADE_UPDATE',):
             table_routes = self.table_route_map.get(data['e'])
             if isinstance(
-                self._wss_api.subscriptions.get(table_routes[table_routes.index(subscr_name)]), bool
+                self._wss_api.subscriptions.get(table_routes), bool
             ):
                 return None
             else:

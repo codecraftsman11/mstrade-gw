@@ -7,6 +7,7 @@ from mst_gateway.connector.api.utils import time2timestamp
 from mst_gateway.exceptions import ConnectorError
 from mst_gateway.connector.api.types.order import OrderSchema
 from . import var
+from .var import BITMEX_EXECUTION_STATUS_MAP
 
 
 def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
@@ -137,6 +138,32 @@ def load_order_data(raw_data: dict, state_data: dict, skip_undef=False) -> dict:
         elif k == 'active':
             data[k] = bool(data[k] != 'New')
     return data
+
+
+def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
+    order_type_and_exec = var.ORDER_TYPE_AND_EXECUTION_READ_MAP.get(
+        raw_data.get('ordType')
+    ) or {'type': None, 'execution': None}
+    return {
+        'order_id': raw_data.get('clOrdID'),
+        'side': raw_data.get('side'),
+        'tick_volume': raw_data.get('lastQty'),
+        'tick_price': raw_data.get('lastPx'),
+        'volume': raw_data.get('orderQty'),
+        'price': to_float(raw_data.get('price')),
+        'type': load_order_type(raw_data.get('ordType')),
+        'status': BITMEX_EXECUTION_STATUS_MAP.get(raw_data.get('ordStatus')),
+        'leaves_volume': raw_data.get('leavesQty'),
+        'filled_volume': raw_data.get('cumQty'),
+        'avg_price': raw_data.get('avgPx'),
+        'timestamp': raw_data.get('timestamp'),
+        'symbol': raw_data.get('symbol'),
+        'system_symbol': state_data.get('system_symbol'),
+        'schema': state_data.get('schema'),
+        'stop': raw_data.get('stopPx'),
+        'created': to_date(raw_data.get('timestamp')),
+        **order_type_and_exec,
+    }
 
 
 def load_user_data(raw_data: dict) -> dict:

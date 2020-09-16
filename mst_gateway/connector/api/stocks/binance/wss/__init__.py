@@ -1,6 +1,6 @@
 import asyncio
 from logging import Logger
-from typing import Optional, Union
+from typing import Optional
 from mst_gateway.exceptions import ConnectorError
 from websockets import client
 from . import subscribers as subscr
@@ -26,7 +26,6 @@ class BinanceWssApi(StockWssApi):
     auth_subscribers = {
         'wallet': subscr.BinanceWalletSubscriber(),
         'order': subscr.BinanceOrderSubscriber(),
-        'execution': subscr.BinanceExecutionSubscriber(),
     }
 
     router_class = BinanceWssRouter
