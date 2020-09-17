@@ -367,9 +367,6 @@ def load_futures_wallet_detail_data(raw_data: dict, asset: str) -> dict:
 
 def _ws_wallet(balances: list, state_balances: dict, state_data: dict, currencies: dict,
                assets: Union[list, tuple], fields: Union[list, tuple]):
-    _balances = list()
-    for b in balances:
-        _balances.append(b)
     balances.extend([v for v in state_balances.values()])
     total_balance = dict()
     for asset in assets:

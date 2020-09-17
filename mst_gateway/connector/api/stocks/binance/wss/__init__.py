@@ -129,7 +129,8 @@ class BinanceWssApi(StockWssApi):
         data = parse_message(message)
         for method in (
             self.split_order_book,
-            self.split_order
+            self.split_order,
+            self.split_wallet
         ):
             _tmp = method(data)
             if _tmp:
@@ -207,18 +208,6 @@ class BinanceFuturesWssApi(BinanceWssApi):
         if self.test:
             return self.TEST_URL
         return self.BASE_URL
-
-    def _split_message(self, message):
-        data = parse_message(message)
-        for method in (
-            self.split_order_book,
-            self.split_order,
-            self.split_wallet
-        ):
-            _tmp = method(data)
-            if _tmp:
-                return _tmp
-        return message
 
     def split_wallet(self, data):
         if isinstance(data, list) or (isinstance(data, dict) and data.get('e') != 'ACCOUNT_UPDATE'):
