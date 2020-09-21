@@ -390,3 +390,15 @@ def slice_order_book(splitted_ob: Dict[int, list], depth: int, offset: int) -> D
             api.SELL: splitted_ob[api.SELL][:-offset]
         }
     return splitted_ob
+
+def map_api_parameters(params: dict) -> Optional[dict]:
+    """
+    Changes the name (key) of any parameters that have a different name in the Bitmex API.
+    Example: 'stopPx' becomes 'stop_price'
+
+    """
+    mapped_names = var.BITMEX_PARAMETER_NAMES_MAP
+    for name, binance_name in mapped_names.items():
+        if name in params:
+            params[binance_name] = params.pop(name)
+    return params

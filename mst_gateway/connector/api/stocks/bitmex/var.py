@@ -29,3 +29,14 @@ ORDER_TYPE_AND_EXECUTION_READ_MAP = {
 
 BITMEX_BUY = "Buy"
 BITMEX_SELL = "Sell"
+
+BITMEX_PARAMETER_NAMES_MAP = {
+    'order_id': 'origClOrdID',
+    'stopPx': 'stop_price',
+    'volume': 'orderQty',
+    'value': 'orderQty',
+    'comment': 'text',
+    'ttl': 'timeInForce',
+    'ttl_type': 'timeInForce',
+    'display_value': 'displayQty'
+}
