@@ -22,7 +22,7 @@ def _make_create_order_args(args, options):
     if not isinstance(options, dict):
         return False
     if 'display_value' in options:
-        args['dispalyQty'] = options['display_value']
+        args['displayQty'] = options['display_value']
     if 'stop_price' in options:
         args['stopPx'] = options['stop_price']
     if 'ttl_type' in options:
@@ -230,6 +230,26 @@ class BitmexRestApi(StockRestApi):
             args['clOrdID'] = order_id
         _make_create_order_args(args, options)
         data, _ = self._bitmex_api(self._handler.Order.Order_new, **args)
+        return bool(data)
+
+    def update_order(self, 
+                     order_id: str, 
+                     value: float = 1, 
+                     price: float = None, 
+                     options: dict = dict()) -> bool: 
+        """
+        Amends an order in the Bitmex API. 
+        Required params: order_id and (value OR price)
+
+        """
+        params = dict(
+            price = price,
+            orderQty = value,
+            origClOrdID = order_id,
+            **options
+        )
+        params = utils.map_api_parameters(params)
+        data, _ = self._bitmex_api(self._handler.Order.Order_amend, **params)
         return bool(data)
 
     def cancel_all_orders(self):
