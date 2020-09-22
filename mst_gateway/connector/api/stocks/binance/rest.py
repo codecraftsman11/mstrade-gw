@@ -138,16 +138,19 @@ class BinanceRestApi(StockRestApi):
 
     def create_order(self, symbol: str,
                      schema: str,
+                     order_id: str,
                      side: str = Client.SIDE_BUY,
                      value: float = 1,
                      order_type: str = Client.ORDER_TYPE_MARKET,
-                     **params) -> bool:
-        params.update(dict(
+                     options: dict = dict()) -> bool:
+        params = dict(
+                newClientOrderId=order_id,
                 symbol=symbol.upper(),
-                side=side.upper(),
+                side='SELL' if side else 'BUY',
                 type=order_type.upper(),
-                quantity=value
-        ))
+                quantity=value,
+                **options
+        )
         params = utils.map_api_parameters(params)
         schema_handlers = {
             OrderSchema.exchange: self._handler.create_order,
@@ -158,6 +161,24 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(f"Invalid schema parameter: {schema}")
         data = self._binance_api(schema_handlers[schema], **params)
         return bool(data)
+
+    def update_order(self, symbol: str,
+                     schema: str,
+                     order_id: str,
+                     side: str = Client.SIDE_BUY,
+                     value: float = 1,
+                     order_type: str = Client.ORDER_TYPE_MARKET,
+                     options: dict = dict()) -> bool:
+        """
+        Updates an order by deleting an existing order
+        and creating a new one with the same ClientOrderId.
+
+        """
+        if self.cancel_order(order_id, schema, symbol=symbol): 
+            return self.create_order(symbol, schema, order_id, side, 
+                                     value, order_type, options=options)
+        else:
+            return False
 
     def cancel_all_orders(self):
         open_orders = [dict(symbol=order["symbol"], orderId=order["orderId"]) for order in
