@@ -1,12 +1,15 @@
 from abc import abstractmethod
+from typing import Optional
 from hashlib import sha1
 
 
 class BaseStorage:
     timeout = None
 
-    def __init__(self, storage=None):
+    def __init__(self, storage=None, timeout: Optional[int] = None):
         self._storage = storage or dict()
+        if isinstance(timeout, int):
+            self.timeout = timeout
 
     @property
     def storage(self):
@@ -114,7 +117,7 @@ class BaseStorage:
     @staticmethod
     def _key(key: (str, list, tuple, dict)) -> str:
         if isinstance(key, (list, tuple)):
-            return sha1('|'.join(key).encode()).hexdigest()
+            return sha1('|'.join(key).encode().lower()).hexdigest()
         if isinstance(key, dict):
-            return sha1('|'.join(key.values()).encode()).hexdigest()
+            return sha1('|'.join(key.values()).encode().lower()).hexdigest()
         return str(key).lower()
