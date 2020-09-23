@@ -94,7 +94,7 @@ class BinanceWssRouter(Router):
         if not isinstance(data, dict):
             return None
         if data.get('e') in ('outboundAccountPosition',):
-            if isinstance(self._wss_api.subscriptions.get(self.table_route_map.get(data['e'])), dict):
+            if self.table_route_map.get(data['e']) != {True}:
                 try:
                     return data['B'][0]['a']
                 except (KeyError, IndexError):
@@ -102,7 +102,7 @@ class BinanceWssRouter(Router):
             return None
         if data.get('e') in ('executionReport',):
             table_routes = self.table_route_map.get(data['e'])
-            if isinstance(self._wss_api.subscriptions.get(table_routes[table_routes.index(subscr_name)]), bool):
+            if self._wss_api.subscriptions.get(table_routes[table_routes.index(subscr_name)]) == {True}:
                 return None
         return data.get('s')
 
@@ -132,7 +132,7 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
         if not isinstance(data, dict):
             return None
         if data.get('e') in ('ACCOUNT_UPDATE',):
-            if isinstance(self._wss_api.subscriptions.get(self.table_route_map.get(data['e'])), dict):
+            if self.table_route_map.get(data['e']) != {True}:
                 try:
                     return data['a']['B'][0]['a']
                 except (KeyError, IndexError):
@@ -140,7 +140,7 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
             return None
         if data.get('e') in ('ORDER_TRADE_UPDATE',):
             table_routes = self.table_route_map.get(data['e'])
-            if isinstance(self._wss_api.subscriptions.get(table_routes[table_routes.index(subscr_name)]), dict):
+            if self._wss_api.subscriptions.get(table_routes[table_routes.index(subscr_name)]) != {True}:
                 try:
                     return data['o']['s']
                 except KeyError:

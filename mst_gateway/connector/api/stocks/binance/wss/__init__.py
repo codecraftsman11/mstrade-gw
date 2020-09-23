@@ -103,7 +103,7 @@ class BinanceWssApi(StockWssApi):
     def unregister(self, subscr_name, symbol: str = None):
         if subscr_name in self.register_state_groups:
             self.storage.remove(f'{subscr_name}.{self.account_name}')
-        return super().register(subscr_name, symbol)
+        return super().unregister(subscr_name, symbol)
 
     async def process_message(self, message, on_message: Optional[callable] = None):
         messages = self._split_message(message)
@@ -157,11 +157,11 @@ class BinanceWssApi(StockWssApi):
     def split_wallet(self, data):
         if isinstance(data, list) or (isinstance(data, dict) and data.get('e') != 'outboundAccountPosition'):
             return None
-        if isinstance(self._subscriptions.get('wallet'), dict):
+        if self._subscriptions.get('wallet') != {True}:
             _data = list()
             balances = data.pop('B')
             for b in balances:
-                if b.get('a', '').lower() in self._subscriptions['wallet'].keys():
+                if b.get('a', '').lower() in self._subscriptions['wallet']:
                     data['B'] = [b]
                     _data.append(dump_message(data))
             return _data
@@ -212,11 +212,11 @@ class BinanceFuturesWssApi(BinanceWssApi):
     def split_wallet(self, data):
         if isinstance(data, list) or (isinstance(data, dict) and data.get('e') != 'ACCOUNT_UPDATE'):
             return None
-        if isinstance(self._subscriptions.get('wallet'), dict):
+        if self._subscriptions.get('wallet') != {True}:
             _data = list()
             balances = data.get('a').pop('B')
             for b in balances:
-                if b.get('a', '').lower() in self._subscriptions['wallet'].keys():
+                if b.get('a', '').lower() in self._subscriptions['wallet']:
                     data['a']['B'] = [b]
                     _data.append(dump_message(data))
             return _data

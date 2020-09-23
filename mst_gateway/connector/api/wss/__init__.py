@@ -89,7 +89,7 @@ class StockWssApi(Connector):
         return True
 
     async def unsubscribe(self, subscr_name: str, symbol: str = None) -> bool:
-        if not self.is_registered(subscr_name, symbol):
+        if not self.is_registered(subscr_name, symbol, check_for_unsub=True):
             return True
         _subscriber = self._get_subscriber(subscr_name)
         if not _subscriber:
@@ -102,37 +102,28 @@ class StockWssApi(Connector):
         self.unregister(subscr_name, symbol)
         return True
 
-    def is_registered(self, subscr_name, symbol: str = None) -> bool:
-        if subscr_name.lower() not in self._subscriptions:
-            return False
-        if not symbol and isinstance(self._subscriptions[subscr_name.lower()], bool):
-            return True
-        if symbol is not None and isinstance(self._subscriptions[subscr_name.lower()], dict)\
-                and symbol.lower() in self._subscriptions[subscr_name.lower()]:
-            return True
-        return False
+    def is_registered(self, subscr_name, symbol: str = None, check_for_unsub: bool = False) -> bool:
+        if not check_for_unsub:
+            return (symbol and symbol.lower() in self._subscriptions.get(subscr_name.lower(), set())) \
+                   or True in self._subscriptions.get(subscr_name.lower(), set())
+        if symbol:
+            return symbol.lower() in self._subscriptions.get(subscr_name.lower(), set())
+        return True in self._subscriptions.get(subscr_name.lower(), set())
 
     def register(self, subscr_name, symbol: str = None):
-        if symbol is None:
-            self._subscriptions[subscr_name.lower()] = True
-        elif subscr_name.lower() not in self._subscriptions:
-            self._subscriptions[subscr_name.lower()] = {symbol.lower(): True}
+        if not self._subscriptions.get(subscr_name.lower()):
+            self._subscriptions[subscr_name.lower()] = set()
+        if symbol:
+            self._subscriptions[subscr_name.lower()].add(symbol.lower())
         else:
-            if isinstance(self._subscriptions[subscr_name.lower()], bool):
-                self._subscriptions[subscr_name.lower()] = {}
-            self._subscriptions[subscr_name.lower()][symbol.lower()] = True
+            self._subscriptions[subscr_name.lower()].add(True)
 
     def unregister(self, subscr_name, symbol: str = None):
-        if subscr_name.lower() not in self._subscriptions:
-            return
-        if symbol is None:
+        if symbol and symbol.lower() in self._subscriptions.get(subscr_name.lower(), set()):
+            self._subscriptions[subscr_name.lower()].remove(symbol.lower())
+        if not symbol and subscr_name.lower() in self._subscriptions \
+                and True in self._subscriptions[subscr_name.lower()]:
             del self._subscriptions[subscr_name.lower()]
-            return
-        if isinstance(self._subscriptions[subscr_name.lower()], dict):
-            if symbol.lower() in self._subscriptions[subscr_name.lower()]:
-                del self._subscriptions[subscr_name.lower()][symbol.lower()]
-            if not self._subscriptions[subscr_name.lower()]:
-                del self._subscriptions[subscr_name.lower()]
 
     async def open(self, **kwargs):
         if not self.throttle.validate(
@@ -196,10 +187,10 @@ class StockWssApi(Connector):
             if subscr in self.auth_subscribers:
                 if not await self.authenticate():
                     continue
-            if not isinstance(self._subscriptions[subscr], dict):
+            if True in self._subscriptions[subscr]:
                 await self.subscribe(subscr, force=True)
-            else:
-                for symbol in self._subscriptions[subscr]:
+            for symbol in self._subscriptions[subscr]:
+                if symbol is not True:
                     await self.subscribe(subscr, symbol, force=True)
 
     async def _connect(self, **kwargs):

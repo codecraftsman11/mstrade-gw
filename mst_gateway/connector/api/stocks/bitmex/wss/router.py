@@ -102,6 +102,6 @@ class BitmexWssRouter(Router):
         return None
 
     def _get_route_key(self, data, subscr_name):
-        if isinstance(self._wss_api.subscriptions.get(subscr_name), bool):
+        if self._wss_api.subscriptions.get(subscr_name) == {True}:
             return None
         return data.get('currency') or data.get('symbol')
