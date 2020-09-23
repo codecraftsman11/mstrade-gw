@@ -55,6 +55,8 @@ class BitmexSymbolSerializer(BitmexSerializer):
                 item['askPrice'] = state[0]['ask_price']
             if item.get('bidPrice') is None:
                 item['bidPrice'] = state[0]['bid_price']
+            if item.get('volume24h') is None:
+                item['volume24h'] = state[0]['volume24']
         quote = self._quotes.get(item['symbol'].lower())
         if quote:
             item.update(**quote)
