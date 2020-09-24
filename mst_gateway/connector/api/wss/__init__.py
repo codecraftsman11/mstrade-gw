@@ -19,6 +19,7 @@ class StockWssApi(Connector):
                                           SUBSCRIPTIONS}
     auth_subscribers: Dict[str, Subscriber] = {key: None for key in
                                                AUTH_SUBSCRIPTIONS}
+    register_state_groups = []
     name = "Base"
     BASE_URL = None
     throttle = ThrottleWss()
@@ -34,7 +35,8 @@ class StockWssApi(Connector):
                  throttle_rate: int = 30,
                  throttle_storage=None,
                  schema='margin1',
-                 state_storage=None):
+                 state_storage=None,
+                 register_state=True):
         self.tasks = list()
         if name is not None:
             self.name = name
@@ -51,6 +53,7 @@ class StockWssApi(Connector):
         self.schema = schema
         if state_storage is not None:
             self.storage = StateStorage(state_storage)
+        self.register_state = register_state
         super().__init__(auth, logger)
 
     @property
@@ -78,11 +81,11 @@ class StockWssApi(Connector):
                         force: bool = False) -> bool:
         if not force and self.is_registered(subscr_name, symbol):
             return True
-        subscriber = self._get_subscriber(subscr_name)
-        if not subscriber:
+        _subscriber = self._get_subscriber(subscr_name)
+        if not _subscriber:
             self._logger.error("There is no subscriber in %s for %s", self, subscr_name)
             return False
-        if not await subscriber.subscribe(self, symbol):
+        if not await _subscriber.subscribe(self, symbol):
             self._logger.error("Error subscribing %s to %s", self, subscr_name)
             return False
         self.register(subscr_name, symbol)
@@ -91,12 +94,12 @@ class StockWssApi(Connector):
     async def unsubscribe(self, subscr_name: str, symbol: str = None) -> bool:
         if not self.is_registered(subscr_name, symbol):
             return True
-        subscriber = self._get_subscriber(subscr_name)
-        if not subscriber:
+        _subscriber = self._get_subscriber(subscr_name)
+        if not _subscriber:
             self._logger.error("There is no subscriber in %s to unsubscribe"
                                " from %s", self, subscr_name)
             return False
-        if not await subscriber.unsubscribe(self, symbol):
+        if not await _subscriber.unsubscribe(self, symbol):
             self._logger.error("Error unsubscribing from %s in %s", subscr_name, self)
             return False
         self.unregister(subscr_name, symbol)
