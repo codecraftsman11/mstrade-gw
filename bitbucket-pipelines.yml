@@ -58,7 +58,7 @@ definitions:
          - echo "[[ -d $destfolder ]] || mkdir $destfolder; cd $destfolder" > run.sh
          - echo "cat > local_run_$BITBUCKET_DEPLOYMENT_ENVIRONMENT.sh << 'EOF'" >> run.sh
          - tmp_stg="STAGE_${BITBUCKET_DEPLOYMENT_ENVIRONMENT^^}"
-         - declare -a STAGES=('INIT' ${!tmp_stg})
+         - declare -a STAGES="('INIT' ${!tmp_stg})"
          - ENV_INFR_INIT="^BITBUCKET_|^BB_"
 
          - for stg in "${STAGES[@]}"; do
