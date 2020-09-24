@@ -61,7 +61,6 @@ pipelines:
 #       - echo "nothing to do"
 
  pull-requests:
-#    feature/pipeline: 
    '**':
     - step: 
        <<: *PRDeploy
