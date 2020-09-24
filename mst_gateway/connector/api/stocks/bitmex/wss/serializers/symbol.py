@@ -25,6 +25,15 @@ class BitmexSymbolSerializer(BitmexSerializer):
                     'askPrice': item['askPrice'],
                     'bidPrice': item['bidPrice']
                 }
+            if message.get("table") == "instrument" \
+                    and item.get('symbol')\
+                    and item.get("volume24h"):
+                state = self._get_state(item['symbol'])
+                if state:
+                    state[0]['volume24'] = item["volume24h"]
+                    self._update_state(item['symbol'], state[0])
+                else:
+                    self._update_state(item['symbol'], item)
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
         if message.get('table') == 'quote':
