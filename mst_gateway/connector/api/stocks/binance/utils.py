@@ -389,11 +389,11 @@ def ws_spot_wallet(raw_data: dict, state_data: dict, currencies: dict,
     return _ws_wallet(_balances, _state_balances, state_data, currencies, assets, fields)
 
 
-def ws_spot_balance_data(balances: list, state_data: dict):
+def ws_spot_balance_data(balances: list, state_balances: dict):
     result = list()
     for b in balances:
         _currency = b['a'].lower()
-        _currency_state = state_data.pop(_currency, dict())
+        _currency_state = state_balances.pop(_currency, dict())
         result.append({
             'currency': b['a'],
             'balance': to_float(b['f']),
@@ -415,11 +415,11 @@ def ws_margin_wallet(raw_data: dict, state_data: dict, currencies: dict,
     return _ws_wallet(_balances, _state_balances, state_data, currencies, assets, fields)
 
 
-def ws_margin_balance_data(balances: list, state_data: dict):
+def ws_margin_balance_data(balances: list, state_balances: dict):
     result = list()
     for b in balances:
         _currency = b['a'].lower()
-        _currency_state = state_data.pop(_currency, dict())
+        _currency_state = state_balances.pop(_currency, dict())
         result.append({
             'currency': b['a'],
             'balance': to_float(b['f']),
@@ -444,12 +444,12 @@ def ws_futures_wallet(raw_data: dict, state_data: dict, currencies: dict,
     return _ws_wallet(_balances, _state_balances, state_data, currencies, assets, fields)
 
 
-def ws_futures_balance_data(balances: list, position: list, state_data: dict):
+def ws_futures_balance_data(balances: list, position: list, state_balances: dict):
     unrealised_pnl = sum([to_float(p['up']) for p in position]) if position else 0
     result = list()
     for b in balances:
         _currency = b['a'].lower()
-        _currency_state = state_data.pop(_currency, dict())
+        _currency_state = state_balances.pop(_currency, dict())
         margin_balance = to_float(b['wb']) + unrealised_pnl
         maint_margin = _currency_state.get('maint_margin', 0)
         result.append({

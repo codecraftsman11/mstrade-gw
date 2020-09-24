@@ -19,6 +19,7 @@ class StockWssApi(Connector):
                                           SUBSCRIPTIONS}
     auth_subscribers: Dict[str, Subscriber] = {key: None for key in
                                                AUTH_SUBSCRIPTIONS}
+    register_state_groups = []
     name = "Base"
     BASE_URL = None
     throttle = ThrottleWss()
@@ -34,7 +35,8 @@ class StockWssApi(Connector):
                  throttle_rate: int = 30,
                  throttle_storage=None,
                  schema='margin1',
-                 state_storage=None):
+                 state_storage=None,
+                 register_state=True):
         self.tasks = list()
         if name is not None:
             self.name = name
@@ -51,6 +53,7 @@ class StockWssApi(Connector):
         self.schema = schema
         if state_storage is not None:
             self.storage = StateStorage(state_storage)
+        self.register_state = register_state
         super().__init__(auth, logger)
 
     @property

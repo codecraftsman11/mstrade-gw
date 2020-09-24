@@ -22,7 +22,7 @@ class StateStorage(BaseStorage):
         return result
 
     def get_pattern(self, key):
-        return self._get_pattern(key)
+        return self._get_pattern(self._key(key))
 
     def remove(self, key):
         try:
@@ -32,6 +32,6 @@ class StateStorage(BaseStorage):
 
     def remove_pattern(self, key):
         try:
-            return self._remove_pattern(key)
+            return self._remove_pattern(self._key(key))
         except KeyError:
             pass

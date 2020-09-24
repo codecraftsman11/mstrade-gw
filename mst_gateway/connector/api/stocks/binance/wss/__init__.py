@@ -45,10 +45,11 @@ class BinanceWssApi(StockWssApi):
                  throttle_rate: int = 30,
                  throttle_storage=None,
                  schema='exchange',
-                 state_storage=None):
+                 state_storage=None,
+                 register_state=True):
         self.test = self._is_test(url)
         super().__init__(name, account_name, url, auth, logger, options, throttle_rate,
-                         throttle_storage, schema, state_storage)
+                         throttle_storage, schema, state_storage, register_state)
 
     def _is_test(self, url):
         return url != self.BASE_URL
@@ -96,14 +97,14 @@ class BinanceWssApi(StockWssApi):
         return None
 
     def register(self, subscr_name, symbol: str = None):
-        if subscr_name in self.register_state_groups:
-            self.storage.set(f'{subscr_name}.{self.account_name}', {'*': '*'})
+        if self.register_state and subscr_name in self.register_state_groups:
+            self.storage.set(f'{subscr_name}.{self.account_name}'.lower(), {'*': '*'})
         return super().register(subscr_name, symbol)
 
     def unregister(self, subscr_name, symbol: str = None):
-        if subscr_name in self.register_state_groups:
-            self.storage.remove(f'{subscr_name}.{self.account_name}')
-        return super().unregister(subscr_name, symbol)
+        if self.register_state and subscr_name in self.register_state_groups:
+            self.storage.remove(f'{subscr_name}.{self.account_name}'.lower())
+        return super().register(subscr_name, symbol)
 
     async def process_message(self, message, on_message: Optional[callable] = None):
         messages = self._split_message(message)
@@ -157,11 +158,11 @@ class BinanceWssApi(StockWssApi):
     def split_wallet(self, data):
         if isinstance(data, list) or (isinstance(data, dict) and data.get('e') != 'outboundAccountPosition'):
             return None
-        if self._subscriptions.get('wallet') != {True}:
+        if isinstance(self._subscriptions.get('wallet'), dict):
             _data = list()
             balances = data.pop('B')
             for b in balances:
-                if b.get('a', '').lower() in self._subscriptions['wallet']:
+                if b.get('a', '').lower() in self._subscriptions['wallet'].keys():
                     data['B'] = [b]
                     _data.append(dump_message(data))
             return _data
@@ -196,9 +197,10 @@ class BinanceFuturesWssApi(BinanceWssApi):
                  throttle_rate: int = 30,
                  throttle_storage=None,
                  schema='futures',
-                 state_storage=None):
+                 state_storage=None,
+                 register_state=True):
         super().__init__(name, account_name, url, auth, logger, options,
-                         throttle_rate, throttle_storage, schema, state_storage)
+                         throttle_rate, throttle_storage, schema, state_storage, register_state)
         self._url = self._generate_url()
 
     def _is_test(self, url):
@@ -212,11 +214,11 @@ class BinanceFuturesWssApi(BinanceWssApi):
     def split_wallet(self, data):
         if isinstance(data, list) or (isinstance(data, dict) and data.get('e') != 'ACCOUNT_UPDATE'):
             return None
-        if self._subscriptions.get('wallet') != {True}:
+        if isinstance(self._subscriptions.get('wallet'), dict):
             _data = list()
             balances = data.get('a').pop('B')
             for b in balances:
-                if b.get('a', '').lower() in self._subscriptions['wallet']:
+                if b.get('a', '').lower() in self._subscriptions['wallet'].keys():
                     data['a']['B'] = [b]
                     _data.append(dump_message(data))
             return _data
