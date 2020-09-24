@@ -32,8 +32,6 @@ class BitmexSymbolSerializer(BitmexSerializer):
                 if state:
                     state[0]['volume24'] = item["volume24h"]
                     self._update_state(item['symbol'], state[0])
-                else:
-                    self._update_state(item['symbol'], item)
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
         if message.get('table') == 'quote':
