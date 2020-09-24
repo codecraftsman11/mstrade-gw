@@ -192,9 +192,10 @@ class StockWssApi(Connector):
                     continue
             if True in self._subscriptions[subscr]:
                 await self.subscribe(subscr, force=True)
-            for symbol in self._subscriptions[subscr]:
-                if symbol is not True:
-                    await self.subscribe(subscr, symbol, force=True)
+            else:
+                for symbol in self._subscriptions[subscr]:
+                    if symbol is not True:
+                        await self.subscribe(subscr, symbol, force=True)
 
     async def _connect(self, **kwargs):
         ws_options = kwargs.get('ws_options', dict())
