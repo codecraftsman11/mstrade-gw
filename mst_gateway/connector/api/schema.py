@@ -42,6 +42,7 @@ SYMBOL_FIELDS = {
     'expiration': str,
     'price': float,
     'price24': float,
+    'delta': float,
     'tick': float,
     'mark_price': float,
     'face_price': float,

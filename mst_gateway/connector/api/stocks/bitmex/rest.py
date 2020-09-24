@@ -374,7 +374,7 @@ class BitmexRestApi(StockRestApi):
             total_balance = {schema: {}}
             if schema == OrderSchema.margin1:
                 balances = self.get_wallet(schema=schema)['balances']
-                currencies = utils.load_currencies_as_dict(self.list_symbols(schema))
+                currencies = self.storage.get('currency', self.name, OrderSchema.margin1)
             else:
                 continue
             for asset in assets:
