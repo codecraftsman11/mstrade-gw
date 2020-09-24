@@ -251,21 +251,21 @@ class BinanceRestApi(StockRestApi):
         assets = kwargs.get('assets', ('btc', 'usd'))
         fields = ('balance',)
         data = self._binance_api(self._handler.get_account, **kwargs)
-        currencies = utils.load_currencies_as_dict(self._binance_api(self._handler.get_all_tickers))
+        currencies = self.storage.get('currency', self.name, OrderSchema.exchange)
         return utils.load_spot_wallet_data(data, currencies, assets, fields)
 
     def _margin_wallet(self, **kwargs):
         assets = kwargs.get('assets', ('btc', 'usd'))
         fields = ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed')
         data = self._binance_api(self._handler.get_margin_account, **kwargs)
-        currencies = utils.load_currencies_as_dict(self._binance_api(self._handler.get_all_tickers))
+        currencies = self.storage.get('currency', self.name, OrderSchema.margin2)
         return utils.load_margin_wallet_data(data, currencies, assets, fields)
 
     def _futures_wallet(self, **kwargs):
         assets = kwargs.get('assets', ('btc', 'usd'))
         fields = ('balance', 'unrealised_pnl', 'margin_balance')
         data = self._binance_api(self._handler.futures_account, **kwargs)
-        currencies = utils.load_currencies_as_dict(self._binance_api(self._handler.futures_symbol_ticker))
+        currencies = self.storage.get('currency', self.name, OrderSchema.futures)
         return utils.load_futures_wallet_data(data, currencies, assets, fields)
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
@@ -394,6 +394,9 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(f"Invalid schema {schema}.")
         fee_tier = utils.get_vip(self._binance_api(self._handler.futures_account_v2))
         return utils.load_commission(commissions, pair[0], fee_tier)
+
+    def get_funding_rate(self, schema: str) -> dict:
+        raise NotImplementedError
 
     def _binance_api(self, method: callable, **kwargs):
         try:

@@ -12,16 +12,26 @@ class StateStorage(BaseStorage):
             try:
                 return result[exchange.lower()][schema.lower()]
             except KeyError:
-                pass
-        elif exchange:
+                return dict()
+        elif exchange or schema:
+            _key = exchange or schema
             try:
-                return result[exchange.lower()]
+                return result[_key.lower()]
             except KeyError:
-                pass
+                return dict()
         return result
+
+    def get_pattern(self, key):
+        return self._get_pattern(self._key(key))
 
     def remove(self, key):
         try:
             self._remove(self._key(key))
+        except KeyError:
+            pass
+
+    def remove_pattern(self, key):
+        try:
+            return self._remove_pattern(self._key(key))
         except KeyError:
             pass

@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from logging import Logger
 from typing import (
     Optional,
@@ -352,7 +353,7 @@ class BitmexRestApi(StockRestApi):
             total_balance = {schema: {}}
             if schema == OrderSchema.margin1:
                 balances = self.get_wallet(schema=schema)['balances']
-                currencies = utils.load_currencies_as_dict(self.list_symbols(schema))
+                currencies = self.storage.get('currency', self.name, OrderSchema.margin1)
             else:
                 continue
             for asset in assets:
@@ -366,6 +367,16 @@ class BitmexRestApi(StockRestApi):
             commissions, _ = self._bitmex_api(self._handler.User.User_getCommission)
             return utils.load_commission(commissions, pair[0], symbol)
         raise ConnectorError(f"Invalid schema {schema}.")
+
+    def get_funding_rate(self, schema: str) -> dict:
+        funding_rates, _ = self._bitmex_api(
+            method=self._handler.Funding.Funding_get,
+            reverse=True,
+            startTime=datetime.now().replace(
+                hour=0, minute=0, second=0, microsecond=0
+            ),
+        )
+        return utils.load_funding_rates(funding_rates)
 
     def _bitmex_api(self, method: callable, **kwargs):
         headers = {}

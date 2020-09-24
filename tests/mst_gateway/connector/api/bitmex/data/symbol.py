@@ -17,11 +17,13 @@ TEST_SYMBOL_MESSAGES = [
                     "symbol": "XBTUSD",
                     "price": 9339.0,
                     "price24": 9351.0,
+                    "delta": -0.13,
                     "mark_price": 9341.21,
                     "face_price": 0.0001070525124689414,
                     "bid_price": 9339.0,
                     "ask_price": 9339.5,
                     "reversed": True,
+                    "volume24": 997235816,
                     "pair": [
                         "XBT",
                         "USD"
@@ -53,11 +55,13 @@ TEST_SYMBOL_MESSAGES = [
                     "symbol": "XBTUSD",
                     "price": 9339.0,
                     "price24": 9351.0,
+                    "delta": -0.13,
                     "mark_price": 9341.21,
                     "face_price": 0.0001070525124689414,
                     "bid_price": 9339.0,
                     "ask_price": 9339.5,
                     "reversed": True,
+                    "volume24": 997235816,
                     "pair": [
                         "XBT",
                         "USD"
@@ -85,11 +89,13 @@ RESULT_SYMBOL_STATE = {
             "symbol": "XBTUSD",
             "price": 9339.0,
             "price24": 9351.0,
+            "delta": -0.13,
             "mark_price": 9341.21,
             "face_price": 0.0001070525124689414,
             "bid_price": 9339.0,
             "ask_price": 9339.5,
             "reversed": True,
+            "volume24": 997235816,
             "pair": [
                 "XBT",
                 "USD"

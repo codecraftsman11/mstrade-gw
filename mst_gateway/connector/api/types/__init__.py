@@ -10,6 +10,7 @@ from .order import (
     ORDER_CLOSE_TYPES,
     ORDER_ALGORITHM_TYPES,
     ORDER_STANDARD_TYPES,
+    ORDER_POSITION_TYPES,
     BUY,
     SELL
 )

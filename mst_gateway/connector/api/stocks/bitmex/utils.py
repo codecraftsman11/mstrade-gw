@@ -14,17 +14,21 @@ def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
     symbol_time = to_date(raw_data.get('timestamp'))
     mark_price = to_float(raw_data.get('markPrice'))
     face_price, _reversed = BitmexFinFactory.calc_face_price(symbol, mark_price)
+    price = to_float(raw_data.get('lastPrice'))
+    price24 = to_float(raw_data.get('prevPrice24h'))
     return {
         'time': symbol_time,
         'timestamp': time2timestamp(symbol_time),
         'symbol': symbol,
-        'price': to_float(raw_data.get('lastPrice')),
-        'price24': to_float(raw_data.get('prevPrice24h')),
+        'price': price,
+        'price24': price24,
+        'delta': symbol_delta(price, price24),
         'mark_price': mark_price,
         'face_price': face_price,
         'bid_price': to_float(raw_data.get('bidPrice')),
         'ask_price': to_float(raw_data.get('askPrice')),
         'reversed': _reversed,
+        'volume24': to_float(raw_data.get('volume24h')),
         'expiration': state_data.get('expiration'),
         'pair': state_data.get('pair'),
         'tick': state_data.get('tick'),
@@ -42,18 +46,30 @@ def load_symbols_currencies(currency: list) -> dict:
     return {c.get('symbol', '').lower(): to_float(c.get('lastPrice')) for c in currency}
 
 
+def load_funding_rates(funding_rates: list) -> dict:
+    result = dict()
+    for fr in funding_rates:
+        symbol = fr.get('symbol', '').lower()
+        if symbol not in result.keys():
+            result[symbol] = {
+                'symbol': symbol, 'funding_rate': to_float(fr.get('fundingRate'))
+            }
+    return result
+
+
 def load_exchange_symbol_info(raw_data: list) -> list:
     symbol_list = []
     for d in raw_data:
         symbol = d.get('symbol')
         base_asset = d.get('rootSymbol')
+        quote_currency = d.get('quoteCurrency')
 
         if re.search(r'\d{2}$', symbol):
             symbol_schema = OrderSchema.futures
         else:
             symbol_schema = OrderSchema.margin1
 
-        quote_asset, expiration = _quote_asset(symbol, base_asset, symbol_schema)
+        quote_asset, expiration = _quote_asset(symbol, base_asset, quote_currency, symbol_schema)
         symbol_list.append(
             {
                 'symbol': symbol,
@@ -69,10 +85,10 @@ def load_exchange_symbol_info(raw_data: list) -> list:
     return symbol_list
 
 
-def _quote_asset(symbol, base_asset, symbol_schema):
+def _quote_asset(symbol, base_asset, quote_currency, symbol_schema):
     quote_asset = symbol[len(base_asset):].upper()
     if symbol_schema == OrderSchema.futures:
-        return 'USD', quote_asset
+        return quote_currency, quote_asset
     return quote_asset, None
 
 
@@ -295,6 +311,12 @@ def to_xbt(value: int):
     if isinstance(value, int):
         return round(value / 10 ** 8, 8)
     return value
+
+
+def symbol_delta(price, price24):
+    if price and price24:
+        return round((price - price24) / price24 * 100, 2)
+    return 100
 
 
 def to_date(token: Union[datetime, str]) -> Optional[datetime]:
