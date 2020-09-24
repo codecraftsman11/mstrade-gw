@@ -122,4 +122,3 @@ pipelines:
        name: Deployment master branch to Production
        deployment: Production
 
-
