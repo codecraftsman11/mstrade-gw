@@ -10,6 +10,6 @@ runCommands() {
 }
 
 getToken(){
- token=$(curl -s -X POST -u "${BB_KEY}:${BB_SECRET}" "https://bitbucket.org/site/oauth2/access_token" -d "grant_type=client_credentials" |jq -r 'to_entries[] | select( .key == ("access_token")) | ( "\(.value|tostring)")')
- [ $? -eq  0 ]  && return ${token} || return $?
+ curl -s -X POST -u "${BB_KEY}:${BB_SECRET}" "https://bitbucket.org/site/oauth2/access_token" -d "grant_type=client_credentials" |jq -r 'to_entries[] | select( .key == ("access_token")) | ( "\(.value|tostring)")'
+ [ $? -eq  0 ] || exit 1 
 }
