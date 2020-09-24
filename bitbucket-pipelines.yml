@@ -48,7 +48,7 @@ definitions:
 
         script: 
          - destfolder="$BITBUCKET_WORKSPACE/$BITBUCKET_DEPLOYMENT_ENVIRONMENT/$BITBUCKET_REPO_SLUG"
-         - if [ ${BITBUCKET_DEPLOYMENT_ENVIRONMENT} == "test" -a ${BITBUCKET_BRANCH} == "master" ]; then
+         - if [ "${BITBUCKET_DEPLOYMENT_ENVIRONMENT}" = "test" -a "${BITBUCKET_BRANCH}" = "master" ]; then
          -   echo "[[ -d $destfolder ]] || exit 0; cd $destfolder" > run.sh
          -   declare -a STAGES="('INIT' 'DROP_TEST_BRANCH' 'EXIT')"
          - else  
