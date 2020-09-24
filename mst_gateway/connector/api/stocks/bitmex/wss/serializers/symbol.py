@@ -17,14 +17,22 @@ class BitmexSymbolSerializer(BitmexSerializer):
         super().__init__(wss_api)
 
     def prefetch(self, message: dict) -> None:
-        for item in message.get('data', []):
-            if item.get('symbol') \
-                    and item.get('askPrice') is not None \
-                    and item.get('bidPrice') is not None:
-                self._quotes[item['symbol'].lower()] = {
-                    'askPrice': item['askPrice'],
-                    'bidPrice': item['bidPrice']
-                }
+        if message.get("table") == "instrument":
+            for item in message.get('data', []):
+                if item.get('symbol') and item.get('volume24h'):
+                    state = self._get_state(item['symbol'])
+                    if state:
+                        state[0]['volume24'] = item["volume24h"]
+                        self._update_state(item['symbol'], state[0])
+        if message.get("table") == "quote":
+            for item in message.get('data', []):
+                if item.get('symbol') \
+                        and item.get('askPrice') is not None \
+                        and item.get('bidPrice') is not None:
+                    self._quotes[item['symbol'].lower()] = {
+                        'askPrice': item['askPrice'],
+                        'bidPrice': item['bidPrice']
+                    }
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
         if message.get('table') == 'quote':
@@ -55,6 +63,8 @@ class BitmexSymbolSerializer(BitmexSerializer):
                 item['askPrice'] = state[0]['ask_price']
             if item.get('bidPrice') is None:
                 item['bidPrice'] = state[0]['bid_price']
+            if item.get('volume24h') is None:
+                item['volume24h'] = state[0]['volume24']
         quote = self._quotes.get(item['symbol'].lower())
         if quote:
             item.update(**quote)
