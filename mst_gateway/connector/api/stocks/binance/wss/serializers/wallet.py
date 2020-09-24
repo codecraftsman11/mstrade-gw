@@ -17,7 +17,7 @@ class BinanceWalletSerializer(BinanceSerializer):
         )
         if not state_data:
             return
-        if isinstance(self._wss_api.subscriptions.get(self.subscription), dict):
+        if self._wss_api.subscriptions.get(self.subscription) != {True}:
             return self._wallet_detail(item, state_data)
         else:
             currencies = self._wss_api.storage.get('currency', self._wss_api.name, self._wss_api.schema)
