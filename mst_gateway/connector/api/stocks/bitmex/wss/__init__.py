@@ -3,7 +3,9 @@ from websockets import client
 from . import subscribers as subscr
 from .router import BitmexWssRouter
 from .utils import is_auth_ok, make_cmd, parse_message
+from .. import var
 from ..lib import bitmex_signature
+from ...binance.wss import dump_message
 from ....wss import StockWssApi
 from ....wss.subscriber import Subscriber
 
@@ -50,3 +52,28 @@ class BitmexWssApi(StockWssApi):
         if subscr_name.lower() == "trade":
             return super()._get_subscriber("quote_bin")
         return super()._get_subscriber(subscr_name)
+
+    def _split_message(self, message):
+        data = parse_message(message)
+        for method in (
+            self.split_order,
+        ):
+            _tmp = method(data)
+            if _tmp:
+                return _tmp
+        return message
+
+    def split_order(self, data):
+        if isinstance(data, dict) and data.get('table') == 'execution':
+            _data = list()
+            for order_data in data.get('data', []):
+                action = self.define_action_by_order_status(order_data.get('ordStatus'))
+                _data.append(dump_message(dict(table='execution', action=action,  data=[order_data])))
+            return _data
+
+    def define_action_by_order_status(self, order_status: str) -> str:
+        if order_status == var.BITMEX_ORDER_STATUS_NEW:
+            return 'insert'
+        elif order_status in var.BITMEX_ORDER_DELETE_ACTION_STATUSES:
+            return 'delete'
+        return 'update'

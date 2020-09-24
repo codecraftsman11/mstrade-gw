@@ -105,26 +105,6 @@ class BinanceWssApi(StockWssApi):
             self.storage.remove(f'{subscr_name}.{self.account_name}'.lower())
         return super().register(subscr_name, symbol)
 
-    async def process_message(self, message, on_message: Optional[callable] = None):
-        messages = self._split_message(message)
-        if not isinstance(messages, list):
-            messages = [messages]
-        for message in messages:
-            try:
-                data = self.get_data(message)
-            except Exception as exc:
-                self._error = errors.ERROR_INVALID_DATA
-                self._logger.error("Error validating incoming message %s; Details: %s", message, exc)
-                continue
-            if not data:
-                continue
-            if on_message:
-                if asyncio.iscoroutinefunction(on_message):
-                    await on_message(data)
-                else:
-                    on_message(data)
-        return None
-
     def _split_message(self, message):
         data = parse_message(message)
         for method in (

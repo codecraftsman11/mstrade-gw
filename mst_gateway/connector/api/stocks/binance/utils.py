@@ -861,10 +861,10 @@ def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
         'volume': to_float(raw_data.get('q')),
         'price': to_float(raw_data.get('p')),
         'type': raw_data['x'].lower() if raw_data.get('x') else None,
-        'status': load_ws_execution_status(raw_data.get('X')),
-        'leaves_volume': calculate_ws_execution_leaves_volume(raw_data),
+        'status': load_ws_order_status(raw_data.get('X')),
+        'leaves_volume': calculate_ws_order_leaves_volume(raw_data),
         'filled_volume': to_float(raw_data.get('z')),
-        'avg_price': calculate_ws_execution_avg_price(raw_data),
+        'avg_price': calculate_ws_order_avg_price(raw_data),
         'timestamp': to_date(raw_data.get('E')),
         'symbol': raw_data.get('s'),
         'system_symbol': state_data.get('system_symbol'),
@@ -875,15 +875,15 @@ def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
     }
 
 
-def load_ws_execution_status(binance_order_status: Optional[str]) -> Optional[str]:
-    return var.BINANCE_EXECUTION_STATUS_MAP.get(binance_order_status)
+def load_ws_order_status(binance_order_status: Optional[str]) -> Optional[str]:
+    return var.BINANCE_ORDER_STATUS_MAP.get(binance_order_status)
 
 
-def calculate_ws_execution_leaves_volume(raw_data: dict) -> Optional[float]:
+def calculate_ws_order_leaves_volume(raw_data: dict) -> Optional[float]:
     return to_float(raw_data['q']) - to_float(raw_data['z']) if raw_data.get('q') and raw_data.get('z') else 0.0
 
 
-def calculate_ws_execution_avg_price(raw_data: dict) -> Optional[float]:
+def calculate_ws_order_avg_price(raw_data: dict) -> Optional[float]:
     if raw_data.get('ap'):
         return to_float(raw_data['ap'])
     elif raw_data.get('Z') and raw_data.get('z') and to_float(raw_data['z']):
