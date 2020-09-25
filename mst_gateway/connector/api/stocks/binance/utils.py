@@ -131,6 +131,12 @@ def load_order_side(order_side: bool) -> int:
     return api.SELL
 
 
+def store_order_side(side: int) -> str:
+    if side:
+        return var.BINANCE_ORDER_SIDE_SELL
+    return var.BINANCE_ORDER_SIDE_BUY
+
+
 def load_order_book_side(order_side: str) -> int:
     if order_side == 'bids':
         return api.BUY
@@ -906,6 +912,7 @@ def load_execution_ws_data(message_data: dict, raw_data: dict, state_data: dict)
         'schema': state_data.get('schema')
     }
 
+
 def map_api_parameters(params: dict) -> Optional[dict]:
     """
     Changes the name (key) of any parameters that have a different name in the Binance API.
@@ -913,7 +920,7 @@ def map_api_parameters(params: dict) -> Optional[dict]:
 
     """
     mapped_names = var.BINANCE_PARAMETER_NAMES_MAP
-    for name, binance_name  in mapped_names.items():
+    for name, binance_name in mapped_names.items():
         if name in params:
             params[binance_name] = params.pop(name)
     return params

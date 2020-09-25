@@ -18,20 +18,6 @@ from .....exceptions import ConnectorError, RecoverableError
 from .....utils import j_dumps
 
 
-def _make_create_order_args(args, options):
-    if not isinstance(options, dict):
-        return False
-    if 'display_value' in options:
-        args['displayQty'] = options['display_value']
-    if 'stop_price' in options:
-        args['stopPx'] = options['stop_price']
-    if 'ttl_type' in options:
-        args['timeInForce'] = options['ttl_type']
-    if 'comment' in options:
-        args['text'] = options['comment']
-    return True
-
-
 class BitmexFactory:
     BASE_URL = "https://www.bitmex.com/api/v1"
     TEST_URL = "https://testnet.bitmex.com/api/v1"
@@ -209,34 +195,34 @@ class BitmexRestApi(StockRestApi):
         ).get(symbol.lower(), dict())
         return utils.load_quote_data(quotes[0], state_data)
 
-    def create_order(self, symbol: str,
-                     side: int,
-                     value: float = 1,
+    def create_order(self, order_id: str, symbol: str, schema: str,
+                     side: int, volume: float,
                      order_type: str = api.OrderType.market,
-                     price: float = None,
-                     order_id: str = None,
-                     options: dict = None) -> bool:
-        args = dict(
+                     order_execution: str = api.OrderExec.market,
+                     price: float = None, options: dict = None) -> dict:
+        params = dict(
+            order_id=order_id,
             symbol=utils.symbol2stock(symbol),
             side=utils.store_order_side(side),
-            orderQty=value,
-            ordType=utils.store_order_type(order_type)
+            volume=volume,
+            order_type=utils.store_order_type(order_type, order_execution)
         )
         if price is None:
-            args['ordType'] = 'Market'
+            params['order_type'] = var.ORDER_TYPE_WRITE_MAP[api.OrderType.market]
         else:
-            args['price'] = price
-        if order_id is not None:
-            args['clOrdID'] = order_id
-        _make_create_order_args(args, options)
-        data, _ = self._bitmex_api(self._handler.Order.Order_new, **args)
-        return bool(data)
+            params['price'] = price
+        params = utils.map_api_parameters(params)
+        state_data = self.storage.get(
+            'symbol', self.name, OrderSchema.margin1
+        ).get(symbol.lower(), dict())
+        data, _ = self._bitmex_api(self._handler.Order.Order_new, **params)
+        return utils.load_order_data(data, state_data)
 
     def update_order(self, 
                      order_id: str, 
                      value: float = 1, 
                      price: float = None, 
-                     options: dict = dict()) -> bool: 
+                     options: dict = dict()) -> bool:
         """
         Amends an order in the Bitmex API. 
         Required params: order_id and (value OR price)
@@ -256,12 +242,12 @@ class BitmexRestApi(StockRestApi):
         data, _ = self._bitmex_api(self._handler.Order.Order_cancelAll)
         return bool(data)
 
-    def cancel_order(self, order_id):
+    def cancel_order(self, order_id: str, schema: str):
         data, _ = self._bitmex_api(self._handler.Order.Order_cancel,
                                    clOrdID=order_id)
         return bool(data)
 
-    def get_order(self, order_id: str) -> Optional[dict]:
+    def get_order(self, order_id: str, schema: str) -> Optional[dict]:
         data, _ = self._bitmex_api(self._handler.Order.Order_getOrders,
                                    reverse=True,
                                    filter=j_dumps({
@@ -422,13 +408,10 @@ class BitmexRestApi(StockRestApi):
 
             return resp.result, resp.metadata
         except HTTPError as exc:
-            message = ''
-            if isinstance(exc.swagger_result, dict):
+            message = exc.message
+            if not message and isinstance(exc.swagger_result, dict):
                 message = exc.swagger_result.get('error', {}).get('message')
-
-            full_message = f"Bitmex api error. Details: {exc.status_code}, {exc.message or message}"
+            full_message = f"Bitmex api error. Details: {exc.status_code}, {message}"
             if int(exc.status_code) == 429 or int(exc.status_code) >= 500:
                 raise RecoverableError(full_message)
-            else:
-                raise ConnectorError(full_message)
-
+            raise ConnectorError(full_message)

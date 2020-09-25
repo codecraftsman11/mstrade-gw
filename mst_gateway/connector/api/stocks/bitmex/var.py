@@ -1,4 +1,4 @@
-from .... import api
+from mst_gateway.connector import api
 
 
 BITMEX_MAX_QUOTE_BINS_COUNT = 750
@@ -27,16 +27,23 @@ ORDER_TYPE_AND_EXECUTION_READ_MAP = {
 }
 
 
+STORE_ORDER_TYPE_AND_EXECUTION_READ_MAP = {
+    f'{api.OrderType.market}|{api.OrderExec.market}': ORDER_TYPE_WRITE_MAP[api.OrderType.market],
+    f'{api.OrderType.limit}|{api.OrderExec.limit}': ORDER_TYPE_WRITE_MAP[api.OrderType.limit],
+}
+
+
 BITMEX_BUY = "Buy"
 BITMEX_SELL = "Sell"
 
+
 BITMEX_PARAMETER_NAMES_MAP = {
-    'order_id': 'origClOrdID',
+    'order_id': 'clOrdID',
     'stopPx': 'stop_price',
     'volume': 'orderQty',
-    'value': 'orderQty',
     'comment': 'text',
     'ttl': 'timeInForce',
     'ttl_type': 'timeInForce',
-    'display_value': 'displayQty'
+    'display_value': 'displayQty',
+    'order_type': 'ordType'
 }

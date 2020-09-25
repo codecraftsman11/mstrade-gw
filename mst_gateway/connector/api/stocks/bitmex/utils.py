@@ -92,8 +92,8 @@ def _quote_asset(symbol, base_asset, quote_currency, symbol_schema):
     return quote_asset, None
 
 
-def store_order_type(order_type: str) -> str:
-    return var.ORDER_TYPE_WRITE_MAP.get(order_type)
+def store_order_type(order_type: str, order_execution: str) -> str:
+    return var.STORE_ORDER_TYPE_AND_EXECUTION_READ_MAP.get(f'{order_type}|{order_execution}'.lower())
 
 
 def load_order_type(order_type: str) -> str:
@@ -120,6 +120,7 @@ def load_order_data(raw_data: dict, state_data: dict, skip_undef=False) -> dict:
     ) or {'type': None, 'execution': None}
     data = {
         'order_id': raw_data.get('clOrdID'),
+        'exchange_order_id': raw_data.get('orderID'),
         'symbol': raw_data.get('symbol'),
         'value': raw_data.get('orderQty'),
         'stop': raw_data.get('stopPx'),
@@ -399,6 +400,7 @@ def slice_order_book(splitted_ob: Dict[int, list], depth: int, offset: int) -> D
             api.SELL: splitted_ob[api.SELL][:-offset]
         }
     return splitted_ob
+
 
 def map_api_parameters(params: dict) -> Optional[dict]:
     """

@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from bravado.exception import HTTPError
 from binance.exceptions import BinanceAPIException, BinanceRequestException
 from mst_gateway.calculator import BinanceFinFactory
-from mst_gateway.connector.api.types import OrderSchema
+from mst_gateway.connector.api.types import OrderSchema, OrderType, OrderExec
 from .lib import Client
 from . import utils, var
 from ...rest import StockRestApi
@@ -136,20 +136,18 @@ class BinanceRestApi(StockRestApi):
             quote_bins += quotes
         return quote_bins
 
-    def create_order(self, symbol: str,
-                     schema: str,
-                     order_id: str,
-                     side: str = Client.SIDE_BUY,
-                     value: float = 1,
-                     order_type: str = Client.ORDER_TYPE_MARKET,
-                     options: dict = dict()) -> bool:
+    def create_order(self, order_id: str, symbol: str, schema: str,
+                     side: int, volume: float,
+                     order_type: str = OrderType.market,
+                     order_execution: str = OrderExec.market,
+                     price: float = None, options: dict = None) -> dict:
         params = dict(
                 newClientOrderId=order_id,
                 symbol=symbol.upper(),
-                side='SELL' if side else 'BUY',
+                side=utils.store_order_side(side),
                 type=order_type.upper(),
-                quantity=value,
-                **options
+                quantity=volume,
+                **options if options else None
         )
         params = utils.map_api_parameters(params)
         schema_handlers = {
@@ -160,7 +158,7 @@ class BinanceRestApi(StockRestApi):
         if schema not in schema_handlers:
             raise ConnectorError(f"Invalid schema parameter: {schema}")
         data = self._binance_api(schema_handlers[schema], **params)
-        return bool(data)
+        return data
 
     def update_order(self, symbol: str,
                      schema: str,
@@ -450,8 +448,7 @@ class BinanceRestApi(StockRestApi):
             full_message = f"Binance api error. Details: {exc.status_code}, {exc.message}"
             if int(exc.status_code) == 429 or int(exc.status_code) >= 500:
                 raise RecoverableError(full_message)
-            else:
-                raise ConnectorError(full_message)
+            raise ConnectorError(full_message)
         except BinanceAPIException as exc:
             raise ConnectorError(f"Binance api error. Details: {exc.code}, {exc.message}")
         except BinanceRequestException as exc:
