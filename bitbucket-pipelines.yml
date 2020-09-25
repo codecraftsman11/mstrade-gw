@@ -7,7 +7,9 @@ definitions:
          - destfolder="$BITBUCKET_WORKSPACE/$BITBUCKET_DEPLOYMENT_ENVIRONMENT/$BITBUCKET_REPO_SLUG"
          - echo "[[ -d $destfolder ]] || mkdir $destfolder; cd $destfolder" > run.sh
          - tmp_stg="STAGE_${BITBUCKET_DEPLOYMENT_ENVIRONMENT^^}_${BITBUCKET_BRANCH^^}"
-         - [[ "${!tmp_stg:-notset}" = "notset" ]] && tmp_stg="STAGE_${BITBUCKET_DEPLOYMENT_ENVIRONMENT^^}"
+         - if [ "${!tmp_stg:-notset}" = "notset" ]; then
+         -   tmp_stg="STAGE_${BITBUCKET_DEPLOYMENT_ENVIRONMENT^^}"
+         - fi
          - declare -a STAGES="('INIT' ${!tmp_stg} 'EXIT')"
          - echo "cat > local_run_$BITBUCKET_DEPLOYMENT_ENVIRONMENT.sh << 'EOF'" >> run.sh
          - ENV_INFR_INIT="^BITBUCKET_|^BB_"
