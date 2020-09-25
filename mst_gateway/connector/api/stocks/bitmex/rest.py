@@ -14,7 +14,7 @@ from mst_gateway.connector.api.types import OrderSchema
 from . import utils, var
 from ...rest import StockRestApi
 from .... import api
-from .....exceptions import ConnectorError
+from .....exceptions import ConnectorError, RecoverableError
 from .....utils import j_dumps
 
 
@@ -422,8 +422,13 @@ class BitmexRestApi(StockRestApi):
 
             return resp.result, resp.metadata
         except HTTPError as exc:
-            message = exc.swagger_result.get('error', {}).get('message') \
-                if isinstance(exc.swagger_result, dict) \
-                else ''
-            raise ConnectorError(f"Bitmex api error. Details: {exc.status_code}, {exc.message or message}")
+            message = ''
+            if isinstance(exc.swagger_result, dict):
+                message = exc.swagger_result.get('error', {}).get('message')
+
+            full_message = f"Bitmex api error. Details: {exc.status_code}, {exc.message or message}"
+            if int(exc.status_code) == 429 or int(exc.status_code) >= 500:
+                raise RecoverableError(full_message)
+            else:
+                raise ConnectorError(full_message)
 

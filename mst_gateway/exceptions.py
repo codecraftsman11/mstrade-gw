@@ -10,11 +10,16 @@ class ConfigError(GatewayError):
     pass
 
 
+class SignalInterrupt(GatewayError):
+    pass
+
+
 class ConnectorError(GatewayError):
     pass
 
 
-class SignalInterrupt(GatewayError):
+class RecoverableError(ConnectorError):
+    """ Used for 429 and 5xx status codes. """
     pass
 
 

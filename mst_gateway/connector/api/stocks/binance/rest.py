@@ -9,7 +9,7 @@ from mst_gateway.connector.api.types import OrderSchema
 from .lib import Client
 from . import utils, var
 from ...rest import StockRestApi
-from .....exceptions import ConnectorError
+from .....exceptions import ConnectorError, RecoverableError
 
 
 class BinanceRestApi(StockRestApi):
@@ -447,7 +447,11 @@ class BinanceRestApi(StockRestApi):
         try:
             resp = method(**kwargs)
         except HTTPError as exc:
-            raise ConnectorError(f"Binance api error. Details: {exc.status_code}, {exc.message}")
+            full_message = f"Binance api error. Details: {exc.status_code}, {exc.message}"
+            if int(exc.status_code) == 429 or int(exc.status_code) >= 500:
+                raise RecoverableError(full_message)
+            else:
+                raise ConnectorError(full_message)
         except BinanceAPIException as exc:
             raise ConnectorError(f"Binance api error. Details: {exc.code}, {exc.message}")
         except BinanceRequestException as exc:
