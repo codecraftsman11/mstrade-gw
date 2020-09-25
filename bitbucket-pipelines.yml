@@ -68,7 +68,7 @@ pipelines:
    master:
     - step:
        <<: *PRDeploy
-       name: Drop test branch
+       name: Drop & Recreate test branch
        deployment: Test
     - step: 
        <<: *PRDeploy
