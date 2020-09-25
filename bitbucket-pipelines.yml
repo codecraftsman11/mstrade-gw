@@ -2,18 +2,15 @@ definitions:
  steps:
    - step: &PRDeploy
         name: Pull Request Deployment 
-        deployment: Test
 
         script: 
          - destfolder="$BITBUCKET_WORKSPACE/$BITBUCKET_DEPLOYMENT_ENVIRONMENT/$BITBUCKET_REPO_SLUG"
-         - if [ "${BITBUCKET_DEPLOYMENT_ENVIRONMENT}" = "test" -a "${BITBUCKET_BRANCH}" = "master" ]; then
-         -   echo "[[ -d $destfolder ]] || exit 0; cd $destfolder" > run.sh
-         -   declare -a STAGES="('INIT' 'DROP_TEST_BRANCH' 'EXIT')"
-         - else  
-         -   echo "[[ -d $destfolder ]] || mkdir $destfolder; cd $destfolder" > run.sh
+         - echo "[[ -d $destfolder ]] || mkdir $destfolder; cd $destfolder" > run.sh
+         - tmp_stg="STAGE_${BITBUCKET_DEPLOYMENT_ENVIRONMENT^^}_${BITBUCKET_BRANCH^^}"
+         - if [ "${!tmp_stg:-notset}" = "notset" ]; then
          -   tmp_stg="STAGE_${BITBUCKET_DEPLOYMENT_ENVIRONMENT^^}"
-         -   declare -a STAGES="('INIT' ${!tmp_stg} 'EXIT')"
          - fi
+         - declare -a STAGES="('INIT' ${!tmp_stg} 'EXIT')"
          - echo "cat > local_run_$BITBUCKET_DEPLOYMENT_ENVIRONMENT.sh << 'EOF'" >> run.sh
          - ENV_INFR_INIT="^BITBUCKET_|^BB_"
 
@@ -71,7 +68,7 @@ pipelines:
    master:
     - step:
        <<: *PRDeploy
-       name: Drop test branch
+       name: Drop & Recreate test branch
        deployment: Test
     - step: 
        <<: *PRDeploy
