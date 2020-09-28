@@ -201,28 +201,31 @@ class BitmexRestApi(StockRestApi):
                      order_execution: str = api.OrderExec.market,
                      price: float = None, options: dict = None) -> dict:
         params = dict(
-            order_id=order_id,
             symbol=utils.symbol2stock(symbol),
+            order_type=utils.store_order_type(order_type, order_execution),
             side=utils.store_order_side(side),
             volume=volume,
-            order_type=utils.store_order_type(order_type, order_execution)
+            #**options if options else None
         )
         if price is None:
             params['order_type'] = var.ORDER_TYPE_WRITE_MAP[api.OrderType.market]
         else:
             params['price'] = price
         params = utils.map_api_parameters(params)
+        params['clOrdID'] = order_id
+        print("\nParams", params)
         state_data = self.storage.get(
             'symbol', self.name, OrderSchema.margin1
         ).get(symbol.lower(), dict())
+        print(state_data)
         data, _ = self._bitmex_api(self._handler.Order.Order_new, **params)
         return utils.load_order_data(data, state_data)
 
-    def update_order(self, 
-                     order_id: str, 
-                     value: float = 1, 
-                     price: float = None, 
-                     options: dict = dict()) -> bool:
+    def update_order(self, order_id: str, symbol: str, schema: str,
+                     side: int, volume: float,
+                     order_type: str = api.OrderType.market,
+                     order_execution: str = api.OrderExec.market,
+                     price: float = None, options: dict = None) -> dict:
         """
         Amends an order in the Bitmex API. 
         Required params: order_id and (value OR price)
@@ -230,11 +233,10 @@ class BitmexRestApi(StockRestApi):
         """
         params = dict(
             price = price,
-            orderQty = value,
-            origClOrdID = order_id,
-            **options
+            volume = volume,
         )
         params = utils.map_api_parameters(params)
+        params['origClOrdID'] = order_id
         data, _ = self._bitmex_api(self._handler.Order.Order_amend, **params)
         return bool(data)
 
@@ -242,17 +244,19 @@ class BitmexRestApi(StockRestApi):
         data, _ = self._bitmex_api(self._handler.Order.Order_cancelAll)
         return bool(data)
 
-    def cancel_order(self, order_id: str, schema: str):
+    def cancel_order(self, order_id: str, symbol: str, schema: str):
+        params = dict()
+        params['clOrdID'] = order_id
         data, _ = self._bitmex_api(self._handler.Order.Order_cancel,
-                                   clOrdID=order_id)
+                                   **params)
         return bool(data)
 
-    def get_order(self, order_id: str, schema: str) -> Optional[dict]:
+    def get_order(self, order_id: str, symbol: str, schema: str) -> Optional[dict]:
+        params = dict()
+        params['clOrdID'] = order_id
         data, _ = self._bitmex_api(self._handler.Order.Order_getOrders,
                                    reverse=True,
-                                   filter=j_dumps({
-                                       'clOrdID': order_id
-                                   }))
+                                   filter=j_dumps(params))
         if not data:
             return None
         state_data = self.storage.get(

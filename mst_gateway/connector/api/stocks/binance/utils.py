@@ -137,6 +137,11 @@ def store_order_side(side: int) -> str:
     return var.BINANCE_ORDER_SIDE_BUY
 
 
+def store_order_type(order_type: str, order_execution: str, schema: str) -> str:
+    schema_map = var.BINANCE_ORDER_TYPE_AND_EXECUTION_PER_SCHEMA_MAP.get(schema, dict())
+    return schema_map.get(f'{order_type}|{order_execution}'.lower())
+
+
 def load_order_book_side(order_side: str) -> int:
     if order_side == 'bids':
         return api.BUY

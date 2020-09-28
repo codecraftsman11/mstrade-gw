@@ -84,11 +84,19 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def cancel_order(self, order_id: str, schema: str) -> bool:
+    def update_order(self, order_id: str, symbol: str, schema: str,
+                     side: int, volume: float,
+                     order_type: str = OrderType.market,
+                     order_execution: str = OrderExec.market,
+                     price: float = None, options: dict = None) -> dict:
         raise NotImplementedError
 
     @abstractmethod
-    def get_order(self, order_id: str, schema: str) -> Optional[dict]:
+    def cancel_order(self, order_id: str, symbol: str, schema: str) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_order(self, order_id: str, symbol: str, schema: str) -> Optional[dict]:
         raise NotImplementedError
 
     @abstractmethod

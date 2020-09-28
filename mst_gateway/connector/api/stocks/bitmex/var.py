@@ -38,7 +38,6 @@ BITMEX_SELL = "Sell"
 
 
 BITMEX_PARAMETER_NAMES_MAP = {
-    'order_id': 'clOrdID',
     'stopPx': 'stop_price',
     'volume': 'orderQty',
     'comment': 'text',

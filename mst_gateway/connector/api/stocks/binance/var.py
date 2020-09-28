@@ -24,30 +24,30 @@ BINANCE_ORDER_TYPE_AND_EXECUTION_MAP = {
 
 BINANCE_ORDER_TYPE_AND_EXECUTION_PER_SCHEMA_MAP = {
     api.OrderSchema.margin2: {
-        'LIMIT': {'type': api.OrderType.limit, 'execution': api.OrderExec.limit},
-        'MARKET': {'type': api.OrderType.market, 'execution': api.OrderExec.market},
-        'STOP_LOSS': {'type': api.OrderType.stop_loss, 'execution': api.OrderExec.market},
-        'STOP_LOSS_LIMIT': {'type': api.OrderType.stop_loss, 'execution': api.OrderExec.limit},
-        'TAKE_PROFIT': {'type': api.OrderType.take_profit, 'execution': api.OrderExec.market},
-        'TAKE_PROFIT_LIMIT': {'type': api.OrderType.take_profit, 'execution': api.OrderExec.limit},
-        'LIMIT_MAKER': {'type': api.OrderType.limit, 'execution': api.OrderExec.limit},
+        f'{api.OrderType.limit}|{api.OrderExec.limit}': 'LIMIT',
+        f'{api.OrderType.market}|{api.OrderExec.market}': 'MARKET',
+        f'{api.OrderType.stop_loss}|{api.OrderExec.market}': 'STOP_LOSS',
+        f'{api.OrderType.stop_loss}|{api.OrderExec.limit}': 'STOP_LOSS_LIMIT',
+        f'{api.OrderType.take_profit}|{api.OrderExec.market}': 'TAKE_PROFIT',
+        f'{api.OrderType.take_profit}|{api.OrderExec.limit}': 'TAKE_PROFIT_LIMIT',
+        f'{api.OrderType.limit}|{api.OrderExec.limit}': 'LIMIT_MAKER',
     },
     api.OrderSchema.exchange: {
-        'LIMIT': {'type': api.OrderType.limit, 'execution': api.OrderExec.limit},
-        'MARKET': {'type': api.OrderType.market, 'execution': api.OrderExec.market},
-        'STOP_LOSS': {'type': api.OrderType.stop_loss, 'execution': api.OrderExec.market},
-        'STOP_LOSS_LIMIT': {'type': api.OrderType.stop_loss, 'execution': api.OrderExec.limit},
-        'TAKE_PROFIT': {'type': api.OrderType.take_profit, 'execution': api.OrderExec.market},
-        'TAKE_PROFIT_LIMIT': {'type': api.OrderType.take_profit, 'execution': api.OrderExec.limit},
-        'LIMIT_MAKER': {'type': api.OrderType.limit, 'execution': api.OrderExec.limit},
+        f'{api.OrderType.limit}|{api.OrderExec.limit}': 'LIMIT',
+        f'{api.OrderType.market}|{api.OrderExec.market}': 'MARKET',
+        f'{api.OrderType.stop_loss}|{api.OrderExec.market}': 'STOP_LOSS',
+        f'{api.OrderType.stop_loss}|{api.OrderExec.limit}': 'STOP_LOSS_LIMIT',
+        f'{api.OrderType.take_profit}|{api.OrderExec.market}': 'TAKE_PROFIT',
+        f'{api.OrderType.take_profit}|{api.OrderExec.limit}': 'TAKE_PROFIT_LIMIT',
+        f'{api.OrderType.limit}|{api.OrderExec.limit}': 'LIMIT_MAKER',
     },
     api.OrderSchema.futures: {
-        'LIMIT': {'type': api.OrderType.limit, 'execution': api.OrderExec.limit},
-        'MARKET': {'type': api.OrderType.market, 'execution': api.OrderExec.market},
-        'STOP': {'type': api.OrderType.stop_loss, 'execution': api.OrderExec.limit},
-        'STOP_MARKET': {'type': api.OrderType.stop_loss, 'execution': api.OrderExec.market},
-        'TAKE_PROFIT_MARKET': {'type': api.OrderType.take_profit, 'execution': api.OrderExec.market},
-        'TRAILING_STOP_MARKET': {'type': api.OrderType.trailing_stop, 'execution': api.OrderExec.market},
+        f'{api.OrderType.limit}|{api.OrderExec.limit}': 'LIMIT',
+        f'{api.OrderType.market}|{api.OrderExec.market}': 'MARKET',
+        f'{api.OrderType.stop_loss}|{api.OrderExec.limit}': 'STOP',
+        f'{api.OrderType.stop_loss}|{api.OrderExec.market}': 'STOP_MARKET',
+        f'{api.OrderType.take_profit}|{api.OrderExec.market}': 'TAKE_PROFIT_MARKET',
+        f'{api.OrderType.trailing_stop}|{api.OrderExec.market}': 'TRAILING_STOP_MARKET',
     }
 }
 
@@ -66,8 +66,8 @@ BINANCE_EXECUTION_STATUS_MAP = {
 }
 
 BINANCE_PARAMETER_NAMES_MAP = {
-    'order_id': 'newClientOrderId',
     'exchange_order_id': 'orderId',
+    'order_type': 'type',
     'volume': 'quantity',
     'iceberg_volume': 'icebergQty',
     'stop_price': 'stopPrice',
