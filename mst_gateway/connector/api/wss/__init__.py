@@ -127,6 +127,9 @@ class StockWssApi(Connector):
         if not symbol and subscr_name.lower() in self._subscriptions \
                 and True in self._subscriptions[subscr_name.lower()]:
             del self._subscriptions[subscr_name.lower()]
+        if not self._subscriptions:
+            self.cancel_task()
+            self.close()
 
     async def open(self, **kwargs):
         if not self.throttle.validate(
