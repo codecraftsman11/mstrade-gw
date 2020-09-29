@@ -201,23 +201,19 @@ class BitmexRestApi(StockRestApi):
                      order_execution: str = api.OrderExec.market,
                      price: float = None, options: dict = None) -> dict:
         params = dict(
+            order_id=order_id,
             symbol=utils.symbol2stock(symbol),
-            order_type=utils.store_order_type(order_type, order_execution),
+            order_type=utils.store_order_type(order_type, order_execution, price),
             side=utils.store_order_side(side),
             volume=volume,
-            #**options if options else None
+            price=price
         )
-        if price is None:
-            params['order_type'] = var.ORDER_TYPE_WRITE_MAP[api.OrderType.market]
-        else:
-            params['price'] = price
         params = utils.map_api_parameters(params)
-        params['clOrdID'] = order_id
-        print("\nParams", params)
+        options = utils.map_api_option_parameters(options)
+        params.update(options)
         state_data = self.storage.get(
             'symbol', self.name, OrderSchema.margin1
         ).get(symbol.lower(), dict())
-        print(state_data)
         data, _ = self._bitmex_api(self._handler.Order.Order_new, **params)
         return utils.load_order_data(data, state_data)
 
@@ -227,33 +223,39 @@ class BitmexRestApi(StockRestApi):
                      order_execution: str = api.OrderExec.market,
                      price: float = None, options: dict = None) -> dict:
         """
-        Amends an order in the Bitmex API. 
+        Amends an order in the Bitmex API.
         Required params: order_id and (value OR price)
-
         """
         params = dict(
-            price = price,
-            volume = volume,
+            order_id=order_id,
+            price=price,
+            volume=volume,
         )
-        params = utils.map_api_parameters(params)
-        params['origClOrdID'] = order_id
+        params = utils.map_api_parameters(params, True)
         data, _ = self._bitmex_api(self._handler.Order.Order_amend, **params)
-        return bool(data)
+        state_data = self.storage.get(
+            'symbol', self.name, OrderSchema.margin1
+        ).get(symbol.lower(), dict())
+        return utils.load_order_data(data, state_data)
 
-    def cancel_all_orders(self):
+    def cancel_all_orders(self, schema: str):
         data, _ = self._bitmex_api(self._handler.Order.Order_cancelAll)
         return bool(data)
 
-    def cancel_order(self, order_id: str, symbol: str, schema: str):
-        params = dict()
-        params['clOrdID'] = order_id
+    def cancel_order(self, order_id: str, schema: str) -> bool:
+        params = dict(order_id=order_id)
+        params = utils.map_api_parameters(params)
         data, _ = self._bitmex_api(self._handler.Order.Order_cancel,
                                    **params)
-        return bool(data)
+        if not data:
+            return True
+        if isinstance(data[0], dict) and data[0].get('error'):
+            raise ConnectorError(data[0].get('error'))
+        return True
 
-    def get_order(self, order_id: str, symbol: str, schema: str) -> Optional[dict]:
-        params = dict()
-        params['clOrdID'] = order_id
+    def get_order(self, order_id: str, schema: str) -> Optional[dict]:
+        params = dict(order_id=order_id)
+        params = utils.map_api_parameters(params)
         data, _ = self._bitmex_api(self._handler.Order.Order_getOrders,
                                    reverse=True,
                                    filter=j_dumps(params))
@@ -264,7 +266,9 @@ class BitmexRestApi(StockRestApi):
         ).get(data[0]['symbol'].lower(), dict())
         return utils.load_order_data(data[0], state_data)
 
-    def list_orders(self, symbol: str,
+    def list_orders(self,
+                    schema: str,
+                    symbol: str,
                     active_only: bool = True,
                     count: int = None,
                     offset: int = 0,
@@ -299,11 +303,11 @@ class BitmexRestApi(StockRestApi):
         ).get(symbol.lower(), dict())
         return [utils.load_trade_data(data, state_data) for data in trades]
 
-    def close_order(self, order_id) -> bool:
-        order = self.get_order(order_id)
-        return self.close_all_orders(order['symbol'])
+    def close_order(self, order_id: str, schema: str) -> bool:
+        order = self.get_order(order_id, schema)
+        return self.close_all_orders(order['symbol'], schema)
 
-    def close_all_orders(self, symbol: str) -> bool:
+    def close_all_orders(self, symbol: str, schema: str) -> bool:
         data, _ = self._bitmex_api(self._handler.Order.Order_closePosition,
                                    symbol=utils.symbol2stock(symbol))
         return bool(data)

@@ -3,9 +3,9 @@ from .... import api
 BINANCE_MAX_QUOTE_BINS_COUNT = 1000
 
 BINANCE_WALLET_TYPES = [
-    'exchange',
-    'margin2',
-    'futures'
+    api.OrderSchema.exchange,
+    api.OrderSchema.margin2,
+    api.OrderSchema.futures
 ]
 
 BINANCE_ORDER_TYPE_AND_EXECUTION_MAP = {
@@ -30,7 +30,7 @@ BINANCE_ORDER_TYPE_AND_EXECUTION_PER_SCHEMA_MAP = {
         f'{api.OrderType.stop_loss}|{api.OrderExec.limit}': 'STOP_LOSS_LIMIT',
         f'{api.OrderType.take_profit}|{api.OrderExec.market}': 'TAKE_PROFIT',
         f'{api.OrderType.take_profit}|{api.OrderExec.limit}': 'TAKE_PROFIT_LIMIT',
-        f'{api.OrderType.limit}|{api.OrderExec.limit}': 'LIMIT_MAKER',
+        f'{api.OrderType.limit}|{api.OrderExec.market}': 'LIMIT_MAKER',
     },
     api.OrderSchema.exchange: {
         f'{api.OrderType.limit}|{api.OrderExec.limit}': 'LIMIT',
@@ -39,7 +39,7 @@ BINANCE_ORDER_TYPE_AND_EXECUTION_PER_SCHEMA_MAP = {
         f'{api.OrderType.stop_loss}|{api.OrderExec.limit}': 'STOP_LOSS_LIMIT',
         f'{api.OrderType.take_profit}|{api.OrderExec.market}': 'TAKE_PROFIT',
         f'{api.OrderType.take_profit}|{api.OrderExec.limit}': 'TAKE_PROFIT_LIMIT',
-        f'{api.OrderType.limit}|{api.OrderExec.limit}': 'LIMIT_MAKER',
+        f'{api.OrderType.limit}|{api.OrderExec.market}': 'LIMIT_MAKER',
     },
     api.OrderSchema.futures: {
         f'{api.OrderType.limit}|{api.OrderExec.limit}': 'LIMIT',
