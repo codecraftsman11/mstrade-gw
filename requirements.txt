@@ -1,4 +1,3 @@
 bitmex
 websockets
 python-binance
-asgiref

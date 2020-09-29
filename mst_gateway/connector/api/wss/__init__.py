@@ -1,6 +1,5 @@
 import asyncio
 from abc import ABCMeta, abstractmethod
-from asgiref.sync import async_to_sync
 from logging import Logger
 from typing import Dict, Optional
 import websockets
@@ -130,7 +129,7 @@ class StockWssApi(Connector):
             del self._subscriptions[subscr_name.lower()]
         if not self._subscriptions:
             self.cancel_task()
-            async_to_sync(self.close)()
+            self.close()
 
     async def open(self, **kwargs):
         if not self.throttle.validate(
