@@ -9,5 +9,4 @@ declare -a cmds=()
 
 runCommands "${cmds[@]}"
 unset cmds
-
 #-----
