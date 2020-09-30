@@ -1,4 +1,5 @@
 import re
+from copy import deepcopy
 from typing import Dict, Union, Optional
 from datetime import datetime
 from mst_gateway.calculator import BitmexFinFactory
@@ -92,7 +93,9 @@ def _quote_asset(symbol, base_asset, quote_currency, symbol_schema):
     return quote_asset, None
 
 
-def store_order_type(order_type: str, order_execution: str) -> str:
+def store_order_type(order_type: str, order_execution: str, price: float = None) -> str:
+    if price is None:
+        return var.ORDER_TYPE_WRITE_MAP[api.OrderType.market]
     return var.STORE_ORDER_TYPE_AND_EXECUTION_READ_MAP.get(f'{order_type}|{order_execution}'.lower())
 
 
@@ -325,7 +328,7 @@ def to_date(token: Union[datetime, str]) -> Optional[datetime]:
         return token
     try:
         return datetime.strptime(token, api.DATETIME_FORMAT)
-    except ValueError:
+    except (ValueError, TypeError):
         return None
 
 
@@ -402,16 +405,49 @@ def slice_order_book(splitted_ob: Dict[int, list], depth: int, offset: int) -> D
     return splitted_ob
 
 
-def map_api_parameters(params: dict) -> Optional[dict]:
+def store_ttl(ttl: str) -> str:
+    # TODO: ttl mapping
+    # TODO: available bitmex params: GoodTillCancel, ImmediateOrCancel, FillOrKill
+    # if ttl == api.OrderTTL.D1:
+    #     return ''
+    # if ttl == api.OrderTTL.H1:
+    #     return ''
+    # if ttl == api.OrderTTL.H4:
+    #     return ''
+    if ttl == api.OrderTTL.GTC:
+        return 'GoodTillCancel'
+    return 'GoodTillCancel'
+
+
+def map_api_parameters(params: dict, update=False) -> Optional[dict]:
     """
     Changes the name (key) of any parameters that have a different name in the Bitmex API.
     Example: 'stopPx' becomes 'stop_price'
 
     """
-    mapped_names = var.BITMEX_PARAMETER_NAMES_MAP
-    for name, binance_name in mapped_names.items():
-        if name in params:
-            params[binance_name] = params.pop(name)
+    tmp_params = dict()
+    mapped_names = deepcopy(var.BITMEX_PARAMETER_NAMES_MAP)
+    if update:
+        mapped_names.update(var.BITMEX_UPDATE_PARAMETER_NAMES_MAP)
+    for param, value in params.items():
+        if value is None:
+            continue
+        _param = mapped_names.get(param) or param
+        tmp_params[_param] = value
+    return tmp_params
+
+
+def map_custom_parameter_values(params: Optional[dict]) -> dict:
+    if not params:
+        return dict()
+    if 'comments' in params:
+        params['text'] = params.pop('comments') or ''
+    if 'ttl' in params:
+        params['timeInForce'] = store_ttl(params.pop('ttl'))
+    if params.get('is_passive'):
+        params['execInst'] = 'ParticipateDoNotInitiate'
+    if params.get('iceberg_volume'):
+        params['displayQty'] = params.pop('iceberg_volume') or 0
     return params
 
 
@@ -449,6 +485,7 @@ def add_parameters_by_order_type(main_params: dict, options: dict) -> dict:
         main_params[param_name] = param_value
 
     return main_params
+
 
 def add_extra_order_parameters(options: dict) -> dict:
     """

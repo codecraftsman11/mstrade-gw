@@ -966,6 +966,7 @@ def add_parameters_by_order_type(main_params: dict, options: dict) -> dict:
 
     return main_params
 
+
 def add_extra_order_parameters(options: dict) -> dict:
     """
     Adds specific order parameters based on the value of certain raw parameters.
