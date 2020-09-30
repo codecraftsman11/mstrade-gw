@@ -413,3 +413,54 @@ def map_api_parameters(params: dict) -> Optional[dict]:
         if name in params:
             params[binance_name] = params.pop(name)
     return params
+
+
+def generate_order_parameters(main_params: dict, options: dict) -> dict:
+    """
+    Takes all raw parameters and returns a dictionary of selected order parameters
+    based on:
+        1) the value of order_type
+        2) the value of certain raw parameters (e.g. 'is_iceberg').
+
+    """
+    main_params = add_parameters_by_order_type(main_params, options)
+    extra_params = add_extra_order_parameters(options)
+    return {**main_params, **extra_params}
+
+
+def add_parameters_by_order_type(main_params: dict, options: dict) -> dict:
+    """
+    Fetches specific order parameters based on the order_type value and adds them
+    to the main parameters.
+
+    """
+    order_type = main_params['order_type']
+    mapping_data = var.PARAMETERS_BY_ORDER_TYPE_MAP.get(order_type)
+    if not mapping_data:
+        return main_params
+
+    all_params = {**main_params, **options}
+    for param_name, param_keys in mapping_data.items():
+        # This is how we make sure we can fetch nested values from a dictionary when needed:
+        # param_value is a dict that becomes a string in the end.
+        param_value = dict(all_params)
+        for key in param_keys:
+            param_value = param_value[key]
+        main_params[param_name] = param_value
+
+    return main_params
+
+def add_extra_order_parameters(options: dict) -> dict:
+    """
+    Adds specific order parameters based on the value of certain raw parameters.
+    Example: if 'is_iceberg' exists in options, we add the 'iceberg_volume' parameter
+    and its value to the result.
+
+    """
+    extra_params = dict()
+    for parameter, parameter_data in var.EXTRA_PARAMETERS_MAP.items():
+        if not options.get(parameter):
+            continue
+        for param_name, param_key in parameter_data.items():
+            extra_params[param_name] = options[param_key]
+    return extra_params

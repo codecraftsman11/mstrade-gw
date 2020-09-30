@@ -73,3 +73,56 @@ BINANCE_PARAMETER_NAMES_MAP = {
     'stop_price': 'stopPrice',
     'ttl': 'timeInForce',
 }
+
+PARAMETERS_BY_ORDER_TYPE_MAP = {
+
+    # GENERAL
+    'LIMIT': {
+        'price': ['price'],
+        'ttl': ['ttl']
+    },
+
+    # SPOT/MARGIN
+    'STOP_LOSS': {
+        'stop_price': ['cancel_price']
+    },
+    'TAKE_PROFIT': {
+        'stop_price': ['cancel_price']
+    },
+    'STOP_LOSS_LIMIT': {
+        'stop_price': ['cancel_price'],
+        'price': ['price'],
+        'ttl': ['ttl']
+    },
+    'TAKE_PROFIT_LIMIT': {
+        'stop_price': ['cancel_price'],
+        'price': ['price'],
+        'ttl': ['ttl']
+    },
+
+    # FUTURES
+    'LIMIT_MAKER': {
+        'price': ['price']
+    },
+    'STOP': {
+        'stop_price': ['cancel_price'],
+        'price': ['price']
+    },
+    'STOP_MARKET': {
+        'stopPx': ['cancel_price']
+    },
+    'TAKE_PROFIT_MARKET': {
+        'stop_price': ['cancel_price']
+    },
+    'TRAILING_STOP_MARKET': {
+        'callback_rate': ['compression', 'stop'],
+        'price': ['price']
+    }
+}
+
+
+EXTRA_PARAMETERS_MAP = {
+    'is_iceberg': {
+        'iceberg_volume': 'iceberg_volume'
+    }
+}

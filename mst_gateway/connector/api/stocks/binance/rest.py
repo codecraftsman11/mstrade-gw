@@ -142,22 +142,13 @@ class BinanceRestApi(StockRestApi):
                      order_execution: str = OrderExec.market,
                      price: float = None, options: dict = None) -> dict:
         params = dict(
-            symbol = utils.symbol2stock(symbol),
-            order_type = utils.store_order_type(order_type, order_execution, schema),
-            side = utils.store_order_side(side),
-            volume = volume,
-            price = price,
-            **options if options else None
+            symbol=utils.symbol2stock(symbol),
+            order_type=utils.store_order_type(order_type, order_execution, schema),
+            side=utils.store_order_side(side),
+            volume=volume,
+            price=price
         )
-
-        # Temporary (until we have functions for matching Order Types with Optional params):
-        del params['iceberg_volume']
-        del params['comments']
-        if schema != OrderSchema.futures:
-            del params['is_iceberg']
-            del params['is_passive']
-            del params['ttl']
-
+        params = utils.generate_order_parameters(params, options)
         params = utils.map_api_parameters(params)
         params['newClientOrderId'] = order_id
         schema_handlers = {

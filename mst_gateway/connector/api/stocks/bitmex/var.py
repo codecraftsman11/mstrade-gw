@@ -46,3 +46,16 @@ BITMEX_PARAMETER_NAMES_MAP = {
     'display_value': 'displayQty',
     'order_type': 'ordType'
 }
+
+PARAMETERS_BY_ORDER_TYPE_MAP = {
+    'Limit': {
+        'price': ['price'],
+        'ttl': ['ttl']
+    }
+}
+
+EXTRA_PARAMETERS_MAP = {
+    'is_iceberg': {
+        'iceberg_volume': 'iceberg_volume'
+    }
+}

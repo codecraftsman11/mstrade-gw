@@ -205,19 +205,14 @@ class BitmexRestApi(StockRestApi):
             order_type=utils.store_order_type(order_type, order_execution),
             side=utils.store_order_side(side),
             volume=volume,
-            #**options if options else None
+            price=price
         )
-        if price is None:
-            params['order_type'] = var.ORDER_TYPE_WRITE_MAP[api.OrderType.market]
-        else:
-            params['price'] = price
+        params = utils.generate_order_parameters(params, options)
         params = utils.map_api_parameters(params)
         params['clOrdID'] = order_id
-        print("\nParams", params)
         state_data = self.storage.get(
             'symbol', self.name, OrderSchema.margin1
         ).get(symbol.lower(), dict())
-        print(state_data)
         data, _ = self._bitmex_api(self._handler.Order.Order_new, **params)
         return utils.load_order_data(data, state_data)
 
@@ -232,8 +227,8 @@ class BitmexRestApi(StockRestApi):
 
         """
         params = dict(
-            price = price,
-            volume = volume,
+            volume=volume,
+            price=price
         )
         params = utils.map_api_parameters(params)
         params['origClOrdID'] = order_id
