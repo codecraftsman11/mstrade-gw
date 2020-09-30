@@ -80,6 +80,9 @@ UPDATED_PARAMETER_NAMES_MAP = {
 }
 
 PARAMETERS_BY_ORDER_TYPE_MAP = {
+    # In this dictionary, we are currently naming parameters according to their MSTRADE names.
+    # Then we map them to their exchange names (using a separate mapping function).
+    # But if we want, we can give them exchange names right away.
 
     # GENERAL
     'LIMIT': {
@@ -126,15 +129,5 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         # Where is the callback_rate stored for our trailing_stop orders?
         'callback_rate': ['compression', 'stop'],
         'price': ['price']
-    }
-}
-
-
-EXTRA_PARAMETERS_MAP = {
-    'is_iceberg': {
-        'iceberg_volume': 'iceberg_volume'
-    },
-    'is_passive': {
-        'is_passive': 'is_passive'
     }
 }

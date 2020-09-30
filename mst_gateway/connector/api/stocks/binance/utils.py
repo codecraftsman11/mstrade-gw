@@ -951,33 +951,20 @@ def map_api_parameters(params: dict, update_param_names: bool = False) -> Option
     return tmp_params
 
 
-def map_custom_parameter_values(params: Optional[dict]) -> dict:
-    if not params:
+def map_parameter_values(options: Optional[dict]) -> dict:
+    if not options:
         return dict()
-    if 'ttl' in params:
-        params['timeInForce'] = store_ttl(params.pop('ttl'))
-    if params.get('is_passive'):
-        params['timeInForce'] = 'GTX'
-        del params['is_passive']
-    if params.get('iceberg_volume'):
-        params['icebergQty'] = params.pop('iceberg_volume') or 0
-    return params
+    new_options = dict()
+    if 'ttl' in options:
+        new_options['ttl'] = store_ttl(options['ttl'])
+    if options.get('is_passive'):
+        new_options['ttl'] = 'GTX'
+    if options.get('is_iceberg'):
+        new_options['iceberg_volume'] = options['iceberg_volume'] or 0
+    return new_options
 
 
-def generate_order_parameters(main_params: dict, options: dict) -> dict:
-    """
-    Takes all raw parameters and returns a dictionary of selected order parameters
-    based on:
-        1) the value of order_type
-        2) the value of certain raw parameters (e.g. 'is_iceberg').
-
-    """
-    main_params = add_parameters_by_order_type(main_params, options)
-    extra_params = add_extra_order_parameters(options)
-    return {**main_params, **extra_params}
-
-
-def add_parameters_by_order_type(main_params: dict, options: dict) -> dict:
+def generate_parameters_by_order_type(main_params: dict, options: dict) -> dict:
     """
     Fetches specific order parameters based on the order_type value and adds them
     to the main parameters.
@@ -998,19 +985,3 @@ def add_parameters_by_order_type(main_params: dict, options: dict) -> dict:
         main_params[param_name] = param_value
 
     return main_params
-
-
-def add_extra_order_parameters(options: dict) -> dict:
-    """
-    Adds specific order parameters based on the value of certain raw parameters.
-    Example: if 'is_iceberg' exists in options, we add the 'iceberg_volume' parameter
-    and its value to the result.
-
-    """
-    extra_params = dict()
-    for parameter, parameter_data in var.EXTRA_PARAMETERS_MAP.items():
-        if not options.get(parameter):
-            continue
-        for param_name, param_key in parameter_data.items():
-            extra_params[param_name] = options[param_key]
-    return extra_params
