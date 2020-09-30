@@ -1,6 +1,6 @@
 echo "------------------------ [ Dependant ReDeploy ]" 
 redeploy_launch=${REDEPLOY_LAUNCH:-0}
-projectrepo="${BB_API}/${BITBUCKET_REPO_OWNER}/mstrade-api"
+projectrepo="${BB_API}/${BITBUCKET_REPO_OWNER}"
 
 declare -a cmds=()
 if [ $redeploy_launch -eq 1 ]; then
