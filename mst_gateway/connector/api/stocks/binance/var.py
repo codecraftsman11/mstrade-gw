@@ -84,18 +84,20 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
 
     # SPOT/MARGIN
     'STOP_LOSS': {
-        'stop_price': ['cancel_price']
+        'stop_price': ['price']
     },
     'TAKE_PROFIT': {
-        'stop_price': ['cancel_price']
+        'stop_price': ['price']
     },
     'STOP_LOSS_LIMIT': {
-        'stop_price': ['cancel_price'],
+        # Where is the stop price stored for our take_profit orders?
+        'stop_price': ['price'],
         'price': ['price'],
         'ttl': ['ttl']
     },
     'TAKE_PROFIT_LIMIT': {
-        'stop_price': ['cancel_price'],
+        # Where is the stop price stored for our take_profit orders?
+        'stop_price': ['price'],
         'price': ['price'],
         'ttl': ['ttl']
     },
@@ -105,16 +107,18 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         'price': ['price']
     },
     'STOP': {
-        'stop_price': ['cancel_price'],
+        # Where is the stop price stored for our stop_loss orders?
+        'stop_price': ['price'],
         'price': ['price']
     },
     'STOP_MARKET': {
-        'stopPx': ['cancel_price']
+        'stop_price': ['price']
     },
     'TAKE_PROFIT_MARKET': {
-        'stop_price': ['cancel_price']
+        'stop_price': ['price']
     },
     'TRAILING_STOP_MARKET': {
+        # Where is the callback_rate stored for our trailing_stop orders?
         'callback_rate': ['compression', 'stop'],
         'price': ['price']
     }
