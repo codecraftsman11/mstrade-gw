@@ -84,50 +84,53 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
     # Then we map them to their exchange names (using a separate mapping function).
     # But if we want, we can give them exchange names right away.
 
-    # GENERAL
-    'LIMIT': {
-        'price': ['price'],
-        'ttl': ['ttl']
+    api.OrderSchema.exchange: {
+        'LIMIT': {
+            'price': ['price'],
+            'ttl': ['ttl']
+        },
+        'STOP_LOSS': {
+            'stop_price': ['price']
+        },
+        'TAKE_PROFIT': {
+            'stop_price': ['price']
+        },
+        'STOP_LOSS_LIMIT': {
+            # Where is the stop price stored for our take_profit orders?
+            'stop_price': ['price'],
+            'price': ['price'],
+            'ttl': ['ttl']
+        },
+        'TAKE_PROFIT_LIMIT': {
+            # Where is the stop price stored for our take_profit orders?
+            'stop_price': ['price'],
+            'price': ['price'],
+            'ttl': ['ttl']
+        },
     },
-
-    # SPOT/MARGIN
-    'STOP_LOSS': {
-        'stop_price': ['price']
-    },
-    'TAKE_PROFIT': {
-        'stop_price': ['price']
-    },
-    'STOP_LOSS_LIMIT': {
-        # Where is the stop price stored for our take_profit orders?
-        'stop_price': ['price'],
-        'price': ['price'],
-        'ttl': ['ttl']
-    },
-    'TAKE_PROFIT_LIMIT': {
-        # Where is the stop price stored for our take_profit orders?
-        'stop_price': ['price'],
-        'price': ['price'],
-        'ttl': ['ttl']
-    },
-
-    # FUTURES
-    'LIMIT_MAKER': {
-        'price': ['price']
-    },
-    'STOP': {
-        # Where is the stop price stored for our stop_loss orders?
-        'stop_price': ['price'],
-        'price': ['price']
-    },
-    'STOP_MARKET': {
-        'stop_price': ['price']
-    },
-    'TAKE_PROFIT_MARKET': {
-        'stop_price': ['price']
-    },
-    'TRAILING_STOP_MARKET': {
-        # Where is the callback_rate stored for our trailing_stop orders?
-        'callback_rate': ['compression', 'stop'],
-        'price': ['price']
+    api.OrderSchema.futures: {
+        'LIMIT': {
+            'price': ['price'],
+            'ttl': ['ttl']
+        },
+        'LIMIT_MAKER': {
+            'price': ['price']
+        },
+        'STOP': {
+            # Where is the stop price stored for our stop_loss orders?
+            'stop_price': ['price'],
+            'price': ['price']
+        },
+        'STOP_MARKET': {
+            'stop_price': ['price']
+        },
+        'TAKE_PROFIT_MARKET': {
+            'stop_price': ['price']
+        },
+        'TRAILING_STOP_MARKET': {
+            # Where is the callback_rate stored for our trailing_stop orders?
+            'callback_rate': ['compression', 'stop'],
+            'price': ['price']
+        }
     }
 }

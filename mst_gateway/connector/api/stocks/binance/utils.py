@@ -964,14 +964,14 @@ def map_parameter_values(options: Optional[dict]) -> dict:
     return new_options
 
 
-def generate_parameters_by_order_type(main_params: dict, options: dict) -> dict:
+def generate_parameters_by_order_type(main_params: dict, options: dict, schema: str) -> dict:
     """
     Fetches specific order parameters based on the order_type value and adds them
     to the main parameters.
 
     """
     order_type = main_params['order_type']
-    mapping_data = var.PARAMETERS_BY_ORDER_TYPE_MAP.get(order_type)
+    mapping_data = get_parameter_mapping_data(schema, order_type)
     if not mapping_data:
         return main_params
 
@@ -985,3 +985,15 @@ def generate_parameters_by_order_type(main_params: dict, options: dict) -> dict:
         main_params[param_name] = param_value
 
     return main_params
+
+
+def get_parameter_mapping_data(schema: str, order_type: str) -> Optional[dict]:
+    """
+    Retrieves parameter mapping data for the 'order_type' in the specified schema.
+
+    """
+    mapping_data = var.PARAMETERS_BY_ORDER_TYPE_MAP.get(schema)
+    if not mapping_data:
+        raise ConnectorError(f"Invalid schema parameter: {schema}")
+    mapping_data = mapping_data.get(order_type)
+    return mapping_data if mapping_data else dict()

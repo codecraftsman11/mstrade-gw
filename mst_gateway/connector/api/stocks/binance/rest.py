@@ -149,7 +149,7 @@ class BinanceRestApi(StockRestApi):
             price=price
         )
         options = utils.map_parameter_values(options)
-        params = utils.generate_parameters_by_order_type(params, options)
+        params = utils.generate_parameters_by_order_type(params, options, schema)
         params = utils.map_api_parameters(params)
         schema_handlers = {
             OrderSchema.exchange: self._handler.create_order,
