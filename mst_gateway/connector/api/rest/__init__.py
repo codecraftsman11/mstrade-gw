@@ -92,11 +92,11 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def cancel_order(self, order_id: str, schema: str) -> bool:
+    def cancel_order(self, order_id: str, symbol: str, schema: str) -> bool:
         raise NotImplementedError
 
     @abstractmethod
-    def get_order(self, order_id: str, schema: str) -> Optional[dict]:
+    def get_order(self, order_id: str, symbol: str, schema: str) -> Optional[dict]:
         raise NotImplementedError
 
     @abstractmethod
