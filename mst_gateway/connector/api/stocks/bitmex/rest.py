@@ -225,6 +225,7 @@ class BitmexRestApi(StockRestApi):
         """
         Amends an order in the Bitmex API.
         Required params: order_id and (value OR price)
+
         """
         params = dict(
             order_id=order_id,

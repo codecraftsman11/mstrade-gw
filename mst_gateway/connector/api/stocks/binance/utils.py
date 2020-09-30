@@ -919,6 +919,20 @@ def load_execution_ws_data(message_data: dict, raw_data: dict, state_data: dict)
     }
 
 
+def store_ttl(ttl: str) -> str:
+    # TODO: ttl mapping
+    # TODO: available binance params: GTC, IOC, FOK (GTX for passive orders)
+    # if ttl == api.OrderTTL.D1:
+    #     return ''
+    # if ttl == api.OrderTTL.H1:
+    #     return ''
+    # if ttl == api.OrderTTL.H4:
+    #     return ''
+    if ttl == api.OrderTTL.GTC:
+        return 'GTC'
+    return 'GTC'
+
+
 def map_api_parameters(params: dict, update_param_names: bool = False) -> Optional[dict]:
     """
     Changes the name (key) of any parameters that have a different name in the Binance API.
@@ -935,6 +949,19 @@ def map_api_parameters(params: dict, update_param_names: bool = False) -> Option
         _param = mapped_names.get(param) or param
         tmp_params[_param] = value
     return tmp_params
+
+
+def map_custom_parameter_values(params: Optional[dict]) -> dict:
+    if not params:
+        return dict()
+    if 'ttl' in params:
+        params['timeInForce'] = store_ttl(params.pop('ttl'))
+    if params.get('is_passive'):
+        params['timeInForce'] = 'GTX'
+        del params['is_passive']
+    if params.get('iceberg_volume'):
+        params['icebergQty'] = params.pop('iceberg_volume') or 0
+    return params
 
 
 def generate_order_parameters(main_params: dict, options: dict) -> dict:

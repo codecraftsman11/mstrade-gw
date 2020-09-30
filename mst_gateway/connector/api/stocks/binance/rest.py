@@ -149,8 +149,8 @@ class BinanceRestApi(StockRestApi):
             price=price
         )
         params = utils.generate_order_parameters(params, options)
+        params = utils.map_custom_parameter_values(params)
         params = utils.map_api_parameters(params)
-        params['newClientOrderId'] = order_id
         schema_handlers = {
             OrderSchema.exchange: self._handler.create_order,
             OrderSchema.margin2: self._handler.create_margin_order,
