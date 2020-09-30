@@ -37,7 +37,7 @@ BITMEX_BUY = "Buy"
 BITMEX_SELL = "Sell"
 
 
-BITMEX_PARAMETER_NAMES_MAP = {
+PARAMETER_NAMES_MAP = {
     'order_id': 'clOrdID',
     'stopPx': 'stop_price',
     'volume': 'orderQty',
@@ -50,7 +50,7 @@ BITMEX_PARAMETER_NAMES_MAP = {
     'iceberg_volume': 'displayQty'
 }
 
-BITMEX_UPDATE_PARAMETER_NAMES_MAP = {
+UPDATED_PARAMETER_NAMES_MAP = {
     'order_id': 'origClOrdID'
 }
 

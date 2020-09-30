@@ -1,5 +1,6 @@
 import hashlib
 import re
+from copy import deepcopy
 from datetime import datetime
 from typing import Union, Optional
 from mst_gateway.connector import api
@@ -918,17 +919,22 @@ def load_execution_ws_data(message_data: dict, raw_data: dict, state_data: dict)
     }
 
 
-def map_api_parameters(params: dict) -> Optional[dict]:
+def map_api_parameters(params: dict, update_param_names: bool = False) -> Optional[dict]:
     """
     Changes the name (key) of any parameters that have a different name in the Binance API.
     Example: 'ttl' becomes 'timeInForce'
 
     """
-    mapped_names = var.BINANCE_PARAMETER_NAMES_MAP
-    for name, binance_name in mapped_names.items():
-        if name in params:
-            params[binance_name] = params.pop(name)
-    return params
+    tmp_params = dict()
+    mapped_names = deepcopy(var.PARAMETER_NAMES_MAP)
+    if update_param_names:
+        mapped_names.update(var.UPDATED_PARAMETER_NAMES_MAP)
+    for param, value in params.items():
+        if value is None:
+            continue
+        _param = mapped_names.get(param) or param
+        tmp_params[_param] = value
+    return tmp_params
 
 
 def generate_order_parameters(main_params: dict, options: dict) -> dict:

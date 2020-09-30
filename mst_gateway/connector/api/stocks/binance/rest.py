@@ -189,10 +189,10 @@ class BinanceRestApi(StockRestApi):
 
     def cancel_order(self, order_id: str, symbol: str, schema: str):
         params = dict(
-            symbol = utils.symbol2stock(symbol)
+            order_id=order_id,
+            symbol=utils.symbol2stock(symbol)
         )
-        params = utils.map_api_parameters(params)
-        params['origClientOrderId'] = order_id
+        params = utils.map_api_parameters(params, True)
         schema_handlers = {
             OrderSchema.exchange: self._handler.cancel_order,
             OrderSchema.margin2: self._handler.cancel_margin_order,
@@ -205,10 +205,10 @@ class BinanceRestApi(StockRestApi):
 
     def get_order(self, order_id: str, symbol: str, schema: str):
         params = dict(
-            symbol = utils.symbol2stock(symbol)
+            order_id=order_id,
+            symbol=utils.symbol2stock(symbol)
         )
-        params = utils.map_api_parameters(params)
-        params['origClientOrderId'] = order_id
+        params = utils.map_api_parameters(params, True)
 
         schema_handlers = {
             OrderSchema.exchange: self._handler.get_order,
@@ -227,7 +227,7 @@ class BinanceRestApi(StockRestApi):
         ).get(symbol.lower(), dict())
         return utils.load_order_data(data, state_data)
 
-    def list_orders(self, symbol: str,
+    def list_orders(self, schema: str, symbol: str,
                     active_only: bool = True,
                     count: int = None,
                     offset: int = 0,
@@ -256,10 +256,10 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(f"Invalid schema {schema}.")
         return [utils.load_trade_data(d, state_data) for d in data]
 
-    def close_order(self, order_id):
+    def close_order(self, order_id: str, schema: str):
         raise NotImplementedError
 
-    def close_all_orders(self, symbol: str):
+    def close_all_orders(self, symbol: str, schema: str):
         raise NotImplementedError
 
     def get_order_book(

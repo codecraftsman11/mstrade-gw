@@ -419,16 +419,16 @@ def store_ttl(ttl: str) -> str:
     return 'GoodTillCancel'
 
 
-def map_api_parameters(params: dict, update=False) -> Optional[dict]:
+def map_api_parameters(params: dict, update_param_names: bool = False) -> Optional[dict]:
     """
     Changes the name (key) of any parameters that have a different name in the Bitmex API.
     Example: 'stopPx' becomes 'stop_price'
 
     """
     tmp_params = dict()
-    mapped_names = deepcopy(var.BITMEX_PARAMETER_NAMES_MAP)
-    if update:
-        mapped_names.update(var.BITMEX_UPDATE_PARAMETER_NAMES_MAP)
+    mapped_names = deepcopy(var.PARAMETER_NAMES_MAP)
+    if update_param_names:
+        mapped_names.update(var.UPDATED_PARAMETER_NAMES_MAP)
     for param, value in params.items():
         if value is None:
             continue

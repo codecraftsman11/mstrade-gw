@@ -242,7 +242,7 @@ class BitmexRestApi(StockRestApi):
         data, _ = self._bitmex_api(self._handler.Order.Order_cancelAll)
         return bool(data)
 
-    def cancel_order(self, order_id: str, schema: str) -> bool:
+    def cancel_order(self, order_id: str, symbol: str, schema: str) -> bool:
         params = dict(order_id=order_id)
         params = utils.map_api_parameters(params)
         data, _ = self._bitmex_api(self._handler.Order.Order_cancel,
@@ -253,7 +253,7 @@ class BitmexRestApi(StockRestApi):
             raise ConnectorError(data[0].get('error'))
         return True
 
-    def get_order(self, order_id: str, schema: str) -> Optional[dict]:
+    def get_order(self, order_id: str, symbol: str, schema: str) -> Optional[dict]:
         params = dict(order_id=order_id)
         params = utils.map_api_parameters(params)
         data, _ = self._bitmex_api(self._handler.Order.Order_getOrders,
