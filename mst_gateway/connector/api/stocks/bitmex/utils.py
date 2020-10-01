@@ -154,7 +154,6 @@ def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
         'tick_price': raw_data.get('lastPx'),
         'volume': raw_data.get('orderQty'),
         'price': to_float(raw_data.get('price')),
-        'type': load_order_type(raw_data.get('ordType')),
         'status': BITMEX_ORDER_STATUS_MAP.get(raw_data.get('ordStatus')),
         'leaves_volume': raw_data.get('leavesQty'),
         'filled_volume': raw_data.get('cumQty'),

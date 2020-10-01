@@ -860,7 +860,6 @@ def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
         'tick_price': to_float(raw_data.get('L')),
         'volume': to_float(raw_data.get('q')),
         'price': to_float(raw_data.get('p')),
-        'type': raw_data['x'].lower() if raw_data.get('x') else None,
         'status': load_ws_order_status(raw_data.get('X')),
         'leaves_volume': calculate_ws_order_leaves_volume(raw_data),
         'filled_volume': to_float(raw_data.get('z')),
