@@ -961,6 +961,7 @@ def map_parameter_values(options: Optional[dict]) -> dict:
         new_options['ttl'] = 'GTX'
     if options.get('is_iceberg'):
         new_options['iceberg_volume'] = options['iceberg_volume'] or 0
+        new_options['ttl'] = 'GTC'
     return new_options
 
 
@@ -971,6 +972,9 @@ def generate_parameters_by_order_type(main_params: dict, options: dict, schema: 
 
     """
     order_type = main_params['order_type']
+    if order_type == var.ORDER_TYPE_WRITE_MAP[api.OrderType.market]:
+        del main_params['price']
+
     mapping_data = get_parameter_mapping_data(schema, order_type)
     if not mapping_data:
         return main_params
@@ -981,7 +985,8 @@ def generate_parameters_by_order_type(main_params: dict, options: dict, schema: 
         # param_value is a dict that becomes a string in the end.
         param_value = dict(all_params)
         for key in param_keys:
-            param_value = param_value[key]
+            if isinstance(param_value, dict):
+                param_value = param_value[key]
         main_params[param_name] = param_value
 
     return main_params

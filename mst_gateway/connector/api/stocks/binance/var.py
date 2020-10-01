@@ -8,6 +8,11 @@ BINANCE_WALLET_TYPES = [
     api.OrderSchema.futures
 ]
 
+ORDER_TYPE_WRITE_MAP = {
+    api.OrderType.market: 'MARKET',
+    api.OrderType.limit: 'LIMIT',
+}
+
 BINANCE_ORDER_TYPE_AND_EXECUTION_MAP = {
     'LIMIT': {'type': api.OrderType.limit, 'execution': api.OrderExec.limit},
     'MARKET': {'type': api.OrderType.market, 'execution': api.OrderExec.market},

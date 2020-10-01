@@ -459,6 +459,9 @@ def generate_parameters_by_order_type(main_params: dict, options: dict) -> dict:
 
     """
     order_type = main_params['order_type']
+    if order_type == var.ORDER_TYPE_WRITE_MAP[api.OrderType.market]:
+        del main_params['price']
+
     mapping_data = var.PARAMETERS_BY_ORDER_TYPE_MAP.get(order_type)
     if not mapping_data:
         return main_params

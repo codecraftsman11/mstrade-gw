@@ -146,7 +146,7 @@ class BinanceRestApi(StockRestApi):
             order_type=utils.store_order_type(order_type, order_execution, schema),
             side=utils.store_order_side(side),
             volume=volume,
-            price=price
+            price=str(price)
         )
         options = utils.map_parameter_values(options)
         params = utils.generate_parameters_by_order_type(params, options, schema)
@@ -181,7 +181,7 @@ class BinanceRestApi(StockRestApi):
         else:
             return False
 
-    def cancel_all_orders(self):
+    def cancel_all_orders(self, schema: str):
         open_orders = [dict(symbol=order["symbol"], orderId=order["orderId"]) for order in
                        self._binance_api(self._handler.get_open_orders)]
         data = [self._binance_api(self._handler.cancel_order, **order) for order in open_orders]
@@ -459,7 +459,7 @@ class BinanceRestApi(StockRestApi):
             resp = method(**kwargs)
         except HTTPError as exc:
             full_message = f"Binance api error. Details: {exc.status_code}, {exc.message}"
-            if int(exc.status_code) == 429 or int(exc.status_code) >= 500:
+            if int(exc.status_code) in (418, 429) or int(exc.status_code) >= 500:
                 raise RecoverableError(full_message)
             raise ConnectorError(full_message)
         except BinanceAPIException as exc:
