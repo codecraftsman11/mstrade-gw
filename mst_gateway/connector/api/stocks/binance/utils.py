@@ -855,6 +855,7 @@ def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
     ) or {'type': None, 'execution': None}
     return {
         'order_id': raw_data.get('c'),
+        'exchange_order_id': raw_data.get('i'),
         'side': load_ws_order_side(raw_data.get('S')),
         'tick_volume': to_float(raw_data.get('l')),
         'tick_price': to_float(raw_data.get('L')),
