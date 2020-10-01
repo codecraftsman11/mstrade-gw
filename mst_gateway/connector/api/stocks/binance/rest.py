@@ -396,6 +396,17 @@ class BinanceRestApi(StockRestApi):
         return utils.load_commission(commissions, pair[0], fee_tier)
 
     def get_funding_rate(self, schema: str) -> dict:
+        if schema == OrderSchema.futures:
+            funding_rates = self._binance_api(
+                self._handler.futures_funding_rate,
+                startTime=int(
+                    datetime.now().replace(
+                        hour=0, minute=0, second=0, microsecond=0
+                    ).timestamp()*1000
+                ),
+                limit=1000
+            )
+            return utils.load_funding_rates(funding_rates)
         raise NotImplementedError
 
     def _binance_api(self, method: callable, **kwargs):

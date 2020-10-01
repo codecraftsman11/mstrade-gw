@@ -905,3 +905,13 @@ def load_execution_ws_data(message_data: dict, raw_data: dict, state_data: dict)
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema')
     }
+
+
+def load_funding_rates(funding_rates: list) -> dict:
+    result = dict()
+    for fr in funding_rates:
+        symbol = fr.get('symbol', '').lower()
+        result[symbol] = {
+            'symbol': symbol, 'funding_rate': to_float(fr.get('fundingRate'))
+        }
+    return result
