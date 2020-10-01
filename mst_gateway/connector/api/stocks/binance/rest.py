@@ -259,7 +259,13 @@ class BinanceRestApi(StockRestApi):
         fields = ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed')
         data = self._binance_api(self._handler.get_margin_account, **kwargs)
         currencies = self.storage.get('currency', self.name, OrderSchema.margin2)
-        return utils.load_margin_wallet_data(data, currencies, assets, fields)
+        max_transfers = {
+            user_asset["asset"]: self._binance_api(
+                self._handler.get_max_margin_transfer, asset=user_asset["asset"]
+            ).get("amount")
+            for user_asset in data.get('userAssets')
+        }
+        return utils.load_margin_wallet_data(data, currencies, assets, fields, max_transfers)
 
     def _futures_wallet(self, **kwargs):
         assets = kwargs.get('assets', ('btc', 'usd'))

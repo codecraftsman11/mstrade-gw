@@ -292,9 +292,11 @@ def load_spot_wallet_detail_data(raw_data: dict, asset: str) -> dict:
     raise ConnectorError(f"Invalid asset {asset}.")
 
 
-def load_margin_wallet_data(raw_data: dict, currencies: dict,
-                            assets: Union[list, tuple], fields: Union[list, tuple]) -> dict:
-    balances = _margin_balance_data(raw_data.get('userAssets'))
+def load_margin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
+                            fields: Union[list, tuple], max_transfers: dict) -> dict:
+    balances = _margin_balance_data(
+        balances=raw_data.get('userAssets'), max_transfers=max_transfers
+    )
     total_balance = dict()
     for asset in assets:
         total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
@@ -501,12 +503,16 @@ def _spot_balance_data(balances: list):
     ]
 
 
-def _margin_balance_data(balances: list, max_borrow: float = None, interest_rate: float = None):
+def _margin_balance_data(
+    balances: list, max_borrow: float = None, interest_rate: float = None, max_transfers: dict = None
+):
     return [
         {
             'currency': b['asset'],
             'balance': to_float(b['netAsset']),
-            'withdraw_balance': to_float(b['netAsset']),
+            'withdraw_balance': to_float(
+                max_transfers.get(b['asset'], None) if max_transfers else None
+            ),
             'borrowed': to_float(b['borrowed']),
             'available_borrow': max_borrow,
             'interest': to_float(b['interest']),
