@@ -208,9 +208,7 @@ class BitmexRestApi(StockRestApi):
             volume=volume,
             price=price
         )
-        options = utils.map_parameter_values(options)
         params = utils.generate_parameters_by_order_type(params, options)
-        params = utils.map_api_parameters(params)
         state_data = self.storage.get(
             'symbol', self.name, OrderSchema.margin1
         ).get(symbol.lower(), dict())
@@ -223,8 +221,8 @@ class BitmexRestApi(StockRestApi):
                      order_execution: str = api.OrderExec.market,
                      price: float = None, options: dict = None) -> dict:
         """
-        Amends an order in the Bitmex API.
-        Required params: order_id and (value OR price)
+        Updates an order by 1) changing the clOrdID of the existing order,
+        2) deleting it, 3) creating a new one with the original clOrdID.
 
         """
         params = dict(
@@ -233,11 +231,15 @@ class BitmexRestApi(StockRestApi):
             volume=volume,
         )
         params = utils.map_api_parameters(params, True)
-        data, _ = self._bitmex_api(self._handler.Order.Order_amend, **params)
-        state_data = self.storage.get(
-            'symbol', self.name, OrderSchema.margin1
-        ).get(symbol.lower(), dict())
-        return utils.load_order_data(data, state_data)
+
+        tmp_order_id = "tmp_order_id"
+        params['clOrdID'] = tmp_order_id
+
+        self._bitmex_api(self._handler.Order.Order_amend, **params)
+        self.cancel_order(tmp_order_id, symbol, schema)
+        return self.create_order(order_id, symbol, schema, side,
+                                 volume, order_type, order_execution,
+                                 price, options=options)
 
     def cancel_all_orders(self, schema: str):
         data, _ = self._bitmex_api(self._handler.Order.Order_cancelAll)
