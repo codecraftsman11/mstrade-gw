@@ -103,6 +103,9 @@ class StockWssApi(Connector):
             self._logger.error("Error unsubscribing from %s in %s", subscr_name, self)
             return False
         self.unregister(subscr_name, symbol)
+        if not self._subscriptions:
+            self.cancel_task()
+            await self.close()
         return True
 
     def is_registered(self, subscr_name, symbol: str = None, check_for_unsub: bool = False) -> bool:
@@ -124,12 +127,11 @@ class StockWssApi(Connector):
     def unregister(self, subscr_name, symbol: str = None):
         if symbol and symbol.lower() in self._subscriptions.get(subscr_name.lower(), set()):
             self._subscriptions[subscr_name.lower()].remove(symbol.lower())
+            if not self._subscriptions[subscr_name.lower()]:
+                del self._subscriptions[subscr_name.lower()]
         if not symbol and subscr_name.lower() in self._subscriptions \
                 and True in self._subscriptions[subscr_name.lower()]:
             del self._subscriptions[subscr_name.lower()]
-        if not self._subscriptions:
-            self.cancel_task()
-            self.close()
 
     async def open(self, **kwargs):
         if not self.throttle.validate(
