@@ -148,9 +148,7 @@ class BinanceRestApi(StockRestApi):
             volume=volume,
             price=str(price)
         )
-        options = utils.map_parameter_values(options)
         params = utils.generate_parameters_by_order_type(params, options, schema)
-        params = utils.map_api_parameters(params)
         schema_handlers = {
             OrderSchema.exchange: self._handler.create_order,
             OrderSchema.margin2: self._handler.create_margin_order,
@@ -178,8 +176,7 @@ class BinanceRestApi(StockRestApi):
             return self.create_order(order_id, symbol, schema, side, 
                                      volume, order_type, order_execution, 
                                      price, options=options)
-        else:
-            return False
+        raise ConnectorError(f'Order {order_id} was NOT canceled by the exchange')
 
     def cancel_all_orders(self, schema: str):
         open_orders = [dict(symbol=order["symbol"], orderId=order["orderId"]) for order in
@@ -192,7 +189,7 @@ class BinanceRestApi(StockRestApi):
             order_id=order_id,
             symbol=utils.symbol2stock(symbol)
         )
-        params = utils.map_api_parameters(params, True)
+        params = utils.map_api_parameter_names(params, True)
         schema_handlers = {
             OrderSchema.exchange: self._handler.cancel_order,
             OrderSchema.margin2: self._handler.cancel_margin_order,
@@ -208,7 +205,7 @@ class BinanceRestApi(StockRestApi):
             order_id=order_id,
             symbol=utils.symbol2stock(symbol)
         )
-        params = utils.map_api_parameters(params, True)
+        params = utils.map_api_parameter_names(params, True)
 
         schema_handlers = {
             OrderSchema.exchange: self._handler.get_order,

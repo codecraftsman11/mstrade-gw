@@ -419,39 +419,6 @@ def store_ttl(ttl: str) -> str:
     return 'GoodTillCancel'
 
 
-def map_api_parameters(params: dict, update_param_names: bool = False) -> Optional[dict]:
-    """
-    Changes the name (key) of any parameters that have a different name in the Bitmex API.
-    Example: 'stopPx' becomes 'stop_price'
-
-    """
-    tmp_params = dict()
-    mapped_names = deepcopy(var.PARAMETER_NAMES_MAP)
-    if update_param_names:
-        mapped_names.update(var.UPDATED_PARAMETER_NAMES_MAP)
-    for param, value in params.items():
-        if value is None:
-            continue
-        _param = mapped_names.get(param) or param
-        tmp_params[_param] = value
-    return tmp_params
-
-
-def map_parameter_values(options: Optional[dict]) -> dict:
-    if not options:
-        return dict()
-    new_options = dict()
-    if 'comments' in options:
-        new_options['comments'] = options['comments'] or ''
-    if 'ttl' in options:
-        new_options['ttl'] = store_ttl(options['ttl'])
-    if options.get('is_passive'):
-        new_options['is_passive'] = 'ParticipateDoNotInitiate'
-    if options.get('iceberg_volume'):
-        new_options['iceberg_volume'] = options['iceberg_volume'] or 0
-    return new_options
-
-
 def generate_parameters_by_order_type(main_params: dict, options: dict) -> dict:
     """
     Fetches specific order parameters based on the order_type value and adds them
@@ -464,15 +431,55 @@ def generate_parameters_by_order_type(main_params: dict, options: dict) -> dict:
 
     mapping_data = var.PARAMETERS_BY_ORDER_TYPE_MAP.get(order_type)
     if not mapping_data:
-        return main_params
+        return map_api_parameter_names(main_params)
 
     all_params = {**main_params, **options}
     for param_name, param_keys in mapping_data.items():
-        # This is how we make sure we can fetch nested values from a dictionary when needed:
-        # param_value is a dict that becomes a string in the end.
+        # This is to fetch nested values from a dictionary. param_value is a dict that becomes a string in the end.
         param_value = dict(all_params)
         for key in param_keys:
-            param_value = param_value[key]
+            if isinstance(param_value, dict):
+                param_value = param_value[key]
         main_params[param_name] = param_value
 
-    return main_params
+    options = assign_custom_parameter_values(options)
+    main_params.update(options)
+
+    return map_api_parameter_names(main_params)
+
+
+def assign_custom_parameter_values(options: Optional[dict]) -> dict:
+    """
+    Changes the value of certain parameters according to Binance's specification.
+
+    """
+    if not options:
+        return dict()
+    new_options = dict()
+    if 'comments' in options:
+        new_options['text'] = options['comments'] or ''
+    if 'ttl' in options:
+        new_options['timeInForce'] = store_ttl(options['ttl'])
+    if options.get('is_passive'):
+        new_options['execInst'] = 'ParticipateDoNotInitiate'
+    if options.get('is_iceberg'):
+        new_options['displayQty'] = options['iceberg_volume'] or 0
+    return new_options
+
+
+def map_api_parameter_names(params: dict, update_param_names: bool = False) -> Optional[dict]:
+    """
+    Changes the name (key) of any parameters that have a different name in the Bitmex API.
+    Example: 'ttl' becomes 'timeInForce'
+
+    """
+    tmp_params = dict()
+    mapped_names = deepcopy(var.PARAMETER_NAMES_MAP)
+    if update_param_names:
+        mapped_names.update(var.UPDATED_PARAMETER_NAMES_MAP)
+    for param, value in params.items():
+        if value is None:
+            continue
+        _param = mapped_names.get(param) or param
+        tmp_params[_param] = value
+    return tmp_params

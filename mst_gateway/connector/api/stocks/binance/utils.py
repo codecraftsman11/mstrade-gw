@@ -933,7 +933,66 @@ def store_ttl(ttl: str) -> str:
     return 'GTC'
 
 
-def map_api_parameters(params: dict, update_param_names: bool = False) -> Optional[dict]:
+def generate_parameters_by_order_type(main_params: dict, options: dict, schema: str) -> dict:
+    """
+    Fetches specific order parameters based on the order_type value and adds them
+    to the main parameters.
+
+    """
+    order_type = main_params['order_type']
+    if order_type == var.ORDER_TYPE_WRITE_MAP[api.OrderType.market]:
+        del main_params['price']
+
+    mapping_data = get_parameter_mapping_data(schema, order_type)
+    if not mapping_data:
+        return map_api_parameter_names(main_params)
+
+    all_params = {**main_params, **options}
+    for param_name, param_keys in mapping_data.items():
+        # This is to fetch nested values from a dictionary. param_value is a dict that becomes a string in the end.
+        param_value = dict(all_params)
+        for key in param_keys:
+            if isinstance(param_value, dict):
+                param_value = param_value[key]
+        main_params[param_name] = param_value
+
+    options = assign_custom_parameter_values(options)
+    main_params.update(options)
+
+    return map_api_parameter_names(main_params)
+
+
+def get_parameter_mapping_data(schema: str, order_type: str) -> Optional[dict]:
+    """
+    Retrieves parameter mapping data for the order type in the specified schema.
+
+    """
+    mapping_data = var.PARAMETERS_BY_ORDER_TYPE_MAP.get(schema)
+    if not mapping_data:
+        raise ConnectorError(f"Invalid schema parameter: {schema}")
+    mapping_data = mapping_data.get(order_type)
+    return mapping_data if mapping_data else dict()
+
+
+def assign_custom_parameter_values(options: Optional[dict]) -> dict:
+    """
+    Changes the value of certain parameters according to Bitmex's specification.
+
+    """
+    if not options:
+        return dict()
+    new_options = dict()
+    if 'ttl' in options:
+        new_options['timeInForce'] = store_ttl(options['ttl'])
+    if options.get('is_passive'):
+        new_options['timeInForce'] = 'GTX'
+    if options.get('is_iceberg'):
+        new_options['icebergQty'] = options['iceberg_volume'] or 0
+        new_options['timeInForce'] = 'GTC'
+    return new_options
+
+
+def map_api_parameter_names(params: dict, update_param_names: bool = False) -> Optional[dict]:
     """
     Changes the name (key) of any parameters that have a different name in the Binance API.
     Example: 'ttl' becomes 'timeInForce'
@@ -949,56 +1008,3 @@ def map_api_parameters(params: dict, update_param_names: bool = False) -> Option
         _param = mapped_names.get(param) or param
         tmp_params[_param] = value
     return tmp_params
-
-
-def map_parameter_values(options: Optional[dict]) -> dict:
-    if not options:
-        return dict()
-    new_options = dict()
-    if 'ttl' in options:
-        new_options['ttl'] = store_ttl(options['ttl'])
-    if options.get('is_passive'):
-        new_options['ttl'] = 'GTX'
-    if options.get('is_iceberg'):
-        new_options['iceberg_volume'] = options['iceberg_volume'] or 0
-        new_options['ttl'] = 'GTC'
-    return new_options
-
-
-def generate_parameters_by_order_type(main_params: dict, options: dict, schema: str) -> dict:
-    """
-    Fetches specific order parameters based on the order_type value and adds them
-    to the main parameters.
-
-    """
-    order_type = main_params['order_type']
-    if order_type == var.ORDER_TYPE_WRITE_MAP[api.OrderType.market]:
-        del main_params['price']
-
-    mapping_data = get_parameter_mapping_data(schema, order_type)
-    if not mapping_data:
-        return main_params
-
-    all_params = {**main_params, **options}
-    for param_name, param_keys in mapping_data.items():
-        # This is how we make sure we can fetch nested values from a dictionary when needed:
-        # param_value is a dict that becomes a string in the end.
-        param_value = dict(all_params)
-        for key in param_keys:
-            if isinstance(param_value, dict):
-                param_value = param_value[key]
-        main_params[param_name] = param_value
-
-    return main_params
-
-
-def get_parameter_mapping_data(schema: str, order_type: str) -> Optional[dict]:
-    """
-    Retrieves parameter mapping data for the 'order_type' in the specified schema.
-
-    """
-    mapping_data = var.PARAMETERS_BY_ORDER_TYPE_MAP.get(schema)
-    if not mapping_data:
-        raise ConnectorError(f"Invalid schema parameter: {schema}")
-    mapping_data = mapping_data.get(order_type)
-    return mapping_data if mapping_data else dict()

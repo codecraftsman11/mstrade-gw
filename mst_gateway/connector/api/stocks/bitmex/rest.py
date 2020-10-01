@@ -230,7 +230,7 @@ class BitmexRestApi(StockRestApi):
             price=price,
             volume=volume,
         )
-        params = utils.map_api_parameters(params, True)
+        params = utils.map_api_parameter_names(params, True)
 
         tmp_order_id = "tmp_order_id"
         params['clOrdID'] = tmp_order_id
@@ -247,7 +247,7 @@ class BitmexRestApi(StockRestApi):
 
     def cancel_order(self, order_id: str, symbol: str, schema: str) -> bool:
         params = dict(order_id=order_id)
-        params = utils.map_api_parameters(params)
+        params = utils.map_api_parameter_names(params)
         data, _ = self._bitmex_api(self._handler.Order.Order_cancel,
                                    **params)
         if not data:
@@ -258,7 +258,7 @@ class BitmexRestApi(StockRestApi):
 
     def get_order(self, order_id: str, symbol: str, schema: str) -> Optional[dict]:
         params = dict(order_id=order_id)
-        params = utils.map_api_parameters(params)
+        params = utils.map_api_parameter_names(params)
         data, _ = self._bitmex_api(self._handler.Order.Order_getOrders,
                                    reverse=True,
                                    filter=j_dumps(params))

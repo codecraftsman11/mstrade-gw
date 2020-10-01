@@ -85,56 +85,52 @@ UPDATED_PARAMETER_NAMES_MAP = {
 }
 
 PARAMETERS_BY_ORDER_TYPE_MAP = {
-    # In this dictionary, we are currently naming parameters according to their MSTRADE names.
-    # Then we map them to their exchange names (using a separate mapping function).
-    # But if we want, we can give them exchange names right away.
-
     api.OrderSchema.exchange: {
         'LIMIT': {
             'price': ['price'],
-            'ttl': ['ttl']
+            'timeInForce': ['ttl']
         },
         'STOP_LOSS': {
-            'stop_price': ['price']
+            'stopPrice': ['price']
         },
         'TAKE_PROFIT': {
-            'stop_price': ['price']
+            'stopPrice': ['price']
         },
         'STOP_LOSS_LIMIT': {
             # Where is the stop price stored for our take_profit orders?
-            'stop_price': ['price'],
+            'stopPrice': ['price'],
             'price': ['price'],
-            'ttl': ['ttl']
+            'timeInForce': ['ttl']
         },
         'TAKE_PROFIT_LIMIT': {
             # Where is the stop price stored for our take_profit orders?
-            'stop_price': ['price'],
+            'stopPrice': ['price'],
             'price': ['price'],
-            'ttl': ['ttl']
+            'timeInForce': ['ttl']
         },
     },
     api.OrderSchema.futures: {
         'LIMIT': {
             'price': ['price'],
-            'ttl': ['ttl']
+            'timeInForce': ['ttl']
         },
         'LIMIT_MAKER': {
             'price': ['price']
         },
         'STOP': {
             # Where is the stop price stored for our stop_loss orders?
-            'stop_price': ['price'],
+            'stopPrice': ['price'],
             'price': ['price']
         },
         'STOP_MARKET': {
-            'stop_price': ['price']
+            'stopPrice': ['price']
         },
         'TAKE_PROFIT_MARKET': {
-            'stop_price': ['price']
+            'stopPrice': ['price']
         },
         'TRAILING_STOP_MARKET': {
             # Where is the callback_rate stored for our trailing_stop orders?
-            'callback_rate': ['compression', 'stop'],
+            'callbackRate': ['compression', 'stop'],
             'price': ['price']
         }
     }
