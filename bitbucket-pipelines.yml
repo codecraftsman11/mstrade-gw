@@ -1,15 +1,16 @@
 definitions:
  steps:
    - step: &PRDeploy
-        name: Pull Request Deployment 
+        name: Pull Request Deployment
 
-        script: 
+        script:
          - destfolder="$BITBUCKET_WORKSPACE/$BITBUCKET_DEPLOYMENT_ENVIRONMENT/$BITBUCKET_REPO_SLUG"
          - echo "[[ -d $destfolder ]] || mkdir $destfolder; cd $destfolder" > run.sh
          - tmp_stg="STAGE_${BITBUCKET_DEPLOYMENT_ENVIRONMENT^^}_${BITBUCKET_BRANCH^^}"
          - if [ "${!tmp_stg:-notset}" = "notset" ]; then
          -   tmp_stg="STAGE_${BITBUCKET_DEPLOYMENT_ENVIRONMENT^^}"
          - fi
+         - echo "${tmp_stg}"
          - declare -a STAGES="('INIT' ${!tmp_stg} 'EXIT')"
          - echo "cat > local_run_$BITBUCKET_DEPLOYMENT_ENVIRONMENT.sh << 'EOF'" >> run.sh
          - ENV_INFR_INIT="^BITBUCKET_|^BB_"
@@ -34,7 +35,7 @@ definitions:
          - done
 
          - echo "EOF" >> run.sh
-         
+
          - if [ ! -z $PR_NOT_LAUNCH -a $BITBUCKET_BRANCH != $PR_NOT_LAUNCH ]; then
          -  echo ". ./local_run_$BITBUCKET_DEPLOYMENT_ENVIRONMENT.sh" >> run.sh
          - fi
@@ -47,11 +48,11 @@ definitions:
             SERVER: $DEV_HOST
             PORT: $DEV_HOST_SSH_PORT
             MODE: 'script'
-            COMMAND: "run.sh" 
+            COMMAND: "run.sh"
 
 
 pipelines:
-# default: 
+# default:
 #  - step:
 #     script:
 #       - echo "run default, to do some work of CI"
@@ -59,18 +60,18 @@ pipelines:
 
  pull-requests:
    '**':
-    - step: 
+    - step:
        <<: *PRDeploy
-       name: Merge PR & Build 
+       name: Merge PR & Build
        deployment: Test
 
- branches: 
+ branches:
    master:
     - step:
        <<: *PRDeploy
        name: Drop & Recreate test branch
        deployment: Test
-    - step: 
+    - step:
        <<: *PRDeploy
        name: Deployment master branch to Production
        deployment: Production
