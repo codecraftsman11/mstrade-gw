@@ -208,11 +208,12 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
             'params': [
                 *DEFAULT_PARAMETERS,
                 'icebergQty',
-                'timeInForce',
                 'price',
                 'stopPrice'
             ],
-            'additional_params': {}
+            'additional_params': {
+                'timeInForce': 'GTC'
+            }
         },
         # TAKE_PROFIT
         f'{api.OrderType.take_profit}|{api.OrderExec.market}': {
@@ -227,11 +228,12 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
             'params': [
                 *DEFAULT_PARAMETERS,
                 'icebergQty',
-                'timeInForce',
                 'price',
                 'stopPrice'
             ],
-            'additional_params': {}
+            'additional_params': {
+                'timeInForce': 'GTC'
+            }
         },
         # LIMIT_MAKER
         f'{api.OrderType.limit}|{api.OrderExec.market}': {
@@ -282,11 +284,12 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
                 'isIsolated',
                 'sideEffectType'
                 'icebergQty',
-                'timeInForce',
                 'price',
                 'stopPrice'
             ],
-            'additional_params': {}
+            'additional_params': {
+                'timeInForce': 'GTC'
+            }
         },
         # TAKE_PROFIT
         f'{api.OrderType.take_profit}|{api.OrderExec.market}': {
@@ -305,11 +308,12 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
                 'isIsolated',
                 'sideEffectType'
                 'icebergQty',
-                'timeInForce',
                 'price',
                 'stopPrice'
             ],
-            'additional_params': {}
+            'additional_params': {
+                'timeInForce': 'GTC'
+            }
         },
         # LIMIT_MAKER
         f'{api.OrderType.limit}|{api.OrderExec.market}': {
