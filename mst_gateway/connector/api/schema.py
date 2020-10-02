@@ -52,7 +52,8 @@ SYMBOL_FIELDS = {
     'volume24': float,
     'schema': schema_valid,
     'system_symbol': str,
-    'symbol_schema': schema_valid
+    'symbol_schema': schema_valid,
+    'created': datetime_valid
 }
 
 ORDER_FIELDS = {
