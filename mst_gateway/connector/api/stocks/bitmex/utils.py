@@ -444,7 +444,7 @@ def generate_parameters_by_order_type(main_params: dict, options: dict) -> dict:
     order_execution = main_params.pop('order_execution', None)
     new_params = dict()
     mapping_parameters = store_order_mapping_parameters(order_type, order_execution)
-    options = assign_custom_parameter_values(options)
+    options = assign_custom_parameter_values(options, main_params, order_type)
     all_params = map_api_parameter_names(
         {'order_type': store_order_type(order_type, order_execution), **main_params, **options}
     )
@@ -459,13 +459,11 @@ def generate_parameters_by_order_type(main_params: dict, options: dict) -> dict:
     return new_params
 
 
-def assign_custom_parameter_values(options: Optional[dict]) -> dict:
+def assign_custom_parameter_values(options: Optional[dict], main_params: Optional[dict], order_type: str) -> dict:
     """
     Changes the value of certain parameters according to Binance's specification.
 
     """
-    if not options:
-        return dict()
     new_options = dict()
     if options.get('comments'):
         new_options['text'] = options['comments']
@@ -475,6 +473,14 @@ def assign_custom_parameter_values(options: Optional[dict]) -> dict:
         new_options['execInst'] = 'ParticipateDoNotInitiate'
     if options.get('is_iceberg'):
         new_options['displayQty'] = options['iceberg_volume'] or 0
+
+    # The parameters below must be changed to their actual MSTRADE equivalents
+    if order_type in (api.OrderType.stop_loss, api.OrderType.take_profit):
+        new_options['stopPx'] = main_params['price']
+    elif order_type == api.OrderType.trailing_stop:
+        new_options['stopPx'] = main_params['price']
+        new_options['pegOffsetValue'] = 1
+
     return new_options
 
 

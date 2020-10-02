@@ -24,12 +24,25 @@ ORDER_TYPE_READ_MAP = {
 ORDER_TYPE_AND_EXECUTION_READ_MAP = {
     'Market': {'type': api.OrderType.market, 'execution': api.OrderExec.market},
     'Limit': {'type': api.OrderType.limit, 'execution': api.OrderExec.limit},
+    'Stop': {'type': api.OrderType.stop_loss, 'execution': api.OrderExec.market},
+    'StopLimit': {'type': api.OrderType.stop_loss, 'execution': api.OrderExec.limit},
+    'MarketIfTouched': {'type': api.OrderType.take_profit, 'execution': api.OrderExec.market},
+    'LimitIfTouched': {'type': api.OrderType.take_profit, 'execution': api.OrderExec.limit},
 }
 
 
 STORE_ORDER_TYPE_AND_EXECUTION_READ_MAP = {
-    f'{api.OrderType.market}|{api.OrderExec.market}': ORDER_TYPE_WRITE_MAP[api.OrderType.market],
-    f'{api.OrderType.limit}|{api.OrderExec.limit}': ORDER_TYPE_WRITE_MAP[api.OrderType.limit],
+    f'{api.OrderType.market}|{api.OrderExec.market}': 'Market',
+    f'{api.OrderType.limit}|{api.OrderExec.limit}': 'Limit',
+    f'{api.OrderType.stop_loss}|{api.OrderExec.market}': 'Stop',
+    f'{api.OrderType.stop_loss}|{api.OrderExec.limit}': 'StopLimit',
+    f'{api.OrderType.take_profit}|{api.OrderExec.market}': 'MarketIfTouched',
+    f'{api.OrderType.take_profit}|{api.OrderExec.limit}': 'LimitIfTouched',
+    # We currently map TS-MARKET to 'Stop', but it can also work with 'MarketIfTouched'
+    f'{api.OrderType.trailing_stop}|{api.OrderExec.market}': 'Stop',
+    # We currently map TS-LIMIT to 'StopLimit', but it can also work with 'LimitIfTouched':
+    f'{api.OrderType.trailing_stop}|{api.OrderExec.limit}': 'StopLimit'
+
 }
 
 
@@ -82,5 +95,104 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
             'price',
         ],
         'additional_params': {}
+    },
+    f'{api.OrderType.stop_loss}|{api.OrderExec.limit}': {
+        'params': [
+            'clOrdID',
+            'symbol',
+            'ordType',
+            'side',
+            'orderQty',
+            'text',
+            'timeInForce',
+            'execInst',
+            'displayQty',
+            'price',
+            'stopPx'
+        ],
+        'additional_params': {}
+    },
+    f'{api.OrderType.stop_loss}|{api.OrderExec.market}': {
+        'params': [
+            'clOrdID',
+            'symbol',
+            'ordType',
+            'side',
+            'orderQty',
+            'text',
+            'timeInForce',
+            'execInst',
+            'displayQty',
+            'stopPx'
+        ],
+        'additional_params': {}
+    },
+    f'{api.OrderType.take_profit}|{api.OrderExec.limit}': {
+        'params': [
+            'clOrdID',
+            'symbol',
+            'ordType',
+            'side',
+            'orderQty',
+            'text',
+            'timeInForce',
+            'execInst',
+            'displayQty',
+            'price',
+            'stopPx',
+        ],
+        'additional_params': {}
+    },
+    f'{api.OrderType.take_profit}|{api.OrderExec.market}': {
+        'params': [
+            'clOrdID',
+            'symbol',
+            'ordType',
+            'side',
+            'orderQty',
+            'text',
+            'timeInForce',
+            'execInst',
+            'displayQty',
+            'stopPx'
+        ],
+        'additional_params': {}
+    },
+    f'{api.OrderType.trailing_stop}|{api.OrderExec.limit}': {
+        'params': [
+            'clOrdID',
+            'symbol',
+            'ordType',
+            'side',
+            'orderQty',
+            'text',
+            'timeInForce',
+            'execInst',
+            'displayQty',
+            'price',
+            'stopPx',
+            'pegOffsetValue'
+        ],
+        'additional_params': {
+            'pegPriceType': 'TrailingStopPeg'
+        }
+    },
+    f'{api.OrderType.trailing_stop}|{api.OrderExec.market}': {
+        'params': [
+            'clOrdID',
+            'symbol',
+            'ordType',
+            'side',
+            'orderQty',
+            'text',
+            'timeInForce',
+            'execInst',
+            'displayQty',
+            'stopPx',
+            'pegOffsetValue'
+        ],
+        'additional_params': {
+            'pegPriceType': 'TrailingStopPeg'
+        }
     }
 }
