@@ -90,7 +90,6 @@ DEFAULT_PARAMETERS = [
     'symbol',
     'type',
     'side',
-    'timestamp',
     'quantity',
     'quoteOrderQty'
 ]
