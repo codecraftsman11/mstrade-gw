@@ -93,10 +93,11 @@ def _quote_asset(symbol, base_asset, quote_currency, symbol_schema):
     return quote_asset, None
 
 
-def store_order_type(order_type: str, order_execution: str, price: float = None) -> str:
-    if price is None:
-        return var.ORDER_TYPE_WRITE_MAP[api.OrderType.market]
-    return var.STORE_ORDER_TYPE_AND_EXECUTION_READ_MAP.get(f'{order_type}|{order_execution}'.lower())
+def store_order_type(order_type: str, order_execution: str) -> str:
+    order_type = var.STORE_ORDER_TYPE_AND_EXECUTION_READ_MAP.get(f'{order_type}|{order_execution}'.lower())
+    if order_type:
+        return order_type
+    return var.STORE_ORDER_TYPE_AND_EXECUTION_READ_MAP[f'{api.OrderType.limit}|{api.OrderExec.limit}']
 
 
 def load_order_type(order_type: str) -> str:
@@ -419,33 +420,43 @@ def store_ttl(ttl: str) -> str:
     return 'GoodTillCancel'
 
 
+def store_order_mapping_parameters(order_type: str, order_execution: str) -> list:
+    data = var.PARAMETERS_BY_ORDER_TYPE_MAP.get(f'{order_type}|{order_execution}'.lower())
+    if data:
+        return data['params']
+    return var.PARAMETERS_BY_ORDER_TYPE_MAP[f'{api.OrderType.limit}|{api.OrderExec.limit}']['params']
+
+
+def store_order_additional_parameters(order_type: str, order_execution: str) -> dict:
+    data = var.PARAMETERS_BY_ORDER_TYPE_MAP.get(f'{order_type}|{order_execution}'.lower())
+    if data:
+        return data['additional_params']
+    return var.PARAMETERS_BY_ORDER_TYPE_MAP[f'{api.OrderType.limit}|{api.OrderExec.limit}']['additional_params']
+
+
 def generate_parameters_by_order_type(main_params: dict, options: dict) -> dict:
     """
     Fetches specific order parameters based on the order_type value and adds them
     to the main parameters.
 
     """
-    order_type = main_params['order_type']
-    if order_type == var.ORDER_TYPE_WRITE_MAP[api.OrderType.market]:
-        del main_params['price']
-
-    mapping_data = var.PARAMETERS_BY_ORDER_TYPE_MAP.get(order_type)
-    if not mapping_data:
-        return map_api_parameter_names(main_params)
-
-    all_params = {**main_params, **options}
-    for param_name, param_keys in mapping_data.items():
-        # This is to fetch nested values from a dictionary. param_value is a dict that becomes a string in the end.
-        param_value = dict(all_params)
-        for key in param_keys:
-            if isinstance(param_value, dict):
-                param_value = param_value[key]
-        main_params[param_name] = param_value
-
+    order_type = main_params.pop('order_type', None)
+    order_execution = main_params.pop('order_execution', None)
+    new_params = dict()
+    mapping_parameters = store_order_mapping_parameters(order_type, order_execution)
     options = assign_custom_parameter_values(options)
-    main_params.update(options)
+    all_params = map_api_parameter_names(
+        {'order_type': store_order_type(order_type, order_execution), **main_params, **options}
+    )
 
-    return map_api_parameter_names(main_params)
+    for param_name in mapping_parameters:
+        value = all_params.get(param_name)
+        if value:
+            new_params[param_name] = value
+    new_params.update(
+        store_order_additional_parameters(order_type, order_execution)
+    )
+    return new_params
 
 
 def assign_custom_parameter_values(options: Optional[dict]) -> dict:
@@ -456,9 +467,9 @@ def assign_custom_parameter_values(options: Optional[dict]) -> dict:
     if not options:
         return dict()
     new_options = dict()
-    if 'comments' in options:
-        new_options['text'] = options['comments'] or ''
-    if 'ttl' in options:
+    if options.get('comments'):
+        new_options['text'] = options['comments']
+    if options.get('ttl'):
         new_options['timeInForce'] = store_ttl(options['ttl'])
     if options.get('is_passive'):
         new_options['execInst'] = 'ParticipateDoNotInitiate'

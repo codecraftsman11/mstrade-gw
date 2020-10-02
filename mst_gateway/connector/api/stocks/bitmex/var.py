@@ -39,7 +39,7 @@ BITMEX_SELL = "Sell"
 
 PARAMETER_NAMES_MAP = {
     'order_id': 'clOrdID',
-    'stopPx': 'stop_price',
+    'stop_price': 'stopPx',
     'volume': 'orderQty',
     'comments': 'text',
     'ttl': 'timeInForce',
@@ -50,13 +50,37 @@ PARAMETER_NAMES_MAP = {
     'iceberg_volume': 'displayQty'
 }
 
+
 UPDATED_PARAMETER_NAMES_MAP = {
     'order_id': 'origClOrdID'
 }
 
+
 PARAMETERS_BY_ORDER_TYPE_MAP = {
-    'Limit': {
-        'price': ['price'],
-        'timeInForce': ['ttl']
+    f'{api.OrderType.market}|{api.OrderExec.market}': {
+        'params': [
+            'clOrdID',
+            'symbol',
+            'ordType',
+            'side',
+            'orderQty',
+            'text'
+        ],
+        'additional_params': {}
+    },
+    f'{api.OrderType.limit}|{api.OrderExec.limit}': {
+        'params': [
+            'clOrdID',
+            'symbol',
+            'ordType',
+            'side',
+            'orderQty',
+            'text',
+            'timeInForce',
+            'execInst',
+            'displayQty',
+            'price',
+        ],
+        'additional_params': {}
     }
 }
