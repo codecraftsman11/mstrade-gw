@@ -51,6 +51,7 @@ BINANCE_ORDER_TYPE_AND_EXECUTION_PER_SCHEMA_MAP = {
         f'{api.OrderType.market}|{api.OrderExec.market}': 'MARKET',
         f'{api.OrderType.stop_loss}|{api.OrderExec.limit}': 'STOP',
         f'{api.OrderType.stop_loss}|{api.OrderExec.market}': 'STOP_MARKET',
+        f'{api.OrderType.take_profit}|{api.OrderExec.limit}': 'TAKE_PROFIT',
         f'{api.OrderType.take_profit}|{api.OrderExec.market}': 'TAKE_PROFIT_MARKET',
         f'{api.OrderType.trailing_stop}|{api.OrderExec.market}': 'TRAILING_STOP_MARKET',
     }
@@ -84,54 +85,242 @@ UPDATED_PARAMETER_NAMES_MAP = {
     'order_id': 'origClientOrderId',
 }
 
+DEFAULT_PARAMETERS = [
+    'newClientOrderId',
+    'symbol',
+    'type',
+    'side',
+    'timestamp',
+    'quantity',
+    'quoteOrderQty'
+]
+
 PARAMETERS_BY_ORDER_TYPE_MAP = {
-    api.OrderSchema.exchange: {
-        'LIMIT': {
-            'price': ['price'],
-            'timeInForce': ['ttl']
+
+    api.OrderSchema.futures: {
+        # MARKET
+        f'{api.OrderType.market}|{api.OrderExec.market}': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'positionSide',
+                'reduceOnly'
+            ],
+            'additional_params': {}
         },
-        'STOP_LOSS': {
-            'stopPrice': ['price']
+        # LIMIT
+        f'{api.OrderType.limit}|{api.OrderExec.limit}': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'positionSide',
+                'reduceOnly',
+                'timeInForce',
+                'price'
+            ],
+            'additional_params': {}
         },
-        'TAKE_PROFIT': {
-            'stopPrice': ['price']
+        # STOP
+        f'{api.OrderType.stop_loss}|{api.OrderExec.limit}': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'positionSide',
+                'reduceOnly',
+                'timeInForce',
+                'price',
+                'stopPrice'
+            ],
+            'additional_params': {}
         },
-        'STOP_LOSS_LIMIT': {
-            # Where is the stop price stored for our take_profit orders?
-            'stopPrice': ['price'],
-            'price': ['price'],
-            'timeInForce': ['ttl']
+        # STOP_MARKET
+        f'{api.OrderType.stop_loss}|{api.OrderExec.market}': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'positionSide',
+                'reduceOnly',
+                'closePosition',
+                'stopPrice'
+            ],
+            'additional_params': {}
         },
-        'TAKE_PROFIT_LIMIT': {
-            # Where is the stop price stored for our take_profit orders?
-            'stopPrice': ['price'],
-            'price': ['price'],
-            'timeInForce': ['ttl']
+        # TAKE_PROFIT
+        f'{api.OrderType.take_profit}|{api.OrderExec.limit}': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'positionSide',
+                'reduceOnly',
+                'timeInForce',
+                'price',
+                'stopPrice'
+            ],
+            'additional_params': {}
+        },
+        # TAKE_PROFIT_MARKET
+        f'{api.OrderType.take_profit}|{api.OrderExec.market}': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'positionSide',
+                'reduceOnly',
+                'closePosition',
+                'stopPrice'
+            ],
+            'additional_params': {}
+        },
+        # TRAILING_STOP_MARKET
+        f'{api.OrderType.trailing_stop}|{api.OrderExec.market}': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'positionSide',
+                'reduceOnly',
+                'callbackRate',
+                'activationPrice',
+                'workingType',
+            ],
+            'additional_params': {}
         },
     },
-    api.OrderSchema.futures: {
-        'LIMIT': {
-            'price': ['price'],
-            'timeInForce': ['ttl']
+
+    api.OrderSchema.exchange: {
+        # MARKET
+        f'{api.OrderType.market}|{api.OrderExec.market}': {
+            'params': [
+                *DEFAULT_PARAMETERS
+            ],
+            'additional_params': {}
         },
-        'LIMIT_MAKER': {
-            'price': ['price']
+        # LIMIT
+        f'{api.OrderType.limit}|{api.OrderExec.limit}': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'icebergQty',
+                'timeInForce',
+                'price'
+            ],
+            'additional_params': {}
         },
-        'STOP': {
-            # Where is the stop price stored for our stop_loss orders?
-            'stopPrice': ['price'],
-            'price': ['price']
+        # STOP_LOSS
+        f'{api.OrderType.stop_loss}|{api.OrderExec.market}': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'stopPrice'
+            ],
+            'additional_params': {}
         },
-        'STOP_MARKET': {
-            'stopPrice': ['price']
+        # STOP_LOSS_LIMIT
+        f'{api.OrderType.stop_loss}|{api.OrderExec.limit}': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'icebergQty',
+                'timeInForce',
+                'price',
+                'stopPrice'
+            ],
+            'additional_params': {}
         },
-        'TAKE_PROFIT_MARKET': {
-            'stopPrice': ['price']
+        # TAKE_PROFIT
+        f'{api.OrderType.take_profit}|{api.OrderExec.market}': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'stopPrice'
+            ],
+            'additional_params': {}
         },
-        'TRAILING_STOP_MARKET': {
-            # Where is the callback_rate stored for our trailing_stop orders?
-            'callbackRate': ['compression', 'stop'],
-            'price': ['price']
-        }
-    }
+        # TAKE_PROFIT_LIMIT
+        f'{api.OrderType.take_profit}|{api.OrderExec.limit}': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'icebergQty',
+                'timeInForce',
+                'price',
+                'stopPrice'
+            ],
+            'additional_params': {}
+        },
+        # LIMIT_MAKER
+        f'{api.OrderType.limit}|{api.OrderExec.market}': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'price'
+            ],
+            'additional_params': {}
+        },
+    },
+
+    api.OrderSchema.margin2: {
+        # MARKET
+        f'{api.OrderType.market}|{api.OrderExec.market}': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'isIsolated',
+                'sideEffectType'
+            ],
+            'additional_params': {}
+        },
+        # LIMIT
+        f'{api.OrderType.limit}|{api.OrderExec.limit}': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'isIsolated',
+                'sideEffectType'
+                'icebergQty',
+                'timeInForce',
+                'price'
+            ],
+            'additional_params': {}
+        },
+        # STOP_LOSS
+        f'{api.OrderType.stop_loss}|{api.OrderExec.market}': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'isIsolated',
+                'sideEffectType'
+                'stopPrice'
+            ],
+            'additional_params': {}
+        },
+        # STOP_LOSS_LIMIT
+        f'{api.OrderType.stop_loss}|{api.OrderExec.limit}': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'isIsolated',
+                'sideEffectType'
+                'icebergQty',
+                'timeInForce',
+                'price',
+                'stopPrice'
+            ],
+            'additional_params': {}
+        },
+        # TAKE_PROFIT
+        f'{api.OrderType.take_profit}|{api.OrderExec.market}': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'isIsolated',
+                'sideEffectType'
+                'stopPrice'
+            ],
+            'additional_params': {}
+        },
+        # TAKE_PROFIT_LIMIT
+        f'{api.OrderType.take_profit}|{api.OrderExec.limit}': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'isIsolated',
+                'sideEffectType'
+                'icebergQty',
+                'timeInForce',
+                'price',
+                'stopPrice'
+            ],
+            'additional_params': {}
+        },
+        # LIMIT_MAKER
+        f'{api.OrderType.limit}|{api.OrderExec.market}': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'isIsolated',
+                'sideEffectType'
+                'price'
+            ],
+            'additional_params': {}
+        },
+    },
 }

@@ -144,7 +144,8 @@ class BinanceRestApi(StockRestApi):
         params = dict(
             order_id=order_id,
             symbol=utils.symbol2stock(symbol),
-            order_type=utils.store_order_type(order_type, order_execution, schema),
+            order_type=order_type,
+            order_execution=order_execution,
             side=utils.store_order_side(side),
             volume=volume,
             price=str(price)

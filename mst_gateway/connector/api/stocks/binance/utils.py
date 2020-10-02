@@ -933,54 +933,63 @@ def store_ttl(ttl: str) -> str:
     return 'GTC'
 
 
+def get_mapping_for_schema(schema: str) -> Optional[dict]:
+    """
+    Retrieves order type parameter mapping data for the specified schema.
+
+    """
+    mapping_data = var.PARAMETERS_BY_ORDER_TYPE_MAP.get(schema)
+    if not mapping_data:
+        raise ConnectorError(f"Invalid schema parameter: {schema}")
+    return mapping_data
+
+
+def store_order_mapping_parameters(order_type: str, order_execution: str, schema: str) -> list:
+    data_for_schema = get_mapping_for_schema(schema)
+    data = data_for_schema.get(f'{order_type}|{order_execution}'.lower())
+    if data:
+        return data['params']
+    return data_for_schema[f'{api.OrderType.limit}|{api.OrderExec.limit}']['params']
+
+
+def store_order_additional_parameters(order_type: str, order_execution: str, schema: str) -> dict:
+    data_for_schema = get_mapping_for_schema(schema)
+    data = data_for_schema.get(f'{order_type}|{order_execution}'.lower())
+    if data:
+        return data['additional_params']
+    return data_for_schema[f'{api.OrderType.limit}|{api.OrderExec.limit}']['additional_params']
+
+
 def generate_parameters_by_order_type(main_params: dict, options: dict, schema: str) -> dict:
     """
     Fetches specific order parameters based on the order_type value and adds them
     to the main parameters.
 
     """
-    order_type = main_params['order_type']
-    if order_type == var.ORDER_TYPE_WRITE_MAP[api.OrderType.market]:
-        del main_params['price']
+    order_type = main_params.pop('order_type', None)
+    order_execution = main_params.pop('order_execution', None)
+    new_params = dict()
+    mapping_parameters = store_order_mapping_parameters(order_type, order_execution, schema)
+    options = assign_custom_parameter_values(options, main_params, order_type)
+    all_params = map_api_parameter_names(
+        {'order_type': store_order_type(order_type, order_execution, schema), **main_params, **options}
+    )
 
-    mapping_data = get_parameter_mapping_data(schema, order_type)
-    if not mapping_data:
-        return map_api_parameter_names(main_params)
-
-    all_params = {**main_params, **options}
-    for param_name, param_keys in mapping_data.items():
-        # This is to fetch nested values from a dictionary. param_value is a dict that becomes a string in the end.
-        param_value = dict(all_params)
-        for key in param_keys:
-            if isinstance(param_value, dict):
-                param_value = param_value[key]
-        main_params[param_name] = param_value
-
-    options = assign_custom_parameter_values(options)
-    main_params.update(options)
-
-    return map_api_parameter_names(main_params)
+    for param_name in mapping_parameters:
+        value = all_params.get(param_name)
+        if value:
+            new_params[param_name] = value
+    new_params.update(
+        store_order_additional_parameters(order_type, order_execution, schema)
+    )
+    return new_params
 
 
-def get_parameter_mapping_data(schema: str, order_type: str) -> Optional[dict]:
+def assign_custom_parameter_values(options: Optional[dict], main_params: Optional[dict], order_type: str) -> dict:
     """
-    Retrieves parameter mapping data for the order type in the specified schema.
+    Changes the value of certain parameters according to Binance's specification.
 
     """
-    mapping_data = var.PARAMETERS_BY_ORDER_TYPE_MAP.get(schema)
-    if not mapping_data:
-        raise ConnectorError(f"Invalid schema parameter: {schema}")
-    mapping_data = mapping_data.get(order_type)
-    return mapping_data if mapping_data else dict()
-
-
-def assign_custom_parameter_values(options: Optional[dict]) -> dict:
-    """
-    Changes the value of certain parameters according to Bitmex's specification.
-
-    """
-    if not options:
-        return dict()
     new_options = dict()
     if 'ttl' in options:
         new_options['timeInForce'] = store_ttl(options['ttl'])
@@ -989,6 +998,14 @@ def assign_custom_parameter_values(options: Optional[dict]) -> dict:
     if options.get('is_iceberg'):
         new_options['icebergQty'] = options['iceberg_volume'] or 0
         new_options['timeInForce'] = 'GTC'
+
+    # The parameters below must be changed to their actual MSTRADE equivalents
+    if order_type in (api.OrderType.stop_loss, api.OrderType.take_profit):
+        new_options['stopPrice'] = main_params['price']
+    elif order_type == api.OrderType.trailing_stop:
+        new_options['activationPrice'] = main_params['price']
+        new_options['callbackRate'] = 1
+
     return new_options
 
 
