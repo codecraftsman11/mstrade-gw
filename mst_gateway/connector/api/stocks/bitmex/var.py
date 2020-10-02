@@ -68,27 +68,27 @@ UPDATED_PARAMETER_NAMES_MAP = {
     'order_id': 'origClOrdID'
 }
 
+DEFAULT_PARAMETERS = [
+    'clOrdID',
+    'symbol',
+    'ordType',
+    'side',
+    'orderQty',
+    'text'
+]
 
 PARAMETERS_BY_ORDER_TYPE_MAP = {
+    # Market
     f'{api.OrderType.market}|{api.OrderExec.market}': {
         'params': [
-            'clOrdID',
-            'symbol',
-            'ordType',
-            'side',
-            'orderQty',
-            'text'
+            *DEFAULT_PARAMETERS
         ],
         'additional_params': {}
     },
+    # Limit
     f'{api.OrderType.limit}|{api.OrderExec.limit}': {
         'params': [
-            'clOrdID',
-            'symbol',
-            'ordType',
-            'side',
-            'orderQty',
-            'text',
+            *DEFAULT_PARAMETERS,
             'timeInForce',
             'execInst',
             'displayQty',
@@ -96,14 +96,10 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         ],
         'additional_params': {}
     },
+    # StopLimit
     f'{api.OrderType.stop_loss}|{api.OrderExec.limit}': {
         'params': [
-            'clOrdID',
-            'symbol',
-            'ordType',
-            'side',
-            'orderQty',
-            'text',
+            *DEFAULT_PARAMETERS,
             'timeInForce',
             'execInst',
             'displayQty',
@@ -112,14 +108,10 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         ],
         'additional_params': {}
     },
+    # Stop
     f'{api.OrderType.stop_loss}|{api.OrderExec.market}': {
         'params': [
-            'clOrdID',
-            'symbol',
-            'ordType',
-            'side',
-            'orderQty',
-            'text',
+            *DEFAULT_PARAMETERS,
             'timeInForce',
             'execInst',
             'displayQty',
@@ -127,14 +119,10 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         ],
         'additional_params': {}
     },
+    # LimitIfTouched
     f'{api.OrderType.take_profit}|{api.OrderExec.limit}': {
         'params': [
-            'clOrdID',
-            'symbol',
-            'ordType',
-            'side',
-            'orderQty',
-            'text',
+            *DEFAULT_PARAMETERS,
             'timeInForce',
             'execInst',
             'displayQty',
@@ -143,14 +131,10 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         ],
         'additional_params': {}
     },
+    # MarketIfTouched
     f'{api.OrderType.take_profit}|{api.OrderExec.market}': {
         'params': [
-            'clOrdID',
-            'symbol',
-            'ordType',
-            'side',
-            'orderQty',
-            'text',
+            *DEFAULT_PARAMETERS,
             'timeInForce',
             'execInst',
             'displayQty',
@@ -158,14 +142,10 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         ],
         'additional_params': {}
     },
+    # StopLimit and LimitIfTouched
     f'{api.OrderType.trailing_stop}|{api.OrderExec.limit}': {
         'params': [
-            'clOrdID',
-            'symbol',
-            'ordType',
-            'side',
-            'orderQty',
-            'text',
+            *DEFAULT_PARAMETERS,
             'timeInForce',
             'execInst',
             'displayQty',
@@ -177,14 +157,10 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
             'pegPriceType': 'TrailingStopPeg'
         }
     },
+    # Stop and MarketIfTouched
     f'{api.OrderType.trailing_stop}|{api.OrderExec.market}': {
         'params': [
-            'clOrdID',
-            'symbol',
-            'ordType',
-            'side',
-            'orderQty',
-            'text',
+            *DEFAULT_PARAMETERS,
             'timeInForce',
             'execInst',
             'displayQty',
