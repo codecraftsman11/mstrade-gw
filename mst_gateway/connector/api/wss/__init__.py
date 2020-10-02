@@ -77,60 +77,88 @@ class StockWssApi(Connector):
     def get_state(self, subscr_name: str, symbol: str = None) -> dict:
         return self.router.get_state(subscr_name, symbol)
 
-    async def subscribe(self, subscr_name: str, symbol: str = None,
-                        force: bool = False) -> bool:
-        if not force and self.is_registered(subscr_name, symbol):
+    async def subscribe(
+        self, subscr_name: str, channel: str = None, symbol: str = None, force: bool = False
+    ) -> bool:
+        if not force and channel and self.is_channel_registered(subscr_name, channel, symbol):
             return True
-        _subscriber = self._get_subscriber(subscr_name)
-        if not _subscriber:
-            self._logger.error("There is no subscriber in %s for %s", self, subscr_name)
-            return False
-        if not await _subscriber.subscribe(self, symbol):
-            self._logger.error("Error subscribing %s to %s", self, subscr_name)
-            return False
-        self.register(subscr_name, symbol)
+        if force or self.is_subscribe_required(subscr_name, symbol):
+            _subscriber = self._get_subscriber(subscr_name)
+            if not _subscriber:
+                self._logger.error("There is no subscriber in %s for %s", self, subscr_name)
+                return False
+            if not await _subscriber.subscribe(self, symbol):
+                self._logger.error("Error subscribing %s to %s", self, subscr_name)
+                return False
+        if channel and not self.is_channel_registered(subscr_name, channel, symbol):
+            self.register(subscr_name, channel, symbol)
         return True
 
-    async def unsubscribe(self, subscr_name: str, symbol: str = None) -> bool:
-        if not self.is_registered(subscr_name, symbol, check_for_unsub=True):
+    def is_subscribe_required(self, subscr_name: str, symbol: str = None) -> bool:
+        subscr_symbol = symbol.lower() if symbol else "*"
+        return subscr_symbol not in self._subscriptions.get(subscr_name.lower(), dict())
+
+    async def unsubscribe(self, subscr_name: str, symbol: str = None, channel: str = None) -> bool:
+        if not self.is_channel_registered(subscr_name, channel, symbol):
             return True
-        _subscriber = self._get_subscriber(subscr_name)
-        if not _subscriber:
-            self._logger.error("There is no subscriber in %s to unsubscribe"
-                               " from %s", self, subscr_name)
-            return False
-        if not await _subscriber.unsubscribe(self, symbol):
-            self._logger.error("Error unsubscribing from %s in %s", subscr_name, self)
-            return False
-        self.unregister(subscr_name, symbol)
+        if self.is_unsubscribe_required(subscr_name, symbol):
+            _subscriber = self._get_subscriber(subscr_name)
+            if not _subscriber:
+                self._logger.error(
+                    "There is no subscriber in %s to unsubscribe from %s", self, subscr_name
+                )
+                return False
+            if not await _subscriber.unsubscribe(self, symbol):
+                self._logger.error("Error unsubscribing from %s in %s", subscr_name, self)
+                return False
+        if self.is_channel_registered(subscr_name, channel, symbol):
+            self.unregister(subscr_name, channel, symbol)
+            if not self._subscriptions.get(subscr_name.lower()):
+                _subscriber = self._get_subscriber(subscr_name)
+                if not _subscriber:
+                    self._logger.error(
+                        "There is no subscriber in %s to unsubscribe from %s", self, subscr_name
+                    )
+                    return False
+                if not await _subscriber.unsubscribe(self):
+                    self._logger.error("Error unsubscribing from %s in %s", subscr_name, self)
+                    return False
         if not self._subscriptions:
             self.cancel_task()
             await self.close()
         return True
 
-    def is_registered(self, subscr_name, symbol: str = None, check_for_unsub: bool = False) -> bool:
-        if not check_for_unsub:
-            return (symbol and symbol.lower() in self._subscriptions.get(subscr_name.lower(), set())) \
-                   or True in self._subscriptions.get(subscr_name.lower(), set())
+    def is_unsubscribe_required(self, subscr_name: str, symbol: str = None) -> bool:
         if symbol:
-            return symbol.lower() in self._subscriptions.get(subscr_name.lower(), set())
-        return True in self._subscriptions.get(subscr_name.lower(), set())
+            return symbol.lower() in self._subscriptions.get(subscr_name.lower(), dict()) \
+                   and len(self._subscriptions[subscr_name.lower()][symbol.lower()]) == 1
+        return self._subscriptions.get(subscr_name.lower(), dict()).keys() == ["*"]
 
-    def register(self, subscr_name, symbol: str = None):
+    def is_channel_registered(self, subscr_name: str, channel: str, symbol: str = None) -> bool:
+        return channel in self._subscriptions.get(subscr_name.lower(), dict()).get(
+            symbol.lower() if symbol else "*", dict()
+        )
+
+    def is_registered(self, subscr_name: str, symbol: str = None) -> bool:
+        return (
+            symbol and symbol.lower() in self._subscriptions.get(subscr_name.lower(), dict())
+        ) or "*" in self._subscriptions.get(subscr_name.lower(), dict())
+
+    def register(self, subscr_name: str, channel: str, symbol: str = None) -> None:
         if not self._subscriptions.get(subscr_name.lower()):
-            self._subscriptions[subscr_name.lower()] = set()
-        if symbol:
-            self._subscriptions[subscr_name.lower()].add(symbol.lower())
-        else:
-            self._subscriptions[subscr_name.lower()].add(True)
+            self._subscriptions[subscr_name.lower()] = dict()
+        symbol_key = symbol.lower() if symbol else "*"
+        if not self._subscriptions[subscr_name.lower()].get(symbol_key):
+            self._subscriptions[subscr_name.lower()][symbol_key] = set()
+        self._subscriptions[subscr_name.lower()][symbol_key].add(channel)
 
-    def unregister(self, subscr_name, symbol: str = None):
-        if symbol and symbol.lower() in self._subscriptions.get(subscr_name.lower(), set()):
-            self._subscriptions[subscr_name.lower()].remove(symbol.lower())
-            if not self._subscriptions[subscr_name.lower()]:
-                del self._subscriptions[subscr_name.lower()]
-        if not symbol and subscr_name.lower() in self._subscriptions \
-                and True in self._subscriptions[subscr_name.lower()]:
+    def unregister(self, subscr_name: str, channel: str, symbol: str = None) -> None:
+        symbol_key = symbol.lower() if symbol else "*"
+        if channel in self._subscriptions.get(subscr_name.lower(), dict()).get(symbol_key, dict()):
+            self._subscriptions[subscr_name.lower()][symbol_key].remove(channel)
+        if not self._subscriptions[subscr_name.lower()][symbol_key]:
+            del self._subscriptions[subscr_name.lower()][symbol_key]
+        if not self._subscriptions[subscr_name.lower()]:
             del self._subscriptions[subscr_name.lower()]
 
     async def open(self, **kwargs):
@@ -195,12 +223,9 @@ class StockWssApi(Connector):
             if subscr in self.auth_subscribers:
                 if not await self.authenticate():
                     continue
-            if True in self._subscriptions[subscr]:
-                await self.subscribe(subscr, force=True)
-            else:
-                for symbol in self._subscriptions[subscr]:
-                    if symbol is not True:
-                        await self.subscribe(subscr, symbol, force=True)
+            for subscr_symbol in self._subscriptions[subscr]:
+                symbol = subscr_symbol if subscr_symbol != "*" else None
+                await self.subscribe(subscr_name=subscr, symbol=symbol, force=True)
 
     async def _connect(self, **kwargs):
         ws_options = kwargs.get('ws_options', dict())

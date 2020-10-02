@@ -96,15 +96,15 @@ class BinanceWssApi(StockWssApi):
     def get_state(self, subscr_name: str, symbol: str = None) -> Optional[dict]:
         return None
 
-    def register(self, subscr_name, symbol: str = None):
+    def register(self, subscr_name: str, channel: str, symbol: str = None) -> None:
         if self.register_state and subscr_name in self.register_state_groups:
             self.storage.set(f'{subscr_name}.{self.account_name}'.lower(), {'*': '*'})
-        return super().register(subscr_name, symbol)
+        super().register(subscr_name, channel, symbol)
 
-    def unregister(self, subscr_name, symbol: str = None):
+    def unregister(self, subscr_name: str, channel: str, symbol: str = None) -> None:
         if self.register_state and subscr_name in self.register_state_groups:
             self.storage.remove(f'{subscr_name}.{self.account_name}'.lower())
-        return super().unregister(subscr_name, symbol)
+        super().unregister(subscr_name, channel, symbol)
 
     async def process_message(self, message, on_message: Optional[callable] = None):
         messages = self._split_message(message)
@@ -158,11 +158,11 @@ class BinanceWssApi(StockWssApi):
     def split_wallet(self, data):
         if isinstance(data, list) or (isinstance(data, dict) and data.get('e') != 'outboundAccountPosition'):
             return None
-        if self._subscriptions.get('wallet') != {True}:
+        if self._subscriptions.get('wallet', dict()).keys() != ["*"]:
             _data = list()
             balances = data.pop('B')
             for b in balances:
-                if b.get('a', '').lower() in self._subscriptions['wallet']:
+                if b.get('a', '').lower() in self._subscriptions['wallet'].keys():
                     data['B'] = [b]
                     _data.append(dump_message(data))
             return _data
@@ -214,11 +214,11 @@ class BinanceFuturesWssApi(BinanceWssApi):
     def split_wallet(self, data):
         if isinstance(data, list) or (isinstance(data, dict) and data.get('e') != 'ACCOUNT_UPDATE'):
             return None
-        if self._subscriptions.get('wallet') != {True}:
+        if self._subscriptions.get('wallet', dict()).keys() != ["*"]:
             _data = list()
             balances = data.get('a').pop('B')
             for b in balances:
-                if b.get('a', '').lower() in self._subscriptions['wallet']:
+                if b.get('a', '').lower() in self._subscriptions['wallet'].keys():
                     data['a']['B'] = [b]
                     _data.append(dump_message(data))
             return _data

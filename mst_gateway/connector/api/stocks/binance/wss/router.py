@@ -83,8 +83,7 @@ class BinanceWssRouter(Router):
         }
         serializer = self._subscr_serializer(subscr_name)
         route_key = self._get_route_key(data, subscr_name)
-        if self._wss_api.is_registered(subscr_name, route_key) \
-           and serializer.is_item_valid(data, {}):
+        if self._wss_api.is_registered(subscr_name, route_key) and serializer.is_item_valid(data, {}):
             self._routed_data[subscr_name]['data'].append(data)
         if self._routed_data[subscr_name]['data']:
             return serializer
@@ -94,15 +93,14 @@ class BinanceWssRouter(Router):
         if not isinstance(data, dict):
             return None
         if data.get('e') in ('outboundAccountPosition',):
-            if self.table_route_map.get(data['e']) != {True}:
+            if self._wss_api.subscriptions.get(self.table_route_map.get(data['e']), dict()).keys() != ["*"]:
                 try:
                     return data['B'][0]['a']
                 except (KeyError, IndexError):
                     return None
             return None
         if data.get('e') in ('executionReport',):
-            table_routes = self.table_route_map.get(data['e'])
-            if self._wss_api.subscriptions.get(table_routes[table_routes.index(subscr_name)]) == {True}:
+            if self._wss_api.subscriptions.get(self.table_route_map.get(data['e']), dict()).keys() == ["*"]:
                 return None
         return data.get('s')
 
@@ -132,15 +130,14 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
         if not isinstance(data, dict):
             return None
         if data.get('e') in ('ACCOUNT_UPDATE',):
-            if self.table_route_map.get(data['e']) != {True}:
+            if self._wss_api.subscriptions.get(self.table_route_map.get(data['e']), dict()).keys() != ["*"]:
                 try:
                     return data['a']['B'][0]['a']
                 except (KeyError, IndexError):
                     return None
             return None
         if data.get('e') in ('ORDER_TRADE_UPDATE',):
-            table_routes = self.table_route_map.get(data['e'])
-            if self._wss_api.subscriptions.get(table_routes[table_routes.index(subscr_name)]) != {True}:
+            if self._wss_api.subscriptions.get(self.table_route_map.get(data['e']), dict()).keys() != ["*"]:
                 try:
                     return data['o']['s']
                 except KeyError:
