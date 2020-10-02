@@ -233,11 +233,11 @@ class BitmexRestApi(StockRestApi):
         )
         params = utils.map_api_parameter_names(params, True)
 
-        tmp_order_id = "tmp_order_id"
-        params['clOrdID'] = tmp_order_id
+        temp_order_id = str(datetime.now())
+        params['clOrdID'] = temp_order_id
 
         self._bitmex_api(self._handler.Order.Order_amend, **params)
-        self.cancel_order(tmp_order_id, symbol, schema)
+        self.cancel_order(temp_order_id, symbol, schema)
         return self.create_order(order_id, symbol, schema, side,
                                  volume, order_type, order_execution,
                                  price, options=options)
