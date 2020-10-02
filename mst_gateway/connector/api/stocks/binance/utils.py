@@ -39,6 +39,7 @@ def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema'),
         'symbol_schema': state_data.get('symbol_schema'),
+        'created': state_data.get('created'),
     }
 
 
@@ -801,12 +802,14 @@ def load_symbol_ws_data(raw_data: dict, state_data: dict) -> dict:
         'bid_price': to_float(raw_data.get('b') or mark_price),
         'ask_price': to_float(raw_data.get('a') or mark_price),
         'reversed': _reversed,
+        'volume24': to_float(raw_data.get('v')),
         'expiration': state_data.get('expiration'),
         'pair': state_data.get('pair'),
         'tick': state_data.get('tick'),
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema'),
         'symbol_schema': state_data.get('symbol_schema'),
+        'created': state_data.get('created'),
     }
 
 

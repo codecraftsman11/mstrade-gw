@@ -36,6 +36,7 @@ def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema'),
         'symbol_schema': state_data.get('symbol_schema'),
+        'created': state_data.get('created'),
     }
 
 
