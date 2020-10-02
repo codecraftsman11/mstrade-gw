@@ -253,9 +253,7 @@ def load_quote_bin_data(raw_data: list, state_data: dict) -> dict:
 
 
 def load_order_data(raw_data: dict, state_data: dict) -> dict:
-    order_type_and_exec = var.BINANCE_ORDER_TYPE_AND_EXECUTION_MAP.get(
-        raw_data.get('type', '').upper()
-    ) or {'type': None, 'execution': None}
+    order_type_and_exec = load_order_type_and_exec(state_data.get('schema'), raw_data.get('type').upper())
     data = {
         'order_id': raw_data.get('clientOrderId'),
         'symbol': raw_data.get('symbol'),
@@ -862,9 +860,7 @@ def load_ws_order_side(order_side: Optional[str]) -> Optional[int]:
 
 
 def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
-    order_type_and_exec = var.BINANCE_ORDER_TYPE_AND_EXECUTION_MAP.get(
-        raw_data.get('o', '').upper()
-    ) or {'type': None, 'execution': None}
+    order_type_and_exec = load_order_type_and_exec(state_data.get('schema'), raw_data.get('o').upper())
     data = {
         'order_id': raw_data.get('c'),
         'symbol': raw_data.get('s'),
@@ -917,6 +913,13 @@ def load_execution_ws_data(message_data: dict, raw_data: dict, state_data: dict)
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema')
     }
+
+
+def load_order_type_and_exec(schema: str, order_type: str) -> dict:
+    result = var.BINANCE_ORDER_TYPE_AND_EXECUTION_MAP.get(schema, dict()).get(order_type)
+    if result:
+        return result
+    return {'type': None, 'execution': None}
 
 
 def store_ttl(ttl: str) -> str:

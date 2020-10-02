@@ -11,9 +11,10 @@ class BinanceOrderSerializer(BinanceSerializer):
 
     def is_item_valid(self, message: dict, item) -> bool:
         raw_data = message.get('o') if self._wss_api.schema == api.OrderSchema.futures else message
+        order_types = var.BINANCE_ORDER_TYPE_AND_EXECUTION_MAP.get(self._wss_api.schema, dict()).keys()
         return message.get('e') in (
             'executionReport', 'ORDER_TRADE_UPDATE'
-        ) and raw_data.get('o') in var.BINANCE_ORDER_TYPE_AND_EXECUTION_MAP.keys()
+        ) and raw_data.get('o') in order_types
 
     def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         raw_data = item.get('o') if self._wss_api.schema == api.OrderSchema.futures else item
