@@ -34,15 +34,11 @@ class BitmexQuoteBinSubscriber(BitmexSubscriber):
 
 
 class BitmexOrderSubscriber(BitmexSubscriber):
-    subscriptions = ("order",)
+    subscriptions = ("execution",)
 
 
 class BitmexPositionSubscriber(BitmexSubscriber):
     subscriptions = ("position",)
-
-
-class BitmexExecutionSubscriber(BitmexSubscriber):
-    subscriptions = ("execution",)
 
 
 class BitmexOrderBookSubscriber(BitmexSubscriber):

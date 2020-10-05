@@ -32,7 +32,8 @@ TEST_SYMBOL_MESSAGES = [
                     "system_symbol": "btcusd",
                     "schema": "margin1",
                     "symbol_schema": "margin1",
-                    "expiration": None
+                    "expiration": None,
+                    "created": "2020-06-25T13:03:00.295118Z",
                 }
             ]
         }
@@ -70,7 +71,8 @@ TEST_SYMBOL_MESSAGES = [
                     "system_symbol": "btcusd",
                     "schema": "margin1",
                     "symbol_schema": "margin1",
-                    "expiration": None
+                    "expiration": None,
+                    "created": "2020-06-25T13:03:00.295118Z",
                 }
             ]
         }
@@ -104,7 +106,8 @@ RESULT_SYMBOL_STATE = {
             "system_symbol": "btcusd",
             "schema": "margin1",
             "symbol_schema": "margin1",
-            "expiration": None
+            "expiration": None,
+            "created": "2020-06-25T13:03:00.295118Z",
         }
     ]
 }

@@ -21,10 +21,9 @@ class BitmexWssRouter(Router):
         'quote': "symbol",
         'trade': ["quote_bin", "trade"],
         'tradeBin1m': "quote_bin",
-        'order': "order",
+        'execution': "order",
         'orderBookL2_25': "order_book",
         'position': 'position',
-        'execution': 'execution',
         'margin': 'wallet'
     }
 
@@ -36,7 +35,6 @@ class BitmexWssRouter(Router):
         'order': serializers.BitmexOrderSerializer,
         'trade': serializers.BitmexTradeSerializer,
         'position': serializers.BitmexPositionSerializer,
-        'execution': serializers.BitmexExecutionSerializer,
         'wallet': serializers.BitmexWalletSerializer
     }
 
