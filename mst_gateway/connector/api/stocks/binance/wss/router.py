@@ -22,7 +22,7 @@ class BinanceWssRouter(Router):
         'kline': "quote_bin",
         '24hrTicker': "symbol",
         'outboundAccountPosition': 'wallet',
-        'executionReport': ['order', 'execution'],
+        'executionReport': 'order'
     }
 
     serializer_classes = {
@@ -32,7 +32,6 @@ class BinanceWssRouter(Router):
         'symbol': serializers.BinanceSymbolSerializer,
         'wallet': serializers.BinanceWalletSerializer,
         'order': serializers.BinanceOrderSerializer,
-        'execution': serializers.BinanceExecutionSerializer,
     }
 
     def __init__(self, wss_api: BinanceWssApi):
@@ -101,8 +100,7 @@ class BinanceWssRouter(Router):
                     return None
             return None
         if data.get('e') in ('executionReport',):
-            table_routes = self.table_route_map.get(data['e'])
-            if isinstance(self._wss_api.subscriptions.get(table_routes[table_routes.index(subscr_name)]), bool):
+            if isinstance(self._wss_api.subscriptions.get(self.table_route_map.get(data['e'])), bool):
                 return None
         return data.get('s')
 
@@ -115,7 +113,7 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
         '24hrTicker': "symbol",
         'bookTicker': "symbol",
         'ACCOUNT_UPDATE': 'wallet',
-        'ORDER_TRADE_UPDATE': ['order', 'execution'],
+        'ORDER_TRADE_UPDATE': 'order'
     }
 
     serializer_classes = {
@@ -125,7 +123,6 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
         'symbol': serializers.BinanceFuturesSymbolSerializer,
         'wallet': serializers.BinanceFuturesWalletSerializer,
         'order': serializers.BinanceOrderSerializer,
-        'execution': serializers.BinanceExecutionSerializer,
     }
 
     def _get_route_key(self, data, subscr_name):
@@ -139,8 +136,7 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
                     return None
             return None
         if data.get('e') in ('ORDER_TRADE_UPDATE',):
-            table_routes = self.table_route_map.get(data['e'])
-            if isinstance(self._wss_api.subscriptions.get(table_routes[table_routes.index(subscr_name)]), dict):
+            if isinstance(self._wss_api.subscriptions.get(self.table_route_map.get(data['e'])), dict):
                 try:
                     return data['o']['s']
                 except KeyError:

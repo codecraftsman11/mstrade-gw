@@ -17,15 +17,16 @@ class BinanceOrderSerializer(BinanceSerializer):
         ) and raw_data.get('o') in order_types
 
     def _load_data(self, message: dict, item: dict) -> Optional[dict]:
-        raw_data = item.get('o') if self._wss_api.schema == api.OrderSchema.futures else item
+        if self._wss_api.schema == api.OrderSchema.futures:
+            item.update(item.get('o'))
         state_data = self._wss_api.storage.get(
             'symbol', self._wss_api.name, self._wss_api.schema
         ).get(
-            raw_data['s'].lower()
-        ) if raw_data and raw_data.get('s') else None
+            item['s'].lower()
+        ) if item and item.get('s') else None
         if not state_data:
             return None
         return utils.load_order_ws_data(
-            raw_data=raw_data,
+            raw_data=item,
             state_data=state_data,
         )

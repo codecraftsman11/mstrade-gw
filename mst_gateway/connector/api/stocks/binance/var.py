@@ -80,9 +80,9 @@ BINANCE_ORDER_STATUS_NEW = 'NEW'
 
 BINANCE_ORDER_DELETE_ACTION_STATUSES = ('FILLED', 'CANCELED', 'EXPIRED', 'REJECTED')
 
-BINANCE_EXECUTION_STATUS_MAP = {
+BINANCE_ORDER_STATUS_MAP = {
     'PARTIALLY_FILLED': api.OrderState.active,
-    BINANCE_ORDER_STATUS_NEW: api.OrderState.pending,
+    'NEW': api.OrderState.pending,
     'FILLED': api.OrderState.closed,
     'EXPIRED': api.OrderState.closed,
 }
