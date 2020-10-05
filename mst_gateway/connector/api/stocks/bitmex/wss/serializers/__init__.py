@@ -6,5 +6,4 @@ from .order_book import BitmexOrderBookSerializer
 from .order import BitmexOrderSerializer
 from .trade import BitmexTradeSerializer
 from .position import BitmexPositionSerializer
-from .execution import BitmexExecutionSerializer
 from .wallet import BitmexWalletSerializer
