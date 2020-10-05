@@ -98,7 +98,7 @@ class StockWssApi(Connector):
         subscr_symbol = symbol.lower() if symbol else "*"
         return subscr_symbol not in self._subscriptions.get(subscr_name.lower(), dict())
 
-    async def unsubscribe(self, subscr_name: str, symbol: str = None, channel: str = None) -> bool:
+    async def unsubscribe(self, subscr_name: str, channel: str, symbol: str = None) -> bool:
         if not self.is_channel_registered(subscr_name, channel, symbol):
             return True
         if self.is_unsubscribe_required(subscr_name, symbol):
@@ -132,7 +132,8 @@ class StockWssApi(Connector):
         if symbol:
             return symbol.lower() in self._subscriptions.get(subscr_name.lower(), dict()) \
                    and len(self._subscriptions[subscr_name.lower()][symbol.lower()]) == 1
-        return self._subscriptions.get(subscr_name.lower(), dict()).keys() == ["*"]
+        return self._subscriptions.get(subscr_name.lower(), dict()).keys() == ["*"] \
+            and len(self._subscriptions[subscr_name.lower()]["*"]) == 1
 
     def is_channel_registered(self, subscr_name: str, channel: str, symbol: str = None) -> bool:
         return channel in self._subscriptions.get(subscr_name.lower(), dict()).get(
