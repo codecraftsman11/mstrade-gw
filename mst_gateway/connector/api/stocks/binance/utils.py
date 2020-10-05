@@ -39,6 +39,7 @@ def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema'),
         'symbol_schema': state_data.get('symbol_schema'),
+        'created': state_data.get('created'),
     }
 
 
@@ -801,12 +802,14 @@ def load_symbol_ws_data(raw_data: dict, state_data: dict) -> dict:
         'bid_price': to_float(raw_data.get('b') or mark_price),
         'ask_price': to_float(raw_data.get('a') or mark_price),
         'reversed': _reversed,
+        'volume24': to_float(raw_data.get('v')),
         'expiration': state_data.get('expiration'),
         'pair': state_data.get('pair'),
         'tick': state_data.get('tick'),
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema'),
         'symbol_schema': state_data.get('symbol_schema'),
+        'created': state_data.get('created'),
     }
 
 
@@ -853,55 +856,40 @@ def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
     order_type_and_exec = var.BINANCE_ORDER_TYPE_AND_EXECUTION_MAP.get(
         raw_data.get('o', '').upper()
     ) or {'type': None, 'execution': None}
-    data = {
+    return {
         'order_id': raw_data.get('c'),
-        'symbol': raw_data.get('s'),
-        'value': to_float(raw_data.get('q')),
-        'stop': to_float(raw_data['P']) if raw_data.get('P') else to_float(raw_data.get('sp')),
+        'exchange_order_id': raw_data.get('i'),
         'side': load_ws_order_side(raw_data.get('S')),
+        'tick_volume': to_float(raw_data.get('l')),
+        'tick_price': to_float(raw_data.get('L')),
+        'volume': to_float(raw_data.get('q')),
         'price': to_float(raw_data.get('p')),
-        'created': to_date(raw_data['O']) if raw_data.get('O') else to_date(raw_data.get('T')),
-        'active': raw_data.get('X') != var.BINANCE_ORDER_STATUS_NEW,
+        'status': load_ws_order_status(raw_data.get('X')),
+        'leaves_volume': calculate_ws_order_leaves_volume(raw_data),
+        'filled_volume': to_float(raw_data.get('z')),
+        'avg_price': calculate_ws_order_avg_price(raw_data),
+        'timestamp': to_date(raw_data.get('E')),
+        'symbol': raw_data.get('s'),
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema'),
+        'stop': to_float(raw_data['P']) if raw_data.get('P') else to_float(raw_data.get('sp')),
+        'created': to_date(raw_data['O']) if raw_data.get('O') else to_date(raw_data.get('T')),
         **order_type_and_exec,
     }
-    return data
 
 
-def load_ws_execution_status(binance_order_status: Optional[str]) -> Optional[str]:
-    return var.BINANCE_EXECUTION_STATUS_MAP.get(binance_order_status)
+def load_ws_order_status(binance_order_status: Optional[str]) -> Optional[str]:
+    return var.BINANCE_ORDER_STATUS_MAP.get(binance_order_status)
 
 
-def calculate_ws_execution_leaves_volume(raw_data: dict) -> Optional[float]:
+def calculate_ws_order_leaves_volume(raw_data: dict) -> Optional[float]:
     return to_float(raw_data['q']) - to_float(raw_data['z']) if raw_data.get('q') and raw_data.get('z') else 0.0
 
 
-def calculate_ws_execution_avg_price(raw_data: dict) -> Optional[float]:
+def calculate_ws_order_avg_price(raw_data: dict) -> Optional[float]:
     if raw_data.get('ap'):
         return to_float(raw_data['ap'])
     elif raw_data.get('Z') and raw_data.get('z') and to_float(raw_data['z']):
         return to_float(raw_data['Z'])/to_float(raw_data['z'])
     else:
         return 0.0
-
-
-def load_execution_ws_data(message_data: dict, raw_data: dict, state_data: dict) -> Optional[dict]:
-    return {
-        'order_id': raw_data.get('c'),
-        'side': load_ws_order_side(raw_data.get('S')),
-        'tick_volume': to_float(raw_data.get('l')),
-        'tick_price': to_float(raw_data.get('L')),
-        'volume': to_float(raw_data.get('q')),
-        'price': to_float(raw_data.get('p')),
-        'type': raw_data['x'].lower() if raw_data.get('x') else None,
-        'status': load_ws_execution_status(raw_data.get('X')),
-        'is_active': raw_data.get('X') != var.BINANCE_ORDER_STATUS_NEW,
-        'leaves_volume': calculate_ws_execution_leaves_volume(raw_data),
-        'filled_volume': to_float(raw_data.get('z')),
-        'avg_price': calculate_ws_execution_avg_price(raw_data),
-        'timestamp': to_date(message_data.get('E')) if message_data != raw_data else to_date(raw_data.get('E')),
-        'symbol': raw_data.get('s'),
-        'system_symbol': state_data.get('system_symbol'),
-        'schema': state_data.get('schema')
-    }

@@ -1,6 +1,6 @@
 from typing import Optional
 from .base import BitmexSerializer
-from ...utils import load_order_data
+from ...utils import load_order_ws_data
 
 
 class BitmexOrderSerializer(BitmexSerializer):
@@ -15,4 +15,4 @@ class BitmexOrderSerializer(BitmexSerializer):
         ).get(item['symbol'].lower())
         if not state_data:
             return None
-        return load_order_data(item, state_data)
+        return load_order_ws_data(item, state_data)
