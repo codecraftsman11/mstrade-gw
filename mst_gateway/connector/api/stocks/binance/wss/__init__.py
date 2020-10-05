@@ -98,12 +98,12 @@ class BinanceWssApi(StockWssApi):
     def register(self, subscr_name: str, channel: str, symbol: str = None) -> None:
         if self.register_state and subscr_name in self.register_state_groups:
             self.storage.set(f'{subscr_name}.{self.account_name}'.lower(), {'*': '*'})
-        super().register(subscr_name, channel, symbol)
+        return super().register(subscr_name, channel, symbol)
 
     def unregister(self, subscr_name: str, channel: str, symbol: str = None) -> None:
         if self.register_state and subscr_name in self.register_state_groups:
             self.storage.remove(f'{subscr_name}.{self.account_name}'.lower())
-        super().unregister(subscr_name, channel, symbol)
+        return super().unregister(subscr_name, channel, symbol)
 
     def _split_message(self, message):
         data = parse_message(message)
