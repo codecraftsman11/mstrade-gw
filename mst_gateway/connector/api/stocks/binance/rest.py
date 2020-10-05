@@ -407,7 +407,7 @@ class BinanceRestApi(StockRestApi):
                 limit=1000
             )
             return utils.load_funding_rates(funding_rates)
-        raise NotImplementedError
+        return dict()
 
     def _binance_api(self, method: callable, **kwargs):
         try:
