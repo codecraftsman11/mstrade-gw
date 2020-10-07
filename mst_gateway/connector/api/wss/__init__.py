@@ -98,31 +98,30 @@ class StockWssApi(Connector):
         subscr_symbol = symbol.lower() if symbol else "*"
         return subscr_symbol not in self._subscriptions.get(subscr_name.lower(), dict())
 
+    async def _unsubscribe(
+        self, subscr_name: str, symbol: str = None, return_statement: bool = True
+    ) -> Optional[bool]:
+        _subscriber = self._get_subscriber(subscr_name)
+        if not _subscriber:
+            self._logger.error(
+                "There is no subscriber in %s to unsubscribe from %s", self, subscr_name
+            )
+            if return_statement:
+                return False
+        if not await _subscriber.unsubscribe(self, symbol):
+            self._logger.error("Error unsubscribing from %s in %s", subscr_name, self)
+            if return_statement:
+                return False
+
     async def unsubscribe(self, subscr_name: str, channel: str, symbol: str = None) -> bool:
         if not self.is_channel_registered(subscr_name, channel, symbol):
             return True
         if self.is_unsubscribe_required(subscr_name, symbol):
-            _subscriber = self._get_subscriber(subscr_name)
-            if not _subscriber:
-                self._logger.error(
-                    "There is no subscriber in %s to unsubscribe from %s", self, subscr_name
-                )
-                return False
-            if not await _subscriber.unsubscribe(self, symbol):
-                self._logger.error("Error unsubscribing from %s in %s", subscr_name, self)
-                return False
+            await self._unsubscribe(subscr_name, symbol)
         if self.is_channel_registered(subscr_name, channel, symbol):
             self.unregister(subscr_name, channel, symbol)
             if not self._subscriptions.get(subscr_name.lower()):
-                _subscriber = self._get_subscriber(subscr_name)
-                if not _subscriber:
-                    self._logger.error(
-                        "There is no subscriber in %s to unsubscribe from %s", self, subscr_name
-                    )
-                    return False
-                if not await _subscriber.unsubscribe(self):
-                    self._logger.error("Error unsubscribing from %s in %s", subscr_name, self)
-                    return False
+                await self._unsubscribe(subscr_name, symbol)
         if not self._subscriptions:
             self.cancel_task()
             await self.close()
@@ -167,16 +166,12 @@ class StockWssApi(Connector):
             for symbol_key in list(self._subscriptions[subscr_name]):
                 if channel in self._subscriptions[subscr_name][symbol_key]:
                     self._subscriptions[subscr_name][symbol_key].remove(channel)
-                if not self._subscriptions[subscr_name][symbol_key]:
-                    _subscriber = self._get_subscriber(subscr_name)
-                    if not _subscriber:
-                        self._logger.error(
-                            "There is no subscriber in %s to unsubscribe from %s", self, subscr_name
-                        )
-                    if not await _subscriber.unsubscribe(self, symbol_key if symbol_key != "*" else None):
-                        self._logger.error("Error unsubscribing from %s in %s", subscr_name, self)
-                    del self._subscriptions[subscr_name][symbol_key]
+                    if not self._subscriptions[subscr_name][symbol_key]:
+                        if symbol_key != "*":
+                            await self._unsubscribe(subscr_name, symbol_key, False)
+                        del self._subscriptions[subscr_name][symbol_key]
             if not self._subscriptions[subscr_name]:
+                await self._unsubscribe(subscr_name, None, False)
                 del self._subscriptions[subscr_name]
         if not self._subscriptions:
             self.cancel_task()
