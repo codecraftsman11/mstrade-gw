@@ -162,6 +162,26 @@ class StockWssApi(Connector):
         if not self._subscriptions[subscr_name.lower()]:
             del self._subscriptions[subscr_name.lower()]
 
+    async def remove_channel_from_subscriptions(self, channel: str) -> None:
+        for subscr_name in list(self._subscriptions):
+            for symbol_key in list(self._subscriptions[subscr_name]):
+                if channel in self._subscriptions[subscr_name][symbol_key]:
+                    self._subscriptions[subscr_name][symbol_key].remove(channel)
+                if not self._subscriptions[subscr_name][symbol_key]:
+                    _subscriber = self._get_subscriber(subscr_name)
+                    if not _subscriber:
+                        self._logger.error(
+                            "There is no subscriber in %s to unsubscribe from %s", self, subscr_name
+                        )
+                    if not await _subscriber.unsubscribe(self, symbol_key if symbol_key != "*" else None):
+                        self._logger.error("Error unsubscribing from %s in %s", subscr_name, self)
+                    del self._subscriptions[subscr_name][symbol_key]
+            if not self._subscriptions[subscr_name]:
+                del self._subscriptions[subscr_name]
+        if not self._subscriptions:
+            self.cancel_task()
+            await self.close()
+
     async def open(self, **kwargs):
         if not self.throttle.validate(
             key=dict(name=self.name, url=self._url),
