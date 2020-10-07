@@ -108,6 +108,7 @@ class StockWssApi(Connector):
         if not await _subscriber.unsubscribe(self, symbol):
             self._logger.error("Error unsubscribing from %s in %s", subscr_name, self)
             return False
+        return True
 
     async def unsubscribe(self, subscr_name: str, channel: str, symbol: str = None) -> bool:
         if not self.is_channel_registered(subscr_name, channel, symbol):
@@ -169,8 +170,8 @@ class StockWssApi(Connector):
                         if symbol_key != "*":
                             if not await self._unsubscribe(subscr_name, symbol_key):
                                 self._subscriptions[subscr_name][symbol_key].add(channel)
-                    if not self._subscriptions[subscr_name][symbol_key]:
-                        del self._subscriptions[subscr_name][symbol_key]
+                if not self._subscriptions[subscr_name][symbol_key]:
+                    del self._subscriptions[subscr_name][symbol_key]
             if not self._subscriptions[subscr_name]:
                 if await self._unsubscribe(subscr_name):
                     del self._subscriptions[subscr_name]
