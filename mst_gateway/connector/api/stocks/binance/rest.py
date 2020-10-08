@@ -156,13 +156,28 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin2: self._handler.create_margin_order,
             OrderSchema.futures: self._handler.futures_create_order,
         }
-        if schema not in schema_handlers:
-            raise ConnectorError(f"Invalid schema parameter: {schema}")
-        data = self._binance_api(schema_handlers[schema], **params)
+        try:
+            if schema not in schema_handlers:
+                raise ConnectorError(f"Invalid schema parameter: {schema}")
+            data = self._binance_api(schema_handlers[schema], **params)
+        except ConnectorError as e:
+            return {
+                'action': 'create',
+                'success': False,
+                'error': e,
+                'message': f'Could not create the order. {order_id}',
+                'data': None
+            }
         state_data = self.storage.get(
             'symbol', self.name, schema
         ).get(symbol.lower(), dict())
-        return utils.load_order_data(data, state_data)
+        return {
+            'action': 'create',
+            'success': True,
+            'error': '',
+            'message': f'Successfully created the order. {order_id}',
+            'data': utils.load_order_data(data, state_data)
+        }
 
     def update_order(self, order_id: str, symbol: str, schema: str,
                      side: int, volume: float,
@@ -174,11 +189,12 @@ class BinanceRestApi(StockRestApi):
         and creating a new one with the same ClientOrderId.
 
         """
-        if self.cancel_order(order_id, symbol, schema): 
-            return self.create_order(order_id, symbol, schema, side, 
-                                     volume, order_type, order_execution, 
-                                     price, options=options)
-        raise ConnectorError(f'Order {order_id} was NOT canceled by the exchange')
+        result = self.cancel_order(order_id, symbol, schema)
+        if not result['success']:
+            return result
+        return self.create_order(order_id, symbol, schema, side,
+                                 volume, order_type, order_execution,
+                                 price, options=options)
 
     def cancel_all_orders(self, schema: str):
         open_orders = [dict(symbol=order["symbol"], orderId=order["orderId"]) for order in
@@ -197,10 +213,25 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin2: self._handler.cancel_margin_order,
             OrderSchema.futures: self._handler.futures_cancel_order,
         }
-        if schema not in schema_handlers:
-            raise ConnectorError(f"Invalid schema parameter: {schema}")
-        data = self._binance_api(schema_handlers[schema], **params)
-        return bool(data)
+        try:
+            if schema not in schema_handlers:
+                raise ConnectorError(f"Invalid schema parameter: {schema}")
+            data = self._binance_api(schema_handlers[schema], **params)
+        except ConnectorError as e:
+            return {
+                'action': 'delete',
+                'success': False,
+                'error': e,
+                'message': f'Could not delete the order. {order_id}.',
+                'data': None
+            }
+        return {
+            'action': 'delete',
+            'success': True,
+            'error': '',
+            'message': f'Successfully deleted the order. {order_id}.',
+            'data': data
+        }
 
     def get_order(self, order_id: str, symbol: str, schema: str):
         params = dict(

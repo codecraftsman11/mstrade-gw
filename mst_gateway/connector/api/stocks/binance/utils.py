@@ -258,7 +258,7 @@ def load_order_data(raw_data: dict, state_data: dict) -> dict:
     data = {
         'order_id': raw_data.get('clientOrderId'),
         'symbol': raw_data.get('symbol'),
-        'origQty': raw_data.get('orderQty'),
+        'volume': raw_data.get('origQty'),
         'stop': raw_data.get('stopPrice'),
         'side': raw_data.get('side'),
         'price': to_float(raw_data.get('price')),

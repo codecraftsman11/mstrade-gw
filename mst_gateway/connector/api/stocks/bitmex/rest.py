@@ -213,8 +213,24 @@ class BitmexRestApi(StockRestApi):
         state_data = self.storage.get(
             'symbol', self.name, OrderSchema.margin1
         ).get(symbol.lower(), dict())
-        data, _ = self._bitmex_api(self._handler.Order.Order_new, **params)
-        return utils.load_order_data(data, state_data)
+
+        try:
+            data, _ = self._bitmex_api(self._handler.Order.Order_new, **params)
+        except ConnectorError as e:
+            return {
+                'action': 'create',
+                'success': False,
+                'error': e,
+                'message': f'Could not create the order. {order_id}',
+                'data': None
+            }
+        return {
+            'action': 'create',
+            'success': True,
+            'error': '',
+            'message': f'Successfully created the order. {order_id}',
+            'data': utils.load_order_data(data, state_data)
+        }
 
     def update_order(self, order_id: str, symbol: str, schema: str,
                      side: int, volume: float,
@@ -226,18 +242,27 @@ class BitmexRestApi(StockRestApi):
         2) deleting it, 3) creating a new one with the original clOrdID.
 
         """
+        # Question: can we just leave the amend method here for price/volume changes
+        # and avoid deletion-creation altogether?
+        temp_order_id = str(datetime.now())
         params = dict(
             order_id=order_id,
             price=price,
             volume=volume,
         )
         params = utils.map_api_parameter_names(params, True)
-
-        temp_order_id = str(datetime.now())
         params['clOrdID'] = temp_order_id
 
         self._bitmex_api(self._handler.Order.Order_amend, **params)
-        self.cancel_order(temp_order_id, symbol, schema)
+
+        result = self.cancel_order(temp_order_id, symbol, schema)
+        if not result['success']:
+            # Revert to the original clOrdID to be able to access the order later:
+            params['clOrdID'] = order_id
+            params['origClOrdID'] = temp_order_id
+            self._bitmex_api(self._handler.Order.Order_amend, **params)
+            return result
+
         return self.create_order(order_id, symbol, schema, side,
                                  volume, order_type, order_execution,
                                  price, options=options)
@@ -246,16 +271,26 @@ class BitmexRestApi(StockRestApi):
         data, _ = self._bitmex_api(self._handler.Order.Order_cancelAll)
         return bool(data)
 
-    def cancel_order(self, order_id: str, symbol: str, schema: str) -> bool:
+    def cancel_order(self, order_id: str, symbol: str, schema: str) -> dict:
         params = dict(order_id=order_id)
         params = utils.map_api_parameter_names(params)
         data, _ = self._bitmex_api(self._handler.Order.Order_cancel,
                                    **params)
-        if not data:
-            return True
         if isinstance(data[0], dict) and data[0].get('error'):
-            raise ConnectorError(data[0].get('error'))
-        return True
+            return {
+                'action': 'delete',
+                'success': False,
+                'error': data[0].get('error'),
+                'message': f'Could not delete the order. {order_id}.',
+                'data': None
+            }
+        return {
+            'action': 'delete',
+            'success': True,
+            'error': '',
+            'message': f'Successfully deleted the order. {order_id}.',
+            'data': data
+        }
 
     def get_order(self, order_id: str, symbol: str, schema: str) -> Optional[dict]:
         params = dict(order_id=order_id)
