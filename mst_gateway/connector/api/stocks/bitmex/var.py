@@ -20,7 +20,7 @@ ORDER_TYPE_READ_MAP = {
     v: k for k, v in ORDER_TYPE_WRITE_MAP.items()
 }
 
-
+# TODO: If the new order type mapping is approved, we can remove this variable and change the related functions
 ORDER_TYPE_AND_EXECUTION_READ_MAP = {
     'Market': {'type': api.OrderType.market, 'execution': api.OrderExec.market},
     'Limit': {'type': api.OrderType.limit, 'execution': api.OrderExec.limit},
@@ -28,21 +28,6 @@ ORDER_TYPE_AND_EXECUTION_READ_MAP = {
     'StopLimit': {'type': api.OrderType.stop_loss, 'execution': api.OrderExec.limit},
     'MarketIfTouched': {'type': api.OrderType.take_profit, 'execution': api.OrderExec.market},
     'LimitIfTouched': {'type': api.OrderType.take_profit, 'execution': api.OrderExec.limit},
-}
-
-
-STORE_ORDER_TYPE_AND_EXECUTION_READ_MAP = {
-    f'{api.OrderType.market}|{api.OrderExec.market}': 'Market',
-    f'{api.OrderType.limit}|{api.OrderExec.limit}': 'Limit',
-    f'{api.OrderType.stop_loss}|{api.OrderExec.market}': 'Stop',
-    f'{api.OrderType.stop_loss}|{api.OrderExec.limit}': 'StopLimit',
-    f'{api.OrderType.take_profit}|{api.OrderExec.market}': 'MarketIfTouched',
-    f'{api.OrderType.take_profit}|{api.OrderExec.limit}': 'LimitIfTouched',
-    # We currently map TS-MARKET to 'Stop', but it can also work with 'MarketIfTouched'
-    f'{api.OrderType.trailing_stop}|{api.OrderExec.market}': 'Stop',
-    # We currently map TS-LIMIT to 'StopLimit', but it can also work with 'LimitIfTouched':
-    f'{api.OrderType.trailing_stop}|{api.OrderExec.limit}': 'StopLimit'
-
 }
 
 BITMEX_BUY = "Buy"
@@ -71,10 +56,10 @@ PARAMETER_NAMES_MAP = {
     'iceberg_volume': 'displayQty'
 }
 
-
 UPDATED_PARAMETER_NAMES_MAP = {
     'order_id': 'origClOrdID'
 }
+
 
 DEFAULT_PARAMETERS = [
     'clOrdID',
@@ -86,15 +71,13 @@ DEFAULT_PARAMETERS = [
 ]
 
 PARAMETERS_BY_ORDER_TYPE_MAP = {
-    # Market
-    f'{api.OrderType.market}|{api.OrderExec.market}': {
+    'Market': {
         'params': [
             *DEFAULT_PARAMETERS
         ],
         'additional_params': {}
     },
-    # Limit
-    f'{api.OrderType.limit}|{api.OrderExec.limit}': {
+    'Limit': {
         'params': [
             *DEFAULT_PARAMETERS,
             'timeInForce',
@@ -104,79 +87,4 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         ],
         'additional_params': {}
     },
-    # StopLimit
-    f'{api.OrderType.stop_loss}|{api.OrderExec.limit}': {
-        'params': [
-            *DEFAULT_PARAMETERS,
-            'timeInForce',
-            'execInst',
-            'displayQty',
-            'price',
-            'stopPx'
-        ],
-        'additional_params': {}
-    },
-    # Stop
-    f'{api.OrderType.stop_loss}|{api.OrderExec.market}': {
-        'params': [
-            *DEFAULT_PARAMETERS,
-            'timeInForce',
-            'execInst',
-            'displayQty',
-            'stopPx'
-        ],
-        'additional_params': {}
-    },
-    # LimitIfTouched
-    f'{api.OrderType.take_profit}|{api.OrderExec.limit}': {
-        'params': [
-            *DEFAULT_PARAMETERS,
-            'timeInForce',
-            'execInst',
-            'displayQty',
-            'price',
-            'stopPx',
-        ],
-        'additional_params': {}
-    },
-    # MarketIfTouched
-    f'{api.OrderType.take_profit}|{api.OrderExec.market}': {
-        'params': [
-            *DEFAULT_PARAMETERS,
-            'timeInForce',
-            'execInst',
-            'displayQty',
-            'stopPx'
-        ],
-        'additional_params': {}
-    },
-    # StopLimit and LimitIfTouched
-    f'{api.OrderType.trailing_stop}|{api.OrderExec.limit}': {
-        'params': [
-            *DEFAULT_PARAMETERS,
-            'timeInForce',
-            'execInst',
-            'displayQty',
-            'price',
-            'stopPx',
-            'pegOffsetValue'
-        ],
-        'additional_params': {
-            'pegPriceType': 'TrailingStopPeg'
-        }
-    },
-    # Stop and MarketIfTouched
-    f'{api.OrderType.trailing_stop}|{api.OrderExec.market}': {
-        'params': [
-            *DEFAULT_PARAMETERS,
-            'timeInForce',
-            'execInst',
-            'displayQty',
-            'stopPx',
-            'pegOffsetValue'
-        ],
-        'additional_params': {
-            'pegPriceType': 'TrailingStopPeg'
-        }
-    }
 }

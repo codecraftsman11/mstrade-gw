@@ -13,6 +13,7 @@ ORDER_TYPE_WRITE_MAP = {
     api.OrderType.limit: 'LIMIT',
 }
 
+# TODO: If the new order type mapping is approved, we can remove this variable and change the related functions
 BINANCE_ORDER_TYPE_AND_EXECUTION_MAP = {
     api.OrderSchema.margin2: {
         'LIMIT': {'type': api.OrderType.limit, 'execution': api.OrderExec.limit},
