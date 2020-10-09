@@ -140,8 +140,8 @@ def store_order_side(side: int) -> str:
 
 
 def store_order_type(order_type: str, order_execution: str, schema: str) -> str:
-    schema_map = var.BINANCE_ORDER_TYPE_AND_EXECUTION_PER_SCHEMA_MAP.get(schema, dict())
-    return schema_map.get(f'{order_type}|{order_execution}'.lower())
+    schema_mapping_object = api.SchemaOrderType(schema)
+    return schema_mapping_object.store_order_type(order_type, order_execution)
 
 
 def load_order_book_side(order_side: str) -> int:
@@ -910,20 +910,6 @@ def load_order_type_and_exec(schema: str, order_type: str) -> dict:
     return {'type': None, 'execution': None}
 
 
-def store_ttl(ttl: str) -> str:
-    # TODO: ttl mapping
-    # TODO: available binance params: GTC, IOC, FOK (GTX for passive orders)
-    # if ttl == api.OrderTTL.D1:
-    #     return ''
-    # if ttl == api.OrderTTL.H1:
-    #     return ''
-    # if ttl == api.OrderTTL.H4:
-    #     return ''
-    if ttl == api.OrderTTL.GTC:
-        return 'GTC'
-    return 'GTC'
-
-
 def get_mapping_for_schema(schema: str) -> Optional[dict]:
     """
     Retrieves order type parameter mapping data for the specified schema.
@@ -935,20 +921,20 @@ def get_mapping_for_schema(schema: str) -> Optional[dict]:
     return mapping_data
 
 
-def store_order_mapping_parameters(order_type: str, order_execution: str, schema: str) -> list:
+def store_order_mapping_parameters(exchange_order_type: str, schema: str) -> list:
     data_for_schema = get_mapping_for_schema(schema)
-    data = data_for_schema.get(f'{order_type}|{order_execution}'.lower())
+    data = data_for_schema.get(exchange_order_type)
     if data:
         return data['params']
-    return data_for_schema[f'{api.OrderType.limit}|{api.OrderExec.limit}']['params']
+    return data_for_schema['LIMIT']['params']
 
 
-def store_order_additional_parameters(order_type: str, order_execution: str, schema: str) -> dict:
+def store_order_additional_parameters(exchange_order_type: str, schema: str) -> dict:
     data_for_schema = get_mapping_for_schema(schema)
-    data = data_for_schema.get(f'{order_type}|{order_execution}'.lower())
+    data = data_for_schema.get(exchange_order_type)
     if data:
         return data['additional_params']
-    return data_for_schema[f'{api.OrderType.limit}|{api.OrderExec.limit}']['additional_params']
+    return data_for_schema['LIMIT']['additional_params']
 
 
 def generate_parameters_by_order_type(main_params: dict, options: dict, schema: str) -> dict:
@@ -959,44 +945,36 @@ def generate_parameters_by_order_type(main_params: dict, options: dict, schema: 
     """
     order_type = main_params.pop('order_type', None)
     order_execution = main_params.pop('order_execution', None)
-    new_params = dict()
-    mapping_parameters = store_order_mapping_parameters(order_type, order_execution, schema)
-    options = assign_custom_parameter_values(options, main_params, order_type)
+    exchange_order_type = store_order_type(order_type, order_execution, schema)
+    mapping_parameters = store_order_mapping_parameters(exchange_order_type, schema)
+    options = assign_custom_parameter_values(options)
     all_params = map_api_parameter_names(
-        {'order_type': store_order_type(order_type, order_execution, schema), **main_params, **options}
+        {'order_type': exchange_order_type, **main_params, **options}
     )
-
+    new_params = dict()
     for param_name in mapping_parameters:
         value = all_params.get(param_name)
         if value:
             new_params[param_name] = value
     new_params.update(
-        store_order_additional_parameters(order_type, order_execution, schema)
+        store_order_additional_parameters(exchange_order_type, schema)
     )
     return new_params
 
 
-def assign_custom_parameter_values(options: Optional[dict], main_params: Optional[dict], order_type: str) -> dict:
+def assign_custom_parameter_values(options: Optional[dict]) -> dict:
     """
     Changes the value of certain parameters according to Binance's specification.
 
     """
     new_options = dict()
     if 'ttl' in options:
-        new_options['timeInForce'] = store_ttl(options['ttl'])
+        new_options['timeInForce'] = 'GTC'
     if options.get('is_passive'):
         new_options['timeInForce'] = 'GTX'
     if options.get('is_iceberg'):
         new_options['icebergQty'] = options['iceberg_volume'] or 0
         new_options['timeInForce'] = 'GTC'
-
-    # The parameters below must be changed to their actual MSTRADE equivalents
-    if order_type in (api.OrderType.stop_loss, api.OrderType.take_profit):
-        new_options['stopPrice'] = main_params['price']
-    elif order_type == api.OrderType.trailing_stop:
-        new_options['activationPrice'] = main_params['price']
-        new_options['callbackRate'] = 1
-
     return new_options
 
 
