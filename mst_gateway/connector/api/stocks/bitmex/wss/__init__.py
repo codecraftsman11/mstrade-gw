@@ -58,12 +58,12 @@ class BitmexWssApi(StockWssApi):
         for method in (
             self.split_order,
         ):
-            _tmp = method(data)
+            _tmp = method(data=data)
             if _tmp:
                 return _tmp
         return message
 
-    def split_order(self, data):
+    def split_order(self, data, **kwargs):
         if isinstance(data, dict) and data.get('table') == 'execution':
             _data = list()
             for order_data in data.get('data', []):

@@ -35,6 +35,8 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
         return message['table'] in ("trade", "tradeBin1m")
 
     def _load_data(self, message: dict, item: dict) -> Optional[dict]:
+        if not self.is_item_valid(message, item):
+            return None
         state_data = self._wss_api.storage.get(
             'symbol', self._wss_api.name, self._wss_api.schema
         ).get(item['symbol'].lower())

@@ -3,7 +3,7 @@ from ..utils import symbol2stock
 
 
 def make_cmd(cmd, args, symbol=None):
-    if symbol is not None:
+    if symbol not in ('*', None):
         symbol = symbol2stock(symbol)
         args = f"{args}:{symbol}"
     return json.dumps({

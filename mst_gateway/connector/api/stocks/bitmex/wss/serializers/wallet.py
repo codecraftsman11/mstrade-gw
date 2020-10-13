@@ -11,6 +11,8 @@ class BitmexWalletSerializer(BitmexSerializer):
         return message.get('table') == "margin"
 
     def _load_data(self, message: dict, item: dict) -> Optional[dict]:
+        if not self.is_item_valid(message, item):
+            return None
         state = self._get_state('wallet')
         balances = state[0].get('balances') if state else list()
         for balance in balances:
@@ -33,5 +35,7 @@ class BitmexWalletSerializer(BitmexSerializer):
 
     def _append_item(self, data: list, message: dict, item: dict):
         valid_item = self._load_data(message, item)
+        if not valid_item:
+            return None
         self._update_state('wallet', valid_item)
         self._update_data(data, valid_item)

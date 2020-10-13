@@ -9,16 +9,19 @@ class BitmexPositionSerializer(BitmexSerializer):
         return True
 
     def _load_data(self, message: dict, item: dict) -> Optional[dict]:
+        if not self.is_item_valid(message, item):
+            return None
         state_data = self._wss_api.storage.get(
             'symbol', self._wss_api.name, self._wss_api.schema
         ).get(item['symbol'].lower())
         if not state_data:
             return None
         state = self._get_state(item.get('symbol'))
-        if not item.get('avgEntryPrice'):
-            item['avgEntryPrice'] = state[0]['entry_price']
-        if not item.get('liquidationPrice'):
-            item['liquidationPrice'] = state[0]['liquidation_price']
+        if state:
+            if not item.get('avgEntryPrice'):
+                item['avgEntryPrice'] = state[0]['entry_price']
+            if not item.get('liquidationPrice'):
+                item['liquidationPrice'] = state[0]['liquidation_price']
 
         data = dict(
                 timestamp=item.get('timestamp'),

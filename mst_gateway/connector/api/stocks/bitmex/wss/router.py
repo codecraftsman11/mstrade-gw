@@ -7,7 +7,6 @@ from typing import (
 from . import serializers
 from .serializers.base import BitmexSerializer
 from .utils import parse_message
-from ..utils import stock2symbol
 from ....wss.router import Router
 from ....wss.serializer import Serializer
 
@@ -79,7 +78,7 @@ class BitmexWssRouter(Router):
 
     def _lookup_serializer(self, subscr_name, data: dict) -> Optional[Serializer]:
         table = data['table']
-        if table == "tradeBin1m":
+        if table == 'tradeBin1m':
             if not self._use_trade_bin and data['action'] != 'partial':
                 return None
         self._routed_data[subscr_name] = {
@@ -90,16 +89,7 @@ class BitmexWssRouter(Router):
         }
         serializer = self._subscr_serializer(subscr_name)
         serializer.prefetch(data)
-        for item in data['data']:
-            route_key = self._get_route_key(item, subscr_name)
-            if self._wss_api.is_registered(subscr_name, stock2symbol(route_key)) \
-               and serializer.is_item_valid(data, item):
-                self._routed_data[subscr_name]['data'].append(item)
+        self._routed_data[subscr_name]['data'] = data['data']
         if self._routed_data[subscr_name]['data']:
             return serializer
         return None
-
-    def _get_route_key(self, data, subscr_name):
-        if self._wss_api.subscriptions.get(subscr_name, dict()).keys() == ["*"]:
-            return None
-        return data.get('currency') or data.get('symbol')
