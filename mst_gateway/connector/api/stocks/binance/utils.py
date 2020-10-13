@@ -542,7 +542,7 @@ def _futures_balance_data(balances: list):
             'withdraw_balance': to_float(b['maxWithdrawAmount']),
             'borrowed': None,
             'interest': None,
-            'unrealised_pnl': abs(to_float(b['unrealizedProfit'])),
+            'unrealised_pnl': to_float(b['unrealizedProfit']),
             'margin_balance': to_float(b['marginBalance']),
             'maint_margin': to_float(b['maintMargin']),
             'init_margin': to_float(b['initialMargin']),
