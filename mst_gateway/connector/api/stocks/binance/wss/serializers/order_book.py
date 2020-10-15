@@ -17,17 +17,20 @@ class BinanceOrderBookSerializer(BinanceSerializer):
         super().__init__(wss_api)
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
-        return message.keys() >= {'a', 'b'}
+        return 's' in item
 
-    def _load_data(self, message: dict, item: dict) -> Optional[list]:
+    def _load_data(self, message: dict, item: dict) -> Optional[dict]:
+        if not self.is_item_valid(message, item):
+            return None
         state_data = self._wss_api.storage.get(
             'symbol', self._wss_api.name, self._wss_api.schema
         ).get(item['s'].lower())
         if not state_data:
             return None
-        data = list()
-        bid = item.pop('b')
-        ask = item.pop('a')
-        data.extend([load_order_book_ws_data(item, b, api.BUY, state_data) for b in bid])
-        data.extend([load_order_book_ws_data(item, a, api.SELL, state_data) for a in ask])
-        return data
+        if 'b' in item:
+            order, side = item['b'], api.BUY
+        elif 'a' in item:
+            order, side = item['a'], api.SELL
+        else:
+            return None
+        return load_order_book_ws_data(item, order, side, state_data)

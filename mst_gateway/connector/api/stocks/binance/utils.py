@@ -661,7 +661,7 @@ def load_trade_ws_data(raw_data: dict, state_data: dict) -> dict:
     }
     """
     return {
-        'time': to_date(raw_data.get('E')),
+        'time': to_iso_datetime(raw_data.get('E')),
         'timestamp': raw_data.get('E'),
         'price': to_float(raw_data.get('p')),
         'volume': to_float(raw_data.get('q')),
@@ -700,7 +700,7 @@ def load_quote_bin_ws_data(raw_data: dict, state_data: dict) -> dict:
     }
     """
     return {
-        'time': to_date(raw_data.get('E')),
+        'time': to_iso_datetime(raw_data.get('E')),
         'timestamp': raw_data.get('E'),
         'open': to_float(raw_data.get('k', {}).get("o")),
         'close': to_float(raw_data.get('k', {}).get("c")),
@@ -791,7 +791,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: dict) -> dict:
     price = to_float(raw_data.get('c'))
     price24 = to_float(raw_data.get('w'))
     return {
-        'time': to_date(raw_data.get('E')),
+        'time': to_iso_datetime(raw_data.get('E')),
         'timestamp': raw_data.get('E'),
         'symbol': symbol,
         'price': price,
@@ -809,7 +809,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: dict) -> dict:
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema'),
         'symbol_schema': state_data.get('symbol_schema'),
-        'created': state_data.get('created'),
+        'created': to_iso_datetime(state_data.get('created')),
     }
 
 
@@ -826,6 +826,19 @@ def to_date(token: Union[datetime, int]) -> Optional[datetime]:
         return datetime.fromtimestamp(token/1000)
     except (ValueError, TypeError):
         return None
+
+
+def to_iso_datetime(token: Union[datetime, int, str]) -> Optional[str]:
+    if isinstance(token, str):
+        return token
+    if isinstance(token, datetime):
+        return token.replace(tzinfo=None).isoformat(sep=' ')
+    if isinstance(token, int):
+        try:
+            return datetime.fromtimestamp(token / 1000).replace(tzinfo=None).isoformat(sep=' ')
+        except (ValueError, TypeError):
+            return None
+    return None
 
 
 def to_float(token: Union[int, float, str, None]) -> Optional[float]:
@@ -873,7 +886,7 @@ def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema'),
         'stop': to_float(raw_data['P']) if raw_data.get('P') else to_float(raw_data.get('sp')),
-        'created': to_date(raw_data['O']) if raw_data.get('O') else to_date(raw_data.get('T')),
+        'created': to_iso_datetime(raw_data['O']) if raw_data.get('O') else to_date(raw_data.get('T')),
         **order_type_and_exec,
     }
 
