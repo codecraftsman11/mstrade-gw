@@ -512,7 +512,8 @@ def _margin_balance_data(
             'currency': b['asset'],
             'balance': to_float(b['netAsset']),
             'withdraw_balance': to_float(
-                max_transfers.get(b['asset'], None) if max_transfers else None
+                max_transfers.get(b['asset'], to_float(b['netAsset']))
+                if max_transfers else to_float(b['netAsset'])
             ),
             'borrowed': to_float(b['borrowed']),
             'available_borrow': max_borrow,
