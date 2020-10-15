@@ -327,12 +327,10 @@ def load_currencies_as_dict(currencies: list):
 
 def load_commission(commissions: dict, currency: str, symbol: str) -> dict:
     symbol_commission = commissions.pop(symbol.upper(), dict())
-    maker = to_float(symbol_commission.get('makerFee'))
-    taker = to_float(symbol_commission.get('takerFee'))
     return dict(
         currency=currency.lower(),
-        maker=abs(maker) if maker is not None else None,
-        taker=abs(taker) if taker is not None else None,
+        maker=to_float(symbol_commission.get('makerFee')),
+        taker=to_float(symbol_commission.get('takerFee')),
         type=None
     )
 
