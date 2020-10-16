@@ -14,24 +14,30 @@ class BitmexWalletSerializer(BitmexSerializer):
         if not self.is_item_valid(message, item):
             return None
         state = self._get_state('wallet')
-        balances = state[0].get('balances') if state else list()
+        balances = state[0].get('balances', []) if state else []
         for balance in balances:
-            self._check_balances_data(balance, item)
-        return load_wallet_data(item)
+            if balance.get('currency', '').lower() == item.get('currency', '').lower():
+                self._check_balances_data(balance, item)
+        try:
+            return load_wallet_data(item)
+        except ConnectionError:
+            return None
+
+    def _key_map(self, key: str):
+        _map = {
+            'walletBalance': 'balance',
+            'marginBalance': 'margin_balance',
+            'availableMargin': 'available_margin',
+            'initMargin': 'init_margin',
+            'withdrawableMargin': 'withdraw_balance',
+        }
+        return _map.get(key)
 
     def _check_balances_data(self, balance, item):
-        if balance.get('currency', '').lower() == item.get('currency').lower():
-            if not item.get('walletBalance'):
-                item['walletBalance'] = balance['balance']
-            if not item.get('marginBalance'):
-                item['marginBalance'] = balance['margin_balance']
-            if not item.get('availableMargin'):
-                item['availableMargin'] = balance['available_margin']
-            if not item.get('initMargin'):
-                item['initMargin'] = balance['init_margin']
-            if not item.get('withdrawableMargin'):
-                item['withdrawableMargin'] = balance['withdraw_balance']
-            return item
+        for k, v in item.items():
+            _mapped_key = self._key_map(k)
+            if v is None and _mapped_key:
+                item[k] = balance[_mapped_key]
 
     def _append_item(self, data: list, message: dict, item: dict):
         valid_item = self._load_data(message, item)

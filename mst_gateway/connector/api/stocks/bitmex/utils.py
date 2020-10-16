@@ -10,16 +10,16 @@ from . import var
 from .var import BITMEX_ORDER_STATUS_MAP
 
 
-def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
+def load_symbol_data(raw_data: dict, state_data: dict, is_iso_datetime=False) -> dict:
     symbol = raw_data.get('symbol')
-    symbol_time = to_date(raw_data.get('timestamp'))
+    symbol_time = to_iso_datetime(raw_data.get('timestamp')) if is_iso_datetime else to_date(raw_data.get('timestamp'))
     mark_price = to_float(raw_data.get('markPrice'))
     face_price, _reversed = BitmexFinFactory.calc_face_price(symbol, mark_price)
     price = to_float(raw_data.get('lastPrice'))
     price24 = to_float(raw_data.get('prevPrice24h'))
     return {
         'time': symbol_time,
-        'timestamp': time2timestamp(symbol_time),
+        'timestamp': time2timestamp(to_date(raw_data.get('timestamp'))),
         'symbol': symbol,
         'price': price,
         'price24': price24,
@@ -36,7 +36,7 @@ def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema'),
         'symbol_schema': state_data.get('symbol_schema'),
-        'created': state_data.get('created'),
+        'created': to_iso_datetime(state_data.get('created')) if is_iso_datetime else state_data.get('created'),
     }
 
 
@@ -120,6 +120,7 @@ def load_order_data(raw_data: dict, state_data: dict, skip_undef=False) -> dict:
     order_type_and_exec = var.ORDER_TYPE_AND_EXECUTION_READ_MAP.get(
         raw_data.get('ordType')
     ) or {'type': None, 'execution': None}
+    order_time = to_date(raw_data.get('timestamp'))
     data = {
         'order_id': raw_data.get('clOrdID'),
         'symbol': raw_data.get('symbol'),
@@ -127,7 +128,8 @@ def load_order_data(raw_data: dict, state_data: dict, skip_undef=False) -> dict:
         'stop': raw_data.get('stopPx'),
         'side': raw_data.get('side'),
         'price': to_float(raw_data.get('price')),
-        'created': to_date(raw_data.get('timestamp')),
+        'time': order_time,
+        'timestamp': time2timestamp(order_time),
         'active': raw_data.get('ordStatus') != "New",
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema'),
@@ -160,13 +162,28 @@ def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
         'leaves_volume': raw_data.get('leavesQty'),
         'filled_volume': raw_data.get('cumQty'),
         'avg_price': raw_data.get('avgPx'),
-        'timestamp': raw_data.get('timestamp'),
+        'timestamp': time2timestamp(raw_data.get('timestamp')),
         'symbol': raw_data.get('symbol'),
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema'),
         'stop': raw_data.get('stopPx'),
-        'created': to_date(raw_data.get('timestamp')),
+        'time': to_iso_datetime(raw_data.get('timestamp')),
         **order_type_and_exec,
+    }
+
+
+def load_position_ws_data(raw_data: dict, state_data: dict) -> dict:
+    return {
+        'time': to_iso_datetime(raw_data.get('timestamp')),
+        'timestamp': time2timestamp(raw_data.get('timestamp')),
+        'symbol': raw_data.get('symbol'),
+        'mark_price': raw_data.get('markPrice'),
+        'last_price': raw_data.get('lastPrice'),
+        'volume': raw_data.get('currentQty'),
+        'liquidation_price': raw_data.get('liquidationPrice'),
+        'entry_price': raw_data.get('avgEntryPrice'),
+        'schema': state_data.get('schema'),
+        'system_symbol': state_data.get('system_symbol')
     }
 
 
@@ -177,15 +194,15 @@ def load_user_data(raw_data: dict) -> dict:
     return data
 
 
-def load_trade_data(raw_data: dict, state_data: dict) -> dict:
-    return load_quote_data(raw_data, state_data)
+def load_trade_data(raw_data: dict, state_data: dict, is_iso_datetime=False) -> dict:
+    return load_quote_data(raw_data, state_data, is_iso_datetime=is_iso_datetime)
 
 
-def load_quote_data(raw_data: dict, state_data: dict) -> dict:
-    quote_time = to_date(raw_data.get('timestamp'))
+def load_quote_data(raw_data: dict, state_data: dict, is_iso_datetime=False) -> dict:
+    quote_time = to_iso_datetime(raw_data.get('timestamp')) if is_iso_datetime else to_date(raw_data.get('timestamp'))
     return {
         'time': quote_time,
-        'timestamp': time2timestamp(quote_time),
+        'timestamp': time2timestamp(to_date(raw_data.get('timestamp'))),
         'symbol': raw_data.get('symbol'),
         'price': to_float(raw_data.get('price')),
         'volume': raw_data.get('size'),
@@ -195,11 +212,11 @@ def load_quote_data(raw_data: dict, state_data: dict) -> dict:
     }
 
 
-def load_quote_bin_data(raw_data: dict, state_data: dict) -> dict:
-    quote_time = to_date(raw_data.get('timestamp'))
+def load_quote_bin_data(raw_data: dict, state_data: dict, is_iso_datetime=False) -> dict:
+    quote_time = to_iso_datetime(raw_data.get('timestamp')) if is_iso_datetime else to_date(raw_data.get('timestamp'))
     return {
         'time': quote_time,
-        'timestamp': time2timestamp(quote_time),
+        'timestamp': time2timestamp(to_date(raw_data.get('timestamp'))),
         'symbol': raw_data.get('symbol'),
         'open': to_float(raw_data.get("open")),
         'close': to_float(raw_data.get("close")),
@@ -352,6 +369,19 @@ def to_date(token: Union[datetime, str]) -> Optional[datetime]:
         return datetime.strptime(token, api.DATETIME_FORMAT)
     except ValueError:
         return None
+
+
+def to_iso_datetime(token: Union[datetime, int, str]) -> Optional[str]:
+    if isinstance(token, str):
+        try:
+            return datetime.strptime(token, api.DATETIME_FORMAT).strftime(api.DATETIME_OUT_FORMAT)
+        except ValueError:
+            return None
+    if isinstance(token, datetime):
+        return token.strftime(api.DATETIME_OUT_FORMAT)
+    if isinstance(token, int):
+        return datetime.fromtimestamp(token).strftime(api.DATETIME_OUT_FORMAT)
+    return None
 
 
 def to_float(token: Union[int, float, None]) -> Optional[float]:

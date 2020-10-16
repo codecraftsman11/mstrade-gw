@@ -18,4 +18,4 @@ class BitmexTradeSerializer(BitmexSerializer):
         ).get(item['symbol'].lower())
         if not state_data:
             return None
-        return load_trade_data(item, state_data)
+        return load_trade_data(item, state_data, is_iso_datetime=True)

@@ -1,5 +1,6 @@
 from typing import Optional
 from .base import BitmexSerializer
+from ... import utils
 
 
 class BitmexPositionSerializer(BitmexSerializer):
@@ -18,20 +19,8 @@ class BitmexPositionSerializer(BitmexSerializer):
             return None
         state = self._get_state(item.get('symbol'))
         if state:
-            if not item.get('avgEntryPrice'):
+            if item.get('avgEntryPrice') is None:
                 item['avgEntryPrice'] = state[0]['entry_price']
-            if not item.get('liquidationPrice'):
+            if item.get('liquidationPrice') is None:
                 item['liquidationPrice'] = state[0]['liquidation_price']
-
-        data = dict(
-                timestamp=item.get('timestamp'),
-                symbol=item.get('symbol'),
-                mark_price=item.get('markPrice'),
-                last_price=item.get('lastPrice'),
-                volume=item.get('currentQty'),
-                liquidation_price=item.get('liquidationPrice'),
-                entry_price=item.get('avgEntryPrice'),
-                schema=state_data.get('schema'),
-                system_symbol=state_data.get('system_symbol')
-            )
-        return data
+        return utils.load_position_ws_data(item, state_data)
