@@ -44,11 +44,11 @@ class Serializer:
 
     def data(self, message) -> Optional[dict]:
         (action, data) = self._get_data(message)
-        if data is None:
+        if not data:
             return None
         return {
             'account': self._wss_api.account_name,
-            'table': self.__class__.subscription,
+            'table': self.subscription,
             'schema': self._wss_api.schema,
             'action': action,
             'data': data
@@ -56,11 +56,11 @@ class Serializer:
 
     def state(self, symbol: str = None) -> Optional[dict]:
         data = self._get_state(symbol)
-        if data is None:
+        if not data:
             return None
         return {
             'account': self._wss_api.account_name,
-            'table': self.__class__.subscription,
+            'table': self.subscription,
             'schema': self._wss_api.schema,
             'action': "partial",
             'data': data
