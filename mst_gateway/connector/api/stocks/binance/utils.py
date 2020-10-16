@@ -832,10 +832,10 @@ def to_iso_datetime(token: Union[datetime, int, str]) -> Optional[str]:
     if isinstance(token, str):
         return token
     if isinstance(token, datetime):
-        return token.replace(tzinfo=None).isoformat(sep=' ')
+        return token.strftime(api.DATETIME_OUT_FORMAT)
     if isinstance(token, int):
         try:
-            return datetime.fromtimestamp(token / 1000).replace(tzinfo=None).isoformat(sep=' ')
+            return datetime.fromtimestamp(token / 1000).strftime(api.DATETIME_OUT_FORMAT)
         except (ValueError, TypeError):
             return None
     return None
