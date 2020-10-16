@@ -95,16 +95,6 @@ class BinanceWssApi(StockWssApi):
     def get_state(self, subscr_name: str, symbol: str = None) -> Optional[dict]:
         return None
 
-    def register(self, subscr_channel: str, subscr_name, symbol: str = None):
-        if self.register_state and subscr_name in self.register_state_groups:
-            self.storage.set(f'{subscr_name}.{self.account_name}'.lower(), {'*': '*'})
-        return super().register(subscr_channel, subscr_name, symbol)
-
-    def unregister(self, subscr_channel: str, subscr_name, symbol: str = None):
-        if self.register_state and subscr_name in self.register_state_groups:
-            self.storage.remove(f'{subscr_name}.{self.account_name}'.lower())
-        return super().unregister(subscr_channel, subscr_name, symbol)
-
     def _lookup_table(self, message: Union[dict, list]) -> Optional[dict]:
         _message = {
             'table': None,
