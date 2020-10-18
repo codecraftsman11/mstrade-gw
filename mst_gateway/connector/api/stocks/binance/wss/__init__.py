@@ -112,20 +112,32 @@ class BinanceWssApi(StockWssApi):
             return _message
         return None
 
-    def _split_message(self, message):
-        for method in (
-            self.split_order_book,
-            self.split_order,
-            self.split_wallet
-        ):
-            _tmp = method(message=message)
-            if _tmp:
-                message = _tmp
-        return super()._split_message(message)
+    def __split_message_map(self, key: str) -> Optional[callable]:
+        _map = {
+            '24hrTicker': self.split_symbol,
+            'depthUpdate': self.split_order_book,
+            'executionReport': self.split_order,
+            'outboundAccountPosition': self.split_wallet,
+        }
+        return _map.get(key)
 
-    def split_order_book(self, message, **kwargs):
-        if message['table'] != 'depthUpdate':
-            return None
+    def _split_message(self, message):
+        method = self.__split_message_map(message['table'])
+        if not method:
+            return super()._split_message(message)
+        return super()._split_message(method(message=message))
+
+    def split_symbol(self, message):
+        data = message.pop('data', [])
+        data_count = len(data)
+        _messages = []
+        for d in range(0, data_count, 50):
+            _messages.append(
+                {**message, 'data': data[d:d+50]}
+            )
+        return _messages
+
+    def split_order_book(self, message):
         message.pop('action', None)
         _messages = []
         _data_delete = []
@@ -147,9 +159,7 @@ class BinanceWssApi(StockWssApi):
             _messages.append(dict(**message, action='update', data=_data_update))
         return _messages
 
-    def split_wallet(self, message, **kwargs):
-        if message['table'] != 'outboundAccountPosition':
-            return None
+    def split_wallet(self, message):
         subscr_name = self.router_class.table_route_map.get('outboundAccountPosition')
         if subscr_name not in self._subscriptions:
             return None
@@ -165,11 +175,7 @@ class BinanceWssApi(StockWssApi):
             message['data'] = _new_data
         return message
 
-    def split_order(self, message, **kwargs):
-        if message['table'] != 'executionReport':
-            return None
-        if self.router_class.table_route_map.get('executionReport') not in self._subscriptions:
-            return None
+    def split_order(self, message):
         message.pop('action', None)
         _messages = []
         for item in message.pop('data', []):
@@ -228,9 +234,17 @@ class BinanceFuturesWssApi(BinanceWssApi):
             return self.TEST_URL
         return self.BASE_URL
 
-    def split_wallet(self, message, **kwargs):
-        if message['table'] != 'ACCOUNT_UPDATE':
-            return None
+    def __split_message_map(self, key):
+        _map = {
+            '24hrTicker': self.split_symbol,
+            'ORDER_TRADE_UPDATE': self.split_order,
+            'ACCOUNT_UPDATE': self.split_wallet,
+        }
+        return _map.get(key)
+
+    def split_wallet(self, message):
+        # if message['table'] != 'ACCOUNT_UPDATE':
+        #     return None
         subscr_name = self.router_class.table_route_map.get('ACCOUNT_UPDATE')
         if subscr_name not in self._subscriptions:
             return None
@@ -246,11 +260,11 @@ class BinanceFuturesWssApi(BinanceWssApi):
             message['data'] = _new_data
         return message
 
-    def split_order(self, message, **kwargs):
-        if message['table'] != 'ORDER_TRADE_UPDATE':
-            return None
-        if self.router_class.table_route_map.get('ORDER_TRADE_UPDATE') not in self._subscriptions:
-            return None
+    def split_order(self, message):
+        # if message['table'] != 'ORDER_TRADE_UPDATE':
+        #     return None
+        # if self.router_class.table_route_map.get('ORDER_TRADE_UPDATE') not in self._subscriptions:
+        #     return None
         message.pop('action', None)
         _messages = []
         for item in message.pop('data', []):

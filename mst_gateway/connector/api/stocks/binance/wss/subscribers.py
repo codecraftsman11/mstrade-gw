@@ -16,35 +16,38 @@ class BinanceSubscriber(Subscriber):
         if not api.handler or api.handler.closed:
             return False
         for subscription in self.subscriptions:
-            try:
-                if symbol in ('*', None) and not self.general_subscribe_available:
-                    asyncio.create_task(self.send_command(cmd_subscribe, api, subscription))
-                else:
+            if symbol in ('*', None) and not self.general_subscribe_available:
+                asyncio.create_task(self.send_command(cmd_subscribe, api, subscription))
+            else:
+                try:
                     await api.handler.send(cmd_subscribe(subscription, symbol))
-            except (asyncio.exceptions.CancelledError, ConnectionClosedError) as e:
-                api.logger.warning(e)
-                return False
+                except (asyncio.exceptions.CancelledError, ConnectionClosedError) as e:
+                    api.logger.warning(f"{self.__class__.__name__} - {e}")
+                    return False
         return True
 
     async def _unsubscribe(self, api: BinanceWssApi, symbol=None):
         if not api.handler or api.handler.closed:
             return True
         for subscription in self.subscriptions:
-            try:
-                if symbol in ('*', None) and not self.general_subscribe_available:
-                    asyncio.create_task(self.send_command(cmd_unsubscribe, api, subscription))
-                else:
+            if symbol in ('*', None) and not self.general_subscribe_available:
+                asyncio.create_task(self.send_command(cmd_unsubscribe, api, subscription))
+            else:
+                try:
                     await api.handler.send(cmd_unsubscribe(subscription, symbol))
-            except (asyncio.exceptions.CancelledError, ConnectionClosedError) as e:
-                api.logger.warning(e)
+                except (asyncio.exceptions.CancelledError, ConnectionClosedError) as e:
+                    api.logger.warning(f"{self.__class__.__name__} - {e}")
         return True
 
     async def send_command(self, command: callable, api: BinanceWssApi, subscription: str):
         symbols = [s for s in api.storage.get('symbol', api.name, api.schema)]
         symbols_count = len(symbols)
-        for i in range(0, symbols_count, 400):
-            await api.handler.send(command(subscription, symbols[i:i+400]))
-            await asyncio.sleep(0.5)
+        try:
+            for i in range(0, symbols_count, 400):
+                await api.handler.send(command(subscription, symbols[i:i+400]))
+                await asyncio.sleep(0.5)
+        except (asyncio.exceptions.CancelledError, ConnectionClosedError) as e:
+            api.logger.warning(f"{self.__class__.__name__} - {e}")
 
 
 class BinanceOrderBookSubscriber(BinanceSubscriber):

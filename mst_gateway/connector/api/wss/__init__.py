@@ -234,14 +234,11 @@ class StockWssApi(Connector):
                     del self._subscriptions[subscr_name]
                     continue
             for subscr_symbol in value:
-                if subscr_symbol == '*':
-                    subscr_symbol = None
                 await self.subscribe(None, subscr_name, subscr_symbol, force=True)
 
     async def _connect(self, **kwargs):
         ws_options = kwargs.get('ws_options', dict())
-        return await websockets.connect(self._url,
-                                        **ws_options)
+        return await websockets.connect(self._url, **ws_options)
 
     async def close(self):
         self._subscriptions = dict()

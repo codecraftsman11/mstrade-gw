@@ -58,25 +58,26 @@ class BitmexWssApi(StockWssApi):
             return message
         return None
 
-    def _split_message(self, message):
-        for method in (
-            self.split_order,
-        ):
-            _tmp = method(message=message)
-            if _tmp:
-                message = _tmp
-        return super()._split_message(message)
+    def __split_message_map(self, key: str) -> Optional[callable]:
+        _map = {
+            'execution': self.split_order,
+        }
+        return _map.get(key)
 
-    def split_order(self, message, **kwargs):
-        if not message.get('table') == 'execution':
-            return None
-        _data = list()
+    def _split_message(self, message):
+        method = self.__split_message_map(message['table'])
+        if not method:
+            return super()._split_message(message)
+        return super()._split_message(method(message=message))
+
+    def split_order(self, message):
+        _messages = list()
         _orders = message.pop('data', [])
         message.pop('action', None)
         for order in _orders:
             action = self.define_action_by_order_status(order.get('ordStatus'))
-            _data.append(dict(**message, action=action, data=[order]))
-        return _data
+            _messages.append(dict(**message, action=action, data=[order]))
+        return _messages
 
     def define_action_by_order_status(self, order_status: str) -> str:
         if order_status == var.BITMEX_ORDER_STATUS_NEW:
