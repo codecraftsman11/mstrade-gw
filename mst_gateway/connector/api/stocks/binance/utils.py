@@ -293,11 +293,9 @@ def load_spot_wallet_detail_data(raw_data: dict, asset: str) -> dict:
     raise ConnectorError(f"Invalid asset {asset}.")
 
 
-def load_margin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
-                            fields: Union[list, tuple], max_transfers: dict) -> dict:
-    balances = _margin_balance_data(
-        balances=raw_data.get('userAssets'), max_transfers=max_transfers
-    )
+def load_margin_wallet_data(raw_data: dict, currencies: dict,
+                            assets: Union[list, tuple], fields: Union[list, tuple]) -> dict:
+    balances = _margin_balance_data(raw_data.get('userAssets'))
     total_balance = dict()
     for asset in assets:
         total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
@@ -504,20 +502,22 @@ def _spot_balance_data(balances: list):
     ]
 
 
-def _margin_balance_data(
-    balances: list, max_borrow: float = None, interest_rate: float = None, max_transfers: dict = None
-):
-    return [
-        {
+def _margin_balance_data(balances: list, max_borrow: float = None, interest_rate: float = None):
+    result = list()
+    for b in balances:
+        balance = to_float(b['netAsset'])
+        borrowed = to_float(b['borrowed'])
+        interest = to_float(b['interest'])
+        withdraw_balance = balance - (borrowed + interest)
+        if withdraw_balance < 0:
+            withdraw_balance = 0
+        result.append({
             'currency': b['asset'],
-            'balance': to_float(b['netAsset']),
-            'withdraw_balance': to_float(
-                max_transfers.get(b['asset'], to_float(b['netAsset']))
-                if max_transfers else to_float(b['netAsset'])
-            ),
-            'borrowed': to_float(b['borrowed']),
+            'balance': balance,
+            'withdraw_balance': withdraw_balance,
+            'borrowed': borrowed,
             'available_borrow': max_borrow,
-            'interest': to_float(b['interest']),
+            'interest': interest,
             'interest_rate': interest_rate,
             'unrealised_pnl': 0,
             'margin_balance': to_float(b['free']),
@@ -525,8 +525,9 @@ def _margin_balance_data(
             'init_margin': None,
             'available_margin': round(to_float(b['free']) - to_float(b['locked']), 8),
             'type': to_wallet_state_type(to_float(b['locked'])),
-        } for b in balances
-    ]
+        })
+    return result
+
 
 
 def _margin_max_borrow(data):
