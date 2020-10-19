@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Optional
 from .base import BitmexSerializer
-from ...utils import load_wallet_data, load_wallet_detail_data
+from ...utils import load_wallet_data
 
 
 class BitmexWalletSerializer(BitmexSerializer):
@@ -25,19 +25,19 @@ class BitmexWalletSerializer(BitmexSerializer):
 
     def _key_map(self, key: str):
         _map = {
-            'walletBalance': 'balance',
-            'marginBalance': 'margin_balance',
-            'availableMargin': 'available_margin',
-            'initMargin': 'init_margin',
-            'withdrawableMargin': 'withdraw_balance',
+            'balance': 'walletBalance',
+            'margin_balance': 'marginBalance',
+            'available_margin': 'availableMargin',
+            'init_margin': 'initMargin',
+            'withdraw_balance': 'withdrawableMargin',
         }
         return _map.get(key)
 
     def _check_balances_data(self, balance, item):
-        for k, v in item.items():
+        for k, v in balance.items():
             _mapped_key = self._key_map(k)
-            if v is None and _mapped_key:
-                item[k] = balance[_mapped_key]
+            if _mapped_key:
+                item[_mapped_key] = balance[k]
 
     def _append_item(self, data: list, message: dict, item: dict):
         valid_item = self._load_data(message, item)

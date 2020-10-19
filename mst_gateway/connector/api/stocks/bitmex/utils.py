@@ -29,7 +29,7 @@ def load_symbol_data(raw_data: dict, state_data: dict, is_iso_datetime=False) ->
         'bid_price': to_float(raw_data.get('bidPrice')),
         'ask_price': to_float(raw_data.get('askPrice')),
         'reversed': _reversed,
-        'volume24': to_float(raw_data.get('volume24h')),
+        'volume24': raw_data.get('volume24h'),
         'expiration': state_data.get('expiration'),
         'pair': state_data.get('pair'),
         'tick': state_data.get('tick'),

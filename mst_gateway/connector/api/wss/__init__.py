@@ -113,8 +113,8 @@ class StockWssApi(Connector):
             return False
         if '*' in self._subscriptions[subscr_name]:
             return True
-        if symbol not in self._subscriptions[subscr_name]:
-            return False
+        if symbol in self._subscriptions[subscr_name]:
+            return True
         return False
 
     def is_unregistered(self, subscr_name, symbol: str = None) -> bool:

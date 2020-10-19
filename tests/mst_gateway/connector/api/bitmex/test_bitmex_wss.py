@@ -6,10 +6,9 @@ import pytest
 from websockets.client import WebSocketClientProtocol
 from websockets.exceptions import ConnectionClosed
 from mst_gateway.logging import init_logger
-from mst_gateway.connector.api import schema
+from mst_gateway.connector.api import schema, utils
 from mst_gateway.connector.api.stocks.bitmex import BitmexWssApi
 from mst_gateway.connector.api.stocks.bitmex import BitmexRestApi
-from mst_gateway.connector.api.stocks.bitmex.wss import utils
 from mst_gateway.connector.api.stocks.bitmex.wss import serializers
 from mst_gateway.connector.api.stocks.bitmex.wss.router import BitmexWssRouter
 import tests.config as cfg
@@ -96,61 +95,51 @@ class TestBitmexWssApi:
     def test_bitmex_wss_register_all(self, _wss_api: BitmexWssApi):
         assert not _wss_api.is_registered("symbol")
         assert not _wss_api.is_registered("symbol", "XBTUSD")
-        _wss_api.register("symbol", "test")
+        _wss_api.register("test_channel", "symbol")
         assert _wss_api.is_registered("symbol")
         assert _wss_api.is_registered("symbol", "XBTUSD")
-        _wss_api.unregister("symbol", "test")
+        _wss_api.unregister("test_channel", "symbol")
         assert not _wss_api.is_registered("symbol")
         assert not _wss_api.is_registered("symbol", "XBTUSD")
 
     def test_bitmex_wss_register_symbol(self, _wss_api: BitmexWssApi):
         assert not _wss_api.is_registered("symbol")
         assert not _wss_api.is_registered("symbol", "XBTUSD")
-        _wss_api.register("symbol", "test")
+        _wss_api.register("test_channel", "symbol")
         assert _wss_api.is_registered("symbol")
         assert _wss_api.is_registered("symbol", "XBTUSD")
-        _wss_api.unregister("symbol", "test")
+        _wss_api.unregister("test_channel", "symbol")
         assert not _wss_api.is_registered("symbol")
         assert not _wss_api.is_registered("symbol", "XBTUSD")
-        _wss_api.register("symbol", "test", "XBTUSD")
+        _wss_api.register("test_channel", "symbol", "XBTUSD")
+        assert not _wss_api.is_registered("symbol")
         assert _wss_api.is_registered("symbol", "XBTUSD")
-        assert not _wss_api.is_registered("symbol")
-        _wss_api.unregister("symbol", "test", "XBTUSD")
+        _wss_api.unregister("test_channel", "symbol", "XBTUSD")
         assert not _wss_api.is_registered("symbol")
         assert not _wss_api.is_registered("symbol", "XBTUSD")
-        _wss_api.register("symbol", "test", "XBTUSD")
-        _wss_api.register("symbol", "test")
+        _wss_api.register("test_channel", "symbol", "XBTUSD")
+        _wss_api.register("test_channel", "symbol")
         assert _wss_api.is_registered("symbol", "XBTUSD")
         assert _wss_api.is_registered("symbol")
-        _wss_api.unregister("symbol", "test", "XBTUSD")
+        _wss_api.unregister("symbol", "XBTUSD")
         assert _wss_api.is_registered("symbol")
         assert _wss_api.is_registered("symbol", "XBTUSD")
-        _wss_api.unregister("symbol", "test")
+        _wss_api.unregister("test_channel", "symbol")
         assert not _wss_api.is_registered("symbol")
         assert not _wss_api.is_registered("symbol", "XBTUSD")
-        _wss_api.register("symbol", "test", "XBTUSD")
-        _wss_api.register("symbol", "test")
-        assert _wss_api.is_registered("symbol", "XBTUSD")
-        assert _wss_api.is_registered("symbol")
-        _wss_api.unregister("symbol", "test")
-        assert not _wss_api.is_registered("symbol")
-        assert _wss_api.is_registered("symbol", "XBTUSD")
-        _wss_api.unregister("symbol", "test", "XBTUSD")
-        assert not _wss_api.is_registered("symbol")
-        assert not _wss_api.is_registered("symbol", "XBTUSD")
-        _wss_api.register("SYMBOL", "test")
+        _wss_api.register("test_channel", "SYMBOL")
         assert _wss_api.is_registered("SYMBOL")
         assert _wss_api.is_registered("symbol")
         assert _wss_api.is_registered("SyMbOl")
-        _wss_api.unregister("symbol", "test")
+        _wss_api.unregister("test_channel", "symbol")
         assert not _wss_api.is_registered("SYMBOL")
         assert not _wss_api.is_registered("symbol")
         assert not _wss_api.is_registered("SyMbOl")
-        _wss_api.register("symbol", "test", "XBTusd")
-        assert _wss_api.is_registered("SyMbOl", "XBTusd")
-        assert _wss_api.is_registered("SyMbOl", "XBTUSD")
+        _wss_api.register("test_channel", "SyMbol")
+        assert _wss_api.is_registered("SyMbol", "XBTusd")
+        assert _wss_api.is_registered("SyMbol", "XBTUSD")
         assert _wss_api.is_registered("symbol", "xbtusd")
-        _wss_api.unregister("symbol", "test", "xbtusd")
+        _wss_api.unregister("test_channel", "symbol", "xbtusd")
         assert not _wss_api.is_registered("SyMbOl", "XBTusd")
         assert not _wss_api.is_registered("SyMbOl", "XBTUSD")
         assert not _wss_api.is_registered("symbol", "xbtusd")
@@ -160,121 +149,148 @@ class TestBitmexWssApi:
 
     def test_bitmex_wss_router_get_symbol_serializer(self, _wss_api: BitmexWssApi):
         # pylint: disable=protected-access
-        _wss_api.register("symbol", "test")
+        _wss_api.register("test_channel", "symbol")
         router = _wss_api.router
-        srlz1 = router._get_serializers(TEST_SYMBOL_MESSAGES[0]['message'])
-        srlz2 = router._get_serializers(TEST_SYMBOL_MESSAGES[2]['message'])
+        srlz1 = router._get_serializers(self.process_message(_wss_api, TEST_SYMBOL_MESSAGES[0]['message'])[0])
+        srlz2 = router._get_serializers(self.process_message(_wss_api, TEST_SYMBOL_MESSAGES[1]['message'])[0])
+        srlz3 = router._get_serializers(self.process_message(_wss_api, TEST_SYMBOL_MESSAGES[2]['message'])[0])
         assert isinstance(srlz1['symbol'], serializers.BitmexSymbolSerializer)
-        assert not router._get_serializers(TEST_SYMBOL_MESSAGES[1]['message'])
         assert isinstance(srlz2['symbol'], serializers.BitmexSymbolSerializer)
-        assert srlz1['symbol'] == srlz2['symbol']
+        assert isinstance(srlz3['symbol'], serializers.BitmexSymbolSerializer)
+        assert srlz1['symbol'] == srlz2['symbol'] == srlz3['symbol']
 
     def test_bitmex_wss_router_get_quote_bin_serializer(self, _wss_api: BitmexWssApi):
         # pylint: disable=protected-access
-        _wss_api.register("quote_bin", "test")
+        _wss_api.register("test_channel", "quote_bin")
         router = _wss_api.router
-        assert not router._get_serializers(TEST_QUOTE_BIN_MESSAGES[0]['message'])
-        assert not router._get_serializers(TEST_QUOTE_BIN_MESSAGES[1]['message'])
+        messages = self.process_message(_wss_api, TEST_QUOTE_BIN_MESSAGES[0]['message'])
+        for message in messages:
+            assert not router._get_serializers(message)
+        messages = self.process_message(_wss_api, TEST_QUOTE_BIN_MESSAGES[1]['message'])
+        for message in messages:
+            assert router._get_serializers(message)
         for test in TEST_QUOTE_BIN_MESSAGES[2:]:
-            assert isinstance(
-                router._get_serializers(test['message'])['quote_bin'],
-                serializers.BitmexQuoteBinSerializer)
+            messages = self.process_message(_wss_api, test['message'])
+            for message in messages:
+                assert isinstance(
+                    router._get_serializers(message)['quote_bin'],
+                    serializers.BitmexQuoteBinSerializer)
 
     def test_bitmex_wss_get_symbol_data(self, _wss_api: BitmexWssApi):
-        _wss_api.register("symbol", "test")
+        _wss_api.register("test_channel", "symbol")
         for test in TEST_SYMBOL_MESSAGES:
-            data = _wss_api.get_data(test['message'])
-            assert test['data'] == data.get('symbol')
+            messages = self.process_message(_wss_api, test['message'])
+            for message in messages:
+                data = _wss_api.get_data(message)
+                assert test['data'] == data.get('symbol')
 
     def test_bitmex_wss_get_symbol_state(self, _wss_api: BitmexWssApi):
-        _wss_api.register("symbol", "test")
+        _wss_api.register("test_channel", "symbol")
         for test in TEST_SYMBOL_MESSAGES:
-            _wss_api.get_data(test['message'])
+            messages = self.process_message(_wss_api, test['message'])
+            for message in messages:
+                _wss_api.get_data(message)
         assert _wss_api.get_state("symbol") == RESULT_SYMBOL_STATE
 
     def test_bitmex_wss_get_quote_bin_data(self, _wss_api: BitmexWssApi):
-        _wss_api.register("quote_bin", "test")
+        _wss_api.register("test_channel", "quote_bin")
         for test in TEST_QUOTE_BIN_MESSAGES:
-            data = _wss_api.get_data(test['message'])
-            assert test['data'] == data.get('quote_bin')
+            messages = self.process_message(_wss_api, test['message'])
+            for message in messages:
+                data = _wss_api.get_data(message)
+                assert test['data'] == data.get('quote_bin')
 
     def test_bitmex_wss_get_quote_bin_traded_data(self, _wss_trade_api: BitmexWssApi):
-        _wss_trade_api.register("quote_bin", "test")
+        _wss_trade_api.register("test_channel", "quote_bin")
         for test in TEST_QUOTE_BIN_MESSAGES:
-            data = _wss_trade_api.get_data(test['message'])
-            assert test['data_trade'] == data.get('quote_bin')
+            messages = self.process_message(_wss_trade_api, test['message'])
+            for message in messages:
+                data = _wss_trade_api.get_data(message)
+                assert test['data_trade'] == data.get('quote_bin')
 
     def test_bitmex_wss_get_quote_bin_state(self, _wss_api: BitmexWssApi):
-        _wss_api.register("quote_bin", "test")
+        _wss_api.register("test_channel", "quote_bin")
         for test in TEST_QUOTE_BIN_MESSAGES:
-            _wss_api.get_data(test['message'])
+            messages = self.process_message(_wss_api, test['message'])
+            for message in messages:
+                _wss_api.get_data(message)
         assert _wss_api.get_state("quote_bin") == TEST_QUOTE_BIN_STATE
 
     def test_bitmex_wss_router_get_order_book_serializer(self, _wss_api: BitmexWssApi):
         # pylint: disable=protected-access
-        _wss_api.register("order_book", "test", "XBTUSD")
+        _wss_api.register("test_channel", "order_book", "XBTUSD")
         router = _wss_api.router
-        assert not router._get_serializers(TEST_ORDER_BOOK_MESSAGES[0]['message']).get('order_book')
+        messages = self.process_message(_wss_api, TEST_ORDER_BOOK_MESSAGES[0]['message'])
+        for message in messages:
+            assert not router._get_serializers(message).get('order_book')
         for test in TEST_ORDER_BOOK_MESSAGES[1:]:
-            assert isinstance(
-                router._get_serializers(test['message'])['order_book'],
-                serializers.BitmexOrderBookSerializer)
+            messages = self.process_message(_wss_api, test['message'])
+            for message in messages:
+                assert isinstance(
+                    router._get_serializers(message)['order_book'],
+                    serializers.BitmexOrderBookSerializer)
 
     def test_bitmex_wss_get_order_book_data(self, _wss_api: BitmexWssApi):
-        _wss_api.register("order_book", "test", "XBTUSD")
+        _wss_api.register("test_channel", "order_book", "XBTUSD")
         for test in TEST_ORDER_BOOK_MESSAGES:
-            data = _wss_api.get_data(test['message'])
-            assert test['data'] == data.get('order_book')
+            messages = self.process_message(_wss_api, test['message'])
+            for message in messages:
+                data = _wss_api.get_data(message)
+                assert test['data'] == data.get('order_book')
 
     def test_bitmex_wss_router_get_trade_serializer(self, _wss_api: BitmexWssApi):
         # pylint: disable=protected-access
-        _wss_api.register("trade", "test")
+        _wss_api.register("test_channel", "trade")
         router = _wss_api.router
         for test in TEST_TRADE_MESSAGES:
-            if test['data']:
-                assert isinstance(
-                    router._get_serializers(test['message'])['trade'],
-                    serializers.BitmexTradeSerializer)
-            else:
-                assert not router._get_serializers(test['message']).get('trade')
+            messages = self.process_message(_wss_api, test['message'])
+            for message in messages:
+                if test['data']:
+                    assert isinstance(
+                        router._get_serializers(message)['trade'],
+                        serializers.BitmexTradeSerializer)
+                else:
+                    assert not router._get_serializers(message).get('trade')
 
     def test_bitmex_wss_get_trade_data(self, _wss_api: BitmexWssApi):
-        _wss_api.register("trade", "test", "XBTUSD")
+        _wss_api.register("test_channel", "trade", "XBTUSD")
         for test in TEST_TRADE_MESSAGES:
-            data = _wss_api.get_data(test['message'])
-            assert test['data'] == data.get('trade')
+            messages = self.process_message(_wss_api, test['message'])
+            for message in messages:
+                data = _wss_api.get_data(message)
+                assert test['data'] == data.get('trade')
 
     def test_bitmex_wss_get_trade_state(self, _wss_api: BitmexWssApi):
-        _wss_api.register("trade", "test")
+        _wss_api.register("test_channel", "trade")
         for test in TEST_TRADE_MESSAGES:
-            _wss_api.get_data(test['message'])
+            messages = self.process_message(_wss_api, test['message'])
+            for message in messages:
+                _wss_api.get_data(message)
         assert _wss_api.get_state("trade") == TEST_TRADE_STATE
 
     def test_bitmex_wss_router_get_mixed_serializers(self, _wss_api: BitmexWssApi):
         # pylint: disable=protected-access
-        _wss_api.register("trade", "test")
-        _wss_api.register("quote_bin", "test")
+        _wss_api.register("test_channel", "trade")
+        _wss_api.register("test_channel", "quote_bin")
         router = _wss_api.router
         for test in TEST_TRADE_MESSAGES:
-            _serializers = router._get_serializers(test['message'])
-            if test['data']:
-                assert isinstance(
-                    _serializers['trade'],
-                    serializers.BitmexTradeSerializer)
-            else:
-                assert not _serializers.get('trade')
-            if test['data_quote']:
-                assert isinstance(
-                    _serializers['quote_bin'],
-                    serializers.BitmexQuoteBinSerializer)
-            else:
-                assert not _serializers.get('quote_bin')
+            messages = self.process_message(_wss_api, test['message'])
+            for message in messages:
+                _serializers = router._get_serializers(message)
+                if test['data']:
+                    assert isinstance(
+                        _serializers['trade'],
+                        serializers.BitmexTradeSerializer)
+                if test['data_quote']:
+                    assert isinstance(
+                        _serializers['quote_bin'],
+                        serializers.BitmexQuoteBinSerializer)
 
     def test_bitmex_wss_get_mixed_data(self, _wss_api: BitmexWssApi):
-        _wss_api.register("trade", "test", "XBTUSD")
-        _wss_api.register("quote_bin", "test", "XBTUSD")
+        _wss_api.register("test_channel", "trade", "XBTUSD")
+        _wss_api.register("test_channel", "quote_bin", "XBTUSD")
         for test in TEST_TRADE_MESSAGES:
-            data = _wss_api.get_data(test['message'])
+            data = _wss_api.get_data(utils.parse_message(test['message']))
             assert test['data'] == data.get('trade')
             assert test['data_quote'] == data.get('quote_bin')
 
@@ -294,7 +310,7 @@ class TestBitmexWssApi:
         async def subscribe():
             try:
                 _wss = await _wss_api.open()
-                await _wss_api.subscribe('symbol', 'test')
+                await _wss_api.subscribe('test_channel', 'symbol')
                 await asyncio.wait_for(
                     consume(_wss_api, _wss, self.on_message),
                     timeout=5
@@ -313,14 +329,14 @@ class TestBitmexWssApi:
                 symbol_message = d
                 break
         assert symbol_message
-        assert schema.data_update_valid(symbol_message, schema.SYMBOL_FIELDS)
+        assert schema.data_update_valid(symbol_message, schema.WS_SYMBOL_FIELDS)
 
     @pytest.mark.asyncio
     async def test_bitmex_wss_order_book(self, _wss_api: BitmexWssApi):
         async def subscribe():
             try:
                 _wss = await _wss_api.open()
-                await _wss_api.subscribe('order_book', 'test', 'XBTUSD')
+                await _wss_api.subscribe('test_channel', 'order_book', 'XBTUSD')
                 await asyncio.wait_for(
                     consume(_wss_api, _wss, self.on_message),
                     timeout=5
@@ -341,7 +357,7 @@ class TestBitmexWssApi:
         async def subscribe():
             try:
                 _wss = await _wss_api.open()
-                await _wss_api.subscribe('symbol', 'test')
+                await _wss_api.subscribe('test_channel', 'symbol')
                 await _wss.close()
                 await asyncio.wait_for(
                     consume(_wss_api, _wss, self.on_message),
@@ -361,7 +377,7 @@ class TestBitmexWssApi:
                 symbol_message = d
                 break
         assert symbol_message
-        assert schema.data_update_valid(symbol_message, schema.SYMBOL_FIELDS)
+        assert schema.data_update_valid(symbol_message, schema.WS_SYMBOL_FIELDS)
 
     def on_message(self, data):
         self.data.append(data)
@@ -369,3 +385,13 @@ class TestBitmexWssApi:
     def reset(self):
         # pylint: disable=attribute-defined-outside-init
         self.data = []
+
+    def process_message(self, _wss: BitmexWssApi, message):
+        _message = utils.parse_message(message)
+        if not _message:
+            return []
+        _message = _wss._lookup_table(_message)
+        if not _message:
+            return []
+        messages = _wss._split_message(_message)
+        return messages

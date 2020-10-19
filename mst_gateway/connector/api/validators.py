@@ -38,6 +38,16 @@ def datetime_valid(value):
     return True
 
 
+def iso_datetime_valid(value):
+    if not isinstance(value, str):
+        return False
+    try:
+        datetime.strptime(value, api.DATETIME_OUT_FORMAT)
+    except ValueError:
+        return False
+    return True
+
+
 def pair_valid(value: list) -> bool:
     if not isinstance(value, list):
         return False

@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Set, Optional
 from .base import BitmexSerializer
-from ...utils import load_symbol_data, stock2symbol
+from ...utils import load_symbol_data, stock2symbol, to_float
 
 if TYPE_CHECKING:
     from ... import BitmexWssApi
@@ -23,11 +23,11 @@ class BitmexSymbolSerializer(BitmexSerializer):
                     state = self._get_state(stock2symbol(item['symbol']))
                     if state:
                         if item.get('volume24h'):
-                            state[0]['volume24h'] = item["volume24h"]
-                        if item.get('lastPrice'):
-                            state[0]['lastPrice'] = item["lastPrice"]
+                            state[0]['volume24'] = item['volume24h']
                         if item.get('prevPrice24h'):
-                            state[0]['prevPrice24h'] = item["prevPrice24h"]
+                            state[0]['price24'] = to_float(item['prevPrice24h'])
+                        if item.get('markPrice'):
+                            state[0]['mark_price'] = to_float(item['markPrice'])
                         self._update_state(stock2symbol(item['symbol']), state[0])
         if message.get("table") == "quote":
             for item in message.get('data', []):
@@ -51,13 +51,12 @@ class BitmexSymbolSerializer(BitmexSerializer):
 
     def _key_map(self, key: str):
         _map = {
-            'prevPrice24h': 'price24',
-            'lastPrice': 'price',
-            'tickSize': 'tick',
-            'markPrice': 'mark_price',
-            'askPrice': 'ask_price',
-            'bidPrice': 'bid_price',
-            'volume24h': 'volume24',
+            'price24': 'prevPrice24h',
+            'tick': 'tickSize',
+            'mark_price': 'markPrice',
+            'ask_price': 'askPrice',
+            'bid_price': 'bidPrice',
+            'volume24': 'volume24h',
         }
         return _map.get(key)
 
@@ -72,9 +71,9 @@ class BitmexSymbolSerializer(BitmexSerializer):
             return None
         state = self._get_state(symbol)
         if state:
-            for k, v in item.items():
+            for k, v in state[0].items():
                 _mapped_key = self._key_map(k)
-                if v is None and _mapped_key:
-                    item[k] = state[0][_mapped_key]
+                if _mapped_key and item.get(_mapped_key) is None:
+                    item[_mapped_key] = state[0][k]
         item.update(**self._quotes.get(symbol, {}))
         return load_symbol_data(item, state_data, is_iso_datetime=True)
