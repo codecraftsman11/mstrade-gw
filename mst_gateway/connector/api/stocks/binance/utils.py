@@ -893,3 +893,13 @@ def calculate_ws_order_avg_price(raw_data: dict) -> Optional[float]:
         return to_float(raw_data['Z'])/to_float(raw_data['z'])
     else:
         return 0.0
+
+
+def load_funding_rates(funding_rates: list) -> dict:
+    result = dict()
+    for fr in funding_rates:
+        symbol = fr.get('symbol', '').lower()
+        result[symbol] = {
+            'symbol': symbol, 'funding_rate': to_float(fr.get('fundingRate'))
+        }
+    return result
