@@ -1,5 +1,6 @@
 from __future__ import annotations
 import asyncio
+from asyncio import CancelledError
 from typing import TYPE_CHECKING
 from websockets.exceptions import ConnectionClosedError
 from ....wss.subscriber import Subscriber
@@ -21,7 +22,7 @@ class BinanceSubscriber(Subscriber):
             else:
                 try:
                     await api.handler.send(cmd_subscribe(subscription, symbol))
-                except (asyncio.exceptions.CancelledError, ConnectionClosedError) as e:
+                except (CancelledError, ConnectionClosedError) as e:
                     api.logger.warning(f"{self.__class__.__name__} - {e}")
                     return False
         return True
@@ -35,7 +36,7 @@ class BinanceSubscriber(Subscriber):
             else:
                 try:
                     await api.handler.send(cmd_unsubscribe(subscription, symbol))
-                except (asyncio.exceptions.CancelledError, ConnectionClosedError) as e:
+                except (CancelledError, ConnectionClosedError) as e:
                     api.logger.warning(f"{self.__class__.__name__} - {e}")
         return True
 
@@ -46,7 +47,7 @@ class BinanceSubscriber(Subscriber):
             for i in range(0, symbols_count, 400):
                 await api.handler.send(command(subscription, symbols[i:i+400]))
                 await asyncio.sleep(0.5)
-        except (asyncio.exceptions.CancelledError, ConnectionClosedError) as e:
+        except (CancelledError, ConnectionClosedError) as e:
             api.logger.warning(f"{self.__class__.__name__} - {e}")
 
 
