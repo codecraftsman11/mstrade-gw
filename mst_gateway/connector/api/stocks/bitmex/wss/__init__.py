@@ -54,7 +54,6 @@ class BitmexWssApi(StockWssApi):
         return super()._get_subscriber(subscr_name)
 
     def _lookup_table(self, message: Union[dict, list]) -> Optional[dict]:
-        print('jere')
         if 'table' in message and isinstance(message, dict) and message.get('data'):
             return message
         return None
