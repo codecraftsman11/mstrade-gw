@@ -1,7 +1,7 @@
 import time
 from typing import Union, Optional
 from websockets import client
-from . import subscribers as subscr
+from . import subscribers as subscr_class
 from .router import BitmexWssRouter
 from .utils import is_auth_ok, make_cmd
 from .. import var
@@ -17,16 +17,16 @@ class BitmexWssApi(StockWssApi):
     TEST_URL = "wss://testnet.bitmex.com/realtime"
     name = "bitmex"
     subscribers = {
-        'symbol': subscr.BitmexSymbolSubscriber(),
-        'quote_bin': subscr.BitmexQuoteBinSubscriber(),
-        'order_book': subscr.BitmexOrderBookSubscriber(),
-        # 'trade': subscr.BitmexTradeSubscriber()
+        'symbol': subscr_class.BitmexSymbolSubscriber(),
+        'quote_bin': subscr_class.BitmexQuoteBinSubscriber(),
+        'order_book': subscr_class.BitmexOrderBookSubscriber(),
+        # 'trade': subscr_class.BitmexTradeSubscriber()
     }
 
     auth_subscribers = {
-        'order': subscr.BitmexOrderSubscriber(),
-        'position': subscr.BitmexPositionSubscriber(),
-        'wallet': subscr.BitmexWalletSubscriber()
+        'order': subscr_class.BitmexOrderSubscriber(),
+        'position': subscr_class.BitmexPositionSubscriber(),
+        'wallet': subscr_class.BitmexWalletSubscriber()
     }
 
     router_class = BitmexWssRouter

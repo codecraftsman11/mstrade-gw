@@ -3,7 +3,7 @@ from logging import Logger
 from typing import Optional, Union
 from mst_gateway.exceptions import ConnectorError
 from websockets import client
-from . import subscribers as subscr
+from . import subscribers as subscr_class
 from .router import BinanceWssRouter, BinanceFuturesWssRouter
 from .utils import is_auth_ok, make_cmd
 from ..lib import Client
@@ -17,15 +17,15 @@ class BinanceWssApi(StockWssApi):
     BASE_URL = 'wss://stream.binance.com:9443/ws'
     name = 'binance'
     subscribers = {
-        'order_book': subscr.BinanceOrderBookSubscriber(),
-        'trade': subscr.BinanceTradeSubscriber(),
-        'quote_bin': subscr.BinanceQuoteBinSubscriber(),
-        'symbol': subscr.BinanceSymbolSubscriber(),
+        'order_book': subscr_class.BinanceOrderBookSubscriber(),
+        'trade': subscr_class.BinanceTradeSubscriber(),
+        'quote_bin': subscr_class.BinanceQuoteBinSubscriber(),
+        'symbol': subscr_class.BinanceSymbolSubscriber(),
     }
 
     auth_subscribers = {
-        'wallet': subscr.BinanceWalletSubscriber(),
-        'order': subscr.BinanceOrderSubscriber(),
+        'wallet': subscr_class.BinanceWalletSubscriber(),
+        'order': subscr_class.BinanceOrderSubscriber(),
     }
     register_state_groups = [
         'wallet'
@@ -94,6 +94,19 @@ class BinanceWssApi(StockWssApi):
 
     def get_state(self, subscr_name: str, symbol: str = None) -> Optional[dict]:
         return None
+
+    async def subscribe(self, subscr: Optional[str], subscr_name: str, symbol: str = None,
+                        force: bool = False) -> bool:
+        # TODO: remove it
+        if subscr_name == 'symbol' and symbol in ('*', None):
+            symbol = 'btcusdt'
+        return await super().subscribe(subscr=subscr, subscr_name=subscr_name, symbol=symbol, force=force)
+
+    async def unsubscribe(self, subscr: Optional[str], subscr_name: str, symbol: str = None) -> bool:
+        # TODO: remove it
+        if subscr_name == 'symbol' and symbol in ('*', None):
+            symbol = 'btcusdt'
+        return await super().unsubscribe(subscr=subscr, subscr_name=subscr_name, symbol=symbol)
 
     def _lookup_table(self, message: Union[dict, list]) -> Optional[dict]:
         _message = {
@@ -202,10 +215,10 @@ class BinanceFuturesWssApi(BinanceWssApi):
     TEST_URL = 'wss://stream.binancefuture.com/ws'
 
     subscribers = {
-        'order_book': subscr.BinanceOrderBookSubscriber(),
-        'trade': subscr.BinanceTradeSubscriber(),
-        'quote_bin': subscr.BinanceQuoteBinSubscriber(),
-        'symbol': subscr.BinanceFuturesSymbolSubscriber(),
+        'order_book': subscr_class.BinanceOrderBookSubscriber(),
+        'trade': subscr_class.BinanceTradeSubscriber(),
+        'quote_bin': subscr_class.BinanceQuoteBinSubscriber(),
+        'symbol': subscr_class.BinanceFuturesSymbolSubscriber(),
     }
 
     router_class = BinanceFuturesWssRouter
@@ -243,8 +256,6 @@ class BinanceFuturesWssApi(BinanceWssApi):
         return _map.get(key)
 
     def split_wallet(self, message):
-        # if message['table'] != 'ACCOUNT_UPDATE':
-        #     return None
         subscr_name = self.router_class.table_route_map.get('ACCOUNT_UPDATE')
         if subscr_name not in self._subscriptions:
             return None
@@ -261,10 +272,6 @@ class BinanceFuturesWssApi(BinanceWssApi):
         return message
 
     def split_order(self, message):
-        # if message['table'] != 'ORDER_TRADE_UPDATE':
-        #     return None
-        # if self.router_class.table_route_map.get('ORDER_TRADE_UPDATE') not in self._subscriptions:
-        #     return None
         message.pop('action', None)
         _messages = []
         for item in message.pop('data', []):
