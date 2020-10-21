@@ -20,6 +20,7 @@ class BinanceSubscriber(Subscriber):
             if symbol in ('*', None) and not self.general_subscribe_available:
                 asyncio.create_task(self.send_command(cmd_subscribe, api, subscription))
             else:
+                await asyncio.sleep(1)
                 try:
                     await api.handler.send(cmd_subscribe(subscription, symbol))
                 except (CancelledError, ConnectionClosedError) as e:
@@ -34,6 +35,7 @@ class BinanceSubscriber(Subscriber):
             if symbol in ('*', None) and not self.general_subscribe_available:
                 asyncio.create_task(self.send_command(cmd_unsubscribe, api, subscription))
             else:
+                await asyncio.sleep(1)
                 try:
                     await api.handler.send(cmd_unsubscribe(subscription, symbol))
                 except (CancelledError, ConnectionClosedError) as e:
@@ -45,8 +47,8 @@ class BinanceSubscriber(Subscriber):
         symbols_count = len(symbols)
         try:
             for i in range(0, symbols_count, 400):
+                await asyncio.sleep(1)
                 await api.handler.send(command(subscription, symbols[i:i+400]))
-                await asyncio.sleep(0.5)
         except (CancelledError, ConnectionClosedError) as e:
             api.logger.warning(f"{self.__class__.__name__} - {e}")
 
