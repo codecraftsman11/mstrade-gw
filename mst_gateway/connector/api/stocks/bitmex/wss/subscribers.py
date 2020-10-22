@@ -1,8 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from asyncio import CancelledError
 from websockets import client
-from websockets.exceptions import ConnectionClosedError
 from .utils import cmd_subscribe, cmd_unsubscribe
 from ....wss.subscriber import Subscriber
 
@@ -16,11 +14,7 @@ class BitmexSubscriber(Subscriber):
     async def _subscribe(self, api: BitmexWssApi, symbol=None):
         wss: client = api.handler
         for subscription in self.subscriptions:
-            try:
-                await wss.send(cmd_subscribe(subscription, symbol))
-            except (CancelledError, ConnectionClosedError) as e:
-                api.logger.warning(f"{self.__class__.__name__} - {e}")
-                return False
+            await wss.send(cmd_subscribe(subscription, symbol))
         return True
 
     async def _unsubscribe(self, api: BitmexWssApi, symbol=None):
