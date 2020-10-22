@@ -85,6 +85,16 @@ class BinanceWssApi(StockWssApi):
         return key
 
     async def _connect(self, **kwargs):
+        # TODO: remove
+        kwargs['ws_options'] = {
+            'close_timeout': 30,
+            'ping_interval': 60,
+            'ping_timeout': 60,
+            'max_size': 2 ** 25,
+            'max_queue': 2 ** 7,
+            'read_limit': 2 ** 20,
+            'write_limit': 2 ** 20,
+        }
         _ws: client.WebSocketClientProtocol = await super()._connect(**kwargs)
         self._logger.info('Binance ws connected successful.')
         return _ws

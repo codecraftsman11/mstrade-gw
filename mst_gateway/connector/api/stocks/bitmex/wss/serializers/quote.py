@@ -78,8 +78,11 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
 class BitmexQuoteBinFromTradeSerializer(BitmexQuoteBinSerializer):
     @classmethod
     def _minute_updated(cls, ts_old: str, ts_new: str) -> bool:
-        ts_old = datetime.strptime(ts_old, api.DATETIME_OUT_FORMAT)
-        ts_new = datetime.strptime(ts_new, api.DATETIME_OUT_FORMAT)
+        try:
+            ts_old = datetime.strptime(ts_old, api.DATETIME_OUT_FORMAT)
+            ts_new = datetime.strptime(ts_new, api.DATETIME_OUT_FORMAT)
+        except ValueError:
+            return False
         if (ts_new - ts_old).total_seconds() >= 60:
             return True
         return ts_new.minute > ts_old.minute

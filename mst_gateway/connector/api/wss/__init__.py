@@ -213,13 +213,13 @@ class StockWssApi(Connector):
             if not self.handler:
                 try:
                     await self.open()
-                except (OSError, TypeError, ValueError):
+                except (OSError, TypeError, ValueError, ConnectionError):
                     continue
             if self.handler.closed:
                 await asyncio.sleep(kwargs.get('countdown', 10))
                 try:
                     await self.open(restore=True)
-                except OSError:
+                except (OSError, ConnectionError):
                     continue
             try:
                 message = await self.handler.recv()
