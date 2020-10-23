@@ -3,6 +3,7 @@ from abc import ABCMeta, abstractmethod
 from logging import Logger
 from typing import Dict, Optional, Union
 import websockets
+from datetime import datetime, timedelta
 from mst_gateway.storage import StateStorage
 from .router import Router
 from .subscriber import Subscriber
@@ -25,6 +26,8 @@ class StockWssApi(Connector):
     BASE_URL = None
     throttle = ThrottleWss()
     storage = StateStorage()
+    __state_data = {}
+    __state_data_time = datetime.now()
 
     def __init__(self,
                  name: str = None,
@@ -55,6 +58,7 @@ class StockWssApi(Connector):
         if state_storage is not None:
             self.storage = StateStorage(state_storage)
         self.register_state = register_state
+        self.__update_state_data()
         super().__init__(auth, logger)
 
     @property
@@ -78,7 +82,7 @@ class StockWssApi(Connector):
     def get_state(self, subscr_name: str, symbol: str = None) -> dict:
         return self.router.get_state(subscr_name, symbol)
 
-    async def subscribe(self, subscr: Optional[str],  subscr_name: str, symbol: str = None,
+    async def subscribe(self, subscr_channel: Optional[str],  subscr_name: str, symbol: str = None,
                         force: bool = False) -> bool:
         _subscriber = self._get_subscriber(subscr_name)
         if not _subscriber:
@@ -88,22 +92,21 @@ class StockWssApi(Connector):
             if not await _subscriber.subscribe(self, symbol):
                 self._logger.error(f"Error subscribing {self} to {subscr_name} with args {symbol}")
                 return False
-        if subscr or not force:
-            self.register(subscr, subscr_name, symbol)
+        if subscr_channel or not force:
+            self.register(subscr_channel, subscr_name, symbol)
         return True
 
-    async def unsubscribe(self, subscr: Optional[str], subscr_name: str, symbol: str = None) -> bool:
+    async def unsubscribe(self, subscr_channel: Optional[str], subscr_name: str, symbol: str = None) -> bool:
         _subscriber = self._get_subscriber(subscr_name)
         if not _subscriber:
             self._logger.error(f"There is no subscriber in {self} to unsubscribe from {subscr_name}")
             return False
-        _result, symbol = self.unregister(subscr, subscr_name, symbol)
-        if _result and self.is_unregistered(subscr_name, symbol):
-            if not await _subscriber.unsubscribe(self, symbol):
-                self._logger.error(f"Error unsubscribing from {subscr_name} with args {symbol} in {self}")
+        _result, symbol = self.unregister(subscr_channel, subscr_name, symbol)
         if not self._subscriptions:
             await self.close()
-            return True
+        elif _result and self.is_unregistered(subscr_name, symbol):
+            if not await _subscriber.unsubscribe(self, symbol):
+                self._logger.error(f"Error unsubscribing from {subscr_name} with args {symbol} in {self}")
         return True
 
     def is_registered(self, subscr_name, symbol: str = None) -> bool:
@@ -162,12 +165,14 @@ class StockWssApi(Connector):
         else:
             symbol = symbol.lower()
         if symbol in self._subscriptions[subscr_name]:
+            _res = False
             self._subscriptions[subscr_name][symbol].discard(subscr_channel)
             if not self._subscriptions[subscr_name][symbol]:
                 del self._subscriptions[subscr_name][symbol]
+                _res = True
             if not self._subscriptions[subscr_name]:
                 del self._subscriptions[subscr_name]
-            return True, symbol
+            return _res, symbol
         return False, symbol
 
     async def open(self, **kwargs):
@@ -241,12 +246,12 @@ class StockWssApi(Connector):
         return await websockets.connect(self._url, **ws_options)
 
     async def close(self):
-        self._subscriptions = dict()
+        self._subscriptions = {}
+        self.cancel_task()
         if not self._handler:
             return
         await self._handler.close()
         self._handler = None
-        self.cancel_task()
 
     async def process_message(self, message, on_message: Optional[callable] = None):
         message = parse_message(message)
@@ -291,6 +296,18 @@ class StockWssApi(Connector):
     @abstractmethod
     async def authenticate(self, auth: dict = None) -> bool:
         pass
+
+    def get_state_data(self, symbol):
+        if not symbol:
+            return None
+        self.__update_state_data()
+        return self.__state_data.get(symbol.lower())
+
+    def __update_state_data(self):
+        _state_data_time = self.__state_data_time + timedelta(hours=1)
+        if _state_data_time <= datetime.now() or not self.__state_data:
+            self.__state_data_time = _state_data_time
+            self.__state_data = self.storage.get('symbol', self.name, self.schema)
 
     def __exit__(self, exc_type, exc_value, traceback):
         pass

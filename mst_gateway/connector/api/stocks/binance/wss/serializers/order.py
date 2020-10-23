@@ -13,9 +13,7 @@ class BinanceOrderSerializer(BinanceSerializer):
     def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
             return None
-        state_data = self._wss_api.storage.get(
-            'symbol', self._wss_api.name, self._wss_api.schema
-        ).get(item['s'].lower())
+        state_data = self._wss_api.get_state_data(item.get('s'))
         if not state_data:
             return None
         return utils.load_order_ws_data(item, state_data)

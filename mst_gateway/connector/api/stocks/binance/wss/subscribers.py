@@ -14,13 +14,12 @@ if TYPE_CHECKING:
 class BinanceSubscriber(Subscriber):
 
     async def _subscribe(self, api: BinanceWssApi, symbol=None):
-        if not api.handler or api.handler.closed:
-            return False
         for subscription in self.subscriptions:
             if symbol in ('*', None) and not self.general_subscribe_available:
                 asyncio.create_task(self.send_command(cmd_subscribe, api, subscription))
             else:
-                await asyncio.sleep(1)
+                if not api.handler or api.handler.closed:
+                    return False
                 try:
                     await api.handler.send(cmd_subscribe(subscription, symbol))
                 except (CancelledError, ConnectionClosedError) as e:
@@ -35,7 +34,8 @@ class BinanceSubscriber(Subscriber):
             if symbol in ('*', None) and not self.general_subscribe_available:
                 asyncio.create_task(self.send_command(cmd_unsubscribe, api, subscription))
             else:
-                await asyncio.sleep(1)
+                if not api.handler or api.handler.closed:
+                    return True
                 try:
                     await api.handler.send(cmd_unsubscribe(subscription, symbol))
                 except (CancelledError, ConnectionClosedError) as e:
@@ -48,6 +48,8 @@ class BinanceSubscriber(Subscriber):
         try:
             for i in range(0, symbols_count, 400):
                 await asyncio.sleep(1)
+                if not api.handler or api.handler.closed:
+                    return
                 await api.handler.send(command(subscription, symbols[i:i+400]))
         except (CancelledError, ConnectionClosedError) as e:
             api.logger.warning(f"{self.__class__.__name__} - {e}")

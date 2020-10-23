@@ -85,15 +85,14 @@ class BinanceWssApi(StockWssApi):
         return key
 
     async def _connect(self, **kwargs):
-        # TODO: remove
         kwargs['ws_options'] = {
             'close_timeout': 30,
             'ping_interval': 60,
             'ping_timeout': 60,
-            'max_size': 2 ** 25,
+            'max_size': 2 ** 24,
             'max_queue': 2 ** 7,
-            'read_limit': 2 ** 20,
-            'write_limit': 2 ** 20,
+            'read_limit': 2 ** 18,
+            'write_limit': 2 ** 18,
         }
         _ws: client.WebSocketClientProtocol = await super()._connect(**kwargs)
         self._logger.info('Binance ws connected successful.')
@@ -105,18 +104,18 @@ class BinanceWssApi(StockWssApi):
     def get_state(self, subscr_name: str, symbol: str = None) -> Optional[dict]:
         return None
 
-    async def subscribe(self, subscr: Optional[str], subscr_name: str, symbol: str = None,
-                        force: bool = False) -> bool:
-        # TODO: remove it
-        if subscr_name == 'symbol' and symbol in ('*', None):
-            symbol = 'btcusdt'
-        return await super().subscribe(subscr=subscr, subscr_name=subscr_name, symbol=symbol, force=force)
-
-    async def unsubscribe(self, subscr: Optional[str], subscr_name: str, symbol: str = None) -> bool:
-        # TODO: remove it
-        if subscr_name == 'symbol' and symbol in ('*', None):
-            symbol = 'btcusdt'
-        return await super().unsubscribe(subscr=subscr, subscr_name=subscr_name, symbol=symbol)
+    # async def subscribe(self, subscr_channel: Optional[str], subscr_name: str, symbol: str = None,
+    #                     force: bool = False) -> bool:
+    #     # TODO: remove it
+    #     if subscr_name == 'symbol' and symbol in ('*', None):
+    #         symbol = 'btcusdt'
+    #     return await super().subscribe(subscr=subscr, subscr_name=subscr_name, symbol=symbol, force=force)
+    #
+    # async def unsubscribe(self, subscr_channel: Optional[str], subscr_name: str, symbol: str = None) -> bool:
+    #     # TODO: remove it
+    #     if subscr_name == 'symbol' and symbol in ('*', None):
+    #         symbol = 'btcusdt'
+    #     return await super().unsubscribe(subscr=subscr, subscr_name=subscr_name, symbol=symbol)
 
     def _lookup_table(self, message: Union[dict, list]) -> Optional[dict]:
         _message = {
@@ -137,7 +136,6 @@ class BinanceWssApi(StockWssApi):
 
     def __split_message_map(self, key: str) -> Optional[callable]:
         _map = {
-            '24hrTicker': self.split_symbol,
             'depthUpdate': self.split_order_book,
             'executionReport': self.split_order,
             'outboundAccountPosition': self.split_wallet,
@@ -149,16 +147,6 @@ class BinanceWssApi(StockWssApi):
         if not method:
             return super()._split_message(message)
         return super()._split_message(method(message=message))
-
-    def split_symbol(self, message):
-        data = message.pop('data', [])
-        data_count = len(data)
-        _messages = []
-        for d in range(0, data_count, 50):
-            _messages.append(
-                {**message, 'data': data[d:d+50]}
-            )
-        return _messages
 
     def split_order_book(self, message):
         message.pop('action', None)
@@ -259,7 +247,6 @@ class BinanceFuturesWssApi(BinanceWssApi):
 
     def __split_message_map(self, key):
         _map = {
-            '24hrTicker': self.split_symbol,
             'ORDER_TRADE_UPDATE': self.split_order,
             'ACCOUNT_UPDATE': self.split_wallet,
         }
