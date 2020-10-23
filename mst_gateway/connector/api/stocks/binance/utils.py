@@ -513,14 +513,21 @@ def _spot_balance_data(balances: list):
 
 
 def _margin_balance_data(balances: list, max_borrow: float = None, interest_rate: float = None):
-    return [
-        {
+    result = list()
+    for b in balances:
+        balance = to_float(b['netAsset'])
+        borrowed = to_float(b['borrowed'])
+        interest = to_float(b['interest'])
+        withdraw_balance = balance - (borrowed + interest)
+        if withdraw_balance < 0:
+            withdraw_balance = 0
+        result.append({
             'currency': b['asset'],
-            'balance': to_float(b['netAsset']),
-            'withdraw_balance': to_float(b['netAsset']),
-            'borrowed': to_float(b['borrowed']),
+            'balance': balance,
+            'withdraw_balance': withdraw_balance,
+            'borrowed': borrowed,
             'available_borrow': max_borrow,
-            'interest': to_float(b['interest']),
+            'interest': interest,
             'interest_rate': interest_rate,
             'unrealised_pnl': 0,
             'margin_balance': to_float(b['free']),
@@ -528,8 +535,9 @@ def _margin_balance_data(balances: list, max_borrow: float = None, interest_rate
             'init_margin': None,
             'available_margin': round(to_float(b['free']) - to_float(b['locked']), 8),
             'type': to_wallet_state_type(to_float(b['locked'])),
-        } for b in balances
-    ]
+        })
+    return result
+
 
 
 def _margin_max_borrow(data):
@@ -901,6 +909,16 @@ def calculate_ws_order_avg_price(raw_data: dict) -> Optional[float]:
         return to_float(raw_data['Z'])/to_float(raw_data['z'])
     else:
         return 0.0
+
+
+def load_funding_rates(funding_rates: list) -> dict:
+    result = dict()
+    for fr in funding_rates:
+        symbol = fr.get('symbol', '').lower()
+        result[symbol] = {
+            'symbol': symbol, 'funding_rate': to_float(fr.get('fundingRate'))
+        }
+    return result
 
 
 def load_order_type_and_exec(schema: str, order_type: str) -> dict:
