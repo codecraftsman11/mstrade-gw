@@ -31,14 +31,12 @@ class Margin1OrderTypeSerializer(OrderTypeSerializer):
         self.STORE_TYPE_AND_EXECUTION_MAP = {
             f'{OrderType.market}|{OrderExec.market}': 'Market',
             f'{OrderType.limit}|{OrderExec.limit}': 'Limit',
-            f'{OrderType.stop_loss}|{OrderExec.market}': 'Stop',
-            f'{OrderType.stop_loss}|{OrderExec.limit}': 'StopLimit',
-            f'{OrderType.take_profit}|{OrderExec.market}': 'MarketIfTouched',
-            f'{OrderType.take_profit}|{OrderExec.limit}': 'LimitIfTouched',
-            # We currently map TS-MARKET to 'Stop', but it can also work with 'MarketIfTouched'
-            f'{OrderType.trailing_stop}|{OrderExec.market}': 'Stop',
-            # We currently map TS-LIMIT to 'StopLimit', but it can also work with 'LimitIfTouched':
-            f'{OrderType.trailing_stop}|{OrderExec.limit}': 'StopLimit'
+            f'{OrderType.stop_loss}|{OrderExec.market}': 'Market',
+            f'{OrderType.stop_loss}|{OrderExec.limit}': 'Limit',
+            f'{OrderType.take_profit}|{OrderExec.market}': 'Market',
+            f'{OrderType.take_profit}|{OrderExec.limit}': 'Limit',
+            f'{OrderType.trailing_stop}|{OrderExec.market}': 'Market',
+            f'{OrderType.trailing_stop}|{OrderExec.limit}': 'Limit'
         }
 
 
@@ -56,11 +54,11 @@ class Margin2OrderTypeSerializer(OrderTypeSerializer):
         self.STORE_TYPE_AND_EXECUTION_MAP = {
             f'{OrderType.limit}|{OrderExec.limit}': 'LIMIT',
             f'{OrderType.market}|{OrderExec.market}': 'MARKET',
-            f'{OrderType.stop_loss}|{OrderExec.market}': 'STOP_LOSS',
-            f'{OrderType.stop_loss}|{OrderExec.limit}': 'STOP_LOSS_LIMIT',
-            f'{OrderType.take_profit}|{OrderExec.market}': 'TAKE_PROFIT',
-            f'{OrderType.take_profit}|{OrderExec.limit}': 'TAKE_PROFIT_LIMIT',
-            f'{OrderType.limit}|{OrderExec.market}': 'LIMIT_MAKER',
+            f'{OrderType.stop_loss}|{OrderExec.market}': 'MARKET',
+            f'{OrderType.stop_loss}|{OrderExec.limit}': 'LIMIT',
+            f'{OrderType.take_profit}|{OrderExec.market}': 'MARKET',
+            f'{OrderType.take_profit}|{OrderExec.limit}': 'LIMIT',
+            f'{OrderType.limit}|{OrderExec.market}': 'MARKET',
         }
 
 
@@ -78,11 +76,11 @@ class ExchangeOrderTypeSerializer(OrderTypeSerializer):
         self.STORE_TYPE_AND_EXECUTION_MAP = {
             f'{OrderType.limit}|{OrderExec.limit}': 'LIMIT',
             f'{OrderType.market}|{OrderExec.market}': 'MARKET',
-            f'{OrderType.stop_loss}|{OrderExec.market}': 'STOP_LOSS',
-            f'{OrderType.stop_loss}|{OrderExec.limit}': 'STOP_LOSS_LIMIT',
-            f'{OrderType.take_profit}|{OrderExec.market}': 'TAKE_PROFIT',
-            f'{OrderType.take_profit}|{OrderExec.limit}': 'TAKE_PROFIT_LIMIT',
-            f'{OrderType.limit}|{OrderExec.market}': 'LIMIT_MAKER',
+            f'{OrderType.stop_loss}|{OrderExec.market}': 'MARKET',
+            f'{OrderType.stop_loss}|{OrderExec.limit}': 'LIMIT',
+            f'{OrderType.take_profit}|{OrderExec.market}': 'MARKET',
+            f'{OrderType.take_profit}|{OrderExec.limit}': 'LIMIT',
+            f'{OrderType.limit}|{OrderExec.market}': 'MARKET',
         }
 
 
@@ -100,9 +98,9 @@ class FuturesOrderTypeSerializer(OrderTypeSerializer):
         self.STORE_TYPE_AND_EXECUTION_MAP = {
             f'{OrderType.limit}|{OrderExec.limit}': 'LIMIT',
             f'{OrderType.market}|{OrderExec.market}': 'MARKET',
-            f'{OrderType.stop_loss}|{OrderExec.limit}': 'STOP',
-            f'{OrderType.stop_loss}|{OrderExec.market}': 'STOP_MARKET',
-            f'{OrderType.take_profit}|{OrderExec.limit}': 'TAKE_PROFIT',
-            f'{OrderType.take_profit}|{OrderExec.market}': 'TAKE_PROFIT_MARKET',
-            f'{OrderType.trailing_stop}|{OrderExec.market}': 'TRAILING_STOP_MARKET',
+            f'{OrderType.stop_loss}|{OrderExec.limit}': 'LIMIT',
+            f'{OrderType.stop_loss}|{OrderExec.market}': 'MARKET',
+            f'{OrderType.take_profit}|{OrderExec.limit}': 'LIMIT',
+            f'{OrderType.take_profit}|{OrderExec.market}': 'MARKET',
+            f'{OrderType.trailing_stop}|{OrderExec.market}': 'MARKET',
         }
