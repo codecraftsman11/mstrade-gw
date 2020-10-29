@@ -8,6 +8,7 @@ from mst_gateway.exceptions import ConnectorError
 from mst_gateway.connector.api.types.order import OrderSchema
 from . import var
 from .var import BITMEX_ORDER_STATUS_MAP
+from ...types.binsize import BinSize
 
 
 def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
@@ -214,7 +215,7 @@ def load_quote_bin_data(raw_data: dict, state_data: dict, is_iso_datetime=False,
 
 
 def binsize2timedelta(binsize):
-    return timedelta(seconds={'1m': 60, '5m': 300, '1h': 3600, '1d': 86400}.get(binsize.lower(), 0))
+    return timedelta(seconds=BinSize(binsize).to_sec)
 
 
 def load_order_book_data(raw_data: dict, state_data: dict) -> dict:
