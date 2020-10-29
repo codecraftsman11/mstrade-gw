@@ -342,8 +342,8 @@ class BitmexRestApi(StockRestApi):
         ).get(symbol.lower(), dict())
         return [utils.load_trade_data(data, state_data) for data in trades]
 
-    def close_order(self, order_id: str, schema: str) -> bool:
-        order = self.get_order(order_id, schema)
+    def close_order(self, order_id: str, symbol: str, schema: str) -> bool:
+        order = self.get_order(order_id, symbol, schema)
         return self.close_all_orders(order['symbol'], schema)
 
     def close_all_orders(self, symbol: str, schema: str) -> bool:
