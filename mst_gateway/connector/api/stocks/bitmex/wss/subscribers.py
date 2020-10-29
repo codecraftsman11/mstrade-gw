@@ -24,14 +24,13 @@ class BitmexSubscriber(Subscriber):
         return True
 
     async def _unsubscribe(self, api: BitmexWssApi, symbol=None):
-        # TODO: test
-        # for subscription in self.subscriptions:
-        #     if not api.handler or api.handler.closed:
-        #         return True
-        #     try:
-        #         await api.handler.send(cmd_unsubscribe(subscription, symbol))
-        #     except (CancelledError, ConnectionClosedError) as e:
-        #         api.logger.warning(f"{self.__class__.__name__} - {e}")
+        for subscription in self.subscriptions:
+            if not api.handler or api.handler.closed:
+                return True
+            try:
+                await api.handler.send(cmd_unsubscribe(subscription, symbol))
+            except (CancelledError, ConnectionClosedError) as e:
+                api.logger.warning(f"{self.__class__.__name__} - {e}")
         return True
 
 
