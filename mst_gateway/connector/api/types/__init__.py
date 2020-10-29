@@ -11,6 +11,7 @@ from .order import (
     ORDER_ALGORITHM_TYPES,
     ORDER_STANDARD_TYPES,
     ORDER_POSITION_TYPES,
+    ORDER_PROXY_TYPES,
     BUY,
     SELL
 )

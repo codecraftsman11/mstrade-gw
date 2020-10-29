@@ -109,6 +109,11 @@ ORDER_POSITION_TYPES = (
     OrderType.position,
 )
 
+# Order types that should be proxied to an exchange
+ORDER_PROXY_TYPES = (
+    OrderType.limit,
+    OrderType.market
+)
 
 # Sides
 BUY = 0
