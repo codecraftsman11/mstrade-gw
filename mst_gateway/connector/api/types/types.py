@@ -8,16 +8,15 @@ from .serializers import (
 
 
 class OrderTypeFactory:
-    def __init__(self):
-        self._creators = {
-            OrderSchema.margin1: Margin1OrderTypeSerializer,
-            OrderSchema.margin2: Margin2OrderTypeSerializer,
-            OrderSchema.exchange: ExchangeOrderTypeSerializer,
-            OrderSchema.futures: FuturesOrderTypeSerializer
-        }
+    serializers = {
+        OrderSchema.margin1: Margin1OrderTypeSerializer,
+        OrderSchema.margin2: Margin2OrderTypeSerializer,
+        OrderSchema.exchange: ExchangeOrderTypeSerializer,
+        OrderSchema.futures: FuturesOrderTypeSerializer
+    }
 
     def get_serializer(self, schema):
-        serializer = self._creators.get(schema)
+        serializer = self.serializers.get(schema)
         if not serializer:
             raise ValueError(schema)
         return serializer()

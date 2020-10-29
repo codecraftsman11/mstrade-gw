@@ -96,8 +96,9 @@ def _quote_asset(symbol, base_asset, quote_currency, symbol_schema):
 
 
 def store_order_type(order_type: str, order_execution: str) -> str:
-    schema_mapping_object = api.SchemaOrderType(api.OrderSchema.margin1)
-    return schema_mapping_object.store_order_type(order_type, order_execution)
+    serializer = api.SchemaOrderType(api.OrderSchema.margin1)
+    return serializer.store_order_type(order_type, order_execution)
+
 
 def load_order_type(order_type: str) -> str:
     return var.ORDER_TYPE_READ_MAP.get(order_type)
