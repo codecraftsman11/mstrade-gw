@@ -134,9 +134,13 @@ class BinanceRestApi(StockRestApi):
                                                 **kwargs)
             if not quotes:
                 continue
-            kwargs['endTime'] = int(quotes[0].get('timestamp')-1)
-            quotes.extend(quote_bins)
-            quote_bins = quotes
+            if 'startTime' in kwargs:
+                kwargs['startTime'] = int(quotes[-1].get('timestamp') + 1)
+                quote_bins.extend(quotes)
+            else:
+                kwargs['endTime'] = int(quotes[0].get('timestamp') - 1)
+                quotes.extend(quote_bins)
+                quote_bins = quotes
         return quote_bins
 
     def create_order(self, symbol: str,
