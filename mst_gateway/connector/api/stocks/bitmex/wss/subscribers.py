@@ -1,4 +1,5 @@
 from __future__ import annotations
+import asyncio
 from typing import TYPE_CHECKING
 from asyncio import CancelledError
 from websockets.exceptions import ConnectionClosedError
@@ -8,7 +9,7 @@ from ....wss.subscriber import Subscriber
 if TYPE_CHECKING:
     from . import BitmexWssApi
 
-import asyncio
+
 class BitmexSubscriber(Subscriber):
     subscriptions = ()
 
