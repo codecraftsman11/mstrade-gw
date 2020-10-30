@@ -104,19 +104,6 @@ class BinanceWssApi(StockWssApi):
     def get_state(self, subscr_name: str, symbol: str = None) -> Optional[dict]:
         return None
 
-    # async def subscribe(self, subscr_channel: Optional[str], subscr_name: str, symbol: str = None,
-    #                     force: bool = False) -> bool:
-    #     # TODO: remove it
-    #     if subscr_name == 'symbol' and symbol in ('*', None):
-    #         symbol = 'btcusdt'
-    #     return await super().subscribe(subscr=subscr, subscr_name=subscr_name, symbol=symbol, force=force)
-    #
-    # async def unsubscribe(self, subscr_channel: Optional[str], subscr_name: str, symbol: str = None) -> bool:
-    #     # TODO: remove it
-    #     if subscr_name == 'symbol' and symbol in ('*', None):
-    #         symbol = 'btcusdt'
-    #     return await super().unsubscribe(subscr=subscr, subscr_name=subscr_name, symbol=symbol)
-
     def _lookup_table(self, message: Union[dict, list]) -> Optional[dict]:
         _message = {
             'table': None,
