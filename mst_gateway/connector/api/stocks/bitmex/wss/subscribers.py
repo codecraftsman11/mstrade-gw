@@ -8,7 +8,7 @@ from ....wss.subscriber import Subscriber
 if TYPE_CHECKING:
     from . import BitmexWssApi
 
-
+import asyncio
 class BitmexSubscriber(Subscriber):
     subscriptions = ()
 
@@ -17,6 +17,7 @@ class BitmexSubscriber(Subscriber):
             if not api.handler or api.handler.closed:
                 return False
             try:
+                await asyncio.sleep(0.1)
                 await api.handler.send(cmd_subscribe(subscription, symbol))
             except (CancelledError, ConnectionClosedError) as e:
                 api.logger.warning(f"{self.__class__.__name__} - {e}")
@@ -28,6 +29,7 @@ class BitmexSubscriber(Subscriber):
             if not api.handler or api.handler.closed:
                 return True
             try:
+                await asyncio.sleep(0.1)
                 await api.handler.send(cmd_unsubscribe(subscription, symbol))
             except (CancelledError, ConnectionClosedError) as e:
                 api.logger.warning(f"{self.__class__.__name__} - {e}")
