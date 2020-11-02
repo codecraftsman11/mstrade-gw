@@ -18,7 +18,6 @@ class BitmexSubscriber(Subscriber):
             if not api.handler or api.handler.closed:
                 return False
             try:
-                await asyncio.sleep(0.1)
                 await api.handler.send(cmd_subscribe(subscription, symbol))
             except (CancelledError, ConnectionClosedError) as e:
                 api.logger.warning(f"{self.__class__.__name__} - {e}")
@@ -30,7 +29,6 @@ class BitmexSubscriber(Subscriber):
             if not api.handler or api.handler.closed:
                 return True
             try:
-                await asyncio.sleep(0.1)
                 await api.handler.send(cmd_unsubscribe(subscription, symbol))
             except (CancelledError, ConnectionClosedError) as e:
                 api.logger.warning(f"{self.__class__.__name__} - {e}")
@@ -39,10 +37,22 @@ class BitmexSubscriber(Subscriber):
 
 class BitmexSymbolSubscriber(BitmexSubscriber):
     subscriptions = ("instrument", "quote")
+    is_close_connection = False
 
 
 class BitmexQuoteBinSubscriber(BitmexSubscriber):
     subscriptions = ("trade", "tradeBin1m")
+    is_close_connection = False
+
+
+class BitmexOrderBookSubscriber(BitmexSubscriber):
+    subscriptions = ("orderBookL2_25",)
+    is_close_connection = False
+
+
+class BitmexTradeSubscriber(BitmexSubscriber):
+    subscriptions = ("trade",)
+    is_close_connection = False
 
 
 class BitmexOrderSubscriber(BitmexSubscriber):
@@ -51,14 +61,6 @@ class BitmexOrderSubscriber(BitmexSubscriber):
 
 class BitmexPositionSubscriber(BitmexSubscriber):
     subscriptions = ("position",)
-
-
-class BitmexOrderBookSubscriber(BitmexSubscriber):
-    subscriptions = ("orderBookL2_25",)
-
-
-class BitmexTradeSubscriber(BitmexSubscriber):
-    subscriptions = ("trade",)
 
 
 class BitmexWalletSubscriber(BitmexSubscriber):

@@ -102,7 +102,7 @@ class StockWssApi(Connector):
             self._logger.error(f"There is no subscriber in {self} to unsubscribe from {subscr_name}")
             return False
         _result, symbol = self.unregister(subscr_channel, subscr_name, symbol)
-        if not self._subscriptions:
+        if not self._subscriptions and _subscriber.is_close_connection:
             await self.close()
         elif _result and self.is_unregistered(subscr_name, symbol):
             if not await _subscriber.unsubscribe(self, symbol):

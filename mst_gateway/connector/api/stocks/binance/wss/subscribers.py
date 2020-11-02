@@ -58,24 +58,29 @@ class BinanceSubscriber(Subscriber):
 class BinanceOrderBookSubscriber(BinanceSubscriber):
     subscriptions = ("depth",)
     general_subscribe_available = False
+    is_close_connection = False
 
 
 class BinanceTradeSubscriber(BinanceSubscriber):
     subscriptions = ("trade",)
     general_subscribe_available = False
+    is_close_connection = False
 
 
 class BinanceQuoteBinSubscriber(BinanceSubscriber):
     subscriptions = ("kline_1m",)
     general_subscribe_available = False
+    is_close_connection = False
 
 
 class BinanceSymbolSubscriber(BinanceSubscriber):
     subscriptions = ("!ticker@arr",)
+    is_close_connection = False
 
 
 class BinanceFuturesSymbolSubscriber(BinanceSubscriber):
     subscriptions = ("!ticker@arr", "!bookTicker")
+    is_close_connection = False
 
 
 class BinanceWalletSubscriber(BinanceSubscriber):
