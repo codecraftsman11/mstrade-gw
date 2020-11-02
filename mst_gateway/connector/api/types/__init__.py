@@ -14,3 +14,4 @@ from .order import (
     BUY,
     SELL
 )
+from .binsize import BinSize

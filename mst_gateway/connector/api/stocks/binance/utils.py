@@ -707,9 +707,10 @@ def load_quote_bin_ws_data(raw_data: dict, state_data: dict) -> dict:
       }
     }
     """
+    _timestamp = raw_data.get('k', {}).get('t')
     return {
-        'time': to_date(raw_data.get('E')),
-        'timestamp': raw_data.get('E'),
+        'time': to_date(_timestamp),
+        'timestamp': _timestamp,
         'open': to_float(raw_data.get('k', {}).get("o")),
         'close': to_float(raw_data.get('k', {}).get("c")),
         'high': to_float(raw_data.get('k', {}).get("h")),
