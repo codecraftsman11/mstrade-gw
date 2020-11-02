@@ -118,6 +118,7 @@ class BitmexRestApi(StockRestApi):
                                          symbol=utils.symbol2stock(symbol),
                                          binSize=binsize,
                                          reverse=True,
+                                         partial=True,
                                          start=offset,
                                          count=count,
                                          **self._api_kwargs(kwargs))
