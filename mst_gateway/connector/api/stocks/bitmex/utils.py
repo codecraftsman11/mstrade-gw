@@ -13,14 +13,15 @@ from ...types.binsize import BinSize
 
 def load_symbol_data(raw_data: dict, state_data: dict, is_iso_datetime=False) -> dict:
     symbol = raw_data.get('symbol')
-    symbol_time = to_iso_datetime(raw_data.get('timestamp')) if is_iso_datetime else to_date(raw_data.get('timestamp'))
+    symbol_datetime = to_date(raw_data.get('timestamp'))
+    symbol_time = to_iso_datetime(symbol_datetime) if is_iso_datetime else symbol_datetime
     mark_price = to_float(raw_data.get('markPrice'))
     face_price, _reversed = BitmexFinFactory.calc_face_price(symbol, mark_price)
     price = to_float(raw_data.get('lastPrice'))
     price24 = to_float(raw_data.get('prevPrice24h'))
     return {
         'time': symbol_time,
-        'timestamp': time2timestamp(to_date(raw_data.get('timestamp'))),
+        'timestamp': time2timestamp(symbol_datetime),
         'symbol': symbol,
         'price': price,
         'price24': price24,
@@ -220,7 +221,7 @@ def load_quote_bin_data(raw_data: dict, state_data: dict, is_iso_datetime=False,
     quote_time = to_iso_datetime(_timestamp) if is_iso_datetime else _timestamp
     return {
         'time': quote_time,
-        'timestamp': time2timestamp(quote_time),
+        'timestamp': time2timestamp(_timestamp),
         'symbol': raw_data.get('symbol'),
         'open': to_float(raw_data.get("open")),
         'close': to_float(raw_data.get("close")),

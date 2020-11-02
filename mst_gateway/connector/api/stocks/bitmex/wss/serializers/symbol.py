@@ -64,7 +64,7 @@ class BitmexSymbolSerializer(BitmexSerializer):
         if not self.is_item_valid(message, item):
             return None
         symbol = stock2symbol(item['symbol'])
-        state_data = self._wss_api.get_state_data(item.get('symbol'))
+        state_data = self._wss_api.get_state_data(symbol)
         if not state_data:
             return None
         state = self._get_state(symbol)

@@ -3,7 +3,7 @@ from mst_gateway.connector.api.stocks.binance.utils import stock2symbol
 
 
 def make_cmd(cmd, args, symbol=None):
-    if isinstance(symbol, list) and symbol:
+    if isinstance(symbol, list) and symbol not in ('*', None):
         params = [f'{stock2symbol(s)}@{convert_args(args)}' for s in symbol]
     elif symbol not in ('*', None):
         params = [f'{stock2symbol(symbol)}@{convert_args(args)}']
