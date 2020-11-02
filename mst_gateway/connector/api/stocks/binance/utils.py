@@ -529,7 +529,6 @@ def _margin_balance_data(balances: list, max_borrow: float = None, interest_rate
     return result
 
 
-
 def _margin_max_borrow(data):
     if isinstance(data, dict):
         return to_float(data.get('amount'))
@@ -707,9 +706,10 @@ def load_quote_bin_ws_data(raw_data: dict, state_data: dict) -> dict:
       }
     }
     """
+    _timestamp = raw_data.get('k', {}).get('t')
     return {
-        'time': to_iso_datetime(raw_data.get('E')),
-        'timestamp': raw_data.get('E'),
+        'time': to_iso_datetime(_timestamp),
+        'timestamp': _timestamp,
         'open': to_float(raw_data.get('k', {}).get("o")),
         'close': to_float(raw_data.get('k', {}).get("c")),
         'high': to_float(raw_data.get('k', {}).get("h")),

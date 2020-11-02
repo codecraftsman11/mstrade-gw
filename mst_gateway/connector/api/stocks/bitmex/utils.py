@@ -1,6 +1,6 @@
 import re
 from typing import Dict, Union, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
 from mst_gateway.connector.api.utils import time2timestamp
@@ -8,6 +8,7 @@ from mst_gateway.exceptions import ConnectorError
 from mst_gateway.connector.api.types.order import OrderSchema
 from . import var
 from .var import BITMEX_ORDER_STATUS_MAP
+from ...types.binsize import BinSize
 
 
 def load_symbol_data(raw_data: dict, state_data: dict, is_iso_datetime=False) -> dict:
@@ -212,11 +213,14 @@ def load_quote_data(raw_data: dict, state_data: dict, is_iso_datetime=False) -> 
     }
 
 
-def load_quote_bin_data(raw_data: dict, state_data: dict, is_iso_datetime=False) -> dict:
-    quote_time = to_iso_datetime(raw_data.get('timestamp')) if is_iso_datetime else to_date(raw_data.get('timestamp'))
+def load_quote_bin_data(raw_data: dict, state_data: dict, is_iso_datetime=False, binsize=None) -> dict:
+    if binsize and isinstance(raw_data['timestamp'], datetime):
+        raw_data['timestamp'] = raw_data.get('timestamp') - binsize2timedelta(binsize)
+    _timestamp = to_date(raw_data.get('timestamp'))
+    quote_time = to_iso_datetime(_timestamp) if is_iso_datetime else to_date(_timestamp)
     return {
         'time': quote_time,
-        'timestamp': time2timestamp(to_date(raw_data.get('timestamp'))),
+        'timestamp': time2timestamp(quote_time),
         'symbol': raw_data.get('symbol'),
         'open': to_float(raw_data.get("open")),
         'close': to_float(raw_data.get("close")),
@@ -226,6 +230,10 @@ def load_quote_bin_data(raw_data: dict, state_data: dict, is_iso_datetime=False)
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema')
     }
+
+
+def binsize2timedelta(binsize):
+    return timedelta(seconds=BinSize(binsize).to_sec)
 
 
 def load_order_book_data(raw_data: dict, state_data: dict) -> dict:
