@@ -214,10 +214,10 @@ def load_quote_data(raw_data: dict, state_data: dict, is_iso_datetime=False) -> 
 
 
 def load_quote_bin_data(raw_data: dict, state_data: dict, is_iso_datetime=False, binsize=None) -> dict:
-    if binsize and isinstance(raw_data['timestamp'], datetime):
-        raw_data['timestamp'] = raw_data.get('timestamp') - binsize2timedelta(binsize)
+    if binsize and isinstance(raw_data.get('timestamp'), datetime):
+        raw_data['timestamp'] = raw_data['timestamp'] - binsize2timedelta(binsize)
     _timestamp = to_date(raw_data.get('timestamp'))
-    quote_time = to_iso_datetime(_timestamp) if is_iso_datetime else to_date(_timestamp)
+    quote_time = to_iso_datetime(_timestamp) if is_iso_datetime else _timestamp
     return {
         'time': quote_time,
         'timestamp': time2timestamp(quote_time),
