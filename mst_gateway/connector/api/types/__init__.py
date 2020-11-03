@@ -16,3 +16,4 @@ from .order import (
     SELL
 )
 from .types import (OrderTypeFactory, SchemaOrderType)
+from .binsize import BinSize

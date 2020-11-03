@@ -104,10 +104,11 @@ class BitmexRestApi(StockRestApi):
                                          symbol=utils.symbol2stock(symbol),
                                          binSize=binsize,
                                          reverse=True,
+                                         partial=True,
                                          start=offset,
                                          count=count,
                                          **self._api_kwargs(kwargs))
-        return [utils.load_quote_bin_data(data, state_data) for data in quote_bins]
+        return [utils.load_quote_bin_data(data, state_data, binsize=binsize) for data in quote_bins]
 
     def list_quote_bins(self, symbol, schema, binsize='1m', count=100, **kwargs) -> list:
         kwargs['state_data'] = self.storage.get(

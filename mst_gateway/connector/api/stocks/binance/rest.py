@@ -116,7 +116,7 @@ class BinanceRestApi(StockRestApi):
 
     def list_quote_bins(self, symbol, schema, binsize='1m', count=100, **kwargs) -> list:
         pages = int((count - 1) / var.BINANCE_MAX_QUOTE_BINS_COUNT + 1)
-        rest = count % var.BINANCE_MAX_QUOTE_BINS_COUNT
+        rest = count % var.BINANCE_MAX_QUOTE_BINS_COUNT or var.BINANCE_MAX_QUOTE_BINS_COUNT
         quote_bins = []
         kwargs = self._api_kwargs(kwargs)
         kwargs['state_data'] = self.storage.get(
@@ -132,8 +132,15 @@ class BinanceRestApi(StockRestApi):
                                                 binsize=binsize,
                                                 count=items_count,
                                                 **kwargs)
-            kwargs['startTime'] = quotes[-1].get('timestamp')+1
-            quote_bins += quotes
+            if not quotes:
+                continue
+            if 'startTime' in kwargs:
+                kwargs['startTime'] = int(quotes[-1].get('timestamp') + 1)
+                quote_bins.extend(quotes)
+            else:
+                kwargs['endTime'] = int(quotes[0].get('timestamp') - 1)
+                quotes.extend(quote_bins)
+                quote_bins = quotes
         return quote_bins
 
     def create_order(self, order_id: str, symbol: str, schema: str,
