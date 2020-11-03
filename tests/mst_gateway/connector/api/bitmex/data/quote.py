@@ -1,4 +1,4 @@
-from mst_gateway.connector.api.stocks.bitmex.utils import to_date
+from mst_gateway.connector.api.stocks.bitmex.utils import to_iso_datetime
 from mst_gateway.connector.api.utils import time2timestamp
 import tests.config as cfg
 
@@ -23,8 +23,8 @@ TEST_QUOTE_BIN_MESSAGES = [
             'action': "partial",
             'data': [
                 {
-                    'time': to_date("2019-07-01T10:30:00.000Z"),
-                    'timestamp': time2timestamp(to_date("2019-07-01T10:30:00.000Z")),
+                    'time': to_iso_datetime("2019-07-01T10:30:00.000Z"),
+                    'timestamp': time2timestamp("2019-07-01T10:30:00.000Z"),
                     'symbol': "XBTUSD",
                     'volume': 7187,
                     'open': 11322.5,
@@ -43,8 +43,8 @@ TEST_QUOTE_BIN_MESSAGES = [
             'action': "partial",
             'data': [
                 {
-                    'time': to_date("2019-07-01T10:30:00.000Z"),
-                    'timestamp': time2timestamp(to_date("2019-07-01T10:30:00.000Z")),
+                    'time': to_iso_datetime("2019-07-01T10:30:00.000Z"),
+                    'timestamp': time2timestamp("2019-07-01T10:30:00.000Z"),
                     'symbol': "XBTUSD",
                     'volume': 7187,
                     'open': 11322.5,
@@ -66,10 +66,10 @@ TEST_QUOTE_BIN_MESSAGES = [
             'action': "update",
             'data': [
                 {
-                    'time': to_date("2019-07-01T11:58:09.589Z"),
-                    'timestamp': time2timestamp(to_date("2019-07-01T11:58:09.589Z")),
+                    'time': to_iso_datetime("2019-07-01T11:58:09.589Z"),
+                    'timestamp': time2timestamp("2019-07-01T11:58:09.589Z"),
                     'symbol': "XBTUSD",
-                    'volume': 10,
+                    'volume': 20,
                     'open': 11397.5,
                     'close': 11397.5,
                     'low': 11397.5,
@@ -86,8 +86,8 @@ TEST_QUOTE_BIN_MESSAGES = [
             'action': "update",
             'data': [
                 {
-                    'time': to_date("2019-07-01T11:58:09.589Z"),
-                    'timestamp': time2timestamp(to_date("2019-07-01T11:58:09.589Z")),
+                    'time': to_iso_datetime("2019-07-01T11:58:09.589Z"),
+                    'timestamp': time2timestamp("2019-07-01T11:58:09.589Z"),
                     'symbol': "XBTUSD",
                     'volume': 10,
                     'open': 11397.5,
@@ -109,8 +109,8 @@ TEST_QUOTE_BIN_MESSAGES = [
             'action': "update",
             'data': [
                 {
-                    'time': to_date("2019-07-01T11:59:00.000Z"),
-                    'timestamp': time2timestamp(to_date("2019-07-01T11:59:00.000Z")),
+                    'time': to_iso_datetime("2019-07-01T11:59:00.000Z"),
+                    'timestamp': time2timestamp("2019-07-01T11:59:00.000Z"),
                     'symbol': "XBTUSD",
                     'volume': 7187,
                     'open': 11322.5,
@@ -133,10 +133,10 @@ TEST_QUOTE_BIN_MESSAGES = [
             'action': "update",
             'data': [
                 {
-                    'time': to_date("2019-07-01T11:59:36.307Z"),
-                    'timestamp': time2timestamp(to_date("2019-07-01T11:59:36.307Z")),
+                    'time': to_iso_datetime("2019-07-01T11:59:36.307Z"),
+                    'timestamp': time2timestamp("2019-07-01T11:59:36.307Z"),
                     'symbol': "XBTUSD",
-                    'volume': 100,
+                    'volume': 200,
                     'open': 11329,
                     'close': 11329,
                     'low': 11329,
@@ -153,8 +153,8 @@ TEST_QUOTE_BIN_MESSAGES = [
             'action': "update",
             'data': [
                 {
-                    'time': to_date("2019-07-01T11:59:36.307Z"),
-                    'timestamp': time2timestamp(to_date("2019-07-01T11:59:36.307Z")),
+                    'time': to_iso_datetime("2019-07-01T11:59:36.307Z"),
+                    'timestamp': time2timestamp("2019-07-01T11:59:36.307Z"),
                     'symbol': "XBTUSD",
                     'volume': 100,
                     'open': 11329,
@@ -176,10 +176,10 @@ TEST_QUOTE_BIN_MESSAGES = [
             'action': "update",
             'data': [
                 {
-                    'time': to_date("2019-07-01T11:59:38.326Z"),
-                    'timestamp': time2timestamp(to_date("2019-07-01T11:59:38.326Z")),
+                    'time': to_iso_datetime("2019-07-01T11:59:38.326Z"),
+                    'timestamp': time2timestamp("2019-07-01T11:59:38.326Z"),
                     'symbol': "XBTUSD",
-                    'volume': 105,
+                    'volume': 210,
                     'open': 11329,
                     'close': 11339,
                     'low': 11329,
@@ -196,10 +196,10 @@ TEST_QUOTE_BIN_MESSAGES = [
             'action': "update",
             'data': [
                 {
-                    'time': to_date("2019-07-01T11:59:38.326Z"),
-                    'timestamp': time2timestamp(to_date("2019-07-01T11:59:38.326Z")),
+                    'time': to_iso_datetime("2019-07-01T11:59:38.326Z"),
+                    'timestamp': time2timestamp("2019-07-01T11:59:38.326Z"),
                     'symbol': "XBTUSD",
-                    'volume': 105,
+                    'volume': 110,
                     'open': 11329,
                     'close': 11339,
                     'low': 11329,
@@ -220,10 +220,10 @@ TEST_QUOTE_BIN_STATE = {
     'action': "partial",
     'data': [
         {
-            'time': to_date("2019-07-01T11:59:38.326Z"),
-            'timestamp': time2timestamp(to_date("2019-07-01T11:59:38.326Z")),
+            'time': to_iso_datetime("2019-07-01T11:59:38.326Z"),
+            'timestamp': time2timestamp("2019-07-01T11:59:38.326Z"),
             'symbol': "XBTUSD",
-            'volume': 105,
+            'volume': 210,
             'open': 11329,
             'close': 11339,
             'low': 11329,

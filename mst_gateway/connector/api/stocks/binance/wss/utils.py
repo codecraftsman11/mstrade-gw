@@ -1,21 +1,27 @@
 import json
-from typing import Union
 from mst_gateway.connector.api.stocks.binance.utils import stock2symbol
 
 
 def make_cmd(cmd, args, symbol=None):
-    if symbol is not None:
-        symbol = stock2symbol(symbol)
-        if args == '!ticker@arr':
-            args = 'ticker'
-        elif args == '!bookTicker':
-            args = 'bookTicker'
-        args = f'{symbol}@{args}'
+    if isinstance(symbol, list) and symbol not in ('*', None):
+        params = [f'{stock2symbol(s)}@{convert_args(args)}' for s in symbol]
+    elif symbol not in ('*', None):
+        params = [f'{stock2symbol(symbol)}@{convert_args(args)}']
+    else:
+        params = [args]
     return json.dumps({
         'method': cmd,
-        'params': [args],
+        'params': params,
         'id': 1
     })
+
+
+def convert_args(args):
+    if args == '!ticker@arr':
+        args = 'ticker'
+    elif args == '!bookTicker':
+        args = 'bookTicker'
+    return args
 
 
 def cmd_subscribe(subscr_name, symbol=None):
@@ -27,21 +33,16 @@ def cmd_unsubscribe(subscr_name, symbol=None):
 
 
 def is_ok(response: str) -> bool:
-    data = json.loads(response)
-    return bool(data.get('success'))
+    try:
+        data = json.loads(response)
+    except json.JSONDecodeError:
+        return False
+    return data.get('result', True) is None
 
 
 def is_auth_ok(response: str) -> bool:
-    data = json.loads(response)
-    return not bool(data.get('error'))
-
-
-def parse_message(message: str) -> dict:
     try:
-        return json.loads(message)
+        data = json.loads(response)
     except json.JSONDecodeError:
-        return {'raw': message}
-
-
-def dump_message(data: Union[dict, list]) -> str:
-    return json.dumps(data)
+        return False
+    return not bool(data.get('error'))

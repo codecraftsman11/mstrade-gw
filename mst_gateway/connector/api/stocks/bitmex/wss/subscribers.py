@@ -1,8 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from websockets import client
-from .utils import cmd_subscribe
-from .utils import cmd_unsubscribe
+from asyncio import CancelledError
+from websockets.exceptions import ConnectionClosedError
+from .utils import cmd_subscribe, cmd_unsubscribe
 from ....wss.subscriber import Subscriber
 
 if TYPE_CHECKING:
@@ -13,24 +13,45 @@ class BitmexSubscriber(Subscriber):
     subscriptions = ()
 
     async def _subscribe(self, api: BitmexWssApi, symbol=None):
-        wss: client = api.handler
-        for subscription in self.__class__.subscriptions:
-            await wss.send(cmd_subscribe(subscription, symbol))
+        for subscription in self.subscriptions:
+            if not api.handler or api.handler.closed:
+                return False
+            try:
+                await api.handler.send(cmd_subscribe(subscription, symbol))
+            except (CancelledError, ConnectionClosedError) as e:
+                api.logger.warning(f"{self.__class__.__name__} - {e}")
+                return False
         return True
 
     async def _unsubscribe(self, api: BitmexWssApi, symbol=None):
-        wss: client = api.handler
-        for subscription in self.__class__.subscriptions:
-            await wss.send(cmd_unsubscribe(subscription, symbol))
+        for subscription in self.subscriptions:
+            if not api.handler or api.handler.closed:
+                return True
+            try:
+                await api.handler.send(cmd_unsubscribe(subscription, symbol))
+            except (CancelledError, ConnectionClosedError) as e:
+                api.logger.warning(f"{self.__class__.__name__} - {e}")
         return True
 
 
 class BitmexSymbolSubscriber(BitmexSubscriber):
     subscriptions = ("instrument", "quote")
+    is_close_connection = False
 
 
 class BitmexQuoteBinSubscriber(BitmexSubscriber):
     subscriptions = ("trade", "tradeBin1m")
+    is_close_connection = False
+
+
+class BitmexOrderBookSubscriber(BitmexSubscriber):
+    subscriptions = ("orderBookL2_25",)
+    is_close_connection = False
+
+
+class BitmexTradeSubscriber(BitmexSubscriber):
+    subscriptions = ("trade",)
+    is_close_connection = False
 
 
 class BitmexOrderSubscriber(BitmexSubscriber):
@@ -39,14 +60,6 @@ class BitmexOrderSubscriber(BitmexSubscriber):
 
 class BitmexPositionSubscriber(BitmexSubscriber):
     subscriptions = ("position",)
-
-
-class BitmexOrderBookSubscriber(BitmexSubscriber):
-    subscriptions = ("orderBookL2_25",)
-
-
-class BitmexTradeSubscriber(BitmexSubscriber):
-    subscriptions = ("trade",)
 
 
 class BitmexWalletSubscriber(BitmexSubscriber):
