@@ -50,15 +50,14 @@ def load_symbols_currencies(currency: list) -> dict:
     return {c.get('symbol', '').lower(): to_float(c.get('lastPrice')) for c in currency}
 
 
-def load_funding_rates(funding_rates: list) -> dict:
-    result = dict()
-    for fr in funding_rates:
-        symbol = fr.get('symbol', '').lower()
-        if symbol not in result.keys():
-            result[symbol] = {
-                'symbol': symbol, 'funding_rate': to_float(fr.get('fundingRate'))
-            }
-    return result
+def load_funding_rates(funding_rates: list) -> list:
+    return [
+        {
+            'symbol': funding_rate['symbol'].lower(),
+            'funding_rate': to_float(funding_rate['fundingRate']),
+            'time': to_date(funding_rate['timestamp']),
+        } for funding_rate in funding_rates
+    ]
 
 
 def load_exchange_symbol_info(raw_data: list) -> list:

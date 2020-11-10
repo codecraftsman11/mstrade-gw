@@ -402,19 +402,20 @@ class BinanceRestApi(StockRestApi):
         fee_tier = utils.get_vip(self._binance_api(self._handler.futures_account_v2))
         return utils.load_commission(commissions, pair[0], fee_tier)
 
-    def get_funding_rate(self, schema: str) -> dict:
+    def list_funding_rates(self, schema: str) -> list:
         if schema == OrderSchema.futures:
             funding_rates = self._binance_api(
                 self._handler.futures_funding_rate,
                 startTime=int(
-                    datetime.now().replace(
-                        hour=0, minute=0, second=0, microsecond=0
-                    ).timestamp()*1000
+                    (datetime.now() - timedelta(hours=16, minutes=1)).timestamp() * 1000
                 ),
                 limit=1000
             )
             return utils.load_funding_rates(funding_rates)
-        return dict()
+        elif schema in (OrderSchema.exchange, OrderSchema.margin2):
+            return []
+        else:
+            raise ConnectorError(f"Invalid schema {schema}.")
 
     def _binance_api(self, method: callable, **kwargs):
         try:

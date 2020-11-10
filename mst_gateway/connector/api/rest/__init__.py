@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 from logging import Logger
 from ...base import Connector
 from mst_gateway.storage import StateStorage
@@ -175,7 +175,7 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def get_funding_rate(self, schema: str) -> dict:
+    def list_funding_rates(self, schema: str) -> list:
         raise NotImplementedError
 
     def __setstate__(self, state):

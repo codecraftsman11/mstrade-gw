@@ -916,11 +916,11 @@ def calculate_ws_order_avg_price(raw_data: dict) -> Optional[float]:
         return 0.0
 
 
-def load_funding_rates(funding_rates: list) -> dict:
-    result = dict()
-    for fr in funding_rates:
-        symbol = fr.get('symbol', '').lower()
-        result[symbol] = {
-            'symbol': symbol, 'funding_rate': to_float(fr.get('fundingRate'))
-        }
-    return result
+def load_funding_rates(funding_rates: list) -> list:
+    return [
+        {
+            'symbol': funding_rate['symbol'].lower(),
+            'funding_rate': to_float(funding_rate['fundingRate']),
+            'time': to_date(funding_rate['fundingTime']),
+        } for funding_rate in funding_rates
+    ]

@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from logging import Logger
 from typing import (
     Optional,
@@ -369,15 +369,15 @@ class BitmexRestApi(StockRestApi):
             return utils.load_commission(commissions, pair[0], symbol)
         raise ConnectorError(f"Invalid schema {schema}.")
 
-    def get_funding_rate(self, schema: str) -> dict:
-        funding_rates, _ = self._bitmex_api(
-            method=self._handler.Funding.Funding_get,
-            reverse=True,
-            startTime=datetime.now().replace(
-                hour=0, minute=0, second=0, microsecond=0
-            ),
-        )
-        return utils.load_funding_rates(funding_rates)
+    def list_funding_rates(self, schema: str) -> list:
+        if schema == OrderSchema.margin1:
+            funding_rates, _ = self._bitmex_api(
+                method=self._handler.Funding.Funding_get,
+                startTime=datetime.now() - timedelta(hours=16, minutes=1),
+                count=500,
+            )
+            return utils.load_funding_rates(funding_rates)
+        raise ConnectorError(f"Invalid schema {schema}.")
 
     def _bitmex_api(self, method: callable, **kwargs):
         headers = {}
