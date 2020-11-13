@@ -22,12 +22,13 @@ class Router:
         self._wss_api = wss_api
         self._routed_data = None
 
-    def get_data(self, message: str) -> Dict[str, Dict]:
+    def get_data(self, message: dict) -> dict:
         data = {}
         serializers = self._get_serializers(message)
-        for subscr_name in serializers:
-            data[subscr_name] = (serializers[subscr_name]
-                                 .data(self._routed_data[subscr_name]))
+        for subscr_name, subscr_serializer in serializers.items():
+            _data = subscr_serializer.data(self._routed_data[subscr_name])
+            if _data:
+                data[subscr_name] = _data
         return data
 
     def get_state(self, subscr_name: str, symbol: str = None) -> Optional[dict]:
@@ -37,7 +38,7 @@ class Router:
         return serializer.state(symbol)
 
     @abstractmethod
-    def _get_serializers(self, message: str) -> Dict[str, Serializer]:
+    def _get_serializers(self, message: dict) -> Dict[str, Serializer]:
         raise NotImplementedError
 
     @abstractmethod
