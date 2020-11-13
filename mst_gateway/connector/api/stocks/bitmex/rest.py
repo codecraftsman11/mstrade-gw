@@ -238,35 +238,32 @@ class BitmexRestApi(StockRestApi):
                      order_type: str = api.OrderType.market,
                      order_execution: str = api.OrderExec.market,
                      price: float = None, options: dict = None) -> dict:
-        """
-        Updates an order by 1) changing the clOrdID of the existing order,
-        2) deleting it, 3) creating a new one with the original clOrdID.
-
-        """
-        # Question: can we just leave the amend method here for price/volume changes
-        # and avoid deletion-creation altogether?
-        temp_order_id = str(datetime.now())
         params = dict(
             order_id=order_id,
             price=price,
             volume=volume,
         )
         params = utils.map_api_parameter_names(params, True)
-        params['clOrdID'] = temp_order_id
-
-        self._bitmex_api(self._handler.Order.Order_amend, **params)
-
-        result = self.cancel_order(temp_order_id, symbol, schema)
-        if not result['success']:
-            # Revert to the original clOrdID to be able to access the order later:
-            params['clOrdID'] = order_id
-            params['origClOrdID'] = temp_order_id
-            self._bitmex_api(self._handler.Order.Order_amend, **params)
-            return result
-
-        return self.create_order(order_id, symbol, schema, side,
-                                 volume, order_type, order_execution,
-                                 price, options=options)
+        try:
+            data, _ = self._bitmex_api(self._handler.Order.Order_amend, **params)
+        except ConnectorError as e:
+            return {
+                'action': 'update',
+                'success': False,
+                'error': e,
+                'message': f'Could not update the order. {order_id}',
+                'data': None
+            }
+        state_data = self.storage.get(
+            'symbol', self.name, OrderSchema.margin1
+        ).get(symbol.lower(), dict())
+        return {
+            'action': 'update',
+            'success': True,
+            'error': '',
+            'message': f'Successfully updated the order. {order_id}',
+            'data': utils.load_order_data(data, state_data)
+        }
 
     def cancel_all_orders(self, schema: str):
         data, _ = self._bitmex_api(self._handler.Order.Order_cancelAll)
