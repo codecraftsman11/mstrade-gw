@@ -59,3 +59,7 @@ class ClassWithAttributes:
     @classmethod
     def items(cls) -> dict:
         return {i[0]: i[1] for i in cls._attributes()}
+
+    @classmethod
+    def choices(cls):
+        return cls._attributes()

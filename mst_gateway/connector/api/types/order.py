@@ -70,6 +70,28 @@ class OrderExec(ClassWithAttributes):
     limit = 'limit'
 
 
+class OrderPositionPeriod(ClassWithAttributes):
+    M1 = 'M1'
+    M15 = 'M15'
+    M30 = 'M30'
+    H1 = 'H1'
+    H4 = 'H4'
+    D1 = 'D1'
+
+
+class OrderPositionTrendType(ClassWithAttributes):
+    direct = 'direct'
+    opposite = 'opposite'
+    flat = 'flat'
+
+
+class OrderPositionClosedBy(ClassWithAttributes):
+    take_profit = 'take_profit'
+    stop_loss = 'stop_loss'
+    market = 'market'
+    liquidation = 'liquidation'
+
+
 ORDER_STANDARD_TYPES = (
     OrderType.limit,
     OrderType.market,
