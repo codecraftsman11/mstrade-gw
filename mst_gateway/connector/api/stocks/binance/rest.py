@@ -209,7 +209,7 @@ class BinanceRestApi(StockRestApi):
         data = [self._binance_api(self._handler.cancel_order, **order) for order in open_orders]
         return bool(data)
 
-    def cancel_order(self, order_id: str, symbol: str, schema: str):
+    def cancel_order(self, order_id: str, symbol: str, schema: str) -> dict:
         params = dict(
             order_id=order_id,
             symbol=utils.symbol2stock(symbol)
