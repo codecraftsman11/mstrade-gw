@@ -98,7 +98,7 @@ def _quote_asset(symbol, base_asset, quote_currency, symbol_schema):
 
 
 def store_order_type(order_type: str, order_execution: str) -> str:
-    serializer = api.SchemaOrderType(api.OrderSchema.margin1)
+    serializer = api.OrderTypeConverter(api.OrderSchema.margin1)
     return serializer.store_order_type(order_type, order_execution)
 
 

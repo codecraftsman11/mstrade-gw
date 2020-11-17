@@ -140,7 +140,7 @@ def store_order_side(side: int) -> str:
 
 
 def store_order_type(order_type: str, order_execution: str, schema: str) -> str:
-    serializer = api.SchemaOrderType(schema)
+    serializer = api.OrderTypeConverter(schema)
     return serializer.store_order_type(order_type, order_execution)
 
 
