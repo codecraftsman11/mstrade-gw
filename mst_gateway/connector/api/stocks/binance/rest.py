@@ -168,23 +168,13 @@ class BinanceRestApi(StockRestApi):
                 raise ConnectorError(f"Invalid schema parameter: {schema}")
             data = self._binance_api(schema_handlers[schema], **params)
         except ConnectorError as e:
-            return {
-                'action': 'create',
-                'success': False,
-                'error': e,
-                'message': f'Could not create the order. {order_id}',
-                'data': None
-            }
-        state_data = self.storage.get(
-            'symbol', self.name, schema
-        ).get(symbol.lower(), dict())
-        return {
-            'action': 'create',
-            'success': True,
-            'error': '',
-            'message': f'Successfully created the order. {order_id}',
-            'data': utils.load_order_data(data, state_data)
-        }
+            return self.generate_return_dict(order_id, action='create',
+                                             success=False, error=e)
+
+        state_data = self.storage.get('symbol', self.name, schema).get(
+            symbol.lower(), dict())
+        data = utils.load_order_data(data, state_data)
+        return self.generate_return_dict(order_id, action='create', data=data)
 
     def update_order(self, order_id: str, symbol: str, schema: str,
                      side: int, volume: float,
@@ -224,21 +214,11 @@ class BinanceRestApi(StockRestApi):
             if schema not in schema_handlers:
                 raise ConnectorError(f"Invalid schema parameter: {schema}")
             data = self._binance_api(schema_handlers[schema], **params)
+            return self.generate_return_dict(order_id, action='delete',
+                                             data=data)
         except ConnectorError as e:
-            return {
-                'action': 'delete',
-                'success': False,
-                'error': e,
-                'message': f'Could not delete the order. {order_id}.',
-                'data': None
-            }
-        return {
-            'action': 'delete',
-            'success': True,
-            'error': '',
-            'message': f'Successfully deleted the order. {order_id}.',
-            'data': data
-        }
+            return self.generate_return_dict(order_id, action='delete',
+                                             success=False, error=e)
 
     def get_order(self, order_id: str, symbol: str, schema: str):
         params = dict(

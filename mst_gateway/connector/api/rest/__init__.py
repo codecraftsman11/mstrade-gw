@@ -116,6 +116,23 @@ class StockRestApi(Connector):
     def close_all_orders(self, symbol: str, schema: str) -> bool:
         raise NotImplementedError
 
+    @staticmethod
+    def generate_return_dict(order_id, action='create', success=True,
+                             data=None, error=None):
+        """
+        Generates a return message for create/update/delete adapter methods
+        based on state data values.
+
+        """
+        message = f"Order {order_id} {'was' if success else 'was NOT'} {action}d"
+        return {
+            'action': action,
+            'success': success,
+            'error': error,
+            'message': message,
+            'data': data
+        }
+
     def list_order_book(
         self,
         symbol: str,

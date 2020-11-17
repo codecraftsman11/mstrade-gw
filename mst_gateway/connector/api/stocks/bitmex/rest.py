@@ -211,27 +211,17 @@ class BitmexRestApi(StockRestApi):
             price=price
         )
         params = utils.generate_parameters_by_order_type(params, options)
-        state_data = self.storage.get(
-            'symbol', self.name, OrderSchema.margin1
-        ).get(symbol.lower(), dict())
 
         try:
             data, _ = self._bitmex_api(self._handler.Order.Order_new, **params)
         except ConnectorError as e:
-            return {
-                'action': 'create',
-                'success': False,
-                'error': e,
-                'message': f'Could not create the order. {order_id}',
-                'data': None
-            }
-        return {
-            'action': 'create',
-            'success': True,
-            'error': '',
-            'message': f'Successfully created the order. {order_id}',
-            'data': utils.load_order_data(data, state_data)
-        }
+            return self.generate_return_dict(order_id, action='create',
+                                             success=False, error=e)
+        state_data = self.storage.get(
+            'symbol', self.name, OrderSchema.margin1
+        ).get(symbol.lower(), dict())
+        data = utils.load_order_data(data, state_data)
+        return self.generate_return_dict(order_id, action='create', data=data)
 
     def update_order(self, order_id: str, symbol: str, schema: str,
                      side: int, volume: float,
@@ -247,23 +237,13 @@ class BitmexRestApi(StockRestApi):
         try:
             data, _ = self._bitmex_api(self._handler.Order.Order_amend, **params)
         except ConnectorError as e:
-            return {
-                'action': 'update',
-                'success': False,
-                'error': e,
-                'message': f'Could not update the order. {order_id}',
-                'data': None
-            }
+            return self.generate_return_dict(order_id, action='update',
+                                             success=False, error=e)
         state_data = self.storage.get(
             'symbol', self.name, OrderSchema.margin1
         ).get(symbol.lower(), dict())
-        return {
-            'action': 'update',
-            'success': True,
-            'error': '',
-            'message': f'Successfully updated the order. {order_id}',
-            'data': utils.load_order_data(data, state_data)
-        }
+        data = utils.load_order_data(data, state_data)
+        return self.generate_return_dict(order_id, action='update', data=data)
 
     def cancel_all_orders(self, schema: str):
         data, _ = self._bitmex_api(self._handler.Order.Order_cancelAll)
@@ -272,23 +252,13 @@ class BitmexRestApi(StockRestApi):
     def cancel_order(self, order_id: str, symbol: str, schema: str) -> dict:
         params = dict(order_id=order_id)
         params = utils.map_api_parameter_names(params)
-        data, _ = self._bitmex_api(self._handler.Order.Order_cancel,
-                                   **params)
+        data, _ = self._bitmex_api(self._handler.Order.Order_cancel, **params)
+
         if isinstance(data[0], dict) and data[0].get('error'):
-            return {
-                'action': 'delete',
-                'success': False,
-                'error': data[0].get('error'),
-                'message': f'Could not delete the order. {order_id}.',
-                'data': None
-            }
-        return {
-            'action': 'delete',
-            'success': True,
-            'error': '',
-            'message': f'Successfully deleted the order. {order_id}.',
-            'data': data
-        }
+            error = data[0].get('error')
+            return self.generate_return_dict(order_id, action='delete',
+                                             success=False, error=error)
+        return self.generate_return_dict(order_id, action='delete', data=data)
 
     def get_order(self, order_id: str, symbol: str, schema: str) -> Optional[dict]:
         params = dict(order_id=order_id)
