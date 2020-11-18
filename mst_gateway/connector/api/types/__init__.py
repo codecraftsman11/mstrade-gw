@@ -11,9 +11,11 @@ from .order import (
     ORDER_ALGORITHM_TYPES,
     ORDER_STANDARD_TYPES,
     ORDER_POSITION_TYPES,
-    ORDER_PROXY_TYPES,
     BUY,
     SELL
 )
-from .types import (OrderTypeFactory, OrderTypeConverter)
+from .converters import (
+    BitmexOrderTypeConverter,
+    BinanceOrderTypeConverter
+)
 from .binsize import BinSize

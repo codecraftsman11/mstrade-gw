@@ -79,7 +79,6 @@ class StockRestApi(Connector):
     def create_order(self, order_id: str, symbol: str, schema: str,
                      side: int, volume: float,
                      order_type: str = OrderType.market,
-                     order_execution: str = OrderExec.market,
                      price: float = None, options: dict = None) -> dict:
         raise NotImplementedError
 
@@ -87,7 +86,6 @@ class StockRestApi(Connector):
     def update_order(self, order_id: str, symbol: str, schema: str,
                      side: int, volume: float,
                      order_type: str = OrderType.market,
-                     order_execution: str = OrderExec.market,
                      price: float = None, options: dict = None) -> dict:
         raise NotImplementedError
 

@@ -199,13 +199,11 @@ class BitmexRestApi(StockRestApi):
     def create_order(self, order_id: str, symbol: str, schema: str,
                      side: int, volume: float,
                      order_type: str = api.OrderType.market,
-                     order_execution: str = api.OrderExec.market,
                      price: float = None, options: dict = None) -> dict:
         params = dict(
             order_id=order_id,
             symbol=utils.symbol2stock(symbol),
             order_type=order_type,
-            order_execution=order_execution,
             side=utils.store_order_side(side),
             volume=volume,
             price=price
@@ -226,7 +224,6 @@ class BitmexRestApi(StockRestApi):
     def update_order(self, order_id: str, symbol: str, schema: str,
                      side: int, volume: float,
                      order_type: str = api.OrderType.market,
-                     order_execution: str = api.OrderExec.market,
                      price: float = None, options: dict = None) -> dict:
         params = dict(
             order_id=order_id,

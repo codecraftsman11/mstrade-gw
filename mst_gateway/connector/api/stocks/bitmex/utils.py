@@ -97,14 +97,14 @@ def _quote_asset(symbol, base_asset, quote_currency, symbol_schema):
     return quote_asset, None
 
 
-def store_order_type(order_type: str, order_execution: str) -> str:
-    serializer = api.OrderTypeConverter(api.OrderSchema.margin1)
-    return serializer.store_order_type(order_type, order_execution)
+def store_order_type(order_type: str) -> str:
+    serializer = api.BitmexOrderTypeConverter
+    return serializer.store_type(order_type)
 
 
 def load_order_type_and_exec(schema: str, exchange_order_type: str) -> dict:
-    converter = api.OrderTypeConverter(schema)
-    return converter.load_order_type(exchange_order_type)
+    converter = api.BitmexOrderTypeConverter
+    return converter.load_type_and_exec(schema, exchange_order_type)
 
 
 def store_order_side(order_side: int) -> Optional[str]:
@@ -489,8 +489,7 @@ def generate_parameters_by_order_type(main_params: dict, options: dict) -> dict:
 
     """
     order_type = main_params.pop('order_type', None)
-    order_execution = main_params.pop('order_execution', None)
-    exchange_order_type = store_order_type(order_type, order_execution)
+    exchange_order_type = store_order_type(order_type)
     mapping_parameters = store_order_mapping_parameters(exchange_order_type)
     options = assign_custom_parameter_values(options)
     all_params = map_api_parameter_names(

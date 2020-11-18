@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from bravado.exception import HTTPError
 from binance.exceptions import BinanceAPIException, BinanceRequestException
 from mst_gateway.calculator import BinanceFinFactory
-from mst_gateway.connector.api.types import OrderSchema, OrderType, OrderExec
+from mst_gateway.connector.api.types import OrderSchema, OrderType
 from .lib import Client
 from . import utils, var
 from ...rest import StockRestApi
@@ -146,13 +146,11 @@ class BinanceRestApi(StockRestApi):
     def create_order(self, order_id: str, symbol: str, schema: str,
                      side: int, volume: float,
                      order_type: str = OrderType.market,
-                     order_execution: str = OrderExec.market,
                      price: float = None, options: dict = None) -> dict:
         params = dict(
             order_id=order_id,
             symbol=utils.symbol2stock(symbol),
             order_type=order_type,
-            order_execution=order_execution,
             side=utils.store_order_side(side),
             volume=volume,
             price=str(price)
@@ -179,7 +177,6 @@ class BinanceRestApi(StockRestApi):
     def update_order(self, order_id: str, symbol: str, schema: str,
                      side: int, volume: float,
                      order_type: str = OrderType.market,
-                     order_execution: str = OrderExec.market,
                      price: float = None, options: dict = None) -> dict:
         """
         Updates an order by deleting an existing order
@@ -190,8 +187,7 @@ class BinanceRestApi(StockRestApi):
         if not result['success']:
             return result
         return self.create_order(order_id, symbol, schema, side,
-                                 volume, order_type, order_execution,
-                                 price, options=options)
+                                 volume, order_type, price, options=options)
 
     def cancel_all_orders(self, schema: str):
         open_orders = [dict(symbol=order["symbol"], orderId=order["orderId"]) for order in

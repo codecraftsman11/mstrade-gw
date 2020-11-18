@@ -139,9 +139,9 @@ def store_order_side(side: int) -> str:
     return var.BINANCE_ORDER_SIDE_BUY
 
 
-def store_order_type(order_type: str, order_execution: str, schema: str) -> str:
-    converter = api.OrderTypeConverter(schema)
-    return converter.store_order_type(order_type, order_execution)
+def store_order_type(order_type: str) -> str:
+    converter = api.BinanceOrderTypeConverter
+    return converter.store_type(order_type)
 
 
 def load_order_book_side(order_side: str) -> int:
@@ -935,8 +935,8 @@ def load_funding_rates(funding_rates: list) -> dict:
 
 
 def load_order_type_and_exec(schema: str, exchange_order_type: str) -> dict:
-    converter = api.OrderTypeConverter(schema)
-    return converter.load_order_type(exchange_order_type)
+    converter = api.BinanceOrderTypeConverter
+    return converter.load_type_and_exec(schema, exchange_order_type)
 
 
 def get_mapping_for_schema(schema: str) -> Optional[dict]:
@@ -973,8 +973,7 @@ def generate_parameters_by_order_type(main_params: dict, options: dict, schema: 
 
     """
     order_type = main_params.pop('order_type', None)
-    order_execution = main_params.pop('order_execution', None)
-    exchange_order_type = store_order_type(order_type, order_execution, schema)
+    exchange_order_type = store_order_type(order_type)
     mapping_parameters = store_order_mapping_parameters(exchange_order_type, schema)
     options = assign_custom_parameter_values(options)
     all_params = map_api_parameter_names(
