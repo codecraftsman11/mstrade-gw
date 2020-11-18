@@ -102,8 +102,9 @@ def store_order_type(order_type: str, order_execution: str) -> str:
     return serializer.store_order_type(order_type, order_execution)
 
 
-def load_order_type(order_type: str) -> str:
-    return var.ORDER_TYPE_READ_MAP.get(order_type)
+def load_order_type_and_exec(schema: str, exchange_order_type: str) -> dict:
+    converter = api.OrderTypeConverter(schema)
+    return converter.load_order_type(exchange_order_type)
 
 
 def store_order_side(order_side: int) -> Optional[str]:
@@ -121,9 +122,8 @@ def load_order_side(order_side: str) -> int:
 
 
 def load_order_data(raw_data: dict, state_data: dict, skip_undef=False) -> dict:
-    order_type_and_exec = var.ORDER_TYPE_AND_EXECUTION_READ_MAP.get(
-        raw_data.get('ordType')
-    ) or {'type': None, 'execution': None}
+    order_type_and_exec = load_order_type_and_exec(state_data.get('schema'),
+                                                   raw_data.get('ordType'))
     order_time = to_date(raw_data.get('timestamp'))
     data = {
         'order_id': raw_data.get('clOrdID'),
@@ -152,9 +152,8 @@ def load_order_data(raw_data: dict, state_data: dict, skip_undef=False) -> dict:
 
 
 def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
-    order_type_and_exec = var.ORDER_TYPE_AND_EXECUTION_READ_MAP.get(
-        raw_data.get('ordType')
-    ) or {'type': None, 'execution': None}
+    order_type_and_exec = load_order_type_and_exec(state_data.get('schema'),
+                                                   raw_data.get('ordType'))
     return {
         'order_id': raw_data.get('clOrdID'),
         'exchange_order_id': raw_data.get('orderID'),

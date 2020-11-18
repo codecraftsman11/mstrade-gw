@@ -13,9 +13,9 @@ class BaseOrderTypeSerializer:
 
         """
         order_type = self.LOAD_TYPE_AND_EXECUTION_MAP.get(exchange_order_type)
-        if not order_type:
-            raise ValueError(exchange_order_type)
-        return order_type
+        if order_type:
+            return order_type
+        return {'type': None, 'execution': None}
 
     def store_order_type(self, order_type: str, order_execution: str) -> str:
         """

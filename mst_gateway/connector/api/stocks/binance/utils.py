@@ -140,8 +140,8 @@ def store_order_side(side: int) -> str:
 
 
 def store_order_type(order_type: str, order_execution: str, schema: str) -> str:
-    serializer = api.OrderTypeConverter(schema)
-    return serializer.store_order_type(order_type, order_execution)
+    converter = api.OrderTypeConverter(schema)
+    return converter.store_order_type(order_type, order_execution)
 
 
 def load_order_book_side(order_side: str) -> int:
@@ -934,11 +934,9 @@ def load_funding_rates(funding_rates: list) -> dict:
     return result
 
 
-def load_order_type_and_exec(schema: str, order_type: str) -> dict:
-    result = var.BINANCE_ORDER_TYPE_AND_EXECUTION_MAP.get(schema, dict()).get(order_type)
-    if result:
-        return result
-    return {'type': None, 'execution': None}
+def load_order_type_and_exec(schema: str, exchange_order_type: str) -> dict:
+    converter = api.OrderTypeConverter(schema)
+    return converter.load_order_type(exchange_order_type)
 
 
 def get_mapping_for_schema(schema: str) -> Optional[dict]:
