@@ -18,6 +18,7 @@ BITMEX_ORDER_STATUS_MAP = {
 
 PARAMETER_NAMES_MAP = {
     'order_id': 'clOrdID',
+    'exchange_order_id': 'orderID',
     'stop_price': 'stopPx',
     'volume': 'orderQty',
     'comments': 'text',
@@ -27,10 +28,6 @@ PARAMETER_NAMES_MAP = {
     'order_type': 'ordType',
     'is_passive': 'execInst',
     'iceberg_volume': 'displayQty'
-}
-
-UPDATED_PARAMETER_NAMES_MAP = {
-    'order_id': 'origClOrdID'
 }
 
 

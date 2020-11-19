@@ -254,9 +254,11 @@ def load_quote_bin_data(raw_data: list, state_data: dict) -> dict:
 
 
 def load_order_data(raw_data: dict, state_data: dict) -> dict:
-    order_type_and_exec = load_order_type_and_exec(state_data.get('schema'), raw_data.get('type').upper())
+    order_type_and_exec = load_order_type_and_exec(state_data.get('schema'),
+                                                   raw_data.get('type').upper())
     data = {
         'order_id': raw_data.get('clientOrderId'),
+        'exchange_order_id': raw_data.get('orderId'),
         'symbol': raw_data.get('symbol'),
         'volume': raw_data.get('origQty'),
         'stop': raw_data.get('stopPrice'),
@@ -1006,7 +1008,7 @@ def assign_custom_parameter_values(options: Optional[dict]) -> dict:
     return new_options
 
 
-def map_api_parameter_names(params: dict, update_param_names: bool = False) -> Optional[dict]:
+def map_api_parameter_names(params: dict) -> Optional[dict]:
     """
     Changes the name (key) of any parameters that have a different name in the Binance API.
     Example: 'ttl' becomes 'timeInForce'
@@ -1014,8 +1016,6 @@ def map_api_parameter_names(params: dict, update_param_names: bool = False) -> O
     """
     tmp_params = dict()
     mapped_names = deepcopy(var.PARAMETER_NAMES_MAP)
-    if update_param_names:
-        mapped_names.update(var.UPDATED_PARAMETER_NAMES_MAP)
     for param, value in params.items():
         if value is None:
             continue

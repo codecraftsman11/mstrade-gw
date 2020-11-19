@@ -143,12 +143,10 @@ class BinanceRestApi(StockRestApi):
                 quote_bins = quotes
         return quote_bins
 
-    def create_order(self, order_id: str, symbol: str, schema: str,
-                     side: int, volume: float,
+    def create_order(self, symbol: str, schema: str, side: int, volume: float,
                      order_type: str = OrderType.market,
                      price: float = None, options: dict = None) -> dict:
         params = dict(
-            order_id=order_id,
             symbol=utils.symbol2stock(symbol),
             order_type=order_type,
             side=utils.store_order_side(side),
@@ -166,28 +164,27 @@ class BinanceRestApi(StockRestApi):
                 raise ConnectorError(f"Invalid schema parameter: {schema}")
             data = self._binance_api(schema_handlers[schema], **params)
         except ConnectorError as e:
-            return self.generate_return_dict(order_id, action='create',
+            return self.generate_return_dict(action='create',
                                              success=False, error=e)
 
         state_data = self.storage.get('symbol', self.name, schema).get(
             symbol.lower(), dict())
         data = utils.load_order_data(data, state_data)
-        return self.generate_return_dict(order_id, action='create', data=data)
+        return self.generate_return_dict(action='create', data=data)
 
-    def update_order(self, order_id: str, symbol: str, schema: str,
-                     side: int, volume: float,
+    def update_order(self, exchange_order_id: str, symbol: str,
+                     schema: str, side: int, volume: float,
                      order_type: str = OrderType.market,
                      price: float = None, options: dict = None) -> dict:
         """
-        Updates an order by deleting an existing order
-        and creating a new one with the same ClientOrderId.
+        Updates an order by deleting an existing order and creating a new one.
 
         """
-        result = self.cancel_order(order_id, symbol, schema)
+        result = self.cancel_order(exchange_order_id, symbol, schema)
         if not result['success']:
             return result
-        return self.create_order(order_id, symbol, schema, side,
-                                 volume, order_type, price, options=options)
+        return self.create_order(symbol, schema, side, volume,
+                                 order_type, price, options=options)
 
     def cancel_all_orders(self, schema: str):
         open_orders = [dict(symbol=order["symbol"], orderId=order["orderId"]) for order in
@@ -195,12 +192,12 @@ class BinanceRestApi(StockRestApi):
         data = [self._binance_api(self._handler.cancel_order, **order) for order in open_orders]
         return bool(data)
 
-    def cancel_order(self, order_id: str, symbol: str, schema: str) -> dict:
+    def cancel_order(self, exchange_order_id: str, symbol: str, schema: str) -> dict:
         params = dict(
-            order_id=order_id,
+            exchange_order_id=int(exchange_order_id),
             symbol=utils.symbol2stock(symbol)
         )
-        params = utils.map_api_parameter_names(params, True)
+        params = utils.map_api_parameter_names(params)
         schema_handlers = {
             OrderSchema.exchange: self._handler.cancel_order,
             OrderSchema.margin2: self._handler.cancel_margin_order,
@@ -210,18 +207,17 @@ class BinanceRestApi(StockRestApi):
             if schema not in schema_handlers:
                 raise ConnectorError(f"Invalid schema parameter: {schema}")
             data = self._binance_api(schema_handlers[schema], **params)
-            return self.generate_return_dict(order_id, action='delete',
-                                             data=data)
+            return self.generate_return_dict(action='delete', data=data)
         except ConnectorError as e:
-            return self.generate_return_dict(order_id, action='delete',
+            return self.generate_return_dict(action='delete',
                                              success=False, error=e)
 
-    def get_order(self, order_id: str, symbol: str, schema: str):
+    def get_order(self, exchange_order_id: str, symbol: str, schema: str):
         params = dict(
-            order_id=order_id,
+            exchange_order_id=int(exchange_order_id),
             symbol=utils.symbol2stock(symbol)
         )
-        params = utils.map_api_parameter_names(params, True)
+        params = utils.map_api_parameter_names(params)
 
         schema_handlers = {
             OrderSchema.exchange: self._handler.get_order,

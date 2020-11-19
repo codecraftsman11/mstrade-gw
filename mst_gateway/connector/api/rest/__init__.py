@@ -76,25 +76,26 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def create_order(self, order_id: str, symbol: str, schema: str,
-                     side: int, volume: float,
+    def create_order(self, symbol: str, schema: str, side: int, volume: float,
                      order_type: str = OrderType.market,
                      price: float = None, options: dict = None) -> dict:
         raise NotImplementedError
 
     @abstractmethod
-    def update_order(self, order_id: str, symbol: str, schema: str,
-                     side: int, volume: float,
+    def update_order(self, exchange_order_id: str, symbol: str,
+                     schema: str, side: int, volume: float,
                      order_type: str = OrderType.market,
                      price: float = None, options: dict = None) -> dict:
         raise NotImplementedError
 
     @abstractmethod
-    def cancel_order(self, order_id: str, symbol: str, schema: str) -> dict:
+    def cancel_order(self, exchange_order_id: str, symbol: str,
+                     schema: str) -> dict:
         raise NotImplementedError
 
     @abstractmethod
-    def get_order(self, order_id: str, symbol: str, schema: str) -> Optional[dict]:
+    def get_order(self, exchange_order_id: str, symbol: str,
+                  schema: str) -> Optional[dict]:
         raise NotImplementedError
 
     @abstractmethod
@@ -115,14 +116,14 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @staticmethod
-    def generate_return_dict(order_id, action='create', success=True,
+    def generate_return_dict(action='create', success=True,
                              data=None, error=None):
         """
         Generates a return message for create/update/delete adapter methods
         based on state data values.
 
         """
-        message = f"Order {order_id} {'was' if success else 'was NOT'} {action}d"
+        message = f"Order {'was' if success else 'was NOT'} {action}d"
         return {
             'action': action,
             'success': success,

@@ -32,9 +32,6 @@ PARAMETER_NAMES_MAP = {
     'ttl': 'timeInForce',
 }
 
-UPDATED_PARAMETER_NAMES_MAP = {
-    'order_id': 'origClientOrderId',
-}
 
 DEFAULT_PARAMETERS = [
     'newClientOrderId',
