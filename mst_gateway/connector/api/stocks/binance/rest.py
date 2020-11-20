@@ -402,9 +402,10 @@ class BinanceRestApi(StockRestApi):
         return utils.load_commissions(commissions)
 
     def get_vip_level(self, schema: str) -> str:
-        if schema == OrderSchema.futures:
+        try:
             return utils.get_vip(self._binance_api(self._handler.futures_account_v2))
-        return "0"
+        except ConnectorError:
+            return "0"
 
     def get_funding_rate(self, schema: str) -> dict:
         if schema == OrderSchema.futures:
