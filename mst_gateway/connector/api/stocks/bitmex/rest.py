@@ -367,12 +367,14 @@ class BitmexRestApi(StockRestApi):
             utils.load_total_wallet_summary(total_summary, total_balance, assets, fields)
         return total_summary
 
-    def get_order_commission(self, schema: str, pair: Union[list, tuple]) -> dict:
+    def list_order_commissions(self, schema: str) -> list:
         if schema == OrderSchema.margin1:
-            symbol = ''.join(pair)
             commissions, _ = self._bitmex_api(self._handler.User.User_getCommission)
-            return utils.load_commission(commissions, pair[0], symbol)
+            return utils.load_commissions(commissions)
         raise ConnectorError(f"Invalid schema {schema}.")
+
+    def get_vip_level(self, schema: str) -> str:
+        return '0'
 
     def get_funding_rate(self, schema: str) -> dict:
         funding_rates, _ = self._bitmex_api(
