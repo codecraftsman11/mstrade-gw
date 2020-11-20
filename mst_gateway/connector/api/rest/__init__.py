@@ -175,7 +175,7 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def get_vip_level(self) -> str:
+    def get_vip_level(self, schema: str) -> str:
         raise NotImplementedError
 
     @abstractmethod

@@ -368,8 +368,10 @@ class BitmexRestApi(StockRestApi):
             return utils.load_commissions(commissions)
         raise ConnectorError(f"Invalid schema {schema}.")
 
-    def get_vip_level(self) -> str:
-        return '0'
+    def get_vip_level(self, schema: str) -> str:
+        if schema == OrderSchema.margin1:
+            return '0'
+        raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_funding_rate(self, schema: str) -> dict:
         funding_rates, _ = self._bitmex_api(

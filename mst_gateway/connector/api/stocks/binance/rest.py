@@ -401,8 +401,10 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(f"Invalid schema {schema}.")
         return utils.load_commissions(commissions)
 
-    def get_vip_level(self) -> str:
-        return utils.get_vip(self._binance_api(self._handler.futures_account_v2))
+    def get_vip_level(self, schema: str) -> str:
+        if schema == OrderSchema.futures:
+            return utils.get_vip(self._binance_api(self._handler.futures_account_v2))
+        return "0"
 
     def get_funding_rate(self, schema: str) -> dict:
         if schema == OrderSchema.futures:
