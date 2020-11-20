@@ -12,6 +12,7 @@ from .lib import (
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector.api.types import OrderSchema
 from . import utils, var
+from .utils import binsize2timedelta
 from ...rest import StockRestApi
 from .... import api
 from .....exceptions import ConnectorError, RecoverableError
@@ -100,6 +101,10 @@ class BitmexRestApi(StockRestApi):
     def _list_quote_bins_page(self, symbol, schema, binsize='1m', count=100, offset=0,
                               **kwargs):
         state_data = kwargs.pop('state_data', dict())
+        if 'date_to' in kwargs:
+            kwargs['date_to'] += binsize2timedelta(binsize)
+        if 'date_from' in kwargs:
+            kwargs['date_from'] += binsize2timedelta(binsize)
         quote_bins, _ = self._bitmex_api(self._handler.Trade.Trade_getBucketed,
                                          symbol=utils.symbol2stock(symbol),
                                          binSize=binsize,
