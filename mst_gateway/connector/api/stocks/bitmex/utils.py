@@ -348,14 +348,15 @@ def load_currencies_as_dict(currencies: list):
     return {cur['symbol'].lower(): to_float(cur['price']) for cur in currencies}
 
 
-def load_commission(commissions: dict, currency: str, symbol: str) -> dict:
-    symbol_commission = commissions.pop(symbol.upper(), dict())
-    return dict(
-        currency=currency.lower(),
-        maker=to_float(symbol_commission.get('makerFee')),
-        taker=to_float(symbol_commission.get('takerFee')),
-        type=None
-    )
+def load_commissions(commissions: dict) -> list:
+    return [
+        {
+            'symbol': symbol.lower(),
+            'maker': to_float(commission['makerFee']),
+            'taker': to_float(commission['takerFee']),
+            'type': 'VIP0',
+        } for symbol, commission in commissions.items()
+    ]
 
 
 def to_xbt(value: int):

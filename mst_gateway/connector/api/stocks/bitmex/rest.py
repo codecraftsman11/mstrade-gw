@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 from logging import Logger
 from typing import (
     Optional,
@@ -12,6 +12,7 @@ from .lib import (
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector.api.types import OrderSchema
 from . import utils, var
+from .utils import binsize2timedelta
 from ...rest import StockRestApi
 from .... import api
 from .....exceptions import ConnectorError
@@ -114,6 +115,10 @@ class BitmexRestApi(StockRestApi):
     def _list_quote_bins_page(self, symbol, schema, binsize='1m', count=100, offset=0,
                               **kwargs):
         state_data = kwargs.pop('state_data', dict())
+        if 'date_to' in kwargs:
+            kwargs['date_to'] += binsize2timedelta(binsize)
+        if 'date_from' in kwargs:
+            kwargs['date_from'] += binsize2timedelta(binsize)
         quote_bins, _ = self._bitmex_api(self._handler.Trade.Trade_getBucketed,
                                          symbol=utils.symbol2stock(symbol),
                                          binSize=binsize,
@@ -362,22 +367,24 @@ class BitmexRestApi(StockRestApi):
             utils.load_total_wallet_summary(total_summary, total_balance, assets, fields)
         return total_summary
 
-    def get_order_commission(self, schema: str, pair: Union[list, tuple]) -> dict:
+    def list_order_commissions(self, schema: str) -> list:
         if schema == OrderSchema.margin1:
-            symbol = ''.join(pair)
             commissions, _ = self._bitmex_api(self._handler.User.User_getCommission)
-            return utils.load_commission(commissions, pair[0], symbol)
+            return utils.load_commissions(commissions)
         raise ConnectorError(f"Invalid schema {schema}.")
 
-    def list_funding_rates(self, schema: str) -> list:
-        if schema == OrderSchema.margin1:
-            funding_rates, _ = self._bitmex_api(
-                method=self._handler.Funding.Funding_get,
-                startTime=datetime.now() - timedelta(hours=16, minutes=1),
-                count=500,
-            )
-            return utils.load_funding_rates(funding_rates)
-        raise ConnectorError(f"Invalid schema {schema}.")
+    def get_vip_level(self, schema: str) -> str:
+        return '0'
+
+    def get_funding_rate(self, schema: str) -> dict:
+        funding_rates, _ = self._bitmex_api(
+            method=self._handler.Funding.Funding_get,
+            reverse=True,
+            startTime=datetime.now().replace(
+                hour=0, minute=0, second=0, microsecond=0
+            ),
+        )
+        return utils.load_funding_rates(funding_rates)
 
     def _bitmex_api(self, method: callable, **kwargs):
         headers = {}

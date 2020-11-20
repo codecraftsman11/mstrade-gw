@@ -634,21 +634,14 @@ def load_transaction_id(raw_data: dict) -> dict:
     return data
 
 
-def load_commission(commissions: dict, currency: str, fee_tier) -> dict:
-    commission = dict()
-    for _c in commissions:
-        if fee_tier == str(_c.get('level')):
-            commission = _c
-            break
-
-    maker = to_float(commission.get('makerCommission'))
-    taker = to_float(commission.get('takerCommission'))
-    return dict(
-        currency=currency.lower(),
-        maker=maker,
-        taker=taker,
-        type=f"VIP{fee_tier}"
-    )
+def load_commissions(commissions: dict) -> list:
+    return [
+        {
+            'maker': to_float(commission['makerCommission']),
+            'taker': to_float(commission['takerCommission']),
+            'type': f'VIP{commission["level"]}',
+        } for commission in commissions
+    ]
 
 
 def load_trade_ws_data(raw_data: dict, state_data: dict) -> dict:
