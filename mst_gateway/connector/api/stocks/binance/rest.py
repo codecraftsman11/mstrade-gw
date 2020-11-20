@@ -392,15 +392,20 @@ class BinanceRestApi(StockRestApi):
             utils.load_total_wallet_summary(total_summary, total_balance, assets, fields)
         return total_summary
 
-    def get_order_commission(self, schema: str, pair: Union[list, tuple]) -> dict:
+    def list_order_commissions(self, schema: str) -> list:
         if schema in (OrderSchema.exchange, OrderSchema.margin2):
             commissions = self._binance_api(self._handler.get_trade_level)
         elif schema == OrderSchema.futures:
             commissions = self._binance_api(self._handler.futures_trade_level)
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
-        fee_tier = utils.get_vip(self._binance_api(self._handler.futures_account_v2))
-        return utils.load_commission(commissions, pair[0], fee_tier)
+        return utils.load_commissions(commissions)
+
+    def get_vip_level(self, schema: str) -> str:
+        try:
+            return utils.get_vip(self._binance_api(self._handler.futures_account_v2))
+        except ConnectorError:
+            return "0"
 
     def get_funding_rate(self, schema: str) -> dict:
         if schema == OrderSchema.futures:
