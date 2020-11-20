@@ -276,11 +276,20 @@ def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
     return quote_bin
 
 
-def load_wallet_data(raw_data: dict) -> dict:
+def load_wallet_data(raw_data: dict, currencies: dict) -> dict:
+    balances = [load_wallet_detail_data(raw_data)]
+    summary = {}
+    total_balance = {OrderSchema.margin1: {}}
+    total_keys = ('balance', 'unrealised_pnl', 'margin_balance')
+    assets = ('btc', 'usd')
+    for asset in assets:
+        total_balance[OrderSchema.margin1][asset] = load_wallet_summary(
+            currencies, balances, asset, total_keys
+        )
+    load_total_wallet_summary(summary, total_balance, assets, total_keys)
     return {
-        'balances': [
-            load_wallet_detail_data(raw_data)
-        ]
+        'balances': balances,
+        **summary,
     }
 
 

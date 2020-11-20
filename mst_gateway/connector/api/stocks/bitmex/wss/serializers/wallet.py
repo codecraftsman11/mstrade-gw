@@ -19,7 +19,10 @@ class BitmexWalletSerializer(BitmexSerializer):
             if balance.get('currency', '').lower() == item.get('currency', '').lower():
                 self._check_balances_data(balance, item)
         try:
-            return load_wallet_data(item)
+            currencies = self._wss_api.storage.get(
+                'currency', self._wss_api.name, self._wss_api.schema
+            )
+            return load_wallet_data(item, currencies)
         except ConnectionError:
             return None
 
