@@ -531,10 +531,9 @@ def map_api_parameter_names(params: dict) -> Optional[dict]:
 
     """
     tmp_params = dict()
-    mapped_names = deepcopy(var.PARAMETER_NAMES_MAP)
     for param, value in params.items():
         if value is None:
             continue
-        _param = mapped_names.get(param) or param
+        _param = var.PARAMETER_NAMES_MAP.get(param) or param
         tmp_params[_param] = value
     return tmp_params
