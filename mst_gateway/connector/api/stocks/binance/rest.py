@@ -1,5 +1,4 @@
 from uuid import uuid4
-from typing import Union
 from logging import Logger
 from datetime import datetime, timedelta
 from bravado.exception import HTTPError
@@ -159,18 +158,13 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin2: self._handler.create_margin_order,
             OrderSchema.futures: self._handler.futures_create_order,
         }
-        try:
-            if schema not in schema_handlers:
-                raise ConnectorError(f"Invalid schema parameter: {schema}")
-            data = self._binance_api(schema_handlers[schema], **params)
-        except ConnectorError as e:
-            return self.generate_return_dict(action='create',
-                                             success=False, error=e)
+        if schema not in schema_handlers:
+            raise ConnectorError(f"Invalid schema parameter: {schema}")
 
+        data = self._binance_api(schema_handlers[schema], **params)
         state_data = self.storage.get('symbol', self.name, schema).get(
             symbol.lower(), dict())
-        data = utils.load_order_data(data, state_data)
-        return self.generate_return_dict(action='create', data=data)
+        return utils.load_order_data(data, state_data)
 
     def update_order(self, exchange_order_id: str, symbol: str,
                      schema: str, side: int, volume: float,
@@ -180,9 +174,7 @@ class BinanceRestApi(StockRestApi):
         Updates an order by deleting an existing order and creating a new one.
 
         """
-        result = self.cancel_order(exchange_order_id, symbol, schema)
-        if not result['success']:
-            return result
+        self.cancel_order(exchange_order_id, symbol, schema)
         return self.create_order(symbol, schema, side, volume,
                                  order_type, price, options=options)
 
@@ -203,14 +195,11 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin2: self._handler.cancel_margin_order,
             OrderSchema.futures: self._handler.futures_cancel_order,
         }
-        try:
-            if schema not in schema_handlers:
-                raise ConnectorError(f"Invalid schema parameter: {schema}")
-            data = self._binance_api(schema_handlers[schema], **params)
-            return self.generate_return_dict(action='delete', data=data)
-        except ConnectorError as e:
-            return self.generate_return_dict(action='delete',
-                                             success=False, error=e)
+        if schema not in schema_handlers:
+            raise ConnectorError(f"Invalid schema parameter: {schema}")
+
+        data = self._binance_api(schema_handlers[schema], **params)
+        return data
 
     def get_order(self, exchange_order_id: str, symbol: str, schema: str):
         params = dict(

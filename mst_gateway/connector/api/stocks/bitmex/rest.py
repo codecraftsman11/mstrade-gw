@@ -3,7 +3,6 @@ from datetime import datetime
 from logging import Logger
 from typing import (
     Optional,
-    Union,
 )
 from bravado.exception import HTTPError
 from .lib import (
@@ -213,16 +212,11 @@ class BitmexRestApi(StockRestApi):
         )
         params = utils.generate_parameters_by_order_type(params, options)
 
-        try:
-            data, _ = self._bitmex_api(self._handler.Order.Order_new, **params)
-        except ConnectorError as e:
-            return self.generate_return_dict(action='create',
-                                             success=False, error=e)
+        data, _ = self._bitmex_api(self._handler.Order.Order_new, **params)
         state_data = self.storage.get(
             'symbol', self.name, OrderSchema.margin1
         ).get(symbol.lower(), dict())
-        data = utils.load_order_data(data, state_data)
-        return self.generate_return_dict(action='create', data=data)
+        return utils.load_order_data(data, state_data)
 
     def update_order(self, exchange_order_id: str, symbol: str,
                      schema: str, side: int, volume: float,
@@ -232,9 +226,7 @@ class BitmexRestApi(StockRestApi):
         Updates an order by deleting an existing order and creating a new one.
 
         """
-        result = self.cancel_order(exchange_order_id, symbol, schema)
-        if not result['success']:
-            return result
+        self.cancel_order(exchange_order_id, symbol, schema)
         return self.create_order(symbol, schema, side, volume,
                                  order_type, price, options=options)
 
@@ -249,9 +241,8 @@ class BitmexRestApi(StockRestApi):
         data, _ = self._bitmex_api(self._handler.Order.Order_cancel, **params)
         if isinstance(data[0], dict) and data[0].get('error'):
             error = data[0].get('error')
-            return self.generate_return_dict(action='delete',
-                                             success=False, error=error)
-        return self.generate_return_dict(action='delete', data=data)
+            raise ConnectorError(error)
+        return data
 
     def get_order(self, exchange_order_id: str, symbol: str,
                   schema: str) -> Optional[dict]:
