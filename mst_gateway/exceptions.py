@@ -18,7 +18,7 @@ class ConnectorError(GatewayError):
     pass
 
 
-class RecoverableError(ConnectorError):
+class RecoverableError(GatewayError):
     """ Used for 429 and 5xx status codes. """
     pass
 
