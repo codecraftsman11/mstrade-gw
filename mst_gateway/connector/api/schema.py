@@ -83,7 +83,7 @@ ORDER_FIELDS = {
     'order_id': order_id_valid,
     'symbol': str,
     'value': int,
-    'stop': float,
+    'stop': float,    # trigger level for Stop and Take Profit orders
     'type': type_valid,
     'side': side_valid,
     'price': float,
