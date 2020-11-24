@@ -15,7 +15,6 @@ from .order import (
     SELL
 )
 from .converters import (
-    BitmexOrderTypeConverter,
-    BinanceOrderTypeConverter
+    BaseOrderTypeConverter
 )
 from .binsize import BinSize

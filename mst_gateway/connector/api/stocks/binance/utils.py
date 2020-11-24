@@ -1,6 +1,5 @@
 import hashlib
 import re
-from copy import deepcopy
 from datetime import datetime
 from typing import Union, Optional
 from mst_gateway.connector import api
@@ -8,6 +7,7 @@ from mst_gateway.calculator.binance import BinanceFinFactory
 from mst_gateway.connector.api.types.order import OrderSchema
 from .....exceptions import ConnectorError
 from . import var
+from .converter import BinanceOrderTypeConverter
 
 
 def _face_price(symbol, mark_price):
@@ -140,7 +140,7 @@ def store_order_side(side: int) -> str:
 
 
 def store_order_type(order_type: str) -> str:
-    converter = api.BinanceOrderTypeConverter
+    converter = BinanceOrderTypeConverter
     return converter.store_type(order_type)
 
 
@@ -930,7 +930,7 @@ def load_funding_rates(funding_rates: list) -> dict:
 
 
 def load_order_type_and_exec(schema: str, exchange_order_type: str) -> dict:
-    converter = api.BinanceOrderTypeConverter
+    converter = BinanceOrderTypeConverter
     return converter.load_type_and_exec(schema, exchange_order_type)
 
 

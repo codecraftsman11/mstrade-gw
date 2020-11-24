@@ -1,5 +1,4 @@
 import re
-from copy import deepcopy
 from typing import Dict, Union, Optional
 from datetime import datetime, timedelta
 from mst_gateway.calculator import BitmexFinFactory
@@ -9,6 +8,7 @@ from mst_gateway.exceptions import ConnectorError
 from mst_gateway.connector.api.types.order import OrderSchema
 from . import var
 from .var import BITMEX_ORDER_STATUS_MAP
+from .converter import BitmexOrderTypeConverter
 from ...types.binsize import BinSize
 
 
@@ -98,12 +98,12 @@ def _quote_asset(symbol, base_asset, quote_currency, symbol_schema):
 
 
 def store_order_type(order_type: str) -> str:
-    serializer = api.BitmexOrderTypeConverter
-    return serializer.store_type(order_type)
+    converter = BitmexOrderTypeConverter
+    return converter.store_type(order_type)
 
 
 def load_order_type_and_exec(schema: str, exchange_order_type: str) -> dict:
-    converter = api.BitmexOrderTypeConverter
+    converter = BitmexOrderTypeConverter
     return converter.load_type_and_exec(schema, exchange_order_type)
 
 
