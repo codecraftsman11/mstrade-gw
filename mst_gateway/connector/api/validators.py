@@ -10,10 +10,11 @@ def side_valid(value):
 
 
 def order_id_valid(value):
-    try:
-        return isinstance(value, str) and value
-    except Exception:
-        return False
+    return True
+
+
+def exchange_order_id_valid(value):
+    return value and (isinstance(value, int) or isinstance(value, str))
 
 
 def type_valid(value):

@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 from logging import Logger
 from ...base import Connector
 from mst_gateway.storage import StateStorage
@@ -7,6 +7,7 @@ from mst_gateway.calculator import FinFactory
 from ..errors import ERROR_OK
 from .. import (
     OrderType,
+    OrderExec,
     BUY,
     SELL
 )
@@ -75,38 +76,43 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def create_order(self, symbol: str,
-                     side: int,
-                     value: float = 1,
+    def create_order(self, symbol: str, schema: str, side: int, volume: float,
                      order_type: str = OrderType.market,
-                     price: float = None,
-                     order_id: str = None,
-                     options: dict = None) -> bool:
+                     price: float = None, options: dict = None) -> dict:
         raise NotImplementedError
 
     @abstractmethod
-    def cancel_order(self, order_id: str) -> bool:
+    def update_order(self, exchange_order_id: str, symbol: str,
+                     schema: str, side: int, volume: float,
+                     order_type: str = OrderType.market,
+                     price: float = None, options: dict = None) -> dict:
         raise NotImplementedError
 
     @abstractmethod
-    def get_order(self, order_id: str) -> Optional[dict]:
+    def cancel_order(self, exchange_order_id: str, symbol: str,
+                     schema: str) -> dict:
         raise NotImplementedError
 
     @abstractmethod
-    def list_orders(self, symbol: str, active_only: bool = True,
+    def get_order(self, exchange_order_id: str, symbol: str,
+                  schema: str) -> Optional[dict]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_orders(self, schema: str, symbol: str, active_only: bool = True,
                     count: int = None, offset: int = 0, options: dict = None) -> list:
         raise NotImplementedError
 
     @abstractmethod
-    def cancel_all_orders(self) -> bool:
+    def cancel_all_orders(self, schema: str) -> bool:
         raise NotImplementedError
 
     @abstractmethod
-    def close_order(self, order_id: str) -> bool:
+    def close_order(self, exchange_order_id: str, symbol: str, schema: str) -> bool:
         raise NotImplementedError
 
     @abstractmethod
-    def close_all_orders(self, symbol: str) -> bool:
+    def close_all_orders(self, symbol: str, schema: str) -> bool:
         raise NotImplementedError
 
     def list_order_book(
