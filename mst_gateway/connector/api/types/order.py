@@ -131,7 +131,6 @@ ORDER_POSITION_TYPES = (
     OrderType.position,
 )
 
-
 # Sides
 BUY = 0
 SELL = 1

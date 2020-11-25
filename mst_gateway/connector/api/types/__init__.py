@@ -17,4 +17,7 @@ from .order import (
     OrderPositionTrendType,
     OrderPositionClosedBy
 )
+from .converters import (
+    BaseOrderTypeConverter
+)
 from .binsize import BinSize
