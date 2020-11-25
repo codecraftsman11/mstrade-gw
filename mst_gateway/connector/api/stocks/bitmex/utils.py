@@ -8,6 +8,7 @@ from mst_gateway.exceptions import ConnectorError
 from mst_gateway.connector.api.types.order import OrderSchema
 from . import var
 from .var import BITMEX_ORDER_STATUS_MAP
+from .converter import BitmexOrderTypeConverter
 from ...types.binsize import BinSize
 
 
@@ -97,11 +98,13 @@ def _quote_asset(symbol, base_asset, quote_currency, symbol_schema):
 
 
 def store_order_type(order_type: str) -> str:
-    return var.ORDER_TYPE_WRITE_MAP.get(order_type)
+    converter = BitmexOrderTypeConverter
+    return converter.store_type(order_type)
 
 
-def load_order_type(order_type: str) -> str:
-    return var.ORDER_TYPE_READ_MAP.get(order_type)
+def load_order_type_and_exec(schema: str, exchange_order_type: str) -> dict:
+    converter = BitmexOrderTypeConverter
+    return converter.load_type_and_exec(schema, exchange_order_type)
 
 
 def store_order_side(order_side: int) -> Optional[str]:
@@ -119,14 +122,14 @@ def load_order_side(order_side: str) -> int:
 
 
 def load_order_data(raw_data: dict, state_data: dict, skip_undef=False) -> dict:
-    order_type_and_exec = var.ORDER_TYPE_AND_EXECUTION_READ_MAP.get(
-        raw_data.get('ordType')
-    ) or {'type': None, 'execution': None}
+    order_type_and_exec = load_order_type_and_exec(state_data.get('schema'),
+                                                   raw_data.get('ordType'))
     order_time = to_date(raw_data.get('timestamp'))
     data = {
         'order_id': raw_data.get('clOrdID'),
+        'exchange_order_id': raw_data.get('orderID'),
         'symbol': raw_data.get('symbol'),
-        'value': raw_data.get('orderQty'),
+        'volume': raw_data.get('orderQty'),
         'stop': raw_data.get('stopPx'),
         'side': raw_data.get('side'),
         'price': to_float(raw_data.get('price')),
@@ -149,9 +152,8 @@ def load_order_data(raw_data: dict, state_data: dict, skip_undef=False) -> dict:
 
 
 def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
-    order_type_and_exec = var.ORDER_TYPE_AND_EXECUTION_READ_MAP.get(
-        raw_data.get('ordType')
-    ) or {'type': None, 'execution': None}
+    order_type_and_exec = load_order_type_and_exec(state_data.get('schema'),
+                                                   raw_data.get('ordType'))
     return {
         'order_id': raw_data.get('clOrdID'),
         'exchange_order_id': raw_data.get('orderID'),
@@ -386,7 +388,7 @@ def to_date(token: Union[datetime, str]) -> Optional[datetime]:
         return token
     try:
         return datetime.strptime(token, api.DATETIME_FORMAT)
-    except ValueError:
+    except (ValueError, TypeError):
         return None
 
 
@@ -474,3 +476,73 @@ def slice_order_book(splitted_ob: Dict[int, list], depth: int, offset: int) -> D
             api.SELL: splitted_ob[api.SELL][:-offset]
         }
     return splitted_ob
+
+
+def store_order_mapping_parameters(exchange_order_type: str) -> list:
+    data = var.PARAMETERS_BY_ORDER_TYPE_MAP.get(exchange_order_type)
+    if data:
+        return data['params']
+    return var.PARAMETERS_BY_ORDER_TYPE_MAP['Limit']['params']
+
+
+def store_order_additional_parameters(exchange_order_type: str) -> dict:
+    data = var.PARAMETERS_BY_ORDER_TYPE_MAP.get(exchange_order_type)
+    if data:
+        return data['additional_params']
+    return var.PARAMETERS_BY_ORDER_TYPE_MAP['Limit']['additional_params']
+
+
+def generate_parameters_by_order_type(main_params: dict, options: dict) -> dict:
+    """
+    Fetches specific order parameters based on the order_type value and adds them
+    to the main parameters.
+
+    """
+    order_type = main_params.pop('order_type', None)
+    exchange_order_type = store_order_type(order_type)
+    mapping_parameters = store_order_mapping_parameters(exchange_order_type)
+    options = assign_custom_parameter_values(options)
+    all_params = map_api_parameter_names(
+        {'order_type': exchange_order_type, **main_params, **options}
+    )
+    new_params = dict()
+    for param_name in mapping_parameters:
+        value = all_params.get(param_name)
+        if value:
+            new_params[param_name] = value
+    new_params.update(
+        store_order_additional_parameters(exchange_order_type)
+    )
+    return new_params
+
+
+def assign_custom_parameter_values(options: Optional[dict]) -> dict:
+    """
+    Changes the value of certain parameters according to Binance's specification.
+
+    """
+    new_options = dict()
+    if options.get('comments'):
+        new_options['text'] = options['comments']
+    if options.get('ttl'):
+        new_options['timeInForce'] = 'GoodTillCancel'
+    if options.get('is_passive'):
+        new_options['execInst'] = 'ParticipateDoNotInitiate'
+    if options.get('is_iceberg'):
+        new_options['displayQty'] = options['iceberg_volume'] or 0
+    return new_options
+
+
+def map_api_parameter_names(params: dict) -> Optional[dict]:
+    """
+    Changes the name (key) of any parameters that have a different name in the Bitmex API.
+    Example: 'ttl' becomes 'timeInForce'
+
+    """
+    tmp_params = dict()
+    for param, value in params.items():
+        if value is None:
+            continue
+        _param = var.PARAMETER_NAMES_MAP.get(param) or param
+        tmp_params[_param] = value
+    return tmp_params

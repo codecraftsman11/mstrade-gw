@@ -11,7 +11,6 @@ from mst_gateway.logging import init_logger
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
 from mst_gateway.connector.api import schema
-from mst_gateway.utils import generate_order_id
 import tests.config as cfg
 from .data.storage import STORAGE_DATA
 
@@ -34,8 +33,8 @@ def _bitmex(_debug) -> BitmexRestApi:
                        state_storage=STORAGE_DATA) as bitmex:
         bitmex.open()
         yield bitmex
-        bitmex.cancel_all_orders()
-        bitmex.close_all_orders(symbol=cfg.BITMEX_SYMBOL)
+        bitmex.cancel_all_orders(cfg.BITMEX_SCHEMA)
+        bitmex.close_all_orders(symbol=cfg.BITMEX_SYMBOL, schema=cfg.BITMEX_SCHEMA)
         time.sleep(TEST_INTERVAL)
 
 
@@ -51,8 +50,8 @@ def _bitmex_keepalive_compress(_debug) -> BitmexRestApi:
                        state_storage=STORAGE_DATA) as bitmex:
         bitmex.open(keepalive=True, compress=True)
         yield bitmex
-        bitmex.cancel_all_orders()
-        bitmex.close_all_orders(symbol=cfg.BITMEX_SYMBOL)
+        bitmex.cancel_all_orders(cfg.BITMEX_SCHEMA)
+        bitmex.close_all_orders(symbol=cfg.BITMEX_SYMBOL, schema=cfg.BITMEX_SCHEMA)
 
 
 @pytest.fixture
@@ -67,8 +66,8 @@ def _bitmex_keepalive(_debug) -> BitmexRestApi:
                        state_storage=STORAGE_DATA) as bitmex:
         bitmex.open(keepalive=True)
         yield bitmex
-        bitmex.cancel_all_orders()
-        bitmex.close_all_orders(symbol=cfg.BITMEX_SYMBOL)
+        bitmex.cancel_all_orders(cfg.BITMEX_SCHEMA)
+        bitmex.close_all_orders(symbol=cfg.BITMEX_SYMBOL, schema=cfg.BITMEX_SCHEMA)
 
 
 @pytest.fixture
@@ -83,8 +82,8 @@ def _bitmex_compress(_debug) -> BitmexRestApi:
                        state_storage=STORAGE_DATA) as bitmex:
         bitmex.open(compress=True)
         yield bitmex
-        bitmex.cancel_all_orders()
-        bitmex.close_all_orders(symbol=cfg.BITMEX_SYMBOL)
+        bitmex.cancel_all_orders(cfg.BITMEX_SCHEMA)
+        bitmex.close_all_orders(symbol=cfg.BITMEX_SYMBOL, schema=cfg.BITMEX_SCHEMA)
 
 
 @pytest.fixture
@@ -153,114 +152,122 @@ class TestBitmexRestApi:
         assert res_data[-1]['time'] < TEST_TO_DATE
 
     def test_bitmex_rest_list_quote_bins(self, _bitmex: BitmexRestApi):
-        quote_bins = _bitmex.list_quote_bins(symbol=cfg.BITMEX_SYMBOL,
-                                             schema=cfg.BITMEX_SCHEMA,
-                                             binsize='1m', count=1000, state_data=STORAGE_DATA)
+        quote_bins = self._list_quote_bins(_bitmex)
         assert quote_bins
         assert isinstance(quote_bins, list)
         assert len(quote_bins) == 1000
         assert schema.data_valid(quote_bins[0], schema.QUOTE_BIN_FIELDS)
 
     def test_bitmex_rest_list_quote_bins_range(self, _bitmex: BitmexRestApi):
-        res_data = _bitmex.list_quote_bins(
-            symbol=cfg.BITMEX_SYMBOL,
-            schema=cfg.BITMEX_SCHEMA,
-            binsize='1m',
-            count=1000,
+        res_data = self._list_quote_bins(_bitmex, params=dict(
             date_from=TEST_FROM_DATE,
-            date_to=TEST_RANGE_TO_DATE,
-            state_data=STORAGE_DATA
-        )
+            date_to=TEST_RANGE_TO_DATE
+        ))
         assert len(res_data) < 1000
         assert res_data[0]['time'] > TEST_FROM_DATE
         assert res_data[-1]['time'] < TEST_RANGE_TO_DATE
 
     def test_bitmex_rest_list_quote_bins_keepalive_compress(self, _bitmex_keepalive_compress: BitmexRestApi):
-        quote_bins = _bitmex_keepalive_compress.list_quote_bins(symbol=cfg.BITMEX_SYMBOL,
-                                                                schema=cfg.BITMEX_SCHEMA,
-                                                                binsize='1m',
-                                                                count=1000,
-                                                                state_data=STORAGE_DATA)
+        quote_bins = self._list_quote_bins(_bitmex_keepalive_compress)
         assert quote_bins
         assert isinstance(quote_bins, list)
         assert len(quote_bins) == 1000
         assert schema.data_valid(quote_bins[0], schema.QUOTE_BIN_FIELDS)
 
     def test_bitmex_rest_list_quote_bins_keepalive(self, _bitmex_keepalive: BitmexRestApi):
-        quote_bins = _bitmex_keepalive.list_quote_bins(symbol=cfg.BITMEX_SYMBOL,
-                                                       schema=cfg.BITMEX_SCHEMA,
-                                                       binsize='1m', count=1000,
-                                                       state_data=STORAGE_DATA)
+        quote_bins = self._list_quote_bins(_bitmex_keepalive)
         assert quote_bins
         assert isinstance(quote_bins, list)
         assert len(quote_bins) == 1000
         assert schema.data_valid(quote_bins[0], schema.QUOTE_BIN_FIELDS)
 
     def test_bitmex_rest_list_quote_bins_compress(self, _bitmex_compress: BitmexRestApi):
-        quote_bins = _bitmex_compress.list_quote_bins(symbol=cfg.BITMEX_SYMBOL,
-                                                      schema=cfg.BITMEX_SCHEMA,
-                                                      binsize='1m', count=1000,
-                                                      state_data=STORAGE_DATA)
+        quote_bins = self._list_quote_bins(_bitmex_compress)
         assert quote_bins
         assert isinstance(quote_bins, list)
         assert len(quote_bins) == 1000
         assert schema.data_valid(quote_bins[0], schema.QUOTE_BIN_FIELDS)
 
-    def test_bitmex_rest_create_order(self, _bitmex: BitmexRestApi):
-        assert _bitmex.create_order(symbol=cfg.BITMEX_SYMBOL,
-                                    side=api.BUY,
-                                    order_type=api.OrderType.market)
+    def test_bitmex_rest_create_market_order(self, _bitmex: BitmexRestApi):
+        assert self._create_market_order(_bitmex)
+
+    def test_bitmex_rest_create_limit_order(self, _bitmex: BitmexRestApi):
+        assert self._create_limit_order(_bitmex)
+        assert self._create_limit_order(_bitmex,
+                                        options=dict(
+                                            ttl='GTC', is_passive=False,
+                                            is_iceberg=True, iceberg_volume=3
+                                        ))
+        assert self._create_limit_order(_bitmex,
+                                        options=dict(
+                                            ttl='GTC', is_passive=False,
+                                            is_iceberg=False, comment="test"
+                                        ))
+
+    def test_bitmex_rest_update_order(self, _bitmex: BitmexRestApi):
+        data = self._create_limit_order(_bitmex)
+        exchange_order_id = data['exchange_order_id']
+        data = _bitmex.update_order(exchange_order_id=exchange_order_id,
+                                    symbol=cfg.BITMEX_SYMBOL,
+                                    side=api.BUY, schema=cfg.BITMEX_SCHEMA,
+                                    order_type=api.OrderType.limit,
+                                    price=1411, volume=3,
+                                    options=dict())
+        assert data
+        assert data['price'] == 1411
 
     def test_bitmex_rest_list_orders(self, _bitmex: BitmexRestApi):
-        o_1 = generate_order_id()
-        _bitmex.create_order(symbol=cfg.BITMEX_SYMBOL,
-                             side=api.BUY,
-                             order_id=o_1,
-                             order_type=api.OrderType.market)
-        o_2 = generate_order_id()
-        _bitmex.create_order(symbol=cfg.BITMEX_SYMBOL,
-                             side=api.BUY,
-                             order_id=o_2,
-                             order_type=api.OrderType.market)
-        l_1 = _bitmex.list_orders(symbol=cfg.BITMEX_SYMBOL,
-                                  active_only=False,
-                                  count=1, offset=1)
-        l_2 = _bitmex.list_orders(symbol=cfg.BITMEX_SYMBOL,
-                                  active_only=False,
-                                  count=1)
+        assert self._create_market_order(_bitmex)
+        assert self._create_market_order(_bitmex)
+
+        l_1 = self._list_orders(_bitmex, params=dict(active_only=False, count=1, offset=1))
+        l_2 = self._list_orders(_bitmex, params=dict(active_only=False, count=1))
         assert len(l_1) == 1
-        assert l_1[0]['order_id'] == o_1
         assert len(l_2) == 1
-        assert l_2[0]['order_id'] == o_2
 
     def test_bitmex_rest_get_order(self, _bitmex: BitmexRestApi, _debug: logging.Logger):
-        order_id = generate_order_id()
-        _bitmex.create_order(symbol=cfg.BITMEX_SYMBOL,
-                             side=api.BUY,
-                             order_type=api.OrderType.market,
-                             order_id=order_id)
-        order = _bitmex.get_order(order_id=order_id)
+        data = self._create_market_order(_bitmex)
+        exchange_order_id = data['exchange_order_id']
+        order = self._get_order(_bitmex, exchange_order_id)
         assert schema.data_valid(order, schema.ORDER_FIELDS)
         assert order['symbol'] == cfg.BITMEX_SYMBOL
 
     def test_bitmex_rest_close_order(self, _bitmex: BitmexRestApi):
-        order_id = generate_order_id()
-        _bitmex.create_order(symbol=cfg.BITMEX_SYMBOL,
-                             side=api.BUY,
-                             order_type=api.OrderType.market,
-                             order_id=order_id)
-        _bitmex.close_order(order_id)
-        assert not _bitmex.list_orders(symbol=cfg.BITMEX_SYMBOL)
+        data = self._create_market_order(_bitmex)
+        exchange_order_id = data['exchange_order_id']
+        _bitmex.close_order(exchange_order_id=exchange_order_id,
+                            symbol=cfg.BITMEX_SYMBOL,
+                            schema=cfg.BITMEX_SCHEMA)
+        assert not self._list_orders(_bitmex)
 
     def test_bitmex_rest_close_all_orders(self, _bitmex: BitmexRestApi):
-        order_id = generate_order_id()
-        _bitmex.create_order(symbol=cfg.BITMEX_SYMBOL,
-                             side=api.BUY,
-                             order_type=api.OrderType.market,
-                             order_id=order_id)
-        assert _bitmex.get_order(order_id=order_id)
-        _bitmex.close_all_orders(symbol=cfg.BITMEX_SYMBOL)
-        assert _bitmex.list_orders(symbol=cfg.BITMEX_SYMBOL) == []
+        data = self._create_market_order(_bitmex)
+        exchange_order_id = data['exchange_order_id']
+
+        assert self._get_order(_bitmex, exchange_order_id)
+        _bitmex.close_all_orders(symbol=cfg.BITMEX_SYMBOL,
+                                 schema=cfg.BITMEX_SCHEMA)
+        assert self._list_orders(_bitmex) == []
+
+    def test_bitmex_rest_cancel_order(self, _bitmex: BitmexRestApi):
+        data = self._create_limit_order(_bitmex)
+        exchange_order_id = data['exchange_order_id']
+        _bitmex.cancel_order(exchange_order_id=exchange_order_id,
+                             symbol=cfg.BITMEX_SYMBOL,
+                             schema=cfg.BITMEX_SCHEMA)
+        assert not self._list_orders(_bitmex)
+
+    def test_bitmex_rest_cancel_all_orders(self, _bitmex: BitmexRestApi):
+        data = self._create_limit_order(_bitmex)
+        exchange_order_id = data['exchange_order_id']
+        assert self._get_order(_bitmex, exchange_order_id)
+
+        data = self._create_limit_order(_bitmex)
+        exchange_order_id = data['exchange_order_id']
+        assert self._get_order(_bitmex, exchange_order_id)
+
+        _bitmex.cancel_all_orders(schema=cfg.BITMEX_SCHEMA)
+        assert self._list_orders(_bitmex) == []
 
     def test_bitmex_rest_list_order_book(self, _bitmex: BitmexRestApi):
         ob_items = _bitmex.list_order_book(symbol=cfg.BITMEX_SYMBOL, schema=cfg.BITMEX_SCHEMA)
@@ -352,3 +359,56 @@ class TestBitmexRestApi:
         assert BitmexFinFactory.calc_price('XRPH20', price) == price
         assert BitmexFinFactory.calc_price('XBTEUR', price) is None
         assert BitmexFinFactory.calc_price('XBTUSD', 0) is None
+
+    @staticmethod
+    def _create_limit_order(_bitmex: BitmexRestApi, options: dict = None):
+        if not options:
+            options = dict(ttl='GTC', is_passive=True, is_iceberg=False)
+        return _bitmex.create_order(
+            symbol=cfg.BITMEX_SYMBOL,
+            schema=cfg.BITMEX_SCHEMA,
+            order_type=api.OrderType.limit,
+            side=api.BUY,
+            price=1414,
+            volume=3,
+            options=options
+        )
+
+    @staticmethod
+    def _create_market_order(handler: BitmexRestApi):
+        return handler.create_order(
+            symbol=cfg.BITMEX_SYMBOL,
+            schema=cfg.BITMEX_SCHEMA,
+            order_type=api.OrderType.market,
+            side=api.BUY,
+            price=1414,
+            volume=3,
+            options=dict()
+        )
+
+    @staticmethod
+    def _get_order(handler: BitmexRestApi, exchange_order_id: str):
+        return handler.get_order(
+            exchange_order_id=exchange_order_id,
+            symbol=cfg.BITMEX_SYMBOL,
+            schema=cfg.BITMEX_SCHEMA
+        )
+
+    @staticmethod
+    def _list_orders(handler: BitmexRestApi, params: dict = None):
+        return handler.list_orders(
+            symbol=cfg.BITMEX_SYMBOL,
+            schema=cfg.BITMEX_SCHEMA,
+            **params if params else {}
+        )
+
+    @staticmethod
+    def _list_quote_bins(handler: BitmexRestApi, params: dict = None):
+        return handler.list_quote_bins(
+            symbol=cfg.BITMEX_SYMBOL,
+            schema=cfg.BITMEX_SCHEMA,
+            binsize='1m',
+            count=1000,
+            state_data=STORAGE_DATA,
+            **params if params else {}
+        )

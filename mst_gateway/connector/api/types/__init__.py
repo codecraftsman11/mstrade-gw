@@ -14,4 +14,7 @@ from .order import (
     BUY,
     SELL
 )
+from .converters import (
+    BaseOrderTypeConverter
+)
 from .binsize import BinSize
