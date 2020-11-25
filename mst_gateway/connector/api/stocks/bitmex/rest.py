@@ -14,7 +14,7 @@ from . import utils, var
 from .utils import binsize2timedelta
 from ...rest import StockRestApi
 from .... import api
-from .....exceptions import ConnectorError, RecoverableError
+from .....exceptions import ConnectorError, RecoverableError, NotFoundError
 from .....utils import j_dumps
 
 
@@ -241,6 +241,8 @@ class BitmexRestApi(StockRestApi):
         data, _ = self._bitmex_api(self._handler.Order.Order_cancel, **params)
         if isinstance(data[0], dict) and data[0].get('error'):
             error = data[0].get('error')
+            if data[0].get('ordStatus') in ('Filled', 'Canceled'):
+                raise NotFoundError(error)
             raise ConnectorError(error)
         return data
 

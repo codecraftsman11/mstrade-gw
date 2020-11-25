@@ -23,6 +23,11 @@ class RecoverableError(GatewayError):
     pass
 
 
+class NotFoundError(GatewayError):
+    """ Used for 404 status codes. """
+    pass
+
+
 class QueryError(ConnectorError):
     def __init__(self, msg: str, code: int = None):
         self._code = code
