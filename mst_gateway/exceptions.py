@@ -10,11 +10,21 @@ class ConfigError(GatewayError):
     pass
 
 
+class SignalInterrupt(GatewayError):
+    pass
+
+
 class ConnectorError(GatewayError):
     pass
 
 
-class SignalInterrupt(GatewayError):
+class RecoverableError(GatewayError):
+    """ Used for 429 and 5xx status codes. """
+    pass
+
+
+class NotFoundError(GatewayError):
+    """ Used for 404 status codes. """
     pass
 
 
