@@ -7,6 +7,7 @@ from mst_gateway.calculator.binance import BinanceFinFactory
 from mst_gateway.connector.api.types.order import OrderSchema
 from .....exceptions import ConnectorError
 from . import var
+from .converter import BinanceOrderTypeConverter
 
 
 def _face_price(symbol, mark_price):
@@ -132,6 +133,17 @@ def load_order_side(order_side: bool) -> int:
     return api.SELL
 
 
+def store_order_side(side: int) -> str:
+    if side:
+        return var.BINANCE_ORDER_SIDE_SELL
+    return var.BINANCE_ORDER_SIDE_BUY
+
+
+def store_order_type(order_type: str) -> str:
+    converter = BinanceOrderTypeConverter
+    return converter.store_type(order_type)
+
+
 def load_order_book_side(order_side: str) -> int:
     if order_side == 'bids':
         return api.BUY
@@ -242,13 +254,13 @@ def load_quote_bin_data(raw_data: list, state_data: dict) -> dict:
 
 
 def load_order_data(raw_data: dict, state_data: dict) -> dict:
-    order_type_and_exec = var.BINANCE_ORDER_TYPE_AND_EXECUTION_MAP.get(
-        raw_data.get('type', '').upper()
-    ) or {'type': None, 'execution': None}
+    order_type_and_exec = load_order_type_and_exec(state_data.get('schema'),
+                                                   raw_data.get('type').upper())
     data = {
-        'order_id': raw_data.get('orderId') or raw_data.get('clientOrderId'),
+        'order_id': raw_data.get('clientOrderId'),
+        'exchange_order_id': raw_data.get('orderId'),
         'symbol': raw_data.get('symbol'),
-        'origQty': raw_data.get('orderQty'),
+        'volume': raw_data.get('origQty'),
         'stop': raw_data.get('stopPrice'),
         'side': raw_data.get('side'),
         'price': to_float(raw_data.get('price')),
@@ -867,9 +879,7 @@ def load_ws_order_side(order_side: Optional[str]) -> Optional[int]:
 
 
 def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
-    order_type_and_exec = var.BINANCE_ORDER_TYPE_AND_EXECUTION_MAP.get(
-        raw_data.get('o', '').upper()
-    ) or {'type': None, 'execution': None}
+    order_type_and_exec = load_order_type_and_exec(state_data.get('schema'), raw_data.get('o').upper())
     return {
         'order_id': raw_data.get('c'),
         'exchange_order_id': raw_data.get('i'),
@@ -917,3 +927,90 @@ def load_funding_rates(funding_rates: list) -> list:
             'time': to_date(funding_rate['fundingTime']),
         } for funding_rate in funding_rates
     ]
+
+
+def load_order_type_and_exec(schema: str, exchange_order_type: str) -> dict:
+    converter = BinanceOrderTypeConverter
+    return converter.load_type_and_exec(schema, exchange_order_type)
+
+
+def get_mapping_for_schema(schema: str) -> Optional[dict]:
+    """
+    Retrieves order type parameter mapping data for the specified schema.
+
+    """
+    mapping_data = var.PARAMETERS_BY_ORDER_TYPE_MAP.get(schema)
+    if not mapping_data:
+        raise ConnectorError(f"Invalid schema parameter: {schema}")
+    return mapping_data
+
+
+def store_order_mapping_parameters(exchange_order_type: str, schema: str) -> list:
+    data_for_schema = get_mapping_for_schema(schema)
+    data = data_for_schema.get(exchange_order_type)
+    if data:
+        return data['params']
+    return data_for_schema['LIMIT']['params']
+
+
+def store_order_additional_parameters(exchange_order_type: str, schema: str) -> dict:
+    data_for_schema = get_mapping_for_schema(schema)
+    data = data_for_schema.get(exchange_order_type)
+    if data:
+        return data['additional_params']
+    return data_for_schema['LIMIT']['additional_params']
+
+
+def generate_parameters_by_order_type(main_params: dict, options: dict, schema: str) -> dict:
+    """
+    Fetches specific order parameters based on the order_type value and adds them
+    to the main parameters.
+
+    """
+    order_type = main_params.pop('order_type', None)
+    exchange_order_type = store_order_type(order_type)
+    mapping_parameters = store_order_mapping_parameters(exchange_order_type, schema)
+    options = assign_custom_parameter_values(options)
+    all_params = map_api_parameter_names(
+        {'order_type': exchange_order_type, **main_params, **options}
+    )
+    new_params = dict()
+    for param_name in mapping_parameters:
+        value = all_params.get(param_name)
+        if value:
+            new_params[param_name] = value
+    new_params.update(
+        store_order_additional_parameters(exchange_order_type, schema)
+    )
+    return new_params
+
+
+def assign_custom_parameter_values(options: Optional[dict]) -> dict:
+    """
+    Changes the value of certain parameters according to Binance's specification.
+
+    """
+    new_options = dict()
+    if 'ttl' in options:
+        new_options['timeInForce'] = 'GTC'
+    if options.get('is_passive'):
+        new_options['timeInForce'] = 'GTX'
+    if options.get('is_iceberg'):
+        new_options['icebergQty'] = options['iceberg_volume'] or 0
+        new_options['timeInForce'] = 'GTC'
+    return new_options
+
+
+def map_api_parameter_names(params: dict) -> Optional[dict]:
+    """
+    Changes the name (key) of any parameters that have a different name in the Binance API.
+    Example: 'ttl' becomes 'timeInForce'
+
+    """
+    tmp_params = dict()
+    for param, value in params.items():
+        if value is None:
+            continue
+        _param = var.PARAMETER_NAMES_MAP.get(param) or param
+        tmp_params[_param] = value
+    return tmp_params
