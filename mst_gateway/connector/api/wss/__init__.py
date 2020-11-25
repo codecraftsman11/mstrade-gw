@@ -233,7 +233,8 @@ class StockWssApi(Connector):
             await self.process_message(message, recv_callback)
 
     async def _restore_subscriptions(self):
-        for subscr_name, value in self._subscriptions.items():
+        subscriptions = {**self._subscriptions}
+        for subscr_name, value in subscriptions.items():
             if subscr_name in self.auth_subscribers:
                 if not await self.authenticate():
                     del self._subscriptions[subscr_name]
