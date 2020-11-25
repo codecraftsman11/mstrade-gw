@@ -7,7 +7,8 @@ from ..api.validators import (
     order_id_valid,
     type_valid,
     schema_valid,
-    execution_valid
+    execution_valid,
+    exchange_order_id_valid
 )
 
 
@@ -81,8 +82,9 @@ WS_SYMBOL_FIELDS = {
 
 ORDER_FIELDS = {
     'order_id': order_id_valid,
+    'exchange_order_id': exchange_order_id_valid,
     'symbol': str,
-    'value': int,
+    'volume': int,
     'stop': float,    # trigger level for Stop and Take Profit orders
     'type': type_valid,
     'side': side_valid,
