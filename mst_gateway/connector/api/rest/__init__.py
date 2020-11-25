@@ -108,7 +108,7 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def close_order(self, order_id: str, symbol: str, schema: str) -> bool:
+    def close_order(self, exchange_order_id: str, symbol: str, schema: str) -> bool:
         raise NotImplementedError
 
     @abstractmethod

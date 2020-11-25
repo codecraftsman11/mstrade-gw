@@ -254,7 +254,7 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(f"Invalid schema {schema}.")
         return [utils.load_trade_data(d, state_data) for d in data]
 
-    def close_order(self, order_id: str, symbol: str, schema: str):
+    def close_order(self, exchange_order_id: str, symbol: str, schema: str):
         raise NotImplementedError
 
     def close_all_orders(self, symbol: str, schema: str):
