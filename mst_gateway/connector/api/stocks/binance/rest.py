@@ -460,12 +460,15 @@ class BinanceRestApi(StockRestApi):
         except ConnectorError:
             return "0"
 
-    def list_funding_rates(self, schema: str) -> list:
+    def list_funding_rates(self, schema: str, period_multiplier: int) -> list:
+        period_h = 8
         if schema == OrderSchema.futures:
             funding_rates = self._binance_api(
                 self._handler.futures_funding_rate,
                 startTime=int(
-                    (datetime.now() - timedelta(hours=16, minutes=1)).timestamp() * 1000
+                    (
+                        datetime.now() - timedelta(hours=period_h*period_multiplier, minutes=1)
+                    ).timestamp() * 1000
                 ),
                 limit=1000
             )

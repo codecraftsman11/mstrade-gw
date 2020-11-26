@@ -185,7 +185,7 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def list_funding_rates(self, schema: str) -> list:
+    def list_funding_rates(self, schema: str, period_multiplier: int) -> list:
         raise NotImplementedError
 
     def __setstate__(self, state):
