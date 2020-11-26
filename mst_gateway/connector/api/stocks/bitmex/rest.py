@@ -377,12 +377,11 @@ class BitmexRestApi(StockRestApi):
     def get_vip_level(self, schema: str) -> str:
         return '0'
 
-    def list_funding_rates(self, schema: str, period_multiplier: int) -> list:
-        period_h = 8
+    def list_funding_rates(self, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
         if schema == OrderSchema.margin1:
             funding_rates, _ = self._bitmex_api(
                 method=self._handler.Funding.Funding_get,
-                startTime=datetime.now() - timedelta(hours=period_h*period_multiplier, minutes=1),
+                startTime=datetime.now() - timedelta(hours=period_hour*period_multiplier, minutes=1),
                 count=500,
             )
             return utils.load_funding_rates(funding_rates)
