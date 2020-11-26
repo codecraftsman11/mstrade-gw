@@ -1,6 +1,6 @@
 import re
 from typing import Dict, Union, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
 from mst_gateway.connector.api.utils import time2timestamp
@@ -391,7 +391,7 @@ def to_iso_datetime(token: Union[datetime, int, str]) -> Optional[str]:
     if isinstance(token, datetime):
         return token.strftime(api.DATETIME_OUT_FORMAT)
     if isinstance(token, int):
-        return datetime.fromtimestamp(token).strftime(api.DATETIME_OUT_FORMAT)
+        return datetime.fromtimestamp(token, tz=timezone.utc).strftime(api.DATETIME_OUT_FORMAT)
     return None
 
 

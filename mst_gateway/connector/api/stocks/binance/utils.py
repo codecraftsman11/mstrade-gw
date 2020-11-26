@@ -1,6 +1,6 @@
 import hashlib
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Union, Optional
 from mst_gateway.connector import api
 from mst_gateway.calculator.binance import BinanceFinFactory
@@ -836,7 +836,7 @@ def to_date(token: Union[datetime, int]) -> Optional[datetime]:
     if isinstance(token, datetime):
         return token
     try:
-        return datetime.fromtimestamp(token/1000)
+        return datetime.fromtimestamp(token / 1000, tz=timezone.utc)
     except (ValueError, TypeError):
         return None
 
@@ -848,7 +848,7 @@ def to_iso_datetime(token: Union[datetime, int, str]) -> Optional[str]:
         return token.strftime(api.DATETIME_OUT_FORMAT)
     if isinstance(token, int):
         try:
-            return datetime.fromtimestamp(token / 1000).strftime(api.DATETIME_OUT_FORMAT)
+            return datetime.fromtimestamp(token / 1000, tz=timezone.utc).strftime(api.DATETIME_OUT_FORMAT)
         except (ValueError, TypeError):
             return None
     return None
