@@ -48,7 +48,13 @@ class BinanceRestApi(StockRestApi):
 
     def get_symbol(self, symbol, schema) -> dict:
         if schema == OrderSchema.futures:
-            data = self._binance_api(self._handler.futures_ticker, symbol=symbol.upper())
+            data_ticker = self._binance_api(self._handler.futures_ticker, symbol=symbol.upper())
+            data_bid_ask_price = self._binance_api(self._handler.futures_orderbook_ticker, symbol=symbol.upper())
+            data = {
+                'bidPrice': data_bid_ask_price.get('bidPrice'),
+                'askPrice': data_bid_ask_price.get('askPrice'),
+                **data_ticker
+            }
         elif schema in (OrderSchema.margin2, OrderSchema.exchange):
             data = self._binance_api(self._handler.get_ticker, symbol=symbol.upper())
         else:
