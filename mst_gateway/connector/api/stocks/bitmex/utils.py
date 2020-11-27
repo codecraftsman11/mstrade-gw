@@ -6,6 +6,7 @@ from mst_gateway.connector import api
 from mst_gateway.connector.api.utils import time2timestamp
 from mst_gateway.exceptions import ConnectorError
 from mst_gateway.connector.api.types.order import OrderSchema
+from mst_gateway.utils import delta
 from . import var
 from .var import BITMEX_ORDER_STATUS_MAP
 from .converter import BitmexOrderTypeConverter
@@ -26,7 +27,7 @@ def load_symbol_data(raw_data: dict, state_data: dict, is_iso_datetime=False) ->
         'symbol': symbol,
         'price': price,
         'price24': price24,
-        'delta': symbol_delta(price, price24),
+        'delta': delta(price, price24),
         'mark_price': mark_price,
         'face_price': face_price,
         'bid_price': to_float(raw_data.get('bidPrice')),
@@ -365,12 +366,6 @@ def to_xbt(value: int):
     if isinstance(value, int):
         return round(value / 10 ** 8, 8)
     return value
-
-
-def symbol_delta(price, price24):
-    if price and price24:
-        return round((price - price24) / price24 * 100, 2)
-    return 100
 
 
 def to_date(token: Union[datetime, str]) -> Optional[datetime]:

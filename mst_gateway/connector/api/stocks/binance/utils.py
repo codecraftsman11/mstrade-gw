@@ -5,6 +5,7 @@ from typing import Union, Optional
 from mst_gateway.connector import api
 from mst_gateway.calculator.binance import BinanceFinFactory
 from mst_gateway.connector.api.types.order import OrderSchema
+from mst_gateway.utils import delta
 from .....exceptions import ConnectorError
 from . import var
 from .converter import BinanceOrderTypeConverter
@@ -27,7 +28,7 @@ def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
         'symbol': symbol,
         'price': price,
         'price24': price24,
-        'delta': symbol_delta(price, price24),
+        'delta': delta(price, price24),
         'mark_price': mark_price,
         'face_price': face_price,
         'bid_price': to_float(raw_data.get('bidPrice') or mark_price),
@@ -809,7 +810,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: dict) -> dict:
         'symbol': symbol,
         'price': price,
         'price24': price24,
-        'delta': symbol_delta(price, price24),
+        'delta': delta(price, price24),
         'mark_price': mark_price,
         'face_price': face_price,
         'bid_price': to_float(raw_data.get('b') or mark_price),
@@ -824,12 +825,6 @@ def load_symbol_ws_data(raw_data: dict, state_data: dict) -> dict:
         'symbol_schema': state_data.get('symbol_schema'),
         'created': to_iso_datetime(state_data.get('created')),
     }
-
-
-def symbol_delta(price, price24):
-    if price and price24:
-        return round((price - price24) / price24 * 100, 2)
-    return 100
 
 
 def to_date(token: Union[datetime, int]) -> Optional[datetime]:
