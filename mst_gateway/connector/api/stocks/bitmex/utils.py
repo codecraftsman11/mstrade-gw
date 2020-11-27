@@ -1,11 +1,12 @@
 import re
 from typing import Dict, Union, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
 from mst_gateway.connector.api.utils import time2timestamp
 from mst_gateway.exceptions import ConnectorError
 from mst_gateway.connector.api.types.order import OrderSchema
+from mst_gateway.utils import delta
 from . import var
 from .var import BITMEX_ORDER_STATUS_MAP
 from .converter import BitmexOrderTypeConverter
@@ -26,7 +27,7 @@ def load_symbol_data(raw_data: dict, state_data: dict, is_iso_datetime=False) ->
         'symbol': symbol,
         'price': price,
         'price24': price24,
-        'delta': symbol_delta(price, price24),
+        'delta': delta(price, price24),
         'mark_price': mark_price,
         'face_price': face_price,
         'bid_price': to_float(raw_data.get('bidPrice')),
@@ -51,15 +52,14 @@ def load_symbols_currencies(currency: list) -> dict:
     return {c.get('symbol', '').lower(): to_float(c.get('lastPrice')) for c in currency}
 
 
-def load_funding_rates(funding_rates: list) -> dict:
-    result = dict()
-    for fr in funding_rates:
-        symbol = fr.get('symbol', '').lower()
-        if symbol not in result.keys():
-            result[symbol] = {
-                'symbol': symbol, 'funding_rate': to_float(fr.get('fundingRate'))
-            }
-    return result
+def load_funding_rates(funding_rates: list) -> list:
+    return [
+        {
+            'symbol': funding_rate['symbol'].lower(),
+            'funding_rate': to_float(funding_rate['fundingRate']),
+            'time': to_date(funding_rate['timestamp']),
+        } for funding_rate in funding_rates
+    ]
 
 
 def load_exchange_symbol_info(raw_data: list) -> list:
@@ -368,12 +368,6 @@ def to_xbt(value: int):
     return value
 
 
-def symbol_delta(price, price24):
-    if price and price24:
-        return round((price - price24) / price24 * 100, 2)
-    return 100
-
-
 def to_date(token: Union[datetime, str]) -> Optional[datetime]:
     if isinstance(token, datetime):
         return token
@@ -392,7 +386,7 @@ def to_iso_datetime(token: Union[datetime, int, str]) -> Optional[str]:
     if isinstance(token, datetime):
         return token.strftime(api.DATETIME_OUT_FORMAT)
     if isinstance(token, int):
-        return datetime.fromtimestamp(token).strftime(api.DATETIME_OUT_FORMAT)
+        return datetime.fromtimestamp(token, tz=timezone.utc).strftime(api.DATETIME_OUT_FORMAT)
     return None
 
 

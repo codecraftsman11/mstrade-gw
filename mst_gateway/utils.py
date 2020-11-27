@@ -59,3 +59,12 @@ class ClassWithAttributes:
     @classmethod
     def items(cls) -> dict:
         return {i[0]: i[1] for i in cls._attributes()}
+
+
+def delta(cur_value, prev_value, percent=True):
+    if cur_value and prev_value:
+        result = (cur_value - prev_value) / prev_value
+        if percent:
+            result = round(result * 100, 2)
+        return result
+    return 100
