@@ -60,6 +60,10 @@ class ClassWithAttributes:
     def items(cls) -> dict:
         return {i[0]: i[1] for i in cls._attributes()}
 
+    @classmethod
+    def choices(cls):
+        return cls._attributes()
+
 
 def delta(cur_value, prev_value, percent=True):
     if cur_value and prev_value:
