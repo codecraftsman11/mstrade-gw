@@ -831,7 +831,7 @@ def to_date(token: Union[datetime, int]) -> Optional[datetime]:
     if isinstance(token, datetime):
         return token
     try:
-        return datetime.fromtimestamp(token / 1000, tz=timezone.utc).replace(microsecond=0)
+        return datetime.fromtimestamp(int(token / 1000), tz=timezone.utc)
     except (ValueError, TypeError):
         return None
 
@@ -843,7 +843,7 @@ def to_iso_datetime(token: Union[datetime, int, str]) -> Optional[str]:
         return token.strftime(api.DATETIME_OUT_FORMAT)
     if isinstance(token, int):
         try:
-            return datetime.fromtimestamp(token / 1000, tz=timezone.utc).strftime(api.DATETIME_OUT_FORMAT)
+            return datetime.fromtimestamp(int(token / 1000), tz=timezone.utc).strftime(api.DATETIME_OUT_FORMAT)
         except (ValueError, TypeError):
             return None
     return None
