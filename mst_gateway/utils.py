@@ -63,3 +63,12 @@ class ClassWithAttributes:
     @classmethod
     def choices(cls):
         return cls._attributes()
+
+
+def delta(cur_value, prev_value, percent=True):
+    if cur_value and prev_value:
+        result = (cur_value - prev_value) / prev_value
+        if percent:
+            result = round(result * 100, 2)
+        return result
+    return 100
