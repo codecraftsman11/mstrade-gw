@@ -15,7 +15,8 @@ from .order import (
     SELL,
     OrderPositionPeriod,
     OrderPositionTrendType,
-    OrderPositionClosedBy
+    OrderPositionClosedBy,
+    OrderStandardTypes
 )
 from .converters import (
     BaseOrderTypeConverter

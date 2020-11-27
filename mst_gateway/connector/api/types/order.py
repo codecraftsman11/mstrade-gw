@@ -92,6 +92,11 @@ class OrderPositionClosedBy(ClassWithAttributes):
     liquidation = 'liquidation'
 
 
+class OrderStandardTypes(ClassWithAttributes):
+    limit = OrderType.limit
+    market = OrderType.market
+
+
 ORDER_STANDARD_TYPES = (
     OrderType.limit,
     OrderType.market,
