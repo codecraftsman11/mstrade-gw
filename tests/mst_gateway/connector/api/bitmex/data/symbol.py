@@ -29,6 +29,7 @@ TEST_SYMBOL_MESSAGES = [
                         "USD"
                     ],
                     "tick": 0.5,
+                    "volume_tick": 1.0,
                     "system_symbol": "btcusd",
                     "schema": "margin1",
                     "symbol_schema": "margin1",
@@ -68,6 +69,7 @@ TEST_SYMBOL_MESSAGES = [
                         "USD"
                     ],
                     "tick": 0.5,
+                    "volume_tick": 1.0,
                     "system_symbol": "btcusd",
                     "schema": "margin1",
                     "symbol_schema": "margin1",
@@ -103,6 +105,7 @@ RESULT_SYMBOL_STATE = {
                 "USD"
             ],
             "tick": 0.5,
+            "volume_tick": 1.0,
             "system_symbol": "btcusd",
             "schema": "margin1",
             "symbol_schema": "margin1",
