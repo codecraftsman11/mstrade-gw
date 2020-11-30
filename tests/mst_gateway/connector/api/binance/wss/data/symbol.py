@@ -112,7 +112,7 @@ SPOT_SYMBOL_DETAIL_GET_DATA_RESULTS = [
                     "symbol_schema": cfg.BINANCE_SPOT_SCHEMA,
                     "system_symbol": "btcusd",
                     "tick": 0.01,
-                    "time": "2020-11-23 11:41:59.688000Z",
+                    "time": "2020-11-23 09:41:59.000000Z",
                     "timestamp": 1606124519688,
                     "volume24": 3.346,
                 }
@@ -298,7 +298,7 @@ SPOT_SYMBOL_GET_DATA_RESULTS = [
                 {
                     "ask_price": 30.8125,
                     "bid_price": 30.81,
-                    "created": "2020-11-24 15:53:54.087389Z",
+                    "created": "2020-11-24 15:53:54.000000Z",
                     "delta": 2.05,
                     "expiration": None,
                     "face_price": 30.0831,
@@ -312,14 +312,14 @@ SPOT_SYMBOL_GET_DATA_RESULTS = [
                     "symbol_schema": cfg.BINANCE_SPOT_SCHEMA,
                     "system_symbol": "btcusd",
                     "tick": 0.01,
-                    "time": "2020-11-23 11:41:38.337000Z",
+                    "time": "2020-11-23 09:41:38.000000Z",
                     "timestamp": 1606124498337,
                     "volume24": 8786.81,
                 },
                 {
                     "ask_price": 0.0,
                     "bid_price": 510.0,
-                    "created": "2020-11-24 15:53:54.087389Z",
+                    "created": "2020-11-24 15:53:54.000000Z",
                     "delta": -24.85,
                     "expiration": None,
                     "face_price": 1000.0,
@@ -333,7 +333,7 @@ SPOT_SYMBOL_GET_DATA_RESULTS = [
                     "symbol_schema": cfg.BINANCE_SPOT_SCHEMA,
                     "system_symbol": "btcusd",
                     "tick": 0.01,
-                    "time": "2020-11-23 11:41:38.763000Z",
+                    "time": "2020-11-23 09:41:38.000000Z",
                     "timestamp": 1606124498763,
                     "volume24": 3.346,
                 },
@@ -342,4 +342,114 @@ SPOT_SYMBOL_GET_DATA_RESULTS = [
             "table": "symbol",
         }
     },
+]
+
+FUTURES_SYMBOL_MESSAGE = [
+    {
+        "e": "24hrTicker",
+        "E": 1606745796712,
+        "s": "BTCUSDT",
+        "p": "840.00",
+        "P": "4.626",
+        "w": "18515.75",
+        "c": "19000.00",
+        "Q": "1.630",
+        "o": "18160.00",
+        "h": "80240.00",
+        "l": "18.00",
+        "v": "88743.677",
+        "q": "1643155365.64",
+        "O": 1606659360000,
+        "C": 1606745796709,
+        "F": 147461070,
+        "L": 147482123,
+        "n": 20799,
+    }
+]
+FUTURES_SYMBOL_LOOKUP_TABLE_RESULT = {
+    "action": "update",
+    "data": [
+        {
+            "C": 1606745796709,
+            "E": 1606745796712,
+            "F": 147461070,
+            "L": 147482123,
+            "O": 1606659360000,
+            "P": "4.626",
+            "Q": "1.630",
+            "c": "19000.00",
+            "e": "24hrTicker",
+            "h": "80240.00",
+            "l": "18.00",
+            "n": 20799,
+            "o": "18160.00",
+            "p": "840.00",
+            "q": "1643155365.64",
+            "s": "BTCUSDT",
+            "v": "88743.677",
+            "w": "18515.75",
+        }
+    ],
+    "table": "24hrTicker",
+}
+FUTURES_SYMBOL_SPLIT_MESSAGE_RESULTS = [
+    {
+        "action": "update",
+        "data": [
+            {
+                "C": 1606745796709,
+                "E": 1606745796712,
+                "F": 147461070,
+                "L": 147482123,
+                "O": 1606659360000,
+                "P": "4.626",
+                "Q": "1.630",
+                "c": "19000.00",
+                "e": "24hrTicker",
+                "h": "80240.00",
+                "l": "18.00",
+                "n": 20799,
+                "o": "18160.00",
+                "p": "840.00",
+                "q": "1643155365.64",
+                "s": "BTCUSDT",
+                "v": "88743.677",
+                "w": "18515.75",
+            }
+        ],
+        "table": "24hrTicker",
+    }
+]
+FUTURES_SYMBOL_GET_DATA_RESULTS = [
+    {
+        "symbol": {
+            "account": cfg.BINANCE_ACCOUNT_NAME,
+            "action": "update",
+            "data": [
+                {
+                    "ask_price": 18160.0,
+                    "bid_price": 18160.0,
+                    "created": "2020-09-29 11:24:02.687353Z",
+                    "delta": 2.62,
+                    "expiration": None,
+                    "face_price": 18160.0,
+                    "mark_price": 18160.0,
+                    "pair": ["BTC", "USDT"],
+                    "price": 19000.0,
+                    "price24": 18515.75,
+                    "reversed": False,
+                    "schema": cfg.BINANCE_FUTURES_SCHEMA,
+                    "symbol": "BTCUSDT",
+                    "symbol_schema": cfg.BINANCE_FUTURES_SCHEMA,
+                    "system_symbol": "btcusd",
+                    "tick": 0.01,
+                    "time": "2020-11-30 14:16:36.000000Z",
+                    "timestamp": 1606745796712,
+                    "volume24": 88743.677,
+                }
+            ],
+            "schema": cfg.BINANCE_FUTURES_SCHEMA,
+            "table": "symbol",
+        }
+    }
 ]

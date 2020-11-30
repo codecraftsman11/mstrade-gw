@@ -51,7 +51,7 @@ class BinanceWssApi(StockWssApi):
                          throttle_storage, schema, state_storage, register_state)
 
     def _is_test(self, url):
-        return url != self.BASE_URL
+        return url and url != self.BASE_URL
 
     async def _refresh_key(self):
         while True:
@@ -223,9 +223,6 @@ class BinanceFuturesWssApi(BinanceWssApi):
         super().__init__(name, account_name, url, auth, logger, options,
                          throttle_rate, throttle_storage, schema, state_storage, register_state)
         self._url = self._generate_url()
-
-    def _is_test(self, url):
-        return url != super().BASE_URL
 
     def _generate_url(self):
         if self.test:

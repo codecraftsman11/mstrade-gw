@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 @pytest.fixture
 async def _wss_api() -> BinanceWssApi:
     with BinanceWssApi(name=cfg.BINANCE_WSS_API_NAME, account_name=cfg.BINANCE_ACCOUNT_NAME,
-                       schema=cfg.BINANCE_SPOT_SCHEMA, auth=cfg.BINANCE_SPOT_AUTH_KEYS,
+                       schema=cfg.BINANCE_SPOT_SCHEMA, auth=cfg.BINANCE_AUTH_KEYS,
                        state_storage=STORAGE_DATA, logger=logger) as _wss_api:
         try:
             await _wss_api.open(is_auth=True)
@@ -70,8 +70,7 @@ class TestBinanceSpotWssApi:
         while True:
             try:
                 message = await api_handler.recv()
-                if json.loads(message) != {"id": 1, "result": None}:
-                    await wss_api.process_message(message, on_message)
+                if await wss_api.process_message(message, on_message):
                     break
             except ConnectionClosed:
                 api_handler = await wss_api.open(is_auth=True, restore=True)
@@ -103,7 +102,7 @@ class TestBinanceSpotWssApi:
         assert _wss_api.handler
 
     def test_auth(self, _wss_api: BinanceWssApi):
-        assert _wss_api.auth == cfg.BINANCE_SPOT_AUTH_KEYS
+        assert _wss_api.auth == cfg.BINANCE_AUTH_KEYS
 
     def test_auth_connect(self, _wss_api: BinanceWssApi):
         assert _wss_api.auth_connect
@@ -163,8 +162,8 @@ class TestBinanceSpotWssApi:
         ("ORDER_BOOK", "1", {"order_book": {"*": {"1"}}}),
         ("quote_bin", "1", {"quote_bin": {"*": {"1"}}}),
         ("QUOTE_BIN", "1", {"quote_bin": {"*": {"1"}}}),
-        ("SYMBOL", "1", {"symbol": {"*": {"1"}}}),
         ("symbol", "1", {"symbol": {"*": {"1"}}}),
+        ("SYMBOL", "1", {"symbol": {"*": {"1"}}}),
         ("trade", "1", {"trade": {"*": {"1"}}}),
         ("TRADE", "1", {"trade": {"*": {"1"}}}),
     ])
@@ -361,11 +360,8 @@ class TestBinanceSpotWssApi:
         assert _wss_api._split_message(SPOT_WALLET_LOOKUP_TABLE_RESULT) == SPOT_WALLET_SPLIT_MESSAGE_RESULTS
         SPOT_WALLET_LOOKUP_TABLE_RESULT["data"] = data
 
-    def test_get_data_order_book(self, _wss_api: BinanceWssApi):
-        for i, message in enumerate(SPOT_ORDER_BOOK_SPLIT_MESSAGE_RESULTS):
-            assert _wss_api.get_data(message) == SPOT_ORDER_BOOK_GET_DATA_RESULTS[i]
-
     @pytest.mark.parametrize("messages, results", [
+        (SPOT_ORDER_BOOK_SPLIT_MESSAGE_RESULTS, SPOT_ORDER_BOOK_GET_DATA_RESULTS),
         (SPOT_ORDER_SPLIT_MESSAGE_RESULTS, SPOT_ORDER_GET_DATA_RESULTS),
         (SPOT_QUOTE_BIN_SPLIT_MESSAGE_RESULTS, SPOT_QUOTE_BIN_GET_DATA_RESULTS),
         (SPOT_TRADE_SPLIT_MESSAGE_RESULTS, SPOT_TRADE_GET_DATA_RESULTS),

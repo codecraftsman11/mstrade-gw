@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timezone
 from tests import config as cfg
 
 SPOT_ORDER_MESSAGE = {
@@ -125,7 +125,7 @@ SPOT_ORDER_GET_DATA_RESULTS = [
             "data": [
                 {
                     "avg_price": 0.0,
-                    "created": "2020-11-23 16:40:05.663000Z",
+                    "created": "2020-11-23 14:40:05.000000Z",
                     "exchange_order_id": 410975,
                     "execution": "market",
                     "filled_volume": 0.0,
@@ -140,7 +140,7 @@ SPOT_ORDER_GET_DATA_RESULTS = [
                     "system_symbol": "btcusd",
                     "tick_price": 0.0,
                     "tick_volume": 0.0,
-                    "timestamp": datetime.datetime(2020, 11, 23, 16, 40, 5, 664000),
+                    "timestamp": datetime(2020, 11, 23, 14, 40, 5, tzinfo=timezone.utc),
                     "type": "market",
                     "volume": 1.0,
                 }
@@ -150,3 +150,133 @@ SPOT_ORDER_GET_DATA_RESULTS = [
         }
     }
 ]
+
+FUTURES_ORDER_MESSAGE = {
+    "e": "ORDER_TRADE_UPDATE",
+    "T": 1606737194206,
+    "E": 1606737194209,
+    "o": {
+        "s": "BTCUSDT",
+        "c": "9Wn6wm9ygPJqra0LplJiXm",
+        "S": "SELL",
+        "o": "MARKET",
+        "f": "GTC",
+        "q": "1",
+        "p": "0",
+        "ap": "18379.89000",
+        "sp": "0",
+        "x": "TRADE",
+        "X": "PARTIALLY_FILLED",
+        "i": 2589077294,
+        "l": "0.185",
+        "z": "0.185",
+        "L": "18379.89",
+        "n": "1.36011186",
+        "N": "USDT",
+        "T": 1606737194206,
+        "t": 147481365,
+        "b": "0",
+        "a": "0",
+        "m": False,
+        "R": False,
+        "wt": "CONTRACT_PRICE",
+        "ot": "MARKET",
+        "ps": "BOTH",
+        "cp": False,
+        "rp": "0",
+        "pP": False,
+        "si": 0,
+        "ss": 0,
+    },
+}
+FUTURES_ORDER_LOOKUP_TABLE_RESULT = {
+    "action": "update",
+    "data": [
+        {
+            "E": 1606737194209,
+            "T": 1606737194206,
+            "e": "ORDER_TRADE_UPDATE",
+            "o": {
+                "L": "18379.89",
+                "N": "USDT",
+                "R": False,
+                "S": "SELL",
+                "T": 1606737194206,
+                "X": "PARTIALLY_FILLED",
+                "a": "0",
+                "ap": "18379.89000",
+                "b": "0",
+                "c": "9Wn6wm9ygPJqra0LplJiXm",
+                "cp": False,
+                "f": "GTC",
+                "i": 2589077294,
+                "l": "0.185",
+                "m": False,
+                "n": "1.36011186",
+                "o": "MARKET",
+                "ot": "MARKET",
+                "p": "0",
+                "pP": False,
+                "ps": "BOTH",
+                "q": "1",
+                "rp": "0",
+                "s": "BTCUSDT",
+                "si": 0,
+                "sp": "0",
+                "ss": 0,
+                "t": 147481365,
+                "wt": "CONTRACT_PRICE",
+                "x": "TRADE",
+                "z": "0.185",
+            },
+        }
+    ],
+    "table": "ORDER_TRADE_UPDATE",
+}
+FUTURES_ORDER_SPLIT_MESSAGE_RESULTS = [
+    {
+        "action": "update",
+        "data": [
+            {
+                "E": 1606737194209,
+                "T": 1606737194206,
+                "e": "ORDER_TRADE_UPDATE",
+                "o": {
+                    "L": "18379.89",
+                    "N": "USDT",
+                    "R": False,
+                    "S": "SELL",
+                    "T": 1606737194206,
+                    "X": "PARTIALLY_FILLED",
+                    "a": "0",
+                    "ap": "18379.89000",
+                    "b": "0",
+                    "c": "9Wn6wm9ygPJqra0LplJiXm",
+                    "cp": False,
+                    "f": "GTC",
+                    "i": 2589077294,
+                    "l": "0.185",
+                    "m": False,
+                    "n": "1.36011186",
+                    "o": "MARKET",
+                    "ot": "MARKET",
+                    "p": "0",
+                    "pP": False,
+                    "ps": "BOTH",
+                    "q": "1",
+                    "rp": "0",
+                    "s": "BTCUSDT",
+                    "si": 0,
+                    "sp": "0",
+                    "ss": 0,
+                    "t": 147481365,
+                    "wt": "CONTRACT_PRICE",
+                    "x": "TRADE",
+                    "z": "0.185",
+                },
+            }
+        ],
+        "table": "ORDER_TRADE_UPDATE",
+    }
+]
+FUTURES_ORDER_GET_DATA_RESULTS = [""]

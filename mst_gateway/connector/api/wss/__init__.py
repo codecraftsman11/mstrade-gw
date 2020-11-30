@@ -262,6 +262,7 @@ class StockWssApi(Connector):
         if not message:
             return None
         messages = self._split_message(message)
+        response = False
         for message in messages:
             try:
                 data = self.get_data(message)
@@ -276,7 +277,8 @@ class StockWssApi(Connector):
                     await on_message(data)
                 else:
                     on_message(data)
-        return None
+                response = True
+        return response
 
     def _get_subscriber(self, subscr_name: str) -> Subscriber:
         subscr_name = subscr_name.lower()
