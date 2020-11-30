@@ -1,9 +1,7 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from logging import Logger
-from typing import (
-    Optional,
-)
+from typing import Optional
 from bravado.exception import HTTPError
 from .lib import (
     bitmex_connector, APIKeyAuthenticator, SwaggerClient
@@ -380,15 +378,15 @@ class BitmexRestApi(StockRestApi):
     def get_vip_level(self, schema: str) -> str:
         return '0'
 
-    def get_funding_rate(self, schema: str) -> dict:
-        funding_rates, _ = self._bitmex_api(
-            method=self._handler.Funding.Funding_get,
-            reverse=True,
-            startTime=datetime.now().replace(
-                hour=0, minute=0, second=0, microsecond=0
-            ),
-        )
-        return utils.load_funding_rates(funding_rates)
+    def list_funding_rates(self, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
+        if schema == OrderSchema.margin1:
+            funding_rates, _ = self._bitmex_api(
+                method=self._handler.Funding.Funding_get,
+                startTime=datetime.now() - timedelta(hours=period_hour*period_multiplier, minutes=1),
+                count=500,
+            )
+            return utils.load_funding_rates(funding_rates)
+        raise ConnectorError(f"Invalid schema {schema}.")
 
     def _bitmex_api(self, method: callable, **kwargs):
         headers = {}

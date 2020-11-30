@@ -12,7 +12,11 @@ from .order import (
     ORDER_STANDARD_TYPES,
     ORDER_POSITION_TYPES,
     BUY,
-    SELL
+    SELL,
+    OrderPositionPeriod,
+    OrderPositionTrendType,
+    OrderPositionClosedBy,
+    OrderStandardTypes
 )
 from .converters import (
     BaseOrderTypeConverter

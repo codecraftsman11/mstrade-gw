@@ -48,7 +48,13 @@ class BinanceRestApi(StockRestApi):
 
     def get_symbol(self, symbol, schema) -> dict:
         if schema == OrderSchema.futures:
-            data = self._binance_api(self._handler.futures_ticker, symbol=symbol.upper())
+            data_ticker = self._binance_api(self._handler.futures_ticker, symbol=symbol.upper())
+            data_bid_ask_price = self._binance_api(self._handler.futures_orderbook_ticker, symbol=symbol.upper())
+            data = {
+                'bidPrice': data_bid_ask_price.get('bidPrice'),
+                'askPrice': data_bid_ask_price.get('askPrice'),
+                **data_ticker
+            }
         elif schema in (OrderSchema.margin2, OrderSchema.exchange):
             data = self._binance_api(self._handler.get_ticker, symbol=symbol.upper())
         else:
@@ -454,19 +460,22 @@ class BinanceRestApi(StockRestApi):
         except ConnectorError:
             return "0"
 
-    def get_funding_rate(self, schema: str) -> dict:
+    def list_funding_rates(self, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
         if schema == OrderSchema.futures:
             funding_rates = self._binance_api(
                 self._handler.futures_funding_rate,
                 startTime=int(
-                    datetime.now().replace(
-                        hour=0, minute=0, second=0, microsecond=0
-                    ).timestamp()*1000
+                    (
+                        datetime.now() - timedelta(hours=period_hour*period_multiplier, minutes=1)
+                    ).timestamp() * 1000
                 ),
                 limit=1000
             )
             return utils.load_funding_rates(funding_rates)
-        return dict()
+        elif schema in (OrderSchema.exchange, OrderSchema.margin2):
+            return []
+        else:
+            raise ConnectorError(f"Invalid schema {schema}.")
 
     def _binance_api(self, method: callable, **kwargs):
         try:

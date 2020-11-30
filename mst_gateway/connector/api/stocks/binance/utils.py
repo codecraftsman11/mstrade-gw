@@ -1,10 +1,11 @@
 import hashlib
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Union, Optional
 from mst_gateway.connector import api
 from mst_gateway.calculator.binance import BinanceFinFactory
 from mst_gateway.connector.api.types.order import OrderSchema
+from mst_gateway.utils import delta
 from .....exceptions import ConnectorError
 from . import var
 from .converter import BinanceOrderTypeConverter
@@ -27,7 +28,7 @@ def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
         'symbol': symbol,
         'price': price,
         'price24': price24,
-        'delta': symbol_delta(price, price24),
+        'delta': delta(price, price24),
         'mark_price': mark_price,
         'face_price': face_price,
         'bid_price': to_float(raw_data.get('bidPrice') or mark_price),
@@ -809,7 +810,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: dict) -> dict:
         'symbol': symbol,
         'price': price,
         'price24': price24,
-        'delta': symbol_delta(price, price24),
+        'delta': delta(price, price24),
         'mark_price': mark_price,
         'face_price': face_price,
         'bid_price': to_float(raw_data.get('b') or mark_price),
@@ -826,17 +827,11 @@ def load_symbol_ws_data(raw_data: dict, state_data: dict) -> dict:
     }
 
 
-def symbol_delta(price, price24):
-    if price and price24:
-        return round((price - price24) / price24 * 100, 2)
-    return 100
-
-
 def to_date(token: Union[datetime, int]) -> Optional[datetime]:
     if isinstance(token, datetime):
         return token
     try:
-        return datetime.fromtimestamp(token/1000)
+        return datetime.fromtimestamp(int(token / 1000), tz=timezone.utc)
     except (ValueError, TypeError):
         return None
 
@@ -848,7 +843,7 @@ def to_iso_datetime(token: Union[datetime, int, str]) -> Optional[str]:
         return token.strftime(api.DATETIME_OUT_FORMAT)
     if isinstance(token, int):
         try:
-            return datetime.fromtimestamp(token / 1000).strftime(api.DATETIME_OUT_FORMAT)
+            return datetime.fromtimestamp(int(token / 1000), tz=timezone.utc).strftime(api.DATETIME_OUT_FORMAT)
         except (ValueError, TypeError):
             return None
     return None
@@ -919,14 +914,14 @@ def calculate_ws_order_avg_price(raw_data: dict) -> Optional[float]:
         return 0.0
 
 
-def load_funding_rates(funding_rates: list) -> dict:
-    result = dict()
-    for fr in funding_rates:
-        symbol = fr.get('symbol', '').lower()
-        result[symbol] = {
-            'symbol': symbol, 'funding_rate': to_float(fr.get('fundingRate'))
-        }
-    return result
+def load_funding_rates(funding_rates: list) -> list:
+    return [
+        {
+            'symbol': funding_rate['symbol'].lower(),
+            'funding_rate': to_float(funding_rate['fundingRate']),
+            'time': to_date(funding_rate['fundingTime']),
+        } for funding_rate in funding_rates
+    ]
 
 
 def load_order_type_and_exec(schema: str, exchange_order_type: str) -> dict:
