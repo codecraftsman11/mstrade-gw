@@ -280,18 +280,18 @@ def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
 
 def load_wallet_data(raw_data: dict, currencies: dict) -> dict:
     balances = [load_wallet_detail_data(raw_data)]
-    summary = {}
+    balances_summary = {}
     total_balance = {OrderSchema.margin1: {}}
-    total_keys = ('balance', 'unrealised_pnl', 'margin_balance')
+    summary_keys = ('balance', 'unrealised_pnl', 'margin_balance')
     assets = ('btc', 'usd')
     for asset in assets:
         total_balance[OrderSchema.margin1][asset] = load_wallet_summary(
-            currencies, balances, asset, total_keys
+            currencies, balances, asset, summary_keys
         )
-    load_total_wallet_summary(summary, total_balance, assets, total_keys)
+    load_total_wallet_summary(balances_summary, total_balance, assets, summary_keys)
     return {
         'balances': balances,
-        **summary,
+        **balances_summary,
     }
 
 
@@ -338,18 +338,20 @@ def load_wallet_summary(currencies: dict, balances: list, asset: str,
     return total_balance
 
 
-def load_total_wallet_summary(total: dict, summary: dict, assets: Union[list, tuple], fields: Union[list, tuple]):
-    for schema in summary.keys():
+def load_total_wallet_summary(
+    total_summary: dict, total_balance: dict, assets: Union[list, tuple], fields: Union[list, tuple]
+):
+    for schema in total_balance.keys():
         for field in fields:
             t_field = f'total_{field}'
-            if total.get(t_field) is None:
-                total[t_field] = dict()
+            if total_summary.get(t_field) is None:
+                total_summary[t_field] = dict()
             for asset in assets:
-                if total[t_field].get(asset) is None:
-                    total[t_field][asset] = summary[schema][asset][field]
+                if total_summary[t_field].get(asset) is None:
+                    total_summary[t_field][asset] = total_balance[schema][asset][field]
                 else:
-                    total[t_field][asset] += summary[schema][asset][field]
-    return total
+                    total_summary[t_field][asset] += total_balance[schema][asset][field]
+    return total_summary
 
 
 def load_currency(currency: dict):
