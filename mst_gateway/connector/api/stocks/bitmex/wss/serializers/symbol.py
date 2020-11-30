@@ -53,6 +53,7 @@ class BitmexSymbolSerializer(BitmexSerializer):
         _map = {
             'price24': 'prevPrice24h',
             'tick': 'tickSize',
+            'volume_tick': 'lotSize',
             'mark_price': 'markPrice',
             'ask_price': 'askPrice',
             'bid_price': 'bidPrice',
