@@ -346,10 +346,8 @@ def load_total_wallet_summary(
             t_field = f'total_{field}'
             total_summary.setdefault(t_field, {})
             for asset in assets:
-                if total_summary[t_field].get(asset) is None:
-                    total_summary[t_field][asset] = total_balance[schema][asset][field]
-                else:
-                    total_summary[t_field][asset] += total_balance[schema][asset][field]
+                total_summary[t_field].setdefault(asset, 0)
+                total_summary[t_field][asset] += total_balance[schema][asset][field]
     return total_summary
 
 
