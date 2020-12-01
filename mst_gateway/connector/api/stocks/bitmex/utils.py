@@ -278,7 +278,9 @@ def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
     return quote_bin
 
 
-def load_wallet_data(raw_data: dict, currencies: dict, assets: tuple, fields: tuple) -> dict:
+def load_wallet_data(
+    raw_data: dict, currencies: dict, assets: Union[tuple, list], fields: tuple
+) -> dict:
     balances = [load_wallet_detail_data(raw_data)]
     balances_summary = {}
     total_balance = {OrderSchema.margin1: {}}
