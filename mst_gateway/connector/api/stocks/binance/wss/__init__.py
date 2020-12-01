@@ -145,14 +145,14 @@ class BinanceWssApi(StockWssApi):
             asks = item.pop('a', [])
             for bid in bids:
                 if to_float(bid[1]):
-                    _data_delete.append({'b': bid, **item})
-                else:
                     _data_update.append({'b': bid, **item})
+                else:
+                    _data_delete.append({'b': bid, **item})
             for ask in asks:
                 if to_float(ask[1]):
-                    _data_delete.append({'a': ask, **item})
-                else:
                     _data_update.append({'a': ask, **item})
+                else:
+                    _data_delete.append({'a': ask, **item})
             _messages.append(dict(**message, action='delete', data=_data_delete))
             _messages.append(dict(**message, action='update', data=_data_update))
         return _messages
