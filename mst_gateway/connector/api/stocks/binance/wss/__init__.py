@@ -132,8 +132,8 @@ class BinanceWssApi(StockWssApi):
     def _split_message(self, message):
         method = self.__split_message_map(message['table'])
         if not method:
-            return super()._split_message(message)
-        return super()._split_message(method(message=message))
+            return super(BinanceWssApi, self)._split_message(message)
+        return super(BinanceWssApi, self)._split_message(method(message=message))
 
     def split_order_book(self, message):
         message.pop('action', None)
@@ -234,10 +234,17 @@ class BinanceFuturesWssApi(BinanceWssApi):
 
     def __split_message_map(self, key):
         _map = {
+            'depthUpdate': self.split_order_book,
             'ORDER_TRADE_UPDATE': self.split_order,
             'ACCOUNT_UPDATE': self.split_wallet,
         }
         return _map.get(key)
+
+    def _split_message(self, message):
+        method = self.__split_message_map(message['table'])
+        if not method:
+            return super(BinanceWssApi, self)._split_message(message)
+        return super(BinanceWssApi, self)._split_message(method(message=message))
 
     def split_wallet(self, message):
         subscr_name = self.router_class.table_route_map.get('ACCOUNT_UPDATE')
