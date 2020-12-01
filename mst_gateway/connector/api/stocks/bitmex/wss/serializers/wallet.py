@@ -22,7 +22,9 @@ class BitmexWalletSerializer(BitmexSerializer):
             currencies = self._wss_api.storage.get(
                 'currency', self._wss_api.name, self._wss_api.schema
             )
-            return load_wallet_data(item, currencies)
+            assets = ('btc', 'usd')
+            fields = ('balance', 'unrealised_pnl', 'margin_balance')
+            return load_wallet_data(item, currencies, assets, fields)
         except ConnectionError:
             return None
 
