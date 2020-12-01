@@ -460,6 +460,24 @@ class BinanceRestApi(StockRestApi):
         except ConnectorError:
             return "0"
 
+    def get_alt_currency_commission(self, schema: str) -> dict:
+        if schema in (OrderSchema.exchange, OrderSchema.margin2):
+            result = self._binance_api(self._handler.get_bnb_burn_state)
+            is_active = bool(result.get('spotBNBBurn'))
+        elif schema == OrderSchema.futures:
+            try:
+                _futures = self._binance_api(self._handler.futures_account)
+                result = utils.load_futures_wallet_detail_data(_futures, 'BNB')
+                is_active = result['balance'] > 0
+            except ConnectorError:
+                is_active = False
+        else:
+            raise ConnectorError(f"Invalid schema {schema}.")
+        return {
+            'is_active': is_active,
+            'currency': 'BNB'
+        }
+
     def list_funding_rates(self, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
         if schema == OrderSchema.futures:
             funding_rates = self._binance_api(
