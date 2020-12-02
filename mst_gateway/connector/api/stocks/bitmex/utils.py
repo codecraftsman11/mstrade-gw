@@ -11,6 +11,7 @@ from . import var
 from .var import BITMEX_ORDER_STATUS_MAP
 from .converter import BitmexOrderTypeConverter
 from ...types.binsize import BinSize
+from ...types.asset import to_system_asset
 
 
 def load_symbol_data(raw_data: dict, state_data: dict, is_iso_datetime=False) -> dict:
@@ -75,16 +76,27 @@ def load_exchange_symbol_info(raw_data: list) -> list:
             symbol_schema = OrderSchema.margin1
 
         quote_asset, expiration = _quote_asset(symbol, base_asset, quote_currency, symbol_schema)
+        system_base_asset = to_system_asset(base_asset)
+        if expiration:
+            system_quote_asset = expiration
+            expiration = expiration[-3:]
+        else:
+            system_quote_asset = to_system_asset(quote_asset)
+        system_symbol = f"{system_base_asset}{system_quote_asset}"
         symbol_list.append(
             {
                 'symbol': symbol,
+                'system_symbol': system_symbol.lower(),
                 'base_asset': base_asset,
                 'quote_asset': quote_asset,
+                'system_base_asset': system_base_asset,
+                'system_quote_asset': system_quote_asset,
                 'expiration': expiration,
                 'pair': [base_asset.upper(), quote_asset.upper()],
+                'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
                 'schema': OrderSchema.margin1,
                 'symbol_schema': symbol_schema,
-                'tick': to_float(d.get('tickSize'))
+                'tick': to_float(d.get('tickSize')),
             }
         )
     return symbol_list
