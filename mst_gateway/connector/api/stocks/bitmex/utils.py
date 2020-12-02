@@ -278,11 +278,20 @@ def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
     return quote_bin
 
 
-def load_wallet_data(raw_data: dict) -> dict:
+def load_wallet_data(
+    raw_data: dict, currencies: dict, assets: Union[tuple, list], fields: tuple
+) -> dict:
+    balances = [load_wallet_detail_data(raw_data)]
+    balances_summary = {}
+    total_balance = {OrderSchema.margin1: {}}
+    for asset in assets:
+        total_balance[OrderSchema.margin1][asset] = load_wallet_summary(
+            currencies, balances, asset, fields
+        )
+    load_total_wallet_summary(balances_summary, total_balance, assets, fields)
     return {
-        'balances': [
-            load_wallet_detail_data(raw_data)
-        ]
+        'balances': balances,
+        **balances_summary,
     }
 
 
@@ -329,18 +338,17 @@ def load_wallet_summary(currencies: dict, balances: list, asset: str,
     return total_balance
 
 
-def load_total_wallet_summary(total: dict, summary: dict, assets: Union[list, tuple], fields: Union[list, tuple]):
-    for schema in summary.keys():
+def load_total_wallet_summary(
+    total_summary: dict, total_balance: dict, assets: Union[list, tuple], fields: Union[list, tuple]
+):
+    for schema in total_balance.keys():
         for field in fields:
             t_field = f'total_{field}'
-            if total.get(t_field) is None:
-                total[t_field] = dict()
+            total_summary.setdefault(t_field, {})
             for asset in assets:
-                if total[t_field].get(asset) is None:
-                    total[t_field][asset] = summary[schema][asset][field]
-                else:
-                    total[t_field][asset] += summary[schema][asset][field]
-    return total
+                total_summary[t_field].setdefault(asset, 0)
+                total_summary[t_field][asset] += total_balance[schema][asset][field]
+    return total_summary
 
 
 def load_currency(currency: dict):
