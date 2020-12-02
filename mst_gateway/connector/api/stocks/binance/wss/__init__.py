@@ -232,7 +232,7 @@ class BinanceFuturesWssApi(BinanceWssApi):
             return self.TEST_URL
         return self.BASE_URL
 
-    def __split_message_map(self, key):
+    def __split_message_map(self, key: str) -> Optional[callable]:
         _map = {
             'depthUpdate': self.split_order_book,
             'ORDER_TRADE_UPDATE': self.split_order,
