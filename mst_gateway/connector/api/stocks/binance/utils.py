@@ -130,13 +130,6 @@ def get_tick_from_symbol_filters(symbol_data, filter_name, parameter_name):
     return to_float(result)
 
 
-def _binance_pair(symbol):
-    length = len(symbol)
-    base = length // 2
-    quote = length - base
-    return symbol[:base], symbol[-quote:]
-
-
 def load_trade_data(raw_data: dict, state_data: dict) -> dict:
     """
     {
