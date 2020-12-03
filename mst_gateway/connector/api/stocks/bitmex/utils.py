@@ -6,6 +6,7 @@ from mst_gateway.connector import api
 from mst_gateway.connector.api.utils import time2timestamp
 from mst_gateway.exceptions import ConnectorError
 from mst_gateway.connector.api.types.order import OrderSchema
+from mst_gateway.connector.api.utils import calculate_volume_precision
 from mst_gateway.utils import delta
 from . import var
 from .var import BITMEX_ORDER_STATUS_MAP
@@ -39,6 +40,7 @@ def load_symbol_data(raw_data: dict, state_data: dict, is_iso_datetime=False) ->
         'pair': state_data.get('pair'),
         'tick': state_data.get('tick'),
         'volume_tick': state_data.get('volume_tick'),
+        'volume_precision': state_data.get('volume_precision'),
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema'),
         'symbol_schema': state_data.get('symbol_schema'),
@@ -84,6 +86,11 @@ def load_exchange_symbol_info(raw_data: list) -> list:
         else:
             system_quote_asset = to_system_asset(quote_asset)
         system_symbol = f"{system_base_asset}{system_quote_asset}"
+
+        tick = to_float(d.get('tickSize'))
+        volume_tick = to_float(d.get('lotSize'))
+        volume_precision = calculate_volume_precision(volume_tick)
+
         symbol_list.append(
             {
                 'symbol': symbol,
@@ -97,8 +104,9 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                 'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
                 'schema': OrderSchema.margin1,
                 'symbol_schema': symbol_schema,
-                'tick': to_float(d.get('tickSize')),
-                'volume_tick': to_float(d.get('lotSize'))
+                'tick': tick,
+                'volume_tick': volume_tick,
+                'volume_precision': volume_precision
             }
         )
     return symbol_list

@@ -5,6 +5,7 @@ from typing import Union, Optional
 from mst_gateway.connector import api
 from mst_gateway.calculator.binance import BinanceFinFactory
 from mst_gateway.connector.api.types.order import OrderSchema
+from mst_gateway.connector.api.utils import calculate_volume_precision
 from mst_gateway.utils import delta
 from .....exceptions import ConnectorError
 from . import var
@@ -40,6 +41,7 @@ def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
         'pair': state_data.get('pair'),
         'tick': state_data.get('tick'),
         'volume_tick': state_data.get('volume_tick'),
+        'volume_precision': state_data.get('volume_precision'),
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema'),
         'symbol_schema': state_data.get('symbol_schema'),
@@ -62,6 +64,11 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                 symbol_schema = OrderSchema.margin1
             else:
                 continue
+
+            tick = get_tick_from_symbol_filters(d, 'PRICE_FILTER', 'tickSize')
+            volume_tick = get_tick_from_symbol_filters(d, 'LOT_SIZE', 'stepSize')
+            volume_precision = calculate_volume_precision(volume_tick)
+
             symbol_list.append(
                 {
                     'symbol': d.get('symbol'),
@@ -75,8 +82,9 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                     'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
                     'schema': schema,
                     'symbol_schema': symbol_schema,
-                    'tick': get_tick_from_symbol_filters(d, 'PRICE_FILTER', 'tickSize'),
-                    'volume_tick': get_tick_from_symbol_filters(d, 'LOT_SIZE', 'stepSize')
+                    'tick': tick,
+                    'volume_tick': volume_tick,
+                    'volume_precision': volume_precision
                 }
             )
     return symbol_list
@@ -96,6 +104,11 @@ def load_futures_exchange_symbol_info(raw_data: list) -> list:
                     system_symbol = f"{system_symbol}_{expiration}"
                 except (KeyError, IndexError):
                     expiration = None
+
+            tick = get_tick_from_symbol_filters(d, 'PRICE_FILTER', 'tickSize')
+            volume_tick = get_tick_from_symbol_filters(d, 'LOT_SIZE', 'stepSize')
+            volume_precision = calculate_volume_precision(volume_tick)
+
             symbol_list.append(
                 {
                     'symbol': d.get('symbol'),
@@ -109,8 +122,9 @@ def load_futures_exchange_symbol_info(raw_data: list) -> list:
                     'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
                     'schema': OrderSchema.futures,
                     'symbol_schema': OrderSchema.futures,
-                    'tick': get_tick_from_symbol_filters(d, 'PRICE_FILTER', 'tickSize'),
-                    'volume_tick': get_tick_from_symbol_filters(d, 'LOT_SIZE', 'stepSize')
+                    'tick': tick,
+                    'volume_tick': volume_tick,
+                    'volume_precision': volume_precision
                 }
             )
     return symbol_list
@@ -847,6 +861,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: dict) -> dict:
         'pair': state_data.get('pair'),
         'tick': state_data.get('tick'),
         'volume_tick': state_data.get('volume_tick'),
+        'volume_precision': state_data.get('volume_precision'),
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema'),
         'symbol_schema': state_data.get('symbol_schema'),
