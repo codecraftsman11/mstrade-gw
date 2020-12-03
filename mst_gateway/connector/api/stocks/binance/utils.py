@@ -72,7 +72,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                     'symbol_schema': OrderSchema.exchange
                 })
                 symbol_list.append(_symbol_obj)
-            elif d.get('isMarginTradingAllowed'):
+            if d.get('isMarginTradingAllowed'):
                 _symbol_obj.update({
                     'schema': OrderSchema.margin2,
                     'symbol_schema': OrderSchema.margin2
