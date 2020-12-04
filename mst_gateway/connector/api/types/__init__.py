@@ -22,3 +22,4 @@ from .converters import (
     BaseOrderTypeConverter
 )
 from .binsize import BinSize
+from .asset import to_system_asset

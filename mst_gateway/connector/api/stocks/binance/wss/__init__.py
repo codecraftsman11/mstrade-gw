@@ -132,8 +132,8 @@ class BinanceWssApi(StockWssApi):
     def _split_message(self, message):
         method = self.__split_message_map(message['table'])
         if not method:
-            return super()._split_message(message)
-        return super()._split_message(method(message=message))
+            return super(BinanceWssApi, self)._split_message(message)
+        return super(BinanceWssApi, self)._split_message(method(message=message))
 
     def split_order_book(self, message):
         message.pop('action', None)
@@ -145,14 +145,14 @@ class BinanceWssApi(StockWssApi):
             asks = item.pop('a', [])
             for bid in bids:
                 if to_float(bid[1]):
-                    _data_delete.append({'b': bid, **item})
-                else:
                     _data_update.append({'b': bid, **item})
+                else:
+                    _data_delete.append({'b': bid, **item})
             for ask in asks:
                 if to_float(ask[1]):
-                    _data_delete.append({'a': ask, **item})
-                else:
                     _data_update.append({'a': ask, **item})
+                else:
+                    _data_delete.append({'a': ask, **item})
             _messages.append(dict(**message, action='delete', data=_data_delete))
             _messages.append(dict(**message, action='update', data=_data_update))
         return _messages
@@ -229,12 +229,19 @@ class BinanceFuturesWssApi(BinanceWssApi):
             return self.TEST_URL
         return self.BASE_URL
 
-    def __split_message_map(self, key):
+    def __split_message_map(self, key: str) -> Optional[callable]:
         _map = {
+            'depthUpdate': self.split_order_book,
             'ORDER_TRADE_UPDATE': self.split_order,
             'ACCOUNT_UPDATE': self.split_wallet,
         }
         return _map.get(key)
+
+    def _split_message(self, message):
+        method = self.__split_message_map(message['table'])
+        if not method:
+            return super(BinanceWssApi, self)._split_message(message)
+        return super(BinanceWssApi, self)._split_message(method(message=message))
 
     def split_wallet(self, message):
         subscr_name = self.router_class.table_route_map.get('ACCOUNT_UPDATE')

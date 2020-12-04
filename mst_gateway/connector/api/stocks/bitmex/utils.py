@@ -11,6 +11,7 @@ from . import var
 from .var import BITMEX_ORDER_STATUS_MAP
 from .converter import BitmexOrderTypeConverter
 from ...types.binsize import BinSize
+from ...types.asset import to_system_asset
 
 
 def load_symbol_data(raw_data: dict, state_data: dict, is_iso_datetime=False) -> dict:
@@ -75,16 +76,27 @@ def load_exchange_symbol_info(raw_data: list) -> list:
             symbol_schema = OrderSchema.margin1
 
         quote_asset, expiration = _quote_asset(symbol, base_asset, quote_currency, symbol_schema)
+        system_base_asset = to_system_asset(base_asset)
+        if expiration:
+            system_quote_asset = expiration
+            expiration = expiration[-3:]
+        else:
+            system_quote_asset = to_system_asset(quote_asset)
+        system_symbol = f"{system_base_asset}{system_quote_asset}"
         symbol_list.append(
             {
                 'symbol': symbol,
+                'system_symbol': system_symbol.lower(),
                 'base_asset': base_asset,
                 'quote_asset': quote_asset,
+                'system_base_asset': system_base_asset,
+                'system_quote_asset': system_quote_asset,
                 'expiration': expiration,
                 'pair': [base_asset.upper(), quote_asset.upper()],
+                'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
                 'schema': OrderSchema.margin1,
                 'symbol_schema': symbol_schema,
-                'tick': to_float(d.get('tickSize'))
+                'tick': to_float(d.get('tickSize')),
             }
         )
     return symbol_list
@@ -278,11 +290,20 @@ def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
     return quote_bin
 
 
-def load_wallet_data(raw_data: dict) -> dict:
+def load_wallet_data(
+    raw_data: dict, currencies: dict, assets: Union[tuple, list], fields: tuple
+) -> dict:
+    balances = [load_wallet_detail_data(raw_data)]
+    balances_summary = {}
+    total_balance = {OrderSchema.margin1: {}}
+    for asset in assets:
+        total_balance[OrderSchema.margin1][asset] = load_wallet_summary(
+            currencies, balances, asset, fields
+        )
+    load_total_wallet_summary(balances_summary, total_balance, assets, fields)
     return {
-        'balances': [
-            load_wallet_detail_data(raw_data)
-        ]
+        'balances': balances,
+        **balances_summary,
     }
 
 
@@ -329,18 +350,17 @@ def load_wallet_summary(currencies: dict, balances: list, asset: str,
     return total_balance
 
 
-def load_total_wallet_summary(total: dict, summary: dict, assets: Union[list, tuple], fields: Union[list, tuple]):
-    for schema in summary.keys():
+def load_total_wallet_summary(
+    total_summary: dict, total_balance: dict, assets: Union[list, tuple], fields: Union[list, tuple]
+):
+    for schema in total_balance.keys():
         for field in fields:
             t_field = f'total_{field}'
-            if total.get(t_field) is None:
-                total[t_field] = dict()
+            total_summary.setdefault(t_field, {})
             for asset in assets:
-                if total[t_field].get(asset) is None:
-                    total[t_field][asset] = summary[schema][asset][field]
-                else:
-                    total[t_field][asset] += summary[schema][asset][field]
-    return total
+                total_summary[t_field].setdefault(asset, 0)
+                total_summary[t_field][asset] += total_balance[schema][asset][field]
+    return total_summary
 
 
 def load_currency(currency: dict):

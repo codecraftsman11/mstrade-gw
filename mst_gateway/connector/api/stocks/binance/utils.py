@@ -9,6 +9,7 @@ from mst_gateway.utils import delta
 from .....exceptions import ConnectorError
 from . import var
 from .converter import BinanceOrderTypeConverter
+from ...types.asset import to_system_asset
 
 
 def _face_price(symbol, mark_price):
@@ -49,32 +50,34 @@ def load_exchange_symbol_info(raw_data: list) -> list:
     symbol_list = []
     for d in raw_data:
         if d.get('status') == 'TRADING':
+            system_base_asset = to_system_asset(d.get('baseAsset'))
+            system_quote_asset = to_system_asset(d.get('quoteAsset'))
+            system_symbol = f"{system_base_asset}{system_quote_asset}"
+            _symbol_obj = {
+                'symbol': d.get('symbol'),
+                'system_symbol': system_symbol.lower(),
+                'base_asset': d.get('baseAsset'),
+                'quote_asset': d.get('quoteAsset'),
+                'system_base_asset': system_base_asset,
+                'system_quote_asset': system_quote_asset,
+                'expiration': None,
+                'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
+                'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
+                'tick': to_float(d.get('filters', [{}])[0].get('tickSize'))
+            }
+
             if d.get('isSpotTradingAllowed'):
-                symbol_list.append(
-                    {
-                        'symbol': d.get('symbol'),
-                        'base_asset': d.get('baseAsset'),
-                        'quote_asset': d.get('quoteAsset'),
-                        'expiration': None,
-                        'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
-                        'schema': OrderSchema.exchange,
-                        'symbol_schema': OrderSchema.exchange,
-                        'tick': to_float(d.get('filters', [{}])[0].get('tickSize'))
-                    }
-                )
+                _symbol_obj.update({
+                    'schema': OrderSchema.exchange,
+                    'symbol_schema': OrderSchema.exchange
+                })
+                symbol_list.append(_symbol_obj.copy())
             if d.get('isMarginTradingAllowed'):
-                symbol_list.append(
-                    {
-                        'symbol': d.get('symbol'),
-                        'base_asset': d.get('baseAsset'),
-                        'quote_asset': d.get('quoteAsset'),
-                        'expiration': None,
-                        'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
-                        'schema': OrderSchema.margin2,
-                        'symbol_schema': OrderSchema.margin2,
-                        'tick': to_float(d.get('filters', [{}])[0].get('tickSize'))
-                    }
-                )
+                _symbol_obj.update({
+                    'schema': OrderSchema.margin2,
+                    'symbol_schema': OrderSchema.margin2
+                })
+                symbol_list.append(_symbol_obj.copy())
     return symbol_list
 
 
@@ -82,26 +85,33 @@ def load_futures_exchange_symbol_info(raw_data: list) -> list:
     symbol_list = []
     for d in raw_data:
         if d.get('status') == 'TRADING':
+            system_base_asset = to_system_asset(d.get('baseAsset'))
+            system_quote_asset = to_system_asset(d.get('quoteAsset'))
+            expiration = None
+            system_symbol = f"{system_base_asset}{system_quote_asset}"
+            if d.get('contractType', '').upper() != 'PERPETUAL':
+                try:
+                    expiration = d['symbol'].split('_')[1]
+                    system_symbol = f"{system_symbol}_{expiration}"
+                except (KeyError, IndexError):
+                    expiration = None
             symbol_list.append(
                 {
                     'symbol': d.get('symbol'),
+                    'system_symbol': system_symbol.lower(),
                     'base_asset': d.get('baseAsset'),
                     'quote_asset': d.get('quoteAsset'),
-                    'expiration': None,
+                    'system_base_asset': system_base_asset,
+                    'system_quote_asset': system_quote_asset,
+                    'expiration': expiration,
                     'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
+                    'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
                     'schema': OrderSchema.futures,
                     'symbol_schema': OrderSchema.futures,
                     'tick': to_float(d.get('filters', [{}])[0].get('tickSize'))
                 }
             )
     return symbol_list
-
-
-def _binance_pair(symbol):
-    length = len(symbol)
-    base = length // 2
-    quote = length - base
-    return symbol[:base], symbol[-quote:]
 
 
 def load_trade_data(raw_data: dict, state_data: dict) -> dict:
