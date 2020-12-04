@@ -44,7 +44,7 @@ class StockWssApi(Connector):
         self.tasks = list()
         if name is not None:
             self.name = name.lower()
-        self.account_name = account_name or self.name
+        self.account_id, self.account_name = self._parse_account_name(account_name or self.name)
         self._options = options or {}
         self._url = url or self.__class__.BASE_URL
         self._error = errors.ERROR_OK
@@ -68,6 +68,14 @@ class StockWssApi(Connector):
     @property
     def subscriptions(self):
         return self._subscriptions
+
+    def _parse_account_name(self, account_name: str):
+        _split_acc = account_name.split('.')
+        account_id = None
+        if len(_split_acc) > 2:
+            account_id = _split_acc.pop(2)
+        account_name = '.'.join(_split_acc)
+        return account_id, account_name
 
     def __str__(self):
         return self.name
