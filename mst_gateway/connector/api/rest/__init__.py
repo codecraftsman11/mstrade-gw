@@ -184,6 +184,12 @@ class StockRestApi(Connector):
     def get_vip_level(self, schema: str) -> str:
         raise NotImplementedError
 
+    def get_alt_currency_commission(self, schema: str) -> dict:
+        return {
+            'is_active': False,
+            'currency': None
+        }
+
     @abstractmethod
     def list_funding_rates(self, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
         raise NotImplementedError

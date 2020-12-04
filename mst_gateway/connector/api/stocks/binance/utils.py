@@ -53,30 +53,31 @@ def load_exchange_symbol_info(raw_data: list) -> list:
             system_base_asset = to_system_asset(d.get('baseAsset'))
             system_quote_asset = to_system_asset(d.get('quoteAsset'))
             system_symbol = f"{system_base_asset}{system_quote_asset}"
+            _symbol_obj = {
+                'symbol': d.get('symbol'),
+                'system_symbol': system_symbol.lower(),
+                'base_asset': d.get('baseAsset'),
+                'quote_asset': d.get('quoteAsset'),
+                'system_base_asset': system_base_asset,
+                'system_quote_asset': system_quote_asset,
+                'expiration': None,
+                'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
+                'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
+                'tick': to_float(d.get('filters', [{}])[0].get('tickSize'))
+            }
+
             if d.get('isSpotTradingAllowed'):
-                schema = OrderSchema.exchange
-                symbol_schema = OrderSchema.exchange
-            elif d.get('isMarginTradingAllowed'):
-                schema = OrderSchema.margin1
-                symbol_schema = OrderSchema.margin1
-            else:
-                continue
-            symbol_list.append(
-                {
-                    'symbol': d.get('symbol'),
-                    'system_symbol': system_symbol.lower(),
-                    'base_asset': d.get('baseAsset'),
-                    'quote_asset': d.get('quoteAsset'),
-                    'system_base_asset': system_base_asset,
-                    'system_quote_asset': system_quote_asset,
-                    'expiration': None,
-                    'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
-                    'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
-                    'schema': schema,
-                    'symbol_schema': symbol_schema,
-                    'tick': to_float(d.get('filters', [{}])[0].get('tickSize'))
-                }
-            )
+                _symbol_obj.update({
+                    'schema': OrderSchema.exchange,
+                    'symbol_schema': OrderSchema.exchange
+                })
+                symbol_list.append(_symbol_obj.copy())
+            if d.get('isMarginTradingAllowed'):
+                _symbol_obj.update({
+                    'schema': OrderSchema.margin2,
+                    'symbol_schema': OrderSchema.margin2
+                })
+                symbol_list.append(_symbol_obj.copy())
     return symbol_list
 
 

@@ -197,3 +197,30 @@ class Client(BaseClient):
         """
         res = self._request_futures_api('post', 'listenKey', True, data=params)
         return res['listenKey']
+
+    def get_bnb_burn_state(self, **params):
+        """Get Lending Product List
+
+        https://binance-docs.github.io/apidocs/spot/en/#toggle-bnb-burn-on-spot-trade-and-margin-interest-user_data
+
+        :returns: API response
+
+        .. code-block:: python
+            {
+               "spotBNBBurn":true,
+               "interestBNBBurn": false
+            }
+        """
+        return self._request_margin_api('get', 'bnbBurn', True, data=params)
+
+    def post_bnb_burn_state(self, **params):
+        """Get Lending Product List
+
+        https://binance-docs.github.io/apidocs/spot/en/#toggle-bnb-burn-on-spot-trade-and-margin-interest-user_data
+
+        :param spotBNBBurn: optional
+        :type spotBNBBurn: str
+        :param interestBNBBurn: optional
+        :type interestBNBBurn: str
+        """
+        return self._request_margin_api('post', 'bnbBurn', True, data=params)
