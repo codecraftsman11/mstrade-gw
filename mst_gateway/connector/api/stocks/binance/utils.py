@@ -56,37 +56,38 @@ def load_exchange_symbol_info(raw_data: list) -> list:
             system_base_asset = to_system_asset(d.get('baseAsset'))
             system_quote_asset = to_system_asset(d.get('quoteAsset'))
             system_symbol = f"{system_base_asset}{system_quote_asset}"
-            if d.get('isSpotTradingAllowed'):
-                schema = OrderSchema.exchange
-                symbol_schema = OrderSchema.exchange
-            elif d.get('isMarginTradingAllowed'):
-                schema = OrderSchema.margin1
-                symbol_schema = OrderSchema.margin1
-            else:
-                continue
 
             tick = get_tick_from_symbol_filters(d, 'PRICE_FILTER', 'tickSize')
             volume_tick = get_tick_from_symbol_filters(d, 'LOT_SIZE', 'stepSize')
             volume_precision = calculate_volume_precision(volume_tick)
 
-            symbol_list.append(
-                {
-                    'symbol': d.get('symbol'),
-                    'system_symbol': system_symbol.lower(),
-                    'base_asset': d.get('baseAsset'),
-                    'quote_asset': d.get('quoteAsset'),
-                    'system_base_asset': system_base_asset,
-                    'system_quote_asset': system_quote_asset,
-                    'expiration': None,
-                    'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
-                    'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
-                    'schema': schema,
-                    'symbol_schema': symbol_schema,
-                    'tick': tick,
-                    'volume_tick': volume_tick,
-                    'volume_precision': volume_precision
-                }
-            )
+            _symbol_obj = {
+                'symbol': d.get('symbol'),
+                'system_symbol': system_symbol.lower(),
+                'base_asset': d.get('baseAsset'),
+                'quote_asset': d.get('quoteAsset'),
+                'system_base_asset': system_base_asset,
+                'system_quote_asset': system_quote_asset,
+                'expiration': None,
+                'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
+                'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
+                'tick': tick,
+                'volume_tick': volume_tick,
+                'volume_precision': volume_precision
+            }
+
+            if d.get('isSpotTradingAllowed'):
+                _symbol_obj.update({
+                    'schema': OrderSchema.exchange,
+                    'symbol_schema': OrderSchema.exchange
+                })
+                symbol_list.append(_symbol_obj.copy())
+            if d.get('isMarginTradingAllowed'):
+                _symbol_obj.update({
+                    'schema': OrderSchema.margin2,
+                    'symbol_schema': OrderSchema.margin2
+                })
+                symbol_list.append(_symbol_obj.copy())
     return symbol_list
 
 

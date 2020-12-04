@@ -15,7 +15,7 @@ class BinanceWalletSerializer(BinanceSerializer):
         if not self.is_item_valid(message, item):
             return None
         state_data = self._wss_api.storage.get(
-            f'{self.subscription}.{self._wss_api.account_name}', schema=self._wss_api.schema
+            f'{self.subscription}.{self._wss_api.account_id}', schema=self._wss_api.schema
         )
         if not state_data:
             return None
