@@ -89,7 +89,7 @@ SPOT_QUOTE_BIN_SPLIT_MESSAGE_RESULTS = [
 SPOT_QUOTE_BIN_GET_DATA_RESULTS = [
     {
         "quote_bin": {
-            "account": cfg.BINANCE_ACCOUNT_NAME,
+            "account": cfg.BINANCE_WSS_API_NAME,
             "action": "update",
             "data": [
                 {
@@ -200,7 +200,7 @@ FUTURES_QUOTE_BIN_SPLIT_MESSAGE_RESULTS = [
 FUTURES_QUOTE_BIN_GET_DATA_RESULTS = [
     {
         "quote_bin": {
-            "account": cfg.BINANCE_ACCOUNT_NAME,
+            "account": cfg.BINANCE_WSS_API_NAME,
             "action": "update",
             "data": [
                 {

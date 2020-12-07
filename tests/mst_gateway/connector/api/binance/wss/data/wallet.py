@@ -41,7 +41,7 @@ SPOT_WALLET_SPLIT_MESSAGE_RESULTS = [
 SPOT_WALLET_GET_DATA_RESULTS = [
     {
         "wallet": {
-            "account": cfg.BINANCE_ACCOUNT_NAME,
+            "account": cfg.BINANCE_WSS_API_NAME,
             "action": "update",
             "data": [
                 {
@@ -67,7 +67,7 @@ SPOT_WALLET_GET_DATA_RESULTS = [
 SPOT_PROCESS_WALLET_MESSAGE_RESULT = [
     {
         "wallet": {
-            "account": cfg.BINANCE_ACCOUNT_NAME,
+            "account": cfg.BINANCE_WSS_API_NAME,
             "action": "update",
             "data": [
                 {
@@ -104,17 +104,17 @@ SPOT_PROCESS_WALLET_MESSAGE_RESULT = [
 
 FUTURES_WALLET_MESSAGE = {
     "e": "ACCOUNT_UPDATE",
-    "T": 1606737194206,
-    "E": 1606737194209,
+    "T": 1607330722996,
+    "E": 1607330722999,
     "a": {
-        "B": [{"a": "USDT", "wb": "99991.19288678", "cw": "99991.19288678"}],
+        "B": [{"a": "USDT", "wb": "50343.25059802", "cw": "50343.25059802"}],
         "P": [
             {
                 "s": "BTCUSDT",
-                "pa": "-1.186",
-                "ep": "18564.73839",
-                "cr": "-1545.14723006",
-                "up": "-44.92816657",
+                "pa": "-1",
+                "ep": "19372.83000",
+                "cr": "38805.85249994",
+                "up": "124.83000000",
                 "mt": "cross",
                 "iw": "0",
                 "ps": "BOTH",
@@ -128,21 +128,21 @@ FUTURES_WALLET_LOOKUP_TABLE_RESULT = {
     "action": "update",
     "data": [
         {
-            "E": 1606737194209,
-            "T": 1606737194206,
+            "E": 1607330722999,
+            "T": 1607330722996,
             "a": {
-                "B": [{"a": "USDT", "cw": "99991.19288678", "wb": "99991.19288678"}],
+                "B": [{"a": "USDT", "cw": "50343.25059802", "wb": "50343.25059802"}],
                 "P": [
                     {
-                        "cr": "-1545.14723006",
-                        "ep": "18564.73839",
+                        "cr": "38805.85249994",
+                        "ep": "19372.83000",
                         "iw": "0",
                         "ma": "USDT",
                         "mt": "cross",
-                        "pa": "-1.186",
+                        "pa": "-1",
                         "ps": "BOTH",
                         "s": "BTCUSDT",
-                        "up": "-44.92816657",
+                        "up": "124.83000000",
                     }
                 ],
                 "m": "ORDER",
@@ -157,23 +157,23 @@ FUTURES_WALLET_SPLIT_MESSAGE_RESULTS = [
         "action": "update",
         "data": [
             {
-                "E": 1606737194209,
-                "T": 1606737194206,
+                "E": 1607330722999,
+                "T": 1607330722996,
                 "a": {
                     "B": [
-                        {"a": "USDT", "cw": "99991.19288678", "wb": "99991.19288678"}
+                        {"a": "USDT", "cw": "50343.25059802", "wb": "50343.25059802"}
                     ],
                     "P": [
                         {
-                            "cr": "-1545.14723006",
-                            "ep": "18564.73839",
+                            "cr": "38805.85249994",
+                            "ep": "19372.83000",
                             "iw": "0",
                             "ma": "USDT",
                             "mt": "cross",
-                            "pa": "-1.186",
+                            "pa": "-1",
                             "ps": "BOTH",
                             "s": "BTCUSDT",
-                            "up": "-44.92816657",
+                            "up": "124.83000000",
                         }
                     ],
                     "m": "ORDER",
@@ -187,22 +187,22 @@ FUTURES_WALLET_SPLIT_MESSAGE_RESULTS = [
 FUTURES_WALLET_GET_DATA_RESULTS = [
     {
         "wallet": {
-            "account": cfg.BINANCE_ACCOUNT_NAME,
+            "account": cfg.BINANCE_WSS_API_NAME,
             "action": "update",
             "data": [
                 {
                     "balances": [
                         {
-                            "available_margin": 99782.05747772001,
-                            "balance": 99991.19288678,
+                            "available_margin": 50303.87335553,
+                            "balance": 50343.25059802,
                             "borrowed": None,
                             "currency": "USDT",
                             "init_margin": 2052.59053117,
                             "interest": None,
                             "maint_margin": 164.20724249,
-                            "margin_balance": 99946.26472021,
+                            "margin_balance": 50468.08059802,
                             "type": "trade",
-                            "unrealised_pnl": -44.92816657,
+                            "unrealised_pnl": 124.83,
                         }
                     ]
                 }
@@ -215,22 +215,22 @@ FUTURES_WALLET_GET_DATA_RESULTS = [
 FUTURES_WALLET_PROCESS_MESSAGE_RESULTS = [
     {
         "wallet": {
-            "account": cfg.BINANCE_ACCOUNT_NAME,
+            "account": cfg.BINANCE_WSS_API_NAME,
             "action": "update",
             "data": [
                 {
                     "balances": [
                         {
-                            "available_margin": 99782.05747772001,
-                            "balance": 99991.19288678,
+                            "available_margin": 50303.87335553,
+                            "balance": 50343.25059802,
                             "borrowed": None,
                             "currency": "USDT",
                             "init_margin": 2052.59053117,
                             "interest": None,
                             "maint_margin": 164.20724249,
-                            "margin_balance": 99946.26472021,
+                            "margin_balance": 50468.08059802,
                             "type": "trade",
-                            "unrealised_pnl": -44.92816657,
+                            "unrealised_pnl": 124.83,
                         },
                         {
                             "available_margin": 0.0,
@@ -246,13 +246,13 @@ FUTURES_WALLET_PROCESS_MESSAGE_RESULTS = [
                             "withdraw_balance": 0.0,
                         },
                     ],
-                    "total_balance": {"btc": 5.90281417, "usd": 99991.19288678},
+                    "total_balance": {"btc": 2.97193027, "usd": 50343.25059802},
                     "total_initial_margin": 2052.59053117,
                     "total_maint_margin": 164.20724249,
-                    "total_margin_balance": {"btc": 5.90016191, "usd": 99946.26472021},
+                    "total_margin_balance": {"btc": 2.9792994, "usd": 50468.08059802},
                     "total_open_order_initial_margin": 0.0,
                     "total_position_initial_margin": 2052.59053117,
-                    "total_unrealised_pnl": {"btc": -0.00265226, "usd": -44.92816657},
+                    "total_unrealised_pnl": {"btc": 0.00736913, "usd": 124.83},
                     "trade_enabled": True,
                 }
             ],

@@ -263,14 +263,14 @@ class StockWssApi(Connector):
         self._handler = None
 
     async def process_message(self, message, on_message: Optional[callable] = None):
+        response = False
         message = parse_message(message)
         if not message:
-            return None
+            return response
         message = self._lookup_table(message)
         if not message:
-            return None
+            return response
         messages = self._split_message(message)
-        response = False
         for message in messages:
             try:
                 data = self.get_data(message)
