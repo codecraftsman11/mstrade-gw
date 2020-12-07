@@ -278,7 +278,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "btcusd",
                     "symbol": "btcusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "ethusdt": {
                     "tick": 0.01,
@@ -291,7 +291,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "ethusd",
                     "symbol": "ethusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "bnbusdt": {
                     "tick": 0.001,
@@ -304,7 +304,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "bnbusd",
                     "symbol": "bnbusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "neousdt": {
                     "tick": 0.001,
@@ -317,7 +317,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "neousd",
                     "symbol": "neousdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "ltcusdt": {
                     "tick": 0.01,
@@ -330,7 +330,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "ltcusd",
                     "symbol": "ltcusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "qtumusdt": {
                     "tick": 0.001,
@@ -343,7 +343,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "qtumusd",
                     "symbol": "qtumusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "adausdt": {
                     "tick": 1e-05,
@@ -356,7 +356,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "adausd",
                     "symbol": "adausdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "xrpusdt": {
                     "tick": 0.0001,
@@ -369,7 +369,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "xrpusd",
                     "symbol": "xrpusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "eosusdt": {
                     "tick": 0.001,
@@ -382,7 +382,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "eosusd",
                     "symbol": "eosusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "iotausdt": {
                     "tick": 0.0001,
@@ -395,7 +395,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "iotausd",
                     "symbol": "iotausdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "xlmusdt": {
                     "tick": 1e-05,
@@ -408,7 +408,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "xlmusd",
                     "symbol": "xlmusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "ontusdt": {
                     "tick": 0.0001,
@@ -421,7 +421,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "ontusd",
                     "symbol": "ontusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "trxusdt": {
                     "tick": 1e-05,
@@ -434,7 +434,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "trxusd",
                     "symbol": "trxusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "etcusdt": {
                     "tick": 0.001,
@@ -447,7 +447,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "etcusd",
                     "symbol": "etcusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "icxusdt": {
                     "tick": 0.0001,
@@ -460,7 +460,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "icxusd",
                     "symbol": "icxusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "vetusdt": {
                     "tick": 1e-06,
@@ -473,7 +473,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "vetusd",
                     "symbol": "vetusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "linkusdt": {
                     "tick": 0.001,
@@ -486,7 +486,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "linkusd",
                     "symbol": "linkusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "wavesusdt": {
                     "tick": 0.0001,
@@ -499,7 +499,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "wavesusd",
                     "symbol": "wavesusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "zilusdt": {
                     "tick": 1e-05,
@@ -512,7 +512,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "zilusd",
                     "symbol": "zilusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "zrxusdt": {
                     "tick": 0.0001,
@@ -525,7 +525,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "zrxusd",
                     "symbol": "zrxusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "batusdt": {
                     "tick": 0.0001,
@@ -538,7 +538,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "batusd",
                     "symbol": "batusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "xmrusdt": {
                     "tick": 0.01,
@@ -551,7 +551,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "xmrusd",
                     "symbol": "xmrusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "zecusdt": {
                     "tick": 0.01,
@@ -564,7 +564,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "zecusd",
                     "symbol": "zecusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "iostusdt": {
                     "tick": 1e-06,
@@ -577,7 +577,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "iostusd",
                     "symbol": "iostusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "dashusdt": {
                     "tick": 0.01,
@@ -590,7 +590,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "dashusd",
                     "symbol": "dashusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "omgusdt": {
                     "tick": 0.0001,
@@ -603,7 +603,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "omgusd",
                     "symbol": "omgusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "thetausdt": {
                     "tick": 0.0001,
@@ -616,7 +616,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "thetausd",
                     "symbol": "thetausdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "enjusdt": {
                     "tick": 1e-05,
@@ -629,7 +629,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "enjusd",
                     "symbol": "enjusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "maticusdt": {
                     "tick": 1e-05,
@@ -642,7 +642,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "maticusd",
                     "symbol": "maticusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "atomusdt": {
                     "tick": 0.001,
@@ -655,7 +655,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "atomusd",
                     "symbol": "atomusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "ftmusdt": {
                     "tick": 1e-06,
@@ -668,7 +668,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "ftmusd",
                     "symbol": "ftmusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "algousdt": {
                     "tick": 0.0001,
@@ -681,7 +681,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "algousd",
                     "symbol": "algousdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "dogeusdt": {
                     "tick": 1e-06,
@@ -694,7 +694,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "dogeusd",
                     "symbol": "dogeusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "tomousdt": {
                     "tick": 0.0001,
@@ -707,7 +707,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "tomousd",
                     "symbol": "tomousdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "cvcusdt": {
                     "tick": 1e-05,
@@ -720,7 +720,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "cvcusd",
                     "symbol": "cvcusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "bandusdt": {
                     "tick": 0.0001,
@@ -733,7 +733,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "bandusd",
                     "symbol": "bandusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "xtzusdt": {
                     "tick": 0.001,
@@ -746,7 +746,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "xtzusd",
                     "symbol": "xtzusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "renusdt": {
                     "tick": 1e-05,
@@ -759,7 +759,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "renusd",
                     "symbol": "renusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "kavausdt": {
                     "tick": 0.0001,
@@ -772,7 +772,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "kavausd",
                     "symbol": "kavausdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "rlcusdt": {
                     "tick": 0.0001,
@@ -785,7 +785,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "rlcusd",
                     "symbol": "rlcusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "bchusdt": {
                     "tick": 0.01,
@@ -798,7 +798,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "bchusd",
                     "symbol": "bchusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "solusdt": {
                     "tick": 0.0001,
@@ -811,7 +811,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "solusd",
                     "symbol": "solusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "kncusdt": {
                     "tick": 1e-05,
@@ -824,7 +824,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "kncusd",
                     "symbol": "kncusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "lrcusdt": {
                     "tick": 1e-05,
@@ -837,7 +837,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "lrcusd",
                     "symbol": "lrcusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "compusdt": {
                     "tick": 0.01,
@@ -850,7 +850,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "compusd",
                     "symbol": "compusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "snxusdt": {
                     "tick": 0.001,
@@ -863,7 +863,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "snxusd",
                     "symbol": "snxusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "sxpusdt": {
                     "tick": 0.0001,
@@ -876,7 +876,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "sxpusd",
                     "symbol": "sxpusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "mkrusdt": {
                     "tick": 0.01,
@@ -889,7 +889,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "mkrusd",
                     "symbol": "mkrusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "storjusdt": {
                     "tick": 0.0001,
@@ -902,7 +902,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "storjusd",
                     "symbol": "storjusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "yfiusdt": {
                     "tick": 0.1,
@@ -915,7 +915,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "yfiusd",
                     "symbol": "yfiusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "balusdt": {
                     "tick": 0.001,
@@ -928,7 +928,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "balusd",
                     "symbol": "balusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "blzusdt": {
                     "tick": 1e-05,
@@ -941,7 +941,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "blzusd",
                     "symbol": "blzusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "srmusdt": {
                     "tick": 0.0001,
@@ -954,7 +954,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "srmusd",
                     "symbol": "srmusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "crvusdt": {
                     "tick": 0.001,
@@ -967,7 +967,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "crvusd",
                     "symbol": "crvusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "oceanusdt": {
                     "tick": 1e-05,
@@ -980,7 +980,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "oceanusd",
                     "symbol": "oceanusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "dotusdt": {
                     "tick": 0.001,
@@ -993,7 +993,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "dotusd",
                     "symbol": "dotusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "rsrusdt": {
                     "tick": 1e-06,
@@ -1006,7 +1006,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "rsrusd",
                     "symbol": "rsrusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "trbusdt": {
                     "tick": 0.001,
@@ -1019,7 +1019,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "trbusd",
                     "symbol": "trbusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "bzrxusdt": {
                     "tick": 0.0001,
@@ -1032,7 +1032,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "bzrxusd",
                     "symbol": "bzrxusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "sushiusdt": {
                     "tick": 0.0001,
@@ -1045,7 +1045,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "sushiusd",
                     "symbol": "sushiusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "yfiiusdt": {
                     "tick": 0.1,
@@ -1058,7 +1058,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "yfiiusd",
                     "symbol": "yfiiusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "ksmusdt": {
                     "tick": 0.001,
@@ -1071,7 +1071,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "ksmusd",
                     "symbol": "ksmusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "egldusdt": {
                     "tick": 0.001,
@@ -1084,7 +1084,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "egldusd",
                     "symbol": "egldusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "runeusdt": {
                     "tick": 0.0001,
@@ -1097,7 +1097,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "runeusd",
                     "symbol": "runeusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "uniusdt": {
                     "tick": 0.0001,
@@ -1110,7 +1110,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "uniusd",
                     "symbol": "uniusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "avaxusdt": {
                     "tick": 0.0001,
@@ -1123,7 +1123,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "avaxusd",
                     "symbol": "avaxusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "hntusdt": {
                     "tick": 0.0001,
@@ -1136,7 +1136,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "hntusd",
                     "symbol": "hntusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "flmusdt": {
                     "tick": 0.0001,
@@ -1149,7 +1149,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "flmusd",
                     "symbol": "flmusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "defiusdt": {
                     "tick": 0.1,
@@ -1162,7 +1162,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "defiusd",
                     "symbol": "defiusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "aaveusdt": {
                     "tick": 0.001,
@@ -1175,7 +1175,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "aaveusd",
                     "symbol": "aaveusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "nearusdt": {
                     "tick": 0.0001,
@@ -1188,7 +1188,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "nearusd",
                     "symbol": "nearusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
                 "filusdt": {
                     "tick": 0.001,
@@ -1201,7 +1201,7 @@ STORAGE_DATA = {
                     ),
                     "system_symbol": "filusd",
                     "symbol": "filusdt",
-                    "exchange": "tBinance",
+                    "exchange": "Binance",
                 },
             },
         },
