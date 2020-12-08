@@ -528,26 +528,27 @@ def _spot_balance_data(balances: list):
 def _margin_balance_data(balances: list, max_borrow: float = None, interest_rate: float = None):
     result = list()
     for b in balances:
-        balance = to_float(b['netAsset'])
+        _free = to_float(b['free'])
+        _locked = to_float(b['locked'])
         borrowed = to_float(b['borrowed'])
         interest = to_float(b['interest'])
-        withdraw_balance = balance - (borrowed + interest)
+        withdraw_balance = to_float(b['netAsset']) - (borrowed + interest)
         if withdraw_balance < 0:
             withdraw_balance = 0
         result.append({
             'currency': b['asset'],
-            'balance': balance,
+            'balance': _free,
             'withdraw_balance': withdraw_balance,
             'borrowed': borrowed,
             'available_borrow': max_borrow,
             'interest': interest,
             'interest_rate': interest_rate,
             'unrealised_pnl': 0,
-            'margin_balance': to_float(b['free']),
-            'maint_margin': to_float(b['locked']),
+            'margin_balance': _free,
+            'maint_margin': _locked,
             'init_margin': None,
-            'available_margin': round(to_float(b['free']) - to_float(b['locked']), 8),
-            'type': to_wallet_state_type(to_float(b['locked'])),
+            'available_margin': round(_free - _locked, 8),
+            'type': to_wallet_state_type(_locked),
         })
     return result
 
