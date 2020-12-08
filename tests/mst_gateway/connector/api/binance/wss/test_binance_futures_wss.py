@@ -62,11 +62,30 @@ async def _wss_api() -> BinanceFuturesWssApi:
         logger=logger,
     ) as _wss_api:
         try:
-            await _wss_api.open(is_auth=True)
+            await _wss_api.open()
         except Exception as exc:
             logger.error(exc)
         yield _wss_api
         await _wss_api.close()
+
+
+@pytest.fixture
+async def _testnet_wss_api() -> BinanceFuturesWssApi:
+    with BinanceFuturesWssApi(
+        url=cfg.BINANCE_FUTURES_TESTNET_URL,
+        name=cfg.BINANCE_WSS_API_NAME,
+        account_name=cfg.BINANCE_ACCOUNT_NAME,
+        schema=cfg.BINANCE_FUTURES_SCHEMA,
+        auth=cfg.BINANCE_FUTURES_TESTNET_AUTH_KEYS,
+        state_storage=deepcopy(STORAGE_DATA),
+        logger=logger,
+    ) as _testnet_wss_api:
+        try:
+            await _testnet_wss_api.open()
+        except Exception as exc:
+            logger.error(exc)
+        yield _testnet_wss_api
+        await _testnet_wss_api.close()
 
 
 class TestBinanceFuturesWssApi:
@@ -91,32 +110,49 @@ class TestBinanceFuturesWssApi:
         assert await wss_api.subscribe(subscr_channel, subscr_name, symbol)
         await self.consume(wss_api, wss_api.handler, self.on_message)
 
-    def test_binance_wss_futures_str(self, _wss_api: BinanceFuturesWssApi):
-        assert str(_wss_api) == cfg.BINANCE_WSS_API_NAME
+    def test_binance_wss_futures_str(self, _testnet_wss_api: BinanceFuturesWssApi):
+        assert str(_testnet_wss_api) == cfg.BINANCE_WSS_API_NAME
 
-    def test_binance_wss_futures_options(self, _wss_api: BinanceFuturesWssApi):
-        assert _wss_api.options == {}
+    def test_binance_wss_futures_options(self, _testnet_wss_api: BinanceFuturesWssApi):
+        assert _testnet_wss_api.options == {}
 
-    def test_binance_wss_futures_subscriptions(self, _wss_api: BinanceFuturesWssApi):
-        assert _wss_api.subscriptions == {}
+    def test_binance_wss_futures_subscriptions(
+        self, _testnet_wss_api: BinanceFuturesWssApi
+    ):
+        assert _testnet_wss_api.subscriptions == {}
 
-    def test_binance_wss_futures_router(self, _wss_api: BinanceFuturesWssApi):
-        assert isinstance(_wss_api.router, BinanceFuturesWssRouter)
+    def test_binance_wss_futures_router(self, _testnet_wss_api: BinanceFuturesWssApi):
+        assert isinstance(_testnet_wss_api.router, BinanceFuturesWssRouter)
 
-    def test_binance_wss_futures_logger(self, _wss_api: BinanceFuturesWssApi):
-        assert _wss_api.logger
+    def test_binance_wss_futures_logger(self, _testnet_wss_api: BinanceFuturesWssApi):
+        assert _testnet_wss_api.logger
 
-    def test_binance_wss_futures_handler(self, _wss_api: BinanceFuturesWssApi):
-        assert _wss_api.handler
+    def test_binance_wss_futures_handler(self, _testnet_wss_api: BinanceFuturesWssApi):
+        assert _testnet_wss_api.handler
 
-    def test_binance_wss_futures_auth(self, _wss_api: BinanceFuturesWssApi):
+    def test_binance_wss_futures_auth_data(
+        self, _testnet_wss_api: BinanceFuturesWssApi, _wss_api: BinanceFuturesWssApi
+    ):
+        assert _testnet_wss_api.auth == cfg.BINANCE_FUTURES_TESTNET_AUTH_KEYS
         assert _wss_api.auth == cfg.BINANCE_AUTH_KEYS
 
-    def test_binance_wss_futures_auth_connect(self, _wss_api: BinanceFuturesWssApi):
-        assert _wss_api.auth_connect
+    def test_binance_wss_futures_test(
+        self, _testnet_wss_api: BinanceFuturesWssApi, _wss_api: BinanceFuturesWssApi
+    ):
+        assert _testnet_wss_api.test
+        assert not _wss_api.test
 
-    def test_binance_wss_futures_tasks(self, _wss_api: BinanceFuturesWssApi):
-        assert _wss_api.tasks
+    @pytest.mark.asyncio
+    async def test_binance_wss_futures_open_auth(
+        self, _testnet_wss_api: BinanceFuturesWssApi
+    ):
+        assert _testnet_wss_api.auth_connect is False
+        assert not _testnet_wss_api.tasks
+        await _testnet_wss_api.close()
+        assert not _testnet_wss_api.handler
+        assert await _testnet_wss_api.open(is_auth=True)
+        assert _testnet_wss_api.auth_connect
+        assert _testnet_wss_api.tasks
 
     @pytest.mark.parametrize(
         "subscr_name, subscriber_class",
@@ -130,67 +166,87 @@ class TestBinanceFuturesWssApi:
         ],
     )
     def test_binance_wss_futures__get_subscriber(
-        self, _wss_api: BinanceFuturesWssApi, subscr_name, subscriber_class
+        self, _testnet_wss_api: BinanceFuturesWssApi, subscr_name, subscriber_class
     ):
-        assert isinstance(_wss_api._get_subscriber(subscr_name), subscriber_class)
+        assert isinstance(
+            _testnet_wss_api._get_subscriber(subscr_name), subscriber_class
+        )
 
     @pytest.mark.parametrize(
-        "subscriptions, remap_result",
+        "subscriptions, subscr_name, remap_result",
         [
-            ({"symbol": {"btcusdt": {"1"}, "*": {"1"}}}, {"symbol": {"*": {"1"}}}),
-            ({"symbol": {"btcusdt": {"1"}, "*": {"2"}}}, {"symbol": {"*": {"1", "2"}}}),
+            (
+                {"symbol": {"btcusdt": {"1"}, "*": {"1"}}},
+                "symbol",
+                {"symbol": {"*": {"1"}}},
+            ),
+            (
+                {"symbol": {"btcusdt": {"1"}, "*": {"2"}}},
+                "symbol",
+                {"symbol": {"*": {"1", "2"}}},
+            ),
         ],
     )
     def test_binance_wss_futures_remap_subscriptions(
-        self, _wss_api: BinanceFuturesWssApi, subscriptions, remap_result
+        self,
+        _testnet_wss_api: BinanceFuturesWssApi,
+        subscriptions,
+        subscr_name,
+        remap_result,
     ):
-        _wss_api._subscriptions = subscriptions
-        assert _wss_api.remap_subscriptions(subscr_name="symbol") is None
-        assert _wss_api._subscriptions == remap_result
+        _testnet_wss_api._subscriptions = subscriptions
+        assert _testnet_wss_api.remap_subscriptions(subscr_name=subscr_name) is None
+        assert _testnet_wss_api._subscriptions == remap_result
 
-    def test_binance_wss_futures_is_registered(self, _wss_api: BinanceFuturesWssApi):
-        assert not _wss_api.is_registered(subscr_name="symbol")
-        _wss_api._subscriptions = {"symbol": {"btcusdt": {"1"}}}
-        assert _wss_api.is_registered(subscr_name="symbol", symbol="btcusdt")
-        assert _wss_api.is_registered(subscr_name="SYMBOL", symbol="BTCUSDT")
-        assert not _wss_api.is_registered(subscr_name="symbol", symbol="ethusdt")
-        _wss_api._subscriptions = {"symbol": {"*": {"1"}}}
-        assert _wss_api.is_registered(subscr_name="symbol")
-        assert _wss_api.is_registered(subscr_name="symbol", symbol="ethusdt")
+    def test_binance_wss_futures_is_registered(
+        self, _testnet_wss_api: BinanceFuturesWssApi
+    ):
+        assert not _testnet_wss_api.is_registered(subscr_name="symbol")
+        _testnet_wss_api._subscriptions = {"symbol": {"btcusdt": {"1"}}}
+        assert _testnet_wss_api.is_registered(subscr_name="symbol", symbol="btcusdt")
+        assert _testnet_wss_api.is_registered(subscr_name="SYMBOL", symbol="BTCUSDT")
+        assert not _testnet_wss_api.is_registered(
+            subscr_name="symbol", symbol="ethusdt"
+        )
+        _testnet_wss_api._subscriptions = {"symbol": {"*": {"1"}}}
+        assert _testnet_wss_api.is_registered(subscr_name="symbol")
+        assert _testnet_wss_api.is_registered(subscr_name="symbol", symbol="ethusdt")
 
-    def test_binance_wss_futures_register(self, _wss_api: BinanceFuturesWssApi):
-        assert _wss_api.register(
+    def test_binance_wss_futures_register(self, _testnet_wss_api: BinanceFuturesWssApi):
+        assert _testnet_wss_api.register(
             subscr_name="symbol", symbol="btcusdt", subscr_channel="1"
         ) == (True, "btcusdt")
-        assert _wss_api._subscriptions == {"symbol": {"btcusdt": {"1"}}}
-        assert _wss_api.register(
+        assert _testnet_wss_api._subscriptions == {"symbol": {"btcusdt": {"1"}}}
+        assert _testnet_wss_api.register(
             subscr_name="SYMBOL", symbol="BTCUSDT", subscr_channel="2"
         ) == (True, "btcusdt")
-        assert _wss_api._subscriptions == {"symbol": {"btcusdt": {"1", "2"}}}
-        assert _wss_api.register(
+        assert _testnet_wss_api._subscriptions == {"symbol": {"btcusdt": {"1", "2"}}}
+        assert _testnet_wss_api.register(
             subscr_name="symbol", symbol="ethusdt", subscr_channel="1"
         ) == (True, "ethusdt")
-        assert _wss_api._subscriptions == {
+        assert _testnet_wss_api._subscriptions == {
             "symbol": {"btcusdt": {"1", "2"}, "ethusdt": {"1"}}
         }
-        assert _wss_api.register(subscr_name="symbol", subscr_channel="1") == (
+        assert _testnet_wss_api.register(subscr_name="symbol", subscr_channel="1") == (
             True,
             "*",
         )
-        assert _wss_api._subscriptions == {"symbol": {"*": {"1", "2"}}}
-        assert _wss_api.register(subscr_name="symbol", subscr_channel="3") == (
+        assert _testnet_wss_api._subscriptions == {"symbol": {"*": {"1", "2"}}}
+        assert _testnet_wss_api.register(subscr_name="symbol", subscr_channel="3") == (
             True,
             "*",
         )
-        assert _wss_api._subscriptions == {"symbol": {"*": {"1", "2", "3"}}}
-        assert _wss_api.register(
+        assert _testnet_wss_api._subscriptions == {"symbol": {"*": {"1", "2", "3"}}}
+        assert _testnet_wss_api.register(
             subscr_name="symbol", symbol="btcusdt", subscr_channel="4"
         ) == (True, "*")
-        assert _wss_api._subscriptions == {"symbol": {"*": {"1", "2", "3", "4"}}}
-        assert _wss_api.register(
+        assert _testnet_wss_api._subscriptions == {
+            "symbol": {"*": {"1", "2", "3", "4"}}
+        }
+        assert _testnet_wss_api.register(
             subscr_name="order", symbol="btcusdt", subscr_channel="1"
         ) == (True, "btcusdt")
-        assert _wss_api._subscriptions == {
+        assert _testnet_wss_api._subscriptions == {
             "symbol": {"*": {"1", "2", "3", "4"}},
             "order": {"btcusdt": {"1"}},
         }
@@ -210,7 +266,11 @@ class TestBinanceFuturesWssApi:
         ],
     )
     async def test_binance_wss_futures_subscribe_public(
-        self, _wss_api: BinanceFuturesWssApi, subscr_name, subscr_channel, subscriptions
+        self,
+        _wss_api: BinanceFuturesWssApi,
+        subscr_name,
+        subscr_channel,
+        subscriptions,
     ):
         self.reset()
         assert not self.data
@@ -267,126 +327,140 @@ class TestBinanceFuturesWssApi:
         )
         self.reset()
 
-    def test_binance_wss_futures_is_unregistered(self, _wss_api: BinanceFuturesWssApi):
-        _wss_api._subscriptions = {"symbol": {"btcusdt": {"1"}}}
-        assert not _wss_api.is_unregistered(subscr_name="symbol", symbol="btcusdt")
-        assert not _wss_api.is_unregistered(subscr_name="SYMBOL", symbol="BTCUSDT")
-        assert _wss_api.is_unregistered(subscr_name="symbol")
-        assert _wss_api.is_unregistered(subscr_name="symbol", symbol="ethusdt")
-        assert _wss_api.is_unregistered(subscr_name="order")
-        _wss_api._subscriptions = {"symbol": {"*": {"1"}}}
-        assert not _wss_api.is_unregistered(subscr_name="symbol")
-        assert _wss_api.is_unregistered(subscr_name="symbol", symbol="ethusdt")
-        assert _wss_api.is_unregistered(subscr_name="order")
+    def test_binance_wss_futures_is_unregistered(
+        self, _testnet_wss_api: BinanceFuturesWssApi
+    ):
+        _testnet_wss_api._subscriptions = {"symbol": {"btcusdt": {"1"}}}
+        assert not _testnet_wss_api.is_unregistered(
+            subscr_name="symbol", symbol="btcusdt"
+        )
+        assert not _testnet_wss_api.is_unregistered(
+            subscr_name="SYMBOL", symbol="BTCUSDT"
+        )
+        assert _testnet_wss_api.is_unregistered(subscr_name="symbol")
+        assert _testnet_wss_api.is_unregistered(subscr_name="symbol", symbol="ethusdt")
+        assert _testnet_wss_api.is_unregistered(subscr_name="order")
+        _testnet_wss_api._subscriptions = {"symbol": {"*": {"1"}}}
+        assert not _testnet_wss_api.is_unregistered(subscr_name="symbol")
+        assert _testnet_wss_api.is_unregistered(subscr_name="symbol", symbol="ethusdt")
+        assert _testnet_wss_api.is_unregistered(subscr_name="order")
 
-    def test_binance_wss_futures_unregister(self, _wss_api: BinanceFuturesWssApi):
-        _wss_api._subscriptions = {
+    def test_binance_wss_futures_unregister(
+        self, _testnet_wss_api: BinanceFuturesWssApi
+    ):
+        _testnet_wss_api._subscriptions = {
             "symbol": {"btcusdt": {"1"}, "ethusdt": {"1", "2"}},
             "order": {"*": {"1", "2"}},
         }
-        assert _wss_api.unregister(
+        assert _testnet_wss_api.unregister(
             subscr_name="symbol", symbol="xrpusdt", subscr_channel="1"
         ) == (False, "xrpusdt")
-        assert _wss_api._subscriptions == {
+        assert _testnet_wss_api._subscriptions == {
             "symbol": {"btcusdt": {"1"}, "ethusdt": {"1", "2"}},
             "order": {"*": {"1", "2"}},
         }
-        assert _wss_api.unregister(
+        assert _testnet_wss_api.unregister(
             subscr_name="symbol", symbol="btcusdt", subscr_channel="3"
         ) == (False, "btcusdt")
-        assert _wss_api._subscriptions == {
+        assert _testnet_wss_api._subscriptions == {
             "symbol": {"btcusdt": {"1"}, "ethusdt": {"1", "2"}},
             "order": {"*": {"1", "2"}},
         }
-        assert _wss_api.unregister(
+        assert _testnet_wss_api.unregister(
             subscr_name="order_book", symbol="btcusdt", subscr_channel="3"
         ) == (False, "btcusdt")
-        assert _wss_api._subscriptions == {
+        assert _testnet_wss_api._subscriptions == {
             "symbol": {"btcusdt": {"1"}, "ethusdt": {"1", "2"}},
             "order": {"*": {"1", "2"}},
         }
-        assert _wss_api.unregister(
+        assert _testnet_wss_api.unregister(
             subscr_name="symbol", symbol="ethusdt", subscr_channel="2"
         ) == (False, "ethusdt")
-        assert _wss_api._subscriptions == {
+        assert _testnet_wss_api._subscriptions == {
             "symbol": {"btcusdt": {"1"}, "ethusdt": {"1"}},
             "order": {"*": {"1", "2"}},
         }
-        assert _wss_api.unregister(
+        assert _testnet_wss_api.unregister(
             subscr_name="symbol", symbol="ethusdt", subscr_channel="1"
         ) == (True, "ethusdt")
-        assert _wss_api._subscriptions == {
+        assert _testnet_wss_api._subscriptions == {
             "symbol": {"btcusdt": {"1"}},
             "order": {"*": {"1", "2"}},
         }
-        assert _wss_api.unregister(
+        assert _testnet_wss_api.unregister(
             subscr_name="SYMBOL", symbol="BTCUSDT", subscr_channel="1"
         ) == (True, "btcusdt")
-        assert _wss_api._subscriptions == {"order": {"*": {"1", "2"}}}
-        assert _wss_api.unregister(subscr_name="order", subscr_channel="2") == (
+        assert _testnet_wss_api._subscriptions == {"order": {"*": {"1", "2"}}}
+        assert _testnet_wss_api.unregister(subscr_name="order", subscr_channel="2") == (
             False,
             "*",
         )
-        assert _wss_api._subscriptions == {"order": {"*": {"1"}}}
-        assert _wss_api.unregister(subscr_name="order", subscr_channel="1") == (
+        assert _testnet_wss_api._subscriptions == {"order": {"*": {"1"}}}
+        assert _testnet_wss_api.unregister(subscr_name="order", subscr_channel="1") == (
             True,
             "*",
         )
-        assert _wss_api._subscriptions == {}
+        assert _testnet_wss_api._subscriptions == {}
 
     @pytest.mark.asyncio
     async def test_binance_wss_futures_unsubscribe(
-        self, _wss_api: BinanceFuturesWssApi
+        self, _testnet_wss_api: BinanceFuturesWssApi
     ):
-        _wss_api._subscriptions = {
+        _testnet_wss_api._subscriptions = {
             "symbol": {"btcusdt": {"1"}, "ethusdt": {"1", "2"}},
             "order": {"*": {"1", "2"}},
         }
-        assert await _wss_api.unsubscribe(
+        assert await _testnet_wss_api.unsubscribe(
             subscr_name="symbol", symbol="ethusdt", subscr_channel="2"
         )
-        assert _wss_api._subscriptions == {
+        assert _testnet_wss_api._subscriptions == {
             "symbol": {"btcusdt": {"1"}, "ethusdt": {"1"}},
             "order": {"*": {"1", "2"}},
         }
-        assert await _wss_api.unsubscribe(
+        assert await _testnet_wss_api.unsubscribe(
             subscr_name="SYMBOL", symbol="ETHUSDT", subscr_channel="1"
         )
-        assert _wss_api._subscriptions == {
+        assert _testnet_wss_api._subscriptions == {
             "symbol": {"btcusdt": {"1"}},
             "order": {"*": {"1", "2"}},
         }
-        assert await _wss_api.unsubscribe(subscr_name="order_book", subscr_channel="1")
-        assert _wss_api._subscriptions == {
+        assert await _testnet_wss_api.unsubscribe(
+            subscr_name="order_book", subscr_channel="1"
+        )
+        assert _testnet_wss_api._subscriptions == {
             "symbol": {"btcusdt": {"1"}},
             "order": {"*": {"1", "2"}},
         }
-        assert await _wss_api.unsubscribe(
+        assert await _testnet_wss_api.unsubscribe(
             subscr_name="symbol", symbol="btcusdt", subscr_channel="1"
         )
-        assert _wss_api._subscriptions == {"order": {"*": {"1", "2"}}}
-        assert await _wss_api.unsubscribe(subscr_name="order", subscr_channel="2")
-        assert _wss_api._subscriptions == {"order": {"*": {"1"}}}
-        assert await _wss_api.unsubscribe(subscr_name="order", subscr_channel="1")
-        assert _wss_api._subscriptions == {}
-        assert _wss_api.handler is None
-        assert _wss_api.tasks == []
+        assert _testnet_wss_api._subscriptions == {"order": {"*": {"1", "2"}}}
+        assert await _testnet_wss_api.unsubscribe(
+            subscr_name="order", subscr_channel="2"
+        )
+        assert _testnet_wss_api._subscriptions == {"order": {"*": {"1"}}}
+        assert await _testnet_wss_api.unsubscribe(
+            subscr_name="order", subscr_channel="1"
+        )
+        assert _testnet_wss_api._subscriptions == {}
+        assert _testnet_wss_api.handler is None
+        assert _testnet_wss_api.tasks == []
 
     @pytest.mark.asyncio
     async def test_binance_wss_futures__restore_subscriptions(
-        self, _wss_api: BinanceFuturesWssApi
+        self, _testnet_wss_api: BinanceFuturesWssApi
     ):
         subscriptions = {"symbol": {"btcusdt": {"1"}}, "order": {"btcusdt": {"1"}}}
-        _wss_api._subscriptions = subscriptions
-        await _wss_api._restore_subscriptions()
-        assert _wss_api._subscriptions == subscriptions
-        _wss_api.auth_connect = False
-        await _wss_api._restore_subscriptions()
-        assert _wss_api._subscriptions == {"symbol": {"btcusdt": {"1"}}}
-        assert await _wss_api.unsubscribe(
+        _testnet_wss_api._subscriptions = subscriptions
+        await _testnet_wss_api._restore_subscriptions()
+        assert _testnet_wss_api._subscriptions == subscriptions
+        _testnet_wss_api.auth_connect = False
+        await _testnet_wss_api._restore_subscriptions()
+        assert _testnet_wss_api._subscriptions == {"symbol": {"btcusdt": {"1"}}}
+        assert await _testnet_wss_api.unsubscribe(
             subscr_name="order", symbol="btcusdt", subscr_channel="1"
         )
-        assert await _wss_api.unsubscribe(
+        assert await _testnet_wss_api.unsubscribe(
             subscr_name="symbol", symbol="btcusdt", subscr_channel="1"
         )
 
@@ -395,23 +469,25 @@ class TestBinanceFuturesWssApi:
         [("symbol", None), ("symbol", "btcusdt"), ("SYMBOL", "BTCUSDT")],
     )
     def test_binance_wss_futures_get_state(
-        self, _wss_api: BinanceFuturesWssApi, subscr_name, symbol
+        self, _testnet_wss_api: BinanceFuturesWssApi, subscr_name, symbol
     ):
-        assert _wss_api.get_state(subscr_name, symbol) is None
+        assert _testnet_wss_api.get_state(subscr_name, symbol) is None
 
     @pytest.mark.parametrize("symbol", [None, "not exists"])
     def test_binance_wss_futures_get_state_data_is_none(
-        self, _wss_api: BinanceFuturesWssApi, symbol
+        self, _testnet_wss_api: BinanceFuturesWssApi, symbol
     ):
-        assert _wss_api.get_state_data(symbol) is None
+        assert _testnet_wss_api.get_state_data(symbol) is None
 
     @pytest.mark.parametrize("symbol", ["btcusdt", "BTCUSDT"])
     def test_binance_wss_futures_get_state_data(
-        self, _wss_api: BinanceFuturesWssApi, symbol
+        self, _testnet_wss_api: BinanceFuturesWssApi, symbol
     ):
         assert (
-            _wss_api.get_state_data(symbol)
-            == STORAGE_DATA["symbol"][_wss_api.name][_wss_api.schema][symbol.lower()]
+            _testnet_wss_api.get_state_data(symbol)
+            == STORAGE_DATA["symbol"][_testnet_wss_api.name][_testnet_wss_api.schema][
+                symbol.lower()
+            ]
         )
 
     @pytest.mark.parametrize(
@@ -423,7 +499,7 @@ class TestBinanceFuturesWssApi:
         ],
     )
     def test_binance_wss_futures_parse_message(
-        self, _wss_api: BinanceFuturesWssApi, message, result
+        self, _testnet_wss_api: BinanceFuturesWssApi, message, result
     ):
         assert parse_message(message) == result
 
@@ -439,9 +515,9 @@ class TestBinanceFuturesWssApi:
         ],
     )
     def test_binance_wss_futures__lookup_table(
-        self, _wss_api: BinanceFuturesWssApi, message, result
+        self, _testnet_wss_api: BinanceFuturesWssApi, message, result
     ):
-        assert _wss_api._lookup_table(message) == result
+        assert _testnet_wss_api._lookup_table(message) == result
 
     @pytest.mark.parametrize(
         "order_status, action",
@@ -452,9 +528,9 @@ class TestBinanceFuturesWssApi:
         ],
     )
     def test_binance_wss_futures_define_action_by_order_status(
-        self, _wss_api: BinanceFuturesWssApi, order_status, action
+        self, _testnet_wss_api: BinanceFuturesWssApi, order_status, action
     ):
-        assert _wss_api.define_action_by_order_status(order_status) == action
+        assert _testnet_wss_api.define_action_by_order_status(order_status) == action
 
     @pytest.mark.parametrize(
         "message, split_results",
@@ -473,17 +549,20 @@ class TestBinanceFuturesWssApi:
         ],
     )
     def test_binance_wss_futures__split_message(
-        self, _wss_api: BinanceFuturesWssApi, message, split_results
+        self, _testnet_wss_api: BinanceFuturesWssApi, message, split_results
     ):
-        assert _wss_api._split_message(deepcopy(message)) == split_results
+        assert _testnet_wss_api._split_message(deepcopy(message)) == split_results
 
-    def test_binance_wss_futures_split_wallet(self, _wss_api: BinanceFuturesWssApi):
+    def test_binance_wss_futures_split_wallet(
+        self, _testnet_wss_api: BinanceFuturesWssApi
+    ):
         assert (
-            _wss_api.split_wallet(deepcopy(FUTURES_WALLET_LOOKUP_TABLE_RESULT)) is None
+            _testnet_wss_api.split_wallet(deepcopy(FUTURES_WALLET_LOOKUP_TABLE_RESULT))
+            is None
         )
-        _wss_api._subscriptions = {"wallet": {"usdt": {"1"}}}
+        _testnet_wss_api._subscriptions = {"wallet": {"usdt": {"1"}}}
         assert (
-            _wss_api.split_wallet(deepcopy(FUTURES_WALLET_LOOKUP_TABLE_RESULT))
+            _testnet_wss_api.split_wallet(deepcopy(FUTURES_WALLET_LOOKUP_TABLE_RESULT))
             == FUTURES_WALLET_SPLIT_MESSAGE_RESULTS[0]
         )
 
@@ -505,10 +584,10 @@ class TestBinanceFuturesWssApi:
         ],
     )
     def test_binance_wss_futures_get_data(
-        self, _wss_api: BinanceFuturesWssApi, messages, results
+        self, _testnet_wss_api: BinanceFuturesWssApi, messages, results
     ):
         for i, message in enumerate(messages):
-            assert _wss_api.get_data(message) == results[i]
+            assert _testnet_wss_api.get_data(message) == results[i]
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
@@ -522,22 +601,24 @@ class TestBinanceFuturesWssApi:
         ],
     )
     async def test_binance_wss_futures_process_message(
-        self, _wss_api: BinanceFuturesWssApi, message, results
+        self, _testnet_wss_api: BinanceFuturesWssApi, message, results
     ):
         self.reset()
         assert not self.data
-        await _wss_api.process_message(json.dumps(deepcopy(message)), self.on_message)
+        await _testnet_wss_api.process_message(
+            json.dumps(deepcopy(message)), self.on_message
+        )
         assert self.data == results
         self.reset()
 
     @pytest.mark.asyncio
     async def test_binance_wss_futures_process_wallet_message(
-        self, _wss_api: BinanceFuturesWssApi
+        self, _testnet_wss_api: BinanceFuturesWssApi
     ):
         self.reset()
         assert not self.data
-        _wss_api._subscriptions = {"wallet": {"*": {"1"}}}
-        await _wss_api.process_message(
+        _testnet_wss_api._subscriptions = {"wallet": {"*": {"1"}}}
+        await _testnet_wss_api.process_message(
             json.dumps(deepcopy(FUTURES_WALLET_MESSAGE)), self.on_message
         )
         assert self.data == FUTURES_WALLET_PROCESS_MESSAGE_RESULTS

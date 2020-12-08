@@ -66,11 +66,30 @@ async def _wss_api() -> BinanceWssApi:
         logger=logger,
     ) as _wss_api:
         try:
-            await _wss_api.open(is_auth=True)
+            await _wss_api.open()
         except Exception as exc:
             logger.error(exc)
         yield _wss_api
         await _wss_api.close()
+
+
+@pytest.fixture
+async def _testnet_wss_api() -> BinanceWssApi:
+    with BinanceWssApi(
+        url=cfg.BINANCE_SPOT_TESTNET_URL,
+        name=cfg.BINANCE_WSS_API_NAME,
+        account_name=cfg.BINANCE_ACCOUNT_NAME,
+        schema=cfg.BINANCE_SPOT_SCHEMA,
+        auth=cfg.BINANCE_SPOT_TESTNET_AUTH_KEYS,
+        state_storage=deepcopy(STORAGE_DATA),
+        logger=logger,
+    ) as _testnet_wss_api:
+        try:
+            await _testnet_wss_api.open()
+        except Exception as exc:
+            logger.error(exc)
+        yield _testnet_wss_api
+        await _testnet_wss_api.close()
 
 
 class TestBinanceSpotWssApi:
@@ -89,38 +108,51 @@ class TestBinanceSpotWssApi:
                 if await wss_api.process_message(message, on_message):
                     break
             except ConnectionClosed:
-                api_handler = await wss_api.open(is_auth=True, restore=True)
+                api_handler = await wss_api.open(restore=True)
 
     async def subscribe(self, wss_api, subscr_channel, subscr_name, symbol=None):
         assert await wss_api.subscribe(subscr_channel, subscr_name, symbol)
         await self.consume(wss_api, wss_api.handler, self.on_message)
 
-    def test_binance_wss_spot_str(self, _wss_api: BinanceWssApi):
-        assert str(_wss_api) == cfg.BINANCE_WSS_API_NAME
+    def test_binance_wss_spot_str(self, _testnet_wss_api: BinanceWssApi):
+        assert str(_testnet_wss_api) == cfg.BINANCE_WSS_API_NAME
 
-    def test_binance_wss_spot_options(self, _wss_api: BinanceWssApi):
-        assert _wss_api.options == {}
+    def test_binance_wss_spot_options(self, _testnet_wss_api: BinanceWssApi):
+        assert _testnet_wss_api.options == {}
 
-    def test_binance_wss_spot_subscriptions(self, _wss_api: BinanceWssApi):
-        assert _wss_api.subscriptions == {}
+    def test_binance_wss_spot_subscriptions(self, _testnet_wss_api: BinanceWssApi):
+        assert _testnet_wss_api.subscriptions == {}
 
-    def test_binance_wss_spot_router(self, _wss_api: BinanceWssApi):
-        assert isinstance(_wss_api.router, BinanceWssRouter)
+    def test_binance_wss_spot_router(self, _testnet_wss_api: BinanceWssApi):
+        assert isinstance(_testnet_wss_api.router, BinanceWssRouter)
 
-    def test_binance_wss_spot_logger(self, _wss_api: BinanceWssApi):
-        assert _wss_api.logger
+    def test_binance_wss_spot_logger(self, _testnet_wss_api: BinanceWssApi):
+        assert _testnet_wss_api.logger
 
-    def test_binance_wss_spot_handler(self, _wss_api: BinanceWssApi):
-        assert _wss_api.handler
+    def test_binance_wss_spot_handler(self, _testnet_wss_api: BinanceWssApi):
+        assert _testnet_wss_api.handler
 
-    def test_binance_wss_spot_auth(self, _wss_api: BinanceWssApi):
+    def test_binance_wss_spot_auth_data(
+        self, _testnet_wss_api: BinanceWssApi, _wss_api: BinanceWssApi
+    ):
+        assert _testnet_wss_api.auth == cfg.BINANCE_SPOT_TESTNET_AUTH_KEYS
         assert _wss_api.auth == cfg.BINANCE_AUTH_KEYS
 
-    def test_binance_wss_spot_auth_connect(self, _wss_api: BinanceWssApi):
-        assert _wss_api.auth_connect
+    def test_binance_wss_spot_test(
+        self, _testnet_wss_api: BinanceWssApi, _wss_api: BinanceWssApi
+    ):
+        assert _testnet_wss_api.test
+        assert not _wss_api.test
 
-    def test_binance_wss_spot_tasks(self, _wss_api: BinanceWssApi):
-        assert _wss_api.tasks
+    @pytest.mark.asyncio
+    async def test_binance_wss_spot_open_auth(self, _testnet_wss_api: BinanceWssApi):
+        assert _testnet_wss_api.auth_connect is False
+        assert not _testnet_wss_api.tasks
+        await _testnet_wss_api.close()
+        assert not _testnet_wss_api.handler
+        assert await _testnet_wss_api.open(is_auth=True)
+        assert _testnet_wss_api.auth_connect
+        assert _testnet_wss_api.tasks
 
     @pytest.mark.parametrize(
         "subscr_name, subscriber_class",
@@ -134,67 +166,81 @@ class TestBinanceSpotWssApi:
         ],
     )
     def test_binance_wss_spot__get_subscriber(
-        self, _wss_api: BinanceWssApi, subscr_name, subscriber_class
+        self, _testnet_wss_api: BinanceWssApi, subscr_name, subscriber_class
     ):
-        assert isinstance(_wss_api._get_subscriber(subscr_name), subscriber_class)
+        assert isinstance(
+            _testnet_wss_api._get_subscriber(subscr_name), subscriber_class
+        )
 
     @pytest.mark.parametrize(
-        "subscriptions, remap_result",
+        "subscriptions, subscr_name, remap_result",
         [
-            ({"symbol": {"btcusdt": {"1"}, "*": {"1"}}}, {"symbol": {"*": {"1"}}}),
-            ({"symbol": {"btcusdt": {"1"}, "*": {"2"}}}, {"symbol": {"*": {"1", "2"}}}),
+            (
+                {"symbol": {"btcusdt": {"1"}, "*": {"1"}}},
+                "symbol",
+                {"symbol": {"*": {"1"}}},
+            ),
+            (
+                {"symbol": {"btcusdt": {"1"}, "*": {"2"}}},
+                "symbol",
+                {"symbol": {"*": {"1", "2"}}},
+            ),
         ],
     )
     def test_binance_wss_spot_remap_subscriptions(
-        self, _wss_api: BinanceWssApi, subscriptions, remap_result
+        self, _testnet_wss_api: BinanceWssApi, subscriptions, subscr_name, remap_result
     ):
-        _wss_api._subscriptions = subscriptions
-        assert _wss_api.remap_subscriptions(subscr_name="symbol") is None
-        assert _wss_api._subscriptions == remap_result
+        _testnet_wss_api._subscriptions = subscriptions
+        assert _testnet_wss_api.remap_subscriptions(subscr_name=subscr_name) is None
+        assert _testnet_wss_api._subscriptions == remap_result
 
-    def test_binance_wss_spot_is_registered(self, _wss_api: BinanceWssApi):
-        assert not _wss_api.is_registered(subscr_name="symbol")
-        _wss_api._subscriptions = {"symbol": {"btcusdt": {"1"}}}
-        assert _wss_api.is_registered(subscr_name="symbol", symbol="btcusdt")
-        assert _wss_api.is_registered(subscr_name="SYMBOL", symbol="BTCUSDT")
-        assert not _wss_api.is_registered(subscr_name="symbol", symbol="ethusdt")
-        _wss_api._subscriptions = {"symbol": {"*": {"1"}}}
-        assert _wss_api.is_registered(subscr_name="symbol")
-        assert _wss_api.is_registered(subscr_name="symbol", symbol="ethusdt")
+    def test_binance_wss_spot_is_registered(self, _testnet_wss_api: BinanceWssApi):
+        assert not _testnet_wss_api.is_registered(subscr_name="symbol")
+        _testnet_wss_api._subscriptions = {"symbol": {"btcusdt": {"1"}}}
+        assert _testnet_wss_api.is_registered(subscr_name="symbol", symbol="btcusdt")
+        assert _testnet_wss_api.is_registered(subscr_name="SYMBOL", symbol="BTCUSDT")
+        assert not _testnet_wss_api.is_registered(
+            subscr_name="symbol", symbol="ethusdt"
+        )
+        _testnet_wss_api._subscriptions = {"symbol": {"*": {"1"}}}
+        assert _testnet_wss_api.is_registered(subscr_name="symbol")
+        assert _testnet_wss_api.is_registered(subscr_name="symbol", symbol="ethusdt")
 
-    def test_binance_wss_spot_register(self, _wss_api: BinanceWssApi):
-        assert _wss_api.register(
+    def test_binance_wss_spot_register(self, _testnet_wss_api: BinanceWssApi):
+        assert _testnet_wss_api.register(
             subscr_name="symbol", symbol="btcusdt", subscr_channel="1"
         ) == (True, "btcusdt")
-        assert _wss_api._subscriptions == {"symbol": {"btcusdt": {"1"}}}
-        assert _wss_api.register(
+        assert _testnet_wss_api._subscriptions == {"symbol": {"btcusdt": {"1"}}}
+        assert _testnet_wss_api.register(
             subscr_name="SYMBOL", symbol="BTCUSDT", subscr_channel="2"
         ) == (True, "btcusdt")
-        assert _wss_api._subscriptions == {"symbol": {"btcusdt": {"1", "2"}}}
-        assert _wss_api.register(
+        assert _testnet_wss_api._subscriptions == {"symbol": {"btcusdt": {"1", "2"}}}
+        assert _testnet_wss_api.register(
             subscr_name="symbol", symbol="ethusdt", subscr_channel="1"
         ) == (True, "ethusdt")
-        assert _wss_api._subscriptions == {
+        assert _testnet_wss_api._subscriptions == {
             "symbol": {"btcusdt": {"1", "2"}, "ethusdt": {"1"}}
         }
-        assert _wss_api.register(subscr_name="symbol", subscr_channel="1") == (
+        assert _testnet_wss_api.register(subscr_name="symbol", subscr_channel="1") == (
             True,
             "*",
         )
-        assert _wss_api._subscriptions == {"symbol": {"*": {"1", "2"}}}
-        assert _wss_api.register(subscr_name="symbol", subscr_channel="3") == (
+        assert _testnet_wss_api._subscriptions == {"symbol": {"*": {"1", "2"}}}
+        assert _testnet_wss_api.register(subscr_name="symbol", subscr_channel="3") == (
             True,
             "*",
         )
-        assert _wss_api._subscriptions == {"symbol": {"*": {"1", "2", "3"}}}
-        assert _wss_api.register(
+        assert _testnet_wss_api._subscriptions == {"symbol": {"*": {"1", "2", "3"}}}
+        assert _testnet_wss_api.register(
             subscr_name="symbol", symbol="btcusdt", subscr_channel="4"
         ) == (True, "*")
-        assert _wss_api._subscriptions == {"symbol": {"*": {"1", "2", "3", "4"}}}
-        assert _wss_api.register(
+        assert _testnet_wss_api._subscriptions == {
+            "symbol": {"*": {"1", "2", "3", "4"}}
+        }
+        assert _testnet_wss_api.register(
             subscr_name="order", symbol="btcusdt", subscr_channel="1"
         ) == (True, "btcusdt")
-        assert _wss_api._subscriptions == {
+        assert _testnet_wss_api._subscriptions == {
             "symbol": {"*": {"1", "2", "3", "4"}},
             "order": {"btcusdt": {"1"}},
         }
@@ -214,7 +260,7 @@ class TestBinanceSpotWssApi:
         ],
     )
     async def test_binance_wss_spot_subscribe_public(
-        self, _wss_api: BinanceWssApi, subscr_name, subscr_channel, subscriptions
+        self, _wss_api: BinanceWssApi, subscr_name, subscr_channel, subscriptions,
     ):
         self.reset()
         assert not self.data
@@ -271,124 +317,134 @@ class TestBinanceSpotWssApi:
         )
         self.reset()
 
-    def test_binance_wss_spot_is_unregistered(self, _wss_api: BinanceWssApi):
-        _wss_api._subscriptions = {"symbol": {"btcusdt": {"1"}}}
-        assert not _wss_api.is_unregistered(subscr_name="symbol", symbol="btcusdt")
-        assert not _wss_api.is_unregistered(subscr_name="SYMBOL", symbol="BTCUSDT")
-        assert _wss_api.is_unregistered(subscr_name="symbol")
-        assert _wss_api.is_unregistered(subscr_name="symbol", symbol="ethusdt")
-        assert _wss_api.is_unregistered(subscr_name="order")
-        _wss_api._subscriptions = {"symbol": {"*": {"1"}}}
-        assert not _wss_api.is_unregistered(subscr_name="symbol")
-        assert _wss_api.is_unregistered(subscr_name="symbol", symbol="ethusdt")
-        assert _wss_api.is_unregistered(subscr_name="order")
+    def test_binance_wss_spot_is_unregistered(self, _testnet_wss_api: BinanceWssApi):
+        _testnet_wss_api._subscriptions = {"symbol": {"btcusdt": {"1"}}}
+        assert not _testnet_wss_api.is_unregistered(
+            subscr_name="symbol", symbol="btcusdt"
+        )
+        assert not _testnet_wss_api.is_unregistered(
+            subscr_name="SYMBOL", symbol="BTCUSDT"
+        )
+        assert _testnet_wss_api.is_unregistered(subscr_name="symbol")
+        assert _testnet_wss_api.is_unregistered(subscr_name="symbol", symbol="ethusdt")
+        assert _testnet_wss_api.is_unregistered(subscr_name="order")
+        _testnet_wss_api._subscriptions = {"symbol": {"*": {"1"}}}
+        assert not _testnet_wss_api.is_unregistered(subscr_name="symbol")
+        assert _testnet_wss_api.is_unregistered(subscr_name="symbol", symbol="ethusdt")
+        assert _testnet_wss_api.is_unregistered(subscr_name="order")
 
-    def test_binance_wss_spot_unregister(self, _wss_api: BinanceWssApi):
-        _wss_api._subscriptions = {
+    def test_binance_wss_spot_unregister(self, _testnet_wss_api: BinanceWssApi):
+        _testnet_wss_api._subscriptions = {
             "symbol": {"btcusdt": {"1"}, "ethusdt": {"1", "2"}},
             "order": {"*": {"1", "2"}},
         }
-        assert _wss_api.unregister(
+        assert _testnet_wss_api.unregister(
             subscr_name="symbol", symbol="xrpusdt", subscr_channel="1"
         ) == (False, "xrpusdt")
-        assert _wss_api._subscriptions == {
+        assert _testnet_wss_api._subscriptions == {
             "symbol": {"btcusdt": {"1"}, "ethusdt": {"1", "2"}},
             "order": {"*": {"1", "2"}},
         }
-        assert _wss_api.unregister(
+        assert _testnet_wss_api.unregister(
             subscr_name="symbol", symbol="btcusdt", subscr_channel="3"
         ) == (False, "btcusdt")
-        assert _wss_api._subscriptions == {
+        assert _testnet_wss_api._subscriptions == {
             "symbol": {"btcusdt": {"1"}, "ethusdt": {"1", "2"}},
             "order": {"*": {"1", "2"}},
         }
-        assert _wss_api.unregister(
+        assert _testnet_wss_api.unregister(
             subscr_name="order_book", symbol="btcusdt", subscr_channel="3"
         ) == (False, "btcusdt")
-        assert _wss_api._subscriptions == {
+        assert _testnet_wss_api._subscriptions == {
             "symbol": {"btcusdt": {"1"}, "ethusdt": {"1", "2"}},
             "order": {"*": {"1", "2"}},
         }
-        assert _wss_api.unregister(
+        assert _testnet_wss_api.unregister(
             subscr_name="symbol", symbol="ethusdt", subscr_channel="2"
         ) == (False, "ethusdt")
-        assert _wss_api._subscriptions == {
+        assert _testnet_wss_api._subscriptions == {
             "symbol": {"btcusdt": {"1"}, "ethusdt": {"1"}},
             "order": {"*": {"1", "2"}},
         }
-        assert _wss_api.unregister(
+        assert _testnet_wss_api.unregister(
             subscr_name="symbol", symbol="ethusdt", subscr_channel="1"
         ) == (True, "ethusdt")
-        assert _wss_api._subscriptions == {
+        assert _testnet_wss_api._subscriptions == {
             "symbol": {"btcusdt": {"1"}},
             "order": {"*": {"1", "2"}},
         }
-        assert _wss_api.unregister(
+        assert _testnet_wss_api.unregister(
             subscr_name="SYMBOL", symbol="BTCUSDT", subscr_channel="1"
         ) == (True, "btcusdt")
-        assert _wss_api._subscriptions == {"order": {"*": {"1", "2"}}}
-        assert _wss_api.unregister(subscr_name="order", subscr_channel="2") == (
+        assert _testnet_wss_api._subscriptions == {"order": {"*": {"1", "2"}}}
+        assert _testnet_wss_api.unregister(subscr_name="order", subscr_channel="2") == (
             False,
             "*",
         )
-        assert _wss_api._subscriptions == {"order": {"*": {"1"}}}
-        assert _wss_api.unregister(subscr_name="order", subscr_channel="1") == (
+        assert _testnet_wss_api._subscriptions == {"order": {"*": {"1"}}}
+        assert _testnet_wss_api.unregister(subscr_name="order", subscr_channel="1") == (
             True,
             "*",
         )
-        assert _wss_api._subscriptions == {}
+        assert _testnet_wss_api._subscriptions == {}
 
     @pytest.mark.asyncio
-    async def test_binance_wss_spot_unsubscribe(self, _wss_api: BinanceWssApi):
-        _wss_api._subscriptions = {
+    async def test_binance_wss_spot_unsubscribe(self, _testnet_wss_api: BinanceWssApi):
+        _testnet_wss_api._subscriptions = {
             "symbol": {"btcusdt": {"1"}, "ethusdt": {"1", "2"}},
             "order": {"*": {"1", "2"}},
         }
-        assert await _wss_api.unsubscribe(
+        assert await _testnet_wss_api.unsubscribe(
             subscr_name="symbol", symbol="ethusdt", subscr_channel="2"
         )
-        assert _wss_api._subscriptions == {
+        assert _testnet_wss_api._subscriptions == {
             "symbol": {"btcusdt": {"1"}, "ethusdt": {"1"}},
             "order": {"*": {"1", "2"}},
         }
-        assert await _wss_api.unsubscribe(
+        assert await _testnet_wss_api.unsubscribe(
             subscr_name="SYMBOL", symbol="ETHUSDT", subscr_channel="1"
         )
-        assert _wss_api._subscriptions == {
+        assert _testnet_wss_api._subscriptions == {
             "symbol": {"btcusdt": {"1"}},
             "order": {"*": {"1", "2"}},
         }
-        assert await _wss_api.unsubscribe(subscr_name="order_book", subscr_channel="1")
-        assert _wss_api._subscriptions == {
+        assert await _testnet_wss_api.unsubscribe(
+            subscr_name="order_book", subscr_channel="1"
+        )
+        assert _testnet_wss_api._subscriptions == {
             "symbol": {"btcusdt": {"1"}},
             "order": {"*": {"1", "2"}},
         }
-        assert await _wss_api.unsubscribe(
+        assert await _testnet_wss_api.unsubscribe(
             subscr_name="symbol", symbol="btcusdt", subscr_channel="1"
         )
-        assert _wss_api._subscriptions == {"order": {"*": {"1", "2"}}}
-        assert await _wss_api.unsubscribe(subscr_name="order", subscr_channel="2")
-        assert _wss_api._subscriptions == {"order": {"*": {"1"}}}
-        assert await _wss_api.unsubscribe(subscr_name="order", subscr_channel="1")
-        assert _wss_api._subscriptions == {}
-        assert _wss_api.handler is None
-        assert _wss_api.tasks == []
+        assert _testnet_wss_api._subscriptions == {"order": {"*": {"1", "2"}}}
+        assert await _testnet_wss_api.unsubscribe(
+            subscr_name="order", subscr_channel="2"
+        )
+        assert _testnet_wss_api._subscriptions == {"order": {"*": {"1"}}}
+        assert await _testnet_wss_api.unsubscribe(
+            subscr_name="order", subscr_channel="1"
+        )
+        assert _testnet_wss_api._subscriptions == {}
+        assert _testnet_wss_api.handler is None
+        assert _testnet_wss_api.tasks == []
 
     @pytest.mark.asyncio
     async def test_binance_wss_spot__restore_subscriptions(
-        self, _wss_api: BinanceWssApi
+        self, _testnet_wss_api: BinanceWssApi
     ):
         subscriptions = {"symbol": {"btcusdt": {"1"}}, "order": {"btcusdt": {"1"}}}
-        _wss_api._subscriptions = subscriptions
-        await _wss_api._restore_subscriptions()
-        assert _wss_api._subscriptions == subscriptions
-        _wss_api.auth_connect = False
-        await _wss_api._restore_subscriptions()
-        assert _wss_api._subscriptions == {"symbol": {"btcusdt": {"1"}}}
-        assert await _wss_api.unsubscribe(
+        _testnet_wss_api._subscriptions = subscriptions
+        await _testnet_wss_api._restore_subscriptions()
+        assert _testnet_wss_api._subscriptions == subscriptions
+        _testnet_wss_api.auth_connect = False
+        await _testnet_wss_api._restore_subscriptions()
+        assert _testnet_wss_api._subscriptions == {"symbol": {"btcusdt": {"1"}}}
+        assert await _testnet_wss_api.unsubscribe(
             subscr_name="order", symbol="btcusdt", subscr_channel="1"
         )
-        assert await _wss_api.unsubscribe(
+        assert await _testnet_wss_api.unsubscribe(
             subscr_name="symbol", symbol="btcusdt", subscr_channel="1"
         )
 
@@ -397,21 +453,25 @@ class TestBinanceSpotWssApi:
         [("symbol", None), ("symbol", "btcusdt"), ("SYMBOL", "BTCUSDT")],
     )
     def test_binance_wss_spot_get_state(
-        self, _wss_api: BinanceWssApi, subscr_name, symbol
+        self, _testnet_wss_api: BinanceWssApi, subscr_name, symbol
     ):
-        assert _wss_api.get_state(subscr_name, symbol) is None
+        assert _testnet_wss_api.get_state(subscr_name, symbol) is None
 
     @pytest.mark.parametrize("symbol", [None, "not exists"])
     def test_binance_wss_spot_get_state_data_is_none(
-        self, _wss_api: BinanceWssApi, symbol
+        self, _testnet_wss_api: BinanceWssApi, symbol
     ):
-        assert _wss_api.get_state_data(symbol) is None
+        assert _testnet_wss_api.get_state_data(symbol) is None
 
     @pytest.mark.parametrize("symbol", ["btcusdt", "BTCUSDT"])
-    def test_binance_wss_spot_get_state_data(self, _wss_api: BinanceWssApi, symbol):
+    def test_binance_wss_spot_get_state_data(
+        self, _testnet_wss_api: BinanceWssApi, symbol
+    ):
         assert (
-            _wss_api.get_state_data(symbol)
-            == STORAGE_DATA["symbol"][_wss_api.name][_wss_api.schema][symbol.lower()]
+            _testnet_wss_api.get_state_data(symbol)
+            == STORAGE_DATA["symbol"][_testnet_wss_api.name][_testnet_wss_api.schema][
+                symbol.lower()
+            ]
         )
 
     @pytest.mark.parametrize(
@@ -423,7 +483,7 @@ class TestBinanceSpotWssApi:
         ],
     )
     def test_binance_wss_spot_parse_message(
-        self, _wss_api: BinanceWssApi, message, result
+        self, _testnet_wss_api: BinanceWssApi, message, result
     ):
         assert parse_message(message) == result
 
@@ -440,9 +500,9 @@ class TestBinanceSpotWssApi:
         ],
     )
     def test_binance_wss_spot__lookup_table(
-        self, _wss_api: BinanceWssApi, message, result
+        self, _testnet_wss_api: BinanceWssApi, message, result
     ):
-        assert _wss_api._lookup_table(message) == result
+        assert _testnet_wss_api._lookup_table(message) == result
 
     @pytest.mark.parametrize(
         "order_status, action",
@@ -453,9 +513,9 @@ class TestBinanceSpotWssApi:
         ],
     )
     def test_binance_wss_spot_define_action_by_order_status(
-        self, _wss_api: BinanceWssApi, order_status, action
+        self, _testnet_wss_api: BinanceWssApi, order_status, action
     ):
-        assert _wss_api.define_action_by_order_status(order_status) == action
+        assert _testnet_wss_api.define_action_by_order_status(order_status) == action
 
     @pytest.mark.parametrize(
         "message, split_results",
@@ -475,15 +535,18 @@ class TestBinanceSpotWssApi:
         ],
     )
     def test_binance_wss_spot__split_message(
-        self, _wss_api: BinanceWssApi, message, split_results
+        self, _testnet_wss_api: BinanceWssApi, message, split_results
     ):
-        assert _wss_api._split_message(deepcopy(message)) == split_results
+        assert _testnet_wss_api._split_message(deepcopy(message)) == split_results
 
-    def test_binance_wss_spot_split_wallet(self, _wss_api: BinanceWssApi):
-        assert _wss_api.split_wallet(deepcopy(SPOT_WALLET_LOOKUP_TABLE_RESULT)) is None
-        _wss_api._subscriptions = {"wallet": {"btc": {"1"}}}
+    def test_binance_wss_spot_split_wallet(self, _testnet_wss_api: BinanceWssApi):
         assert (
-            _wss_api.split_wallet(deepcopy(SPOT_WALLET_LOOKUP_TABLE_RESULT))
+            _testnet_wss_api.split_wallet(deepcopy(SPOT_WALLET_LOOKUP_TABLE_RESULT))
+            is None
+        )
+        _testnet_wss_api._subscriptions = {"wallet": {"btc": {"1"}}}
+        assert (
+            _testnet_wss_api.split_wallet(deepcopy(SPOT_WALLET_LOOKUP_TABLE_RESULT))
             == SPOT_WALLET_SPLIT_MESSAGE_RESULTS[0]
         )
 
@@ -498,10 +561,10 @@ class TestBinanceSpotWssApi:
         ],
     )
     def test_binance_wss_spot_get_data(
-        self, _wss_api: BinanceWssApi, messages, results
+        self, _testnet_wss_api: BinanceWssApi, messages, results
     ):
         for i, message in enumerate(messages):
-            assert _wss_api.get_data(message) == results[i]
+            assert _testnet_wss_api.get_data(message) == results[i]
 
     @pytest.mark.parametrize(
         "messages, results",
@@ -514,10 +577,10 @@ class TestBinanceSpotWssApi:
         ],
     )
     def test_binance_wss_spot_get_data_symbol(
-        self, _wss_api: BinanceWssApi, messages, results
+        self, _testnet_wss_api: BinanceWssApi, messages, results
     ):
         for i, message in enumerate(messages):
-            response = _wss_api.get_data(message)
+            response = _testnet_wss_api.get_data(message)
             for j, data in enumerate(response["symbol"]["data"]):
                 data["created"] = results[i]["symbol"]["data"][j]["created"]
             assert response == results[i]
@@ -533,11 +596,13 @@ class TestBinanceSpotWssApi:
         ],
     )
     async def test_binance_wss_spot_process_message(
-        self, _wss_api: BinanceWssApi, message, results
+        self, _testnet_wss_api: BinanceWssApi, message, results
     ):
         self.reset()
         assert not self.data
-        await _wss_api.process_message(json.dumps(deepcopy(message)), self.on_message)
+        await _testnet_wss_api.process_message(
+            json.dumps(deepcopy(message)), self.on_message
+        )
         assert self.data
         assert self.data == results
         self.reset()
@@ -551,11 +616,13 @@ class TestBinanceSpotWssApi:
         ],
     )
     async def test_binance_wss_spot_process_symbol_message(
-        self, _wss_api: BinanceWssApi, message, results
+        self, _testnet_wss_api: BinanceWssApi, message, results
     ):
         self.reset()
         assert not self.data
-        await _wss_api.process_message(json.dumps(deepcopy(message)), self.on_message)
+        await _testnet_wss_api.process_message(
+            json.dumps(deepcopy(message)), self.on_message
+        )
         assert self.data
         for i, message in enumerate(results):
             for j, obj in enumerate(message["symbol"]["data"]):
@@ -565,12 +632,12 @@ class TestBinanceSpotWssApi:
 
     @pytest.mark.asyncio
     async def test_binance_wss_spot_process_wallet_message(
-        self, _wss_api: BinanceWssApi
+        self, _testnet_wss_api: BinanceWssApi
     ):
         self.reset()
         assert not self.data
-        _wss_api._subscriptions = {"wallet": {"*": {"1"}}}
-        await _wss_api.process_message(
+        _testnet_wss_api._subscriptions = {"wallet": {"*": {"1"}}}
+        await _testnet_wss_api.process_message(
             json.dumps(deepcopy(SPOT_WALLET_MESSAGE)), self.on_message
         )
         assert self.data == SPOT_PROCESS_WALLET_MESSAGE_RESULT
