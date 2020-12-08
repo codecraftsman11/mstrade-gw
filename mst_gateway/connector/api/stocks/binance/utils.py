@@ -426,7 +426,7 @@ def ws_spot_balance_data(balances: list, state_balances: dict):
             'maint_margin': to_float(b['l']),
             'init_margin': _currency_state.get('init_margin'),
             'available_margin': round(to_float(b['f']) - to_float(b['l']), 8),
-            'type': to_wallet_state_type(to_float(b['l'])),
+            'type': _currency_state.get('type'),
         })
     return result
 
