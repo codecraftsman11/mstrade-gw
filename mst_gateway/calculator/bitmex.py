@@ -56,13 +56,13 @@ class BitmexFinFactory(FinFactory):
                 result = (1e-6 * price, False)
             elif _symbol in ('ethusd', 'bchusd'):
                 result = (1e-6 * price, False)
-            elif _symbol == 'yfiusdtz20':
+            elif re.match(r'yfiusdt[fghjkmnquvxz]\d{2}', _symbol):
                 result = (1e-7 * price, False)
             elif _symbol == 'ltcusd':
                 result = (2e-6 * price, False)
             elif _symbol == 'linkusdt':
                 result = (0.0001 * price, False)
-            elif re.match(r'(bnb|dot|eos|link|xtz)usdtz\d{2}', _symbol):
+            elif re.match(r'(bnb|dot|eos|link|xtz)usdt[fghjkmnquvxz]\d{2}', _symbol):
                 result = (0.0001 * price, False)
             elif _symbol == 'xrpusd':
                 result = (0.0002 * price, False)
@@ -90,11 +90,11 @@ class BitmexFinFactory(FinFactory):
                 result = 1e+6 * face_price
             elif _symbol in ('ethusd', 'bchusd'):
                 result = 1e+6 * face_price
-            elif _symbol == 'yfiusdtz20':
+            elif re.match(r'yfiusdt[fghjkmnquvxz]\d{2}', _symbol):
                 result = 1e+7 * face_price
             elif _symbol == 'ltcusd':
                 result = 2e+6 * face_price
-            elif re.match(r'(bnb|dot|eos|link|xtz)usdtz\d{2}', _symbol):
+            elif re.match(r'(bnb|dot|eos|link|xtz)usdt[fghjkmnquvxz]\d{2}', _symbol):
                 result = face_price / 0.0001
             elif _symbol == 'linkusdt':
                 result = face_price / 0.0001
