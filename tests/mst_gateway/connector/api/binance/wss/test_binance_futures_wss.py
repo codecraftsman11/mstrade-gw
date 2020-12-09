@@ -111,7 +111,7 @@ class TestBinanceFuturesWssApi:
         await self.consume(wss_api, wss_api.handler, self.on_message)
 
     def test_binance_wss_futures_str(self, _testnet_wss_api: BinanceFuturesWssApi):
-        assert str(_testnet_wss_api) == cfg.BINANCE_WSS_API_NAME
+        assert str(_testnet_wss_api) == cfg.BINANCE_WSS_API_NAME.lower()
 
     def test_binance_wss_futures_options(self, _testnet_wss_api: BinanceFuturesWssApi):
         assert _testnet_wss_api.options == {}

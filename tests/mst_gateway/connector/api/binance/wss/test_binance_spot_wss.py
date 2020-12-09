@@ -115,7 +115,7 @@ class TestBinanceSpotWssApi:
         await self.consume(wss_api, wss_api.handler, self.on_message)
 
     def test_binance_wss_spot_str(self, _testnet_wss_api: BinanceWssApi):
-        assert str(_testnet_wss_api) == cfg.BINANCE_WSS_API_NAME
+        assert str(_testnet_wss_api) == cfg.BINANCE_WSS_API_NAME.lower()
 
     def test_binance_wss_spot_options(self, _testnet_wss_api: BinanceWssApi):
         assert _testnet_wss_api.options == {}
