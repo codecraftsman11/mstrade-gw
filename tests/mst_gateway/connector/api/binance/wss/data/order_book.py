@@ -73,7 +73,7 @@ SPOT_ORDER_BOOK_SPLIT_MESSAGE_RESULTS = [
 SPOT_ORDER_BOOK_GET_DATA_RESULTS = [
     {
         "order_book": {
-            "account": cfg.BINANCE_WSS_API_NAME,
+            "account": "binance.binance",
             "action": "delete",
             "data": [
                 {
@@ -101,7 +101,7 @@ SPOT_ORDER_BOOK_GET_DATA_RESULTS = [
     },
     {
         "order_book": {
-            "account": cfg.BINANCE_WSS_API_NAME,
+            "account": "binance.binance",
             "action": "update",
             "data": [
                 {
@@ -214,7 +214,7 @@ FUTURES_ORDER_BOOK_SPLIT_MESSAGE_RESULTS = [
 FUTURES_ORDER_BOOK_GET_DATA_RESULTS = [
     {
         "order_book": {
-            "account": cfg.BINANCE_WSS_API_NAME,
+            "account": "binance.binance",
             "action": "delete",
             "data": [
                 {

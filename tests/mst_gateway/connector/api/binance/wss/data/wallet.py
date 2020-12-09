@@ -41,7 +41,7 @@ SPOT_WALLET_SPLIT_MESSAGE_RESULTS = [
 SPOT_WALLET_GET_DATA_RESULTS = [
     {
         "wallet": {
-            "account": cfg.BINANCE_WSS_API_NAME,
+            "account": "binance.binance",
             "action": "update",
             "data": [
                 {
@@ -67,7 +67,7 @@ SPOT_WALLET_GET_DATA_RESULTS = [
 SPOT_PROCESS_WALLET_MESSAGE_RESULT = [
     {
         "wallet": {
-            "account": cfg.BINANCE_WSS_API_NAME,
+            "account": "binance.binance",
             "action": "update",
             "data": [
                 {
@@ -187,7 +187,7 @@ FUTURES_WALLET_SPLIT_MESSAGE_RESULTS = [
 FUTURES_WALLET_GET_DATA_RESULTS = [
     {
         "wallet": {
-            "account": cfg.BINANCE_WSS_API_NAME,
+            "account": "binance.binance",
             "action": "update",
             "data": [
                 {
@@ -215,7 +215,7 @@ FUTURES_WALLET_GET_DATA_RESULTS = [
 FUTURES_WALLET_PROCESS_MESSAGE_RESULTS = [
     {
         "wallet": {
-            "account": cfg.BINANCE_WSS_API_NAME,
+            "account": "binance.binance",
             "action": "update",
             "data": [
                 {

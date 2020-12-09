@@ -120,7 +120,7 @@ SPOT_ORDER_SPLIT_MESSAGE_RESULTS = [
 SPOT_ORDER_GET_DATA_RESULTS = [
     {
         "order": {
-            "account": cfg.BINANCE_WSS_API_NAME,
+            "account": "binance.binance",
             "action": "insert",
             "data": [
                 {
@@ -279,7 +279,7 @@ FUTURES_ORDER_SPLIT_MESSAGE_RESULTS = [
 FUTURES_ORDER_GET_DATA_RESULTS = [
     {
         "order": {
-            "account": cfg.BINANCE_WSS_API_NAME,
+            "account": "binance.binance",
             "action": "update",
             "data": [
                 {

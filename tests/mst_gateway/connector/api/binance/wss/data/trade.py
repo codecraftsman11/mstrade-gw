@@ -56,7 +56,7 @@ SPOT_TRADE_SPLIT_MESSAGE_RESULTS = [
 SPOT_TRADE_GET_DATA_RESULTS = [
     {
         "trade": {
-            "account": cfg.BINANCE_WSS_API_NAME,
+            "account": "binance.binance",
             "action": "update",
             "data": [
                 {
@@ -126,7 +126,7 @@ FUTURES_TRADE_SPLIT_MESSAGE_RESULTS = [
 FUTURES_TRADE_GET_DATA_RESULTS = [
     {
         "trade": {
-            "account": cfg.BINANCE_WSS_API_NAME,
+            "account": "binance.binance",
             "action": "update",
             "data": [
                 {

@@ -92,7 +92,7 @@ SPOT_SYMBOL_DETAIL_SPLIT_MESSAGE_RESULTS = [
 SPOT_SYMBOL_DETAIL_GET_DATA_RESULTS = [
     {
         "symbol": {
-            "account": cfg.BINANCE_WSS_API_NAME,
+            "account": "binance.binance",
             "action": "update",
             "data": [
                 {
@@ -292,7 +292,7 @@ SPOT_SYMBOL_SPLIT_MESSAGE_RESULTS = [
 SPOT_SYMBOL_GET_DATA_RESULTS = [
     {
         "symbol": {
-            "account": cfg.BINANCE_WSS_API_NAME,
+            "account": "binance.binance",
             "action": "update",
             "data": [
                 {
@@ -423,7 +423,7 @@ FUTURES_SYMBOL_SPLIT_MESSAGE_RESULTS = [
 FUTURES_SYMBOL_GET_DATA_RESULTS = [
     {
         "symbol": {
-            "account": cfg.BINANCE_WSS_API_NAME,
+            "account": "binance.binance",
             "action": "update",
             "data": [
                 {
