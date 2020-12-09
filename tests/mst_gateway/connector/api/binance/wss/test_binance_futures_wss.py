@@ -54,7 +54,7 @@ logger = logging.getLogger(__name__)
 @pytest.fixture
 async def _wss_api() -> BinanceFuturesWssApi:
     with BinanceFuturesWssApi(
-        url=cfg.BINANCE_FUTURES_PROD_URL,
+        url=cfg.BINANCE_WSS_API_URL,
         name=cfg.BINANCE_WSS_API_NAME,
         account_name=cfg.BINANCE_WSS_API_ACCOUNT_NAME,
         schema=cfg.BINANCE_FUTURES_SCHEMA,
@@ -73,11 +73,11 @@ async def _wss_api() -> BinanceFuturesWssApi:
 @pytest.fixture
 async def _testnet_wss_api() -> BinanceFuturesWssApi:
     with BinanceFuturesWssApi(
-        url=cfg.BINANCE_FUTURES_TESTNET_URL,
+        url=cfg.BINANCE_TESTNET_WSS_API_URL,
         name=cfg.BINANCE_WSS_API_NAME,
         account_name=cfg.BINANCE_WSS_API_ACCOUNT_NAME,
         schema=cfg.BINANCE_FUTURES_SCHEMA,
-        auth=cfg.BINANCE_FUTURES_TESTNET_AUTH_KEYS,
+        auth=cfg.BINANCE_TESTNET_AUTH_KEYS,
         state_storage=deepcopy(STORAGE_DATA),
         logger=logger,
     ) as _testnet_wss_api:
@@ -114,15 +114,21 @@ class TestBinanceFuturesWssApi:
     def test_binance_wss_futures_str(self, _testnet_wss_api: BinanceFuturesWssApi):
         assert str(_testnet_wss_api) == cfg.BINANCE_WSS_API_NAME.lower()
 
-    def test_binance_wss_futures_account_name(self, _testnet_wss_api: BinanceFuturesWssApi):
+    def test_binance_wss_futures_account_name(
+        self, _testnet_wss_api: BinanceFuturesWssApi
+    ):
         assert _testnet_wss_api.account_name == cfg.BINANCE_ACCOUNT_NAME
 
-    def test_binance_wss_futures_account_id(self, _testnet_wss_api: BinanceFuturesWssApi):
+    def test_binance_wss_futures_account_id(
+        self, _testnet_wss_api: BinanceFuturesWssApi
+    ):
         assert _testnet_wss_api.account_id == cfg.BINANCE_ACCOUNT_ID
 
-    def test_binance_wss_futures_url(self, _testnet_wss_api: BinanceFuturesWssApi, _wss_api: BinanceFuturesWssApi):
-        assert _testnet_wss_api._url == cfg.BINANCE_FUTURES_TESTNET_URL
-        assert _wss_api._url == cfg.BINANCE_FUTURES_PROD_URL
+    def test_binance_wss_futures_url(
+        self, _testnet_wss_api: BinanceFuturesWssApi, _wss_api: BinanceFuturesWssApi
+    ):
+        assert _testnet_wss_api._url == _testnet_wss_api.TEST_URL
+        assert _wss_api._url == _testnet_wss_api.BASE_URL
 
     def test_binance_wss_futures_options(self, _testnet_wss_api: BinanceFuturesWssApi):
         assert _testnet_wss_api.options == {}
@@ -144,7 +150,7 @@ class TestBinanceFuturesWssApi:
     def test_binance_wss_futures_auth_data(
         self, _testnet_wss_api: BinanceFuturesWssApi, _wss_api: BinanceFuturesWssApi
     ):
-        assert _testnet_wss_api.auth == cfg.BINANCE_FUTURES_TESTNET_AUTH_KEYS
+        assert _testnet_wss_api.auth == cfg.BINANCE_TESTNET_AUTH_KEYS
         assert _wss_api.auth == cfg.BINANCE_AUTH_KEYS
 
     def test_binance_wss_futures_test(
