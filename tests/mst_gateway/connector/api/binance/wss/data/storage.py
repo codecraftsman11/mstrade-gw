@@ -1206,7 +1206,7 @@ STORAGE_DATA = {
             },
         },
     },
-    f"wallet.1": {
+    f"wallet.{cfg.BINANCE_ACCOUNT_ID}": {
         "app_prefix": 1606230664,
         cfg.BINANCE_SPOT_SCHEMA: {
             "balances": {

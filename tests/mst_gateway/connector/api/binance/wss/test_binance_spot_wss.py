@@ -58,9 +58,9 @@ logger = logging.getLogger(__name__)
 @pytest.fixture
 async def _wss_api() -> BinanceWssApi:
     with BinanceWssApi(
-        url="wss://stream.binance.com:9443/ws",
+        url=cfg.BINANCE_SPOT_PROD_URL,
         name=cfg.BINANCE_WSS_API_NAME,
-        account_name=cfg.BINANCE_ACCOUNT_NAME,
+        account_name=cfg.BINANCE_WSS_API_ACCOUNT_NAME,
         schema=cfg.BINANCE_SPOT_SCHEMA,
         auth=cfg.BINANCE_AUTH_KEYS,
         state_storage=deepcopy(STORAGE_DATA),
@@ -79,7 +79,7 @@ async def _testnet_wss_api() -> BinanceWssApi:
     with BinanceWssApi(
         url=cfg.BINANCE_SPOT_TESTNET_URL,
         name=cfg.BINANCE_WSS_API_NAME,
-        account_name=cfg.BINANCE_ACCOUNT_NAME,
+        account_name=cfg.BINANCE_WSS_API_ACCOUNT_NAME,
         schema=cfg.BINANCE_SPOT_SCHEMA,
         auth=cfg.BINANCE_SPOT_TESTNET_AUTH_KEYS,
         state_storage=deepcopy(STORAGE_DATA),
@@ -117,6 +117,16 @@ class TestBinanceSpotWssApi:
 
     def test_binance_wss_spot_str(self, _testnet_wss_api: BinanceWssApi):
         assert str(_testnet_wss_api) == cfg.BINANCE_WSS_API_NAME.lower()
+
+    def test_binance_wss_spot_account_name(self, _testnet_wss_api: BinanceWssApi):
+        assert _testnet_wss_api.account_name == cfg.BINANCE_ACCOUNT_NAME
+
+    def test_binance_wss_spot_account_id(self, _testnet_wss_api: BinanceWssApi):
+        assert _testnet_wss_api.account_id == cfg.BINANCE_ACCOUNT_ID
+
+    def test_binance_wss_spot_url(self, _testnet_wss_api: BinanceWssApi, _wss_api: BinanceWssApi):
+        assert _testnet_wss_api._url == cfg.BINANCE_SPOT_TESTNET_URL
+        assert _wss_api._url == cfg.BINANCE_SPOT_PROD_URL
 
     def test_binance_wss_spot_options(self, _testnet_wss_api: BinanceWssApi):
         assert _testnet_wss_api.options == {}

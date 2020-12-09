@@ -4,6 +4,7 @@ from logging import Logger
 from typing import Dict, Optional, Union
 import websockets
 from datetime import datetime, timedelta
+from copy import deepcopy
 from mst_gateway.storage import StateStorage
 from .router import Router
 from .subscriber import Subscriber
@@ -241,8 +242,7 @@ class StockWssApi(Connector):
             await self.process_message(message, recv_callback)
 
     async def _restore_subscriptions(self):
-        subscriptions = {**self._subscriptions}
-        for subscr_name, value in subscriptions.items():
+        for subscr_name, value in deepcopy(self._subscriptions).items():
             if subscr_name in self.auth_subscribers:
                 if not await self.authenticate():
                     del self._subscriptions[subscr_name]
