@@ -58,6 +58,7 @@ logger = logging.getLogger(__name__)
 @pytest.fixture
 async def _wss_api() -> BinanceWssApi:
     with BinanceWssApi(
+        url="wss://stream.binance.com:9443/ws",
         name=cfg.BINANCE_WSS_API_NAME,
         account_name=cfg.BINANCE_ACCOUNT_NAME,
         schema=cfg.BINANCE_SPOT_SCHEMA,
@@ -447,6 +448,7 @@ class TestBinanceSpotWssApi:
         assert await _testnet_wss_api.unsubscribe(
             subscr_name="symbol", symbol="btcusdt", subscr_channel="1"
         )
+        assert False
 
     @pytest.mark.parametrize(
         "subscr_name, symbol",

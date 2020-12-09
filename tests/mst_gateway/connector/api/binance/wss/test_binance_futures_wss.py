@@ -54,6 +54,7 @@ logger = logging.getLogger(__name__)
 @pytest.fixture
 async def _wss_api() -> BinanceFuturesWssApi:
     with BinanceFuturesWssApi(
+        url="wss://stream.binancefuture.com/ws",
         name=cfg.BINANCE_WSS_API_NAME,
         account_name=cfg.BINANCE_ACCOUNT_NAME,
         schema=cfg.BINANCE_FUTURES_SCHEMA,
