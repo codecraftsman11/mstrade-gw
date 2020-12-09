@@ -458,7 +458,6 @@ class TestBinanceSpotWssApi:
         assert await _testnet_wss_api.unsubscribe(
             subscr_name="symbol", symbol="btcusdt", subscr_channel="1"
         )
-        assert False
 
     @pytest.mark.parametrize(
         "subscr_name, symbol",
