@@ -10,7 +10,7 @@ BINANCE_SPOT_PROD_URL = getenv(
     "BINANCE_SPOT_PROD_URL", "wss://stream.binance.com:9443/ws"
 )
 BINANCE_FUTURES_PROD_URL = getenv(
-    "BINANCE_FUTURES_PROD_URL", "wss://stream.binancefuture.com/ws"
+    "BINANCE_FUTURES_PROD_URL", "wss://fstream.binance.com/ws"
 )
 BINANCE_AUTH_KEYS = {
     "api_key": getenv("BINANCE_API_KEY"),
