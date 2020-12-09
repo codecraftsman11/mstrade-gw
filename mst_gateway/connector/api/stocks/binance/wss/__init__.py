@@ -224,13 +224,13 @@ class BinanceFuturesWssApi(BinanceWssApi):
                          throttle_rate, throttle_storage, schema, state_storage, register_state)
         self._url = self._generate_url()
 
+    def _is_test(self, url):
+        return url != super().BASE_URL
+
     def _generate_url(self):
         if self.test:
             return self.TEST_URL
         return self.BASE_URL
-
-    def _is_test(self, url):
-        return url != super().BASE_URL
 
     def __split_message_map(self, key: str) -> Optional[callable]:
         _map = {
