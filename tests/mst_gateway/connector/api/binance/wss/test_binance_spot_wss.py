@@ -58,7 +58,7 @@ logger = logging.getLogger(__name__)
 @pytest.fixture
 async def _wss_api() -> BinanceWssApi:
     with BinanceWssApi(
-        url=cfg.BINANCE_WSS_API_URL,
+        url=cfg.BINANCE_SPOT_WSS_API_URL,
         name=cfg.BINANCE_WSS_API_NAME,
         account_name=cfg.BINANCE_WSS_API_ACCOUNT_NAME,
         schema=cfg.BINANCE_SPOT_SCHEMA,
@@ -77,11 +77,11 @@ async def _wss_api() -> BinanceWssApi:
 @pytest.fixture
 async def _testnet_wss_api() -> BinanceWssApi:
     with BinanceWssApi(
-        url=cfg.BINANCE_TESTNET_WSS_API_URL,
+        url=cfg.BINANCE_SPOT_TESTNET_WSS_API_URL,
         name=cfg.BINANCE_WSS_API_NAME,
         account_name=cfg.BINANCE_WSS_API_ACCOUNT_NAME,
         schema=cfg.BINANCE_SPOT_SCHEMA,
-        auth=cfg.BINANCE_TESTNET_AUTH_KEYS,
+        auth=cfg.BINANCE_FUTURES_TESTNET_AUTH_KEYS,
         state_storage=deepcopy(STORAGE_DATA),
         logger=logger,
     ) as _testnet_wss_api:
@@ -127,8 +127,8 @@ class TestBinanceSpotWssApi:
     def test_binance_wss_spot_url(
         self, _testnet_wss_api: BinanceWssApi, _wss_api: BinanceWssApi
     ):
-        assert _testnet_wss_api._url == cfg.BINANCE_TESTNET_WSS_API_URL
-        assert _wss_api._url == cfg.BINANCE_WSS_API_URL
+        assert _testnet_wss_api._url == cfg.BINANCE_SPOT_TESTNET_WSS_API_URL
+        assert _wss_api._url == cfg.BINANCE_SPOT_WSS_API_URL
 
     def test_binance_wss_spot_options(self, _testnet_wss_api: BinanceWssApi):
         assert _testnet_wss_api.options == {}
@@ -148,7 +148,7 @@ class TestBinanceSpotWssApi:
     def test_binance_wss_spot_auth_data(
         self, _testnet_wss_api: BinanceWssApi, _wss_api: BinanceWssApi
     ):
-        assert _testnet_wss_api.auth == cfg.BINANCE_TESTNET_AUTH_KEYS
+        assert _testnet_wss_api.auth == cfg.BINANCE_FUTURES_TESTNET_AUTH_KEYS
         assert _wss_api.auth == cfg.BINANCE_AUTH_KEYS
 
     def test_binance_wss_spot_test(
