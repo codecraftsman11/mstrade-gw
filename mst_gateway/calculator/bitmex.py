@@ -52,9 +52,9 @@ class BitmexFinFactory(FinFactory):
                 result = (0.1 * price, False)
             elif re.match(r'adausdt[fghjkmnquvxz]\d{2}', _symbol):
                 result = (0.01 * price, False)
-            elif re.match(r'ethusd[fghjkmnquvxz]\d{2}', _symbol):
-                result = (1e-6 * price, False)
             elif _symbol in ('ethusd', 'bchusd'):
+                result = (1e-6 * price, False)
+            elif re.match(r'ethusd[fghjkmnquvxz]\d{2}', _symbol):
                 result = (1e-6 * price, False)
             elif re.match(r'yfiusdt[fghjkmnquvxz]\d{2}', _symbol):
                 result = (1e-7 * price, False)
@@ -66,8 +66,9 @@ class BitmexFinFactory(FinFactory):
                 result = (0.0001 * price, False)
             elif _symbol == 'xrpusd':
                 result = (0.0002 * price, False)
-            elif re.match(r'(ada|bch|eos|eth|ltc|trx|xrp)[fghjkmnquvxz]\d{2}',
-                          _symbol):
+            elif re.match(r'(ada|bch|eos|eth|ltc|trx|xrp)[fghjkmnquvxz]\d{2}', _symbol):
+                result = (price, False)
+            elif _symbol == 'ethxbt':
                 result = (price, False)
         except (ValueError, TypeError, ZeroDivisionError):
             pass
@@ -86,22 +87,23 @@ class BitmexFinFactory(FinFactory):
                 result = 10 * face_price
             elif re.match(r'adausdt[fghjkmnquvxz]\d{2}', _symbol):
                 result = 100 * face_price
-            elif re.match(r'ethusd[fghjkmnquvxz]\d{2}', _symbol):
-                result = 1e+6 * face_price
             elif _symbol in ('ethusd', 'bchusd'):
+                result = 1e+6 * face_price
+            elif re.match(r'ethusd[fghjkmnquvxz]\d{2}', _symbol):
                 result = 1e+6 * face_price
             elif re.match(r'yfiusdt[fghjkmnquvxz]\d{2}', _symbol):
                 result = 1e+7 * face_price
             elif _symbol == 'ltcusd':
                 result = 2e+6 * face_price
-            elif re.match(r'(bnb|dot|eos|link|xtz)usdt[fghjkmnquvxz]\d{2}', _symbol):
-                result = face_price / 0.0001
             elif _symbol == 'linkusdt':
+                result = face_price / 0.0001
+            elif re.match(r'(bnb|dot|eos|link|xtz)usdt[fghjkmnquvxz]\d{2}', _symbol):
                 result = face_price / 0.0001
             elif _symbol == 'xrpusd':
                 result = face_price / 0.0002
-            elif re.match(r'(ada|bch|eos|eth|ltc|trx|xrp)[fghjkmnquvxz]\d{2}$',
-                          _symbol):
+            elif re.match(r'(ada|bch|eos|eth|ltc|trx|xrp)[fghjkmnquvxz]\d{2}$', _symbol):
+                result = face_price
+            elif _symbol == 'ethxbt':
                 result = face_price
         except (ValueError, TypeError, ZeroDivisionError):
             pass
