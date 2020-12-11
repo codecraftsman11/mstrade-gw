@@ -26,8 +26,6 @@ class BitmexSymbolSerializer(BitmexSerializer):
                             state[0]['volume24'] = item['volume24h']
                         if item.get('prevPrice24h'):
                             state[0]['price24'] = to_float(item['prevPrice24h'])
-                        if item.get('markPrice'):
-                            state[0]['mark_price'] = to_float(item['markPrice'])
                         self._update_state(stock2symbol(item['symbol']), state[0])
         if message.get("table") == "quote":
             for item in message.get('data', []):
@@ -53,7 +51,6 @@ class BitmexSymbolSerializer(BitmexSerializer):
         _map = {
             'price24': 'prevPrice24h',
             'tick': 'tickSize',
-            'mark_price': 'markPrice',
             'ask_price': 'askPrice',
             'bid_price': 'bidPrice',
             'volume24': 'volume24h',
