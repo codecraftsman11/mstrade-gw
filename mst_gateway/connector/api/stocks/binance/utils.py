@@ -12,17 +12,12 @@ from .converter import BinanceOrderTypeConverter
 from ...types.asset import to_system_asset
 
 
-def _face_price(symbol, mark_price):
-    return mark_price, True
-
-
 def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
     symbol = raw_data.get('symbol')
     symbol_time = to_date(raw_data.get('closeTime'))
-    mark_price = to_float(raw_data.get('lastPrice'))
-    face_price, _reversed = _face_price(symbol, mark_price)
     price = to_float(raw_data.get('lastPrice'))
     price24 = to_float(raw_data.get('weightedAvgPrice'))
+    face_price, _reversed = BinanceFinFactory.calc_face_price(symbol, price)
     return {
         'time': symbol_time,
         'timestamp': raw_data.get('closeTime'),
@@ -30,10 +25,9 @@ def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
         'price': price,
         'price24': price24,
         'delta': delta(price, price24),
-        'mark_price': mark_price,
         'face_price': face_price,
-        'bid_price': to_float(raw_data.get('bidPrice') or mark_price),
-        'ask_price': to_float(raw_data.get('askPrice') or mark_price),
+        'bid_price': to_float(raw_data.get('bidPrice')),
+        'ask_price': to_float(raw_data.get('askPrice')),
         'reversed': _reversed,
         'volume24': to_float(raw_data.get('volume')),
         'expiration': state_data.get('expiration'),
@@ -811,10 +805,9 @@ def load_symbol_ws_data(raw_data: dict, state_data: dict) -> dict:
     }
     """
     symbol = raw_data.get('s')
-    mark_price = to_float(raw_data.get('o'))
-    face_price, _reversed = BinanceFinFactory.calc_face_price(symbol, mark_price)
     price = to_float(raw_data.get('c'))
     price24 = to_float(raw_data.get('w'))
+    face_price, _reversed = BinanceFinFactory.calc_face_price(symbol, price)
     return {
         'time': to_iso_datetime(raw_data.get('E')),
         'timestamp': raw_data.get('E'),
@@ -822,10 +815,9 @@ def load_symbol_ws_data(raw_data: dict, state_data: dict) -> dict:
         'price': price,
         'price24': price24,
         'delta': delta(price, price24),
-        'mark_price': mark_price,
         'face_price': face_price,
-        'bid_price': to_float(raw_data.get('b') or mark_price),
-        'ask_price': to_float(raw_data.get('a') or mark_price),
+        'bid_price': to_float(raw_data.get('b')),
+        'ask_price': to_float(raw_data.get('a')),
         'reversed': _reversed,
         'volume24': to_float(raw_data.get('v')),
         'expiration': state_data.get('expiration'),
