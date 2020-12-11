@@ -19,10 +19,9 @@ def load_symbol_data(raw_data: dict, state_data: dict, is_iso_datetime=False) ->
     symbol = raw_data.get('symbol')
     symbol_datetime = to_date(raw_data.get('timestamp'))
     symbol_time = to_iso_datetime(symbol_datetime) if is_iso_datetime else symbol_datetime
-    mark_price = to_float(raw_data.get('markPrice'))
-    face_price, _reversed = BitmexFinFactory.calc_face_price(symbol, mark_price)
     price = to_float(raw_data.get('lastPrice'))
     price24 = to_float(raw_data.get('prevPrice24h'))
+    face_price, _reversed = BitmexFinFactory.calc_face_price(symbol, price)
     return {
         'time': symbol_time,
         'timestamp': time2timestamp(symbol_datetime),
@@ -30,7 +29,6 @@ def load_symbol_data(raw_data: dict, state_data: dict, is_iso_datetime=False) ->
         'price': price,
         'price24': price24,
         'delta': delta(price, price24),
-        'mark_price': mark_price,
         'face_price': face_price,
         'bid_price': to_float(raw_data.get('bidPrice')),
         'ask_price': to_float(raw_data.get('askPrice')),
