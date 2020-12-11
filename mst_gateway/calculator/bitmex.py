@@ -48,6 +48,10 @@ class BitmexFinFactory(FinFactory):
                 result = (1 / price, True)
             elif re.match(r'xbt[fghjkmnquvxz]\d{2}$', _symbol):
                 result = (1 / price, True)
+            elif _symbol == "xbtjpy":
+                result = (100 / price, True)
+            elif _symbol == "xbtkrw":
+                result = (1000 / price, True)
             elif _symbol in ('xbt7d_u105', 'xbt7d_d95'):
                 result = (0.1 * price, False)
             elif re.match(r'adausdt[fghjkmnquvxz]\d{2}', _symbol):
@@ -83,6 +87,10 @@ class BitmexFinFactory(FinFactory):
                 result = 1 / face_price
             elif re.match(r'xbt[fghjkmnquvxz]\d{2}$', _symbol):
                 result = 1 / face_price
+            elif _symbol == "xbtjpy":
+                result = 100 / face_price
+            elif _symbol == "xbtkrw":
+                result = 1000 / face_price
             elif _symbol in ('xbt7d_u105', 'xbt7d_d95'):
                 result = 10 * face_price
             elif re.match(r'adausdt[fghjkmnquvxz]\d{2}', _symbol):
