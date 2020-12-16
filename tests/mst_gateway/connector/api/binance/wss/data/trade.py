@@ -57,7 +57,7 @@ SPOT_TRADE_GET_DATA_RESULTS = [
     {
         "trade": {
             "account": cfg.BINANCE_ACCOUNT_NAME,
-            "action": "update",
+            "action": "insert",
             "data": [
                 {
                     "price": 30.8308,
@@ -127,7 +127,7 @@ FUTURES_TRADE_GET_DATA_RESULTS = [
     {
         "trade": {
             "account": cfg.BINANCE_ACCOUNT_NAME,
-            "action": "update",
+            "action": "insert",
             "data": [
                 {
                     "price": 22792.59,
