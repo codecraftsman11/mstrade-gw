@@ -90,7 +90,7 @@ class OrderPositionClosedBy(ClassWithAttributes):
     stop_loss = 'stop_loss'
     market = 'market'
     liquidation = 'liquidation'
-    noloss = 'noloss',
+    noloss = 'noloss'
     trailing_stop = 'trailing_stop'
 
 
