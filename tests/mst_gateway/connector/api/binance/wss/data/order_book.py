@@ -48,7 +48,7 @@ SPOT_ORDER_BOOK_SPLIT_MESSAGE_RESULTS = [
         "table": "depthUpdate",
     },
     {
-        "action": "update",
+        "action": "insert",
         "data": [
             {
                 "E": 1606136814064,
@@ -102,7 +102,7 @@ SPOT_ORDER_BOOK_GET_DATA_RESULTS = [
     {
         "order_book": {
             "account": cfg.BINANCE_ACCOUNT_NAME,
-            "action": "update",
+            "action": "insert",
             "data": [
                 {
                     "id": 390711081372756,
@@ -195,7 +195,7 @@ FUTURES_ORDER_BOOK_SPLIT_MESSAGE_RESULTS = [
         "table": "depthUpdate",
     },
     {
-        "action": "update",
+        "action": "insert",
         "data": [
             {
                 "E": 1606739434740,
@@ -252,7 +252,7 @@ FUTURES_ORDER_BOOK_GET_DATA_RESULTS = [
     {
         "order_book": {
             "account": cfg.BINANCE_ACCOUNT_NAME,
-            "action": "update",
+            "action": "insert",
             "data": [
                 {
                     "id": 389886337702756,
