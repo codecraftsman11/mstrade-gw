@@ -7,7 +7,6 @@ from mst_gateway.calculator import FinFactory
 from ..errors import ERROR_OK
 from .. import (
     OrderType,
-    OrderExec,
     BUY,
     SELL
 )
@@ -22,7 +21,7 @@ class StockRestApi(Connector):
     name = 'Base'
 
     def __init__(self, name: str = None, url: str = None, auth: dict = None, logger: Logger = None,
-                 throttle_storage=None, state_storage=None):
+                 throttle_storage=None, state_storage=None, order_book_limit=None):
         if name is not None:
             self.name = name.lower()
         self._keepalive: bool = False
@@ -33,7 +32,11 @@ class StockRestApi(Connector):
             self.throttle = ThrottleRest(storage=throttle_storage)
         if state_storage is not None:
             self.storage = StateStorage(storage=state_storage)
+        self.set_order_book_limit(order_book_limit)
         super().__init__(auth, logger)
+
+    def set_order_book_limit(self, limit: int) -> None:
+        pass
 
     @abstractmethod
     def ping(self) -> bool:

@@ -40,9 +40,10 @@ class BitmexRestApi(StockRestApi):
     name = 'bitmex'
     fin_factory = BitmexFinFactory()
 
-    def __init__(self, name: str = None, url: str = None, auth: dict = None, logger: Logger = None,
-                 throttle_storage=None, throttle_hash_name: str = '*', state_storage=None):
-        super().__init__(name, url, auth, logger, throttle_storage, state_storage)
+    def __init__(self, name: str = None, url: str = None, auth: dict = None,
+                 logger: Logger = None, throttle_storage=None, throttle_hash_name: str = '*',
+                 state_storage=None, order_book_limit=None):
+        super().__init__(name, url, auth, logger, throttle_storage, state_storage, order_book_limit)
         self._throttle_hash_name = throttle_hash_name
 
     def _connect(self, **kwargs):
