@@ -46,6 +46,9 @@ class BitmexRestApi(StockRestApi):
         super().__init__(name, url, auth, logger, throttle_storage, state_storage, order_book_limit)
         self._throttle_hash_name = throttle_hash_name
 
+    def set_order_book_limit(self, limit: int) -> None:
+        pass
+
     def _connect(self, **kwargs):
         self._keepalive = bool(kwargs.get('keepalive', False))
         self._compress = bool(kwargs.get('compress', False))

@@ -35,8 +35,9 @@ class StockRestApi(Connector):
         self.set_order_book_limit(order_book_limit)
         super().__init__(auth, logger)
 
+    @abstractmethod
     def set_order_book_limit(self, limit: int) -> None:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def ping(self) -> bool:
