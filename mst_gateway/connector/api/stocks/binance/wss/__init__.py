@@ -139,22 +139,22 @@ class BinanceWssApi(StockWssApi):
         message.pop('action', None)
         _messages = []
         _data_delete = []
-        _data_insert = []
+        _data_update = []
         for item in message.pop('data', []):
             bids = item.pop('b', [])
             asks = item.pop('a', [])
             for bid in bids:
                 if to_float(bid[1]):
-                    _data_insert.append({'b': bid, **item})
+                    _data_update.append({'b': bid, **item})
                 else:
                     _data_delete.append({'b': bid, **item})
             for ask in asks:
                 if to_float(ask[1]):
-                    _data_insert.append({'a': ask, **item})
+                    _data_update.append({'a': ask, **item})
                 else:
                     _data_delete.append({'a': ask, **item})
             _messages.append(dict(**message, action='delete', data=_data_delete))
-            _messages.append(dict(**message, action='insert', data=_data_insert))
+            _messages.append(dict(**message, action='update', data=_data_update))
         return _messages
 
     def split_wallet(self, message):
