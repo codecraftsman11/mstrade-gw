@@ -15,16 +15,13 @@ class BinanceRestApi(StockRestApi):
     BASE_URL = 'https://api.binance.com'
     name = 'binance'
     fin_factory = BinanceFinFactory()
+    order_book_max_limit = 1000
 
-    def __init__(self, name: str = None, url: str = None, auth: dict = None,
-                 logger: Logger = None, throttle_storage=None, throttle_hash_name: str = '*',
-                 state_storage=None, order_book_limit=None):
-        super().__init__(name, url, auth, logger, throttle_storage, state_storage, order_book_limit)
+    def __init__(self, name: str = None, url: str = None, auth: dict = None, logger: Logger = None,
+                 throttle_storage=None, throttle_hash_name: str = '*', state_storage=None):
+        super().__init__(name, url, auth, logger, throttle_storage, state_storage)
         self._throttle_hash_name = throttle_hash_name
         self.test = self._is_test(self._url)
-
-    def set_order_book_limit(self, limit: int) -> None:
-        self._order_book_limit = limit
 
     def _connect(self, **kwargs):
         return Client(api_key=self._auth['api_key'],
@@ -295,10 +292,10 @@ class BinanceRestApi(StockRestApi):
 
         if schema == OrderSchema.futures:
             data = self._binance_api(self._handler.futures_order_book, symbol=symbol.upper(),
-                                     limit=limit or self._order_book_limit)
+                                     limit=limit or self.order_book_max_limit)
         elif schema in (OrderSchema.margin2, OrderSchema.exchange):
             data = self._binance_api(self._handler.get_order_book, symbol=symbol.upper(),
-                                     limit=limit or self._order_book_limit)
+                                     limit=limit or self.order_book_max_limit)
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
         data = utils.filter_order_book_data(data, min_volume_buy, min_volume_sell)
