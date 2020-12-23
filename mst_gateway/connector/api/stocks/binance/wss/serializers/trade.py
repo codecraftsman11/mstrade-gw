@@ -7,6 +7,10 @@ from ...utils import load_trade_ws_data
 class BinanceTradeSerializer(BinanceSerializer):
     subscription = "trade"
 
+    @classmethod
+    def _get_data_action(cls, message) -> str:
+        return 'insert'
+
     def is_item_valid(self, message: dict, item: dict) -> bool:
         return bool(item)
 
