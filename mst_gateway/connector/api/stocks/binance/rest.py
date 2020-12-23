@@ -15,7 +15,6 @@ class BinanceRestApi(StockRestApi):
     BASE_URL = 'https://api.binance.com'
     name = 'binance'
     fin_factory = BinanceFinFactory()
-    order_book_max_limit = 1000
 
     def __init__(self, name: str = None, url: str = None, auth: dict = None, logger: Logger = None,
                  throttle_storage=None, throttle_hash_name: str = '*', state_storage=None):
