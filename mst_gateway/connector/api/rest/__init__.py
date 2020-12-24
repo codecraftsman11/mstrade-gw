@@ -7,7 +7,6 @@ from mst_gateway.calculator import FinFactory
 from ..errors import ERROR_OK
 from .. import (
     OrderType,
-    OrderExec,
     BUY,
     SELL
 )
