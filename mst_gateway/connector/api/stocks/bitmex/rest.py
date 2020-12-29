@@ -242,7 +242,8 @@ class BitmexRestApi(StockRestApi):
         data, _ = self._bitmex_api(self._handler.Order.Order_cancel, **params)
         if isinstance(data[0], dict) and data[0].get('error'):
             error = data[0].get('error')
-            if data[0].get('ordStatus') in ('Filled', 'Canceled'):
+            status = data[0].get('ordStatus')
+            if status in ('Filled', 'Canceled'):
                 raise NotFoundError(error)
             raise ConnectorError(error)
         return data
@@ -419,4 +420,6 @@ class BitmexRestApi(StockRestApi):
             full_message = f"Bitmex api error. Details: {exc.status_code}, {message}"
             if int(exc.status_code) == 429 or int(exc.status_code) >= 500:
                 raise RecoverableError(full_message)
+            elif int(exc.status_code) == 404:
+                raise NotFoundError(full_message)
             raise ConnectorError(full_message)
