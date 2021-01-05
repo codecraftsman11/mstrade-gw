@@ -5,7 +5,7 @@ from typing import Union, Optional
 from mst_gateway.connector import api
 from mst_gateway.calculator.binance import BinanceFinFactory
 from mst_gateway.connector.api.types.order import OrderSchema
-from mst_gateway.connector.api.utils import calculate_volume_precision
+from mst_gateway.connector.api.utils import calculate_decimal_precision
 from mst_gateway.utils import delta
 from .....exceptions import ConnectorError
 from . import var
@@ -53,7 +53,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
 
             tick = get_tick_from_symbol_filters(d, 'PRICE_FILTER', 'tickSize')
             volume_tick = get_tick_from_symbol_filters(d, 'LOT_SIZE', 'stepSize')
-            volume_precision = calculate_volume_precision(volume_tick)
+            volume_precision = calculate_decimal_precision(volume_tick)
 
             _symbol_obj = {
                 'symbol': d.get('symbol'),
@@ -102,7 +102,7 @@ def load_futures_exchange_symbol_info(raw_data: list) -> list:
 
             tick = get_tick_from_symbol_filters(d, 'PRICE_FILTER', 'tickSize')
             volume_tick = get_tick_from_symbol_filters(d, 'LOT_SIZE', 'stepSize')
-            volume_precision = calculate_volume_precision(volume_tick)
+            volume_precision = calculate_decimal_precision(volume_tick)
 
             symbol_list.append(
                 {

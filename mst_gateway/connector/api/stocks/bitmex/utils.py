@@ -6,7 +6,7 @@ from mst_gateway.connector import api
 from mst_gateway.connector.api.utils import time2timestamp
 from mst_gateway.exceptions import ConnectorError
 from mst_gateway.connector.api.types.order import OrderSchema
-from mst_gateway.connector.api.utils import calculate_volume_precision
+from mst_gateway.connector.api.utils import calculate_decimal_precision
 from mst_gateway.utils import delta
 from . import var
 from .var import BITMEX_ORDER_STATUS_MAP
@@ -87,7 +87,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
 
         tick = to_float(d.get('tickSize'))
         volume_tick = to_float(d.get('lotSize'))
-        volume_precision = calculate_volume_precision(volume_tick)
+        volume_precision = calculate_decimal_precision(volume_tick)
 
         symbol_list.append(
             {

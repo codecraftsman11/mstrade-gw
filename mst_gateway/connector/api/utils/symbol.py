@@ -1,21 +1,21 @@
 
 
-def calculate_volume_precision(volume_tick):
+def calculate_decimal_precision(value):
     """
-    Determines the number of decimal places allowed in symbol's volume
-    based on its volume_tick value.
+    Determines the amount of decimal places in a number.
+        Example: for 0.04, decimal precision is 2
 
     """
-    if not volume_tick:
+    if not value:
         return None
-    if volume_tick.is_integer():
+    if value.is_integer():
         return 0
     else:
-        volume_tick = str(volume_tick)
+        value = str(value)
 
-        if 'e-' in volume_tick:
+        if 'e-' in value:
             # Handle floats that are in scientific notation format (e.g. 1e-05)
-            number, exponent = volume_tick.split('e-')
+            number, exponent = value.split('e-')
             if '.' in number:
                 # Notation with a decimal point (e.g. 1.32e-05)
                 decimal_places = number.split('.')[1]
@@ -25,4 +25,4 @@ def calculate_volume_precision(volume_tick):
                 return int(exponent)
         else:
             # Handle regular floats (e.g. 0.0001):
-            return len(volume_tick.split('.')[1])
+            return len(value.split('.')[1])
