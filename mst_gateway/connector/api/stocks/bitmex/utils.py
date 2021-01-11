@@ -37,7 +37,6 @@ def load_symbol_data(raw_data: dict, state_data: dict, is_iso_datetime=False) ->
         'pair': state_data.get('pair'),
         'tick': state_data.get('tick'),
         'volume_tick': state_data.get('volume_tick'),
-        'volume_precision': state_data.get('volume_precision'),
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema'),
         'symbol_schema': state_data.get('symbol_schema'),
