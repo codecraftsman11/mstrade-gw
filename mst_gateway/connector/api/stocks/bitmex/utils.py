@@ -65,7 +65,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
     symbol_list = []
     for d in raw_data:
         symbol = d.get('symbol')
-        base_asset = d.get('rootSymbol')
+        base_asset = d.get('underlying')
         quote_currency = d.get('quoteCurrency')
 
         if re.search(r'\d{2}$', symbol):
