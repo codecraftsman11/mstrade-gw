@@ -85,6 +85,16 @@ class OrderPositionTrendType(ClassWithAttributes):
     flat = 'flat'
 
 
+class OrderPositionOpenedBy(ClassWithAttributes):
+    limit = 'limit'
+    market = 'market'
+    box_top = 'box_top'
+    limit_turn = 'limit_turn'
+    stop_turn = 'stop_turn'
+    squeeze = 'squeeze'
+    limit_smart = 'limit_smart'
+
+
 class OrderPositionClosedBy(ClassWithAttributes):
     take_profit = 'take_profit'
     stop_loss = 'stop_loss'
