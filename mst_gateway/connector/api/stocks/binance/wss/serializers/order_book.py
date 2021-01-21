@@ -22,9 +22,10 @@ class BinanceOrderBookSerializer(BinanceSerializer):
     def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
             return None
-        state_data = self._wss_api.get_state_data(item.get('s'))
-        if not state_data:
-            return None
+        state_data = None
+        if self._wss_api.register_state:
+            if state_data := self._wss_api.get_state_data(item.get('s')) is None:
+                return None
         if 'b' in item:
             order, side = item['b'], api.BUY
         elif 'a' in item:

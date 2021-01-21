@@ -37,8 +37,9 @@ class BinanceFuturesSymbolSerializer(BinanceSymbolSerializer):
         if not self.is_item_valid(message, item):
             return None
         _symbol = item.get('s', '').lower()
-        state_data = self._wss_api.get_state_data(item.get('s'))
-        if not state_data:
-            return None
+        state_data = None
+        if self._wss_api.register_state:
+            if state_data := self._wss_api.get_state_data(item.get('s')) is None:
+                return None
         item.update(**self._book_ticker.get(_symbol, {}))
         return load_symbol_ws_data(item, state_data)

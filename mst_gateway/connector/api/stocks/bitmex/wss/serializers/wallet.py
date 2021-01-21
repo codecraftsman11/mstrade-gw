@@ -19,9 +19,11 @@ class BitmexWalletSerializer(BitmexSerializer):
             if balance.get('currency', '').lower() == item.get('currency', '').lower():
                 self._check_balances_data(balance, item)
         try:
-            currencies = self._wss_api.storage.get(
-                'currency', self._wss_api.name, self._wss_api.schema
-            )
+            currencies = {}
+            if self._wss_api.register_state:
+                if currencies := self._wss_api.storage.get(
+                        'currency', self._wss_api.name, self._wss_api.schema) is None:
+                    return None
             assets = ('btc', 'usd')
             fields = ('balance', 'unrealised_pnl', 'margin_balance')
             return load_wallet_data(item, currencies, assets, fields)

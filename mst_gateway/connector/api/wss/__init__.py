@@ -320,6 +320,11 @@ class StockWssApi(Connector):
             self.__state_data_time = _state_data_time
             self.__state_data = self.storage.get('symbol', self.name, self.schema)
 
+    @property
+    def state_symbol_list(self) -> list:
+        self.__update_state_data()
+        return list(self.__state_data.keys())
+
     def __exit__(self, exc_type, exc_value, traceback):
         pass
 

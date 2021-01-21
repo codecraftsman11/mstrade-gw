@@ -43,7 +43,7 @@ class BinanceSubscriber(Subscriber):
         return True
 
     async def send_command(self, command: callable, api: BinanceWssApi, subscription: str):
-        symbols = [s for s in api.storage.get('symbol', api.name, api.schema)]
+        symbols = api.state_symbol_list
         symbols_count = len(symbols)
         try:
             for i in range(0, symbols_count, 400):

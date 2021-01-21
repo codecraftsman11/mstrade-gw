@@ -12,9 +12,10 @@ class BitmexPositionSerializer(BitmexSerializer):
     def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
             return None
-        state_data = self._wss_api.get_state_data(item.get('symbol'))
-        if not state_data:
-            return None
+        state_data = None
+        if self._wss_api.register_state:
+            if state_data := self._wss_api.get_state_data(item.get('symbol')) is None:
+                return None
         state = self._get_state(item.get('symbol'))
         if state:
             if item.get('avgEntryPrice') is None:

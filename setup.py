@@ -22,7 +22,8 @@ setup(
     url='ssh://belka158@bitbucket.org/mstrade_dev/mst-gateway.git',
     install_requires=[
         'bitmex',
-        'python-binance'
+        'python-binance',
+        'websockets'
     ],
     extras_require={
         'mysql': ['mysql-connector-python'],
