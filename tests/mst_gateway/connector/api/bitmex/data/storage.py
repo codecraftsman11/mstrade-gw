@@ -7,6 +7,7 @@ STORAGE_DATA = {
             'margin1': {
                 'ethusd': {
                     'tick': 0.05,
+                    'volume_tick': 1.0,
                     'pair': [
                         'ETH',
                         'USD'
@@ -21,6 +22,7 @@ STORAGE_DATA = {
                 },
                 'xbtusd': {
                     'tick': 0.5,
+                    'volume_tick': 1.0,
                     'pair': [
                         'XBT',
                         'USD'
@@ -39,6 +41,7 @@ STORAGE_DATA = {
             'margin1': {
                 'ethusd': {
                     'tick': 0.05,
+                    'volume_tick': 1.0,
                     'pair': [
                         'ETH',
                         'USD'
@@ -53,6 +56,7 @@ STORAGE_DATA = {
                 },
                 'xbtusd': {
                     'tick': 0.5,
+                    'volume_tick': 1.0,
                     'pair': [
                         'XBT',
                         'USD'
