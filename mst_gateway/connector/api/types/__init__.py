@@ -15,6 +15,7 @@ from .order import (
     SELL,
     OrderPositionPeriod,
     OrderPositionTrendType,
+    OrderPositionOpenedBy,
     OrderPositionClosedBy,
     OrderStandardTypes
 )
