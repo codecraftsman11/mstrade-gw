@@ -202,6 +202,7 @@ def load_position_ws_data(raw_data: dict, state_data: dict) -> dict:
         'volume': raw_data.get('currentQty'),
         'liquidation_price': raw_data.get('liquidationPrice'),
         'entry_price': raw_data.get('avgEntryPrice'),
+        'unrealised_pnl': raw_data.get('unrealisedPnl'),
         'schema': state_data.get('schema'),
         'system_symbol': state_data.get('system_symbol')
     }
@@ -531,6 +532,8 @@ def assign_custom_parameter_values(options: Optional[dict]) -> dict:
 
     """
     new_options = dict()
+    if options is None:
+        return new_options
     if options.get('comments'):
         new_options['text'] = options['comments']
     if options.get('ttl'):

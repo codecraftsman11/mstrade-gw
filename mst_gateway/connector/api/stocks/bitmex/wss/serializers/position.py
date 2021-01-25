@@ -21,4 +21,6 @@ class BitmexPositionSerializer(BitmexSerializer):
                 item['avgEntryPrice'] = state[0]['entry_price']
             if item.get('liquidationPrice') is None:
                 item['liquidationPrice'] = state[0]['liquidation_price']
+            if item.get('unrealisedPnl') is None:
+                item['unrealisedPnl'] = state[0]['unrealised_pnl']
         return utils.load_position_ws_data(item, state_data)
