@@ -339,25 +339,25 @@ class BinanceRestApi(StockRestApi):
             return {
                 OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
             }
+
+        try:
+            _spot = self._binance_api(self._handler.get_account, **kwargs)
+        except ConnectorError:
+            _spot = {}
         if schema.lower() == OrderSchema.margin2:
             _margin = self._binance_api(self._handler.get_margin_account, **kwargs)
             _borrow = self._binance_api(self._handler.get_max_margin_loan, asset=asset.upper())
-            try:
-                _vip = utils.get_vip(self._binance_api(self._handler.futures_account_v2))
-            except ConnectorError:
-                _vip = '0'
+            _vip = self.get_vip_level(schema.lower())
             _interest_rate = utils.get_interest_rate(
                 self._binance_api(self._handler.get_public_interest_rate, **kwargs),
                 _vip, asset
             )
-            _spot = self._binance_api(self._handler.get_account, **kwargs)
             return {
                 OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
                 OrderSchema.margin2: utils.load_margin_wallet_detail_data(_margin, asset, _borrow, _interest_rate)
             }
         if schema.lower() == OrderSchema.futures:
             _futures = self._binance_api(self._handler.futures_account, **kwargs)
-            _spot = self._binance_api(self._handler.get_account, **kwargs)
             return {
                 OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
                 OrderSchema.futures: utils.load_futures_wallet_detail_data(_futures, asset)
