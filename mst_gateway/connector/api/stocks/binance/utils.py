@@ -1,41 +1,39 @@
 import hashlib
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Union, Optional
 from mst_gateway.connector import api
 from mst_gateway.calculator.binance import BinanceFinFactory
 from mst_gateway.connector.api.types.order import OrderSchema
+from mst_gateway.utils import delta
 from .....exceptions import ConnectorError
 from . import var
-
-
-def _face_price(symbol, mark_price):
-    return mark_price, True
+from .converter import BinanceOrderTypeConverter
+from ...types.asset import to_system_asset
 
 
 def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
     symbol = raw_data.get('symbol')
     symbol_time = to_date(raw_data.get('closeTime'))
-    mark_price = to_float(raw_data.get('lastPrice'))
-    face_price, _reversed = _face_price(symbol, mark_price)
     price = to_float(raw_data.get('lastPrice'))
     price24 = to_float(raw_data.get('weightedAvgPrice'))
+    face_price, _reversed = BinanceFinFactory.calc_face_price(symbol, price)
     return {
         'time': symbol_time,
         'timestamp': raw_data.get('closeTime'),
         'symbol': symbol,
         'price': price,
         'price24': price24,
-        'delta': symbol_delta(price, price24),
-        'mark_price': mark_price,
+        'delta': delta(price, price24),
         'face_price': face_price,
-        'bid_price': to_float(raw_data.get('bidPrice') or mark_price),
-        'ask_price': to_float(raw_data.get('askPrice') or mark_price),
+        'bid_price': to_float(raw_data.get('bidPrice')),
+        'ask_price': to_float(raw_data.get('askPrice')),
         'reversed': _reversed,
         'volume24': to_float(raw_data.get('volume')),
         'expiration': state_data.get('expiration'),
         'pair': state_data.get('pair'),
         'tick': state_data.get('tick'),
+        'volume_tick': state_data.get('volume_tick'),
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema'),
         'symbol_schema': state_data.get('symbol_schema'),
@@ -47,32 +45,39 @@ def load_exchange_symbol_info(raw_data: list) -> list:
     symbol_list = []
     for d in raw_data:
         if d.get('status') == 'TRADING':
+            system_base_asset = to_system_asset(d.get('baseAsset'))
+            system_quote_asset = to_system_asset(d.get('quoteAsset'))
+            system_symbol = f"{system_base_asset}{system_quote_asset}"
+
+            tick = get_tick_from_symbol_filters(d, 'PRICE_FILTER', 'tickSize')
+            volume_tick = get_tick_from_symbol_filters(d, 'LOT_SIZE', 'stepSize')
+
+            _symbol_obj = {
+                'symbol': d.get('symbol'),
+                'system_symbol': system_symbol.lower(),
+                'base_asset': d.get('baseAsset'),
+                'quote_asset': d.get('quoteAsset'),
+                'system_base_asset': system_base_asset,
+                'system_quote_asset': system_quote_asset,
+                'expiration': None,
+                'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
+                'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
+                'tick': tick,
+                'volume_tick': volume_tick,
+            }
+
             if d.get('isSpotTradingAllowed'):
-                symbol_list.append(
-                    {
-                        'symbol': d.get('symbol'),
-                        'base_asset': d.get('baseAsset'),
-                        'quote_asset': d.get('quoteAsset'),
-                        'expiration': None,
-                        'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
-                        'schema': OrderSchema.exchange,
-                        'symbol_schema': OrderSchema.exchange,
-                        'tick': to_float(d.get('filters', [{}])[0].get('tickSize'))
-                    }
-                )
+                _symbol_obj.update({
+                    'schema': OrderSchema.exchange,
+                    'symbol_schema': OrderSchema.exchange
+                })
+                symbol_list.append(_symbol_obj.copy())
             if d.get('isMarginTradingAllowed'):
-                symbol_list.append(
-                    {
-                        'symbol': d.get('symbol'),
-                        'base_asset': d.get('baseAsset'),
-                        'quote_asset': d.get('quoteAsset'),
-                        'expiration': None,
-                        'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
-                        'schema': OrderSchema.margin2,
-                        'symbol_schema': OrderSchema.margin2,
-                        'tick': to_float(d.get('filters', [{}])[0].get('tickSize'))
-                    }
-                )
+                _symbol_obj.update({
+                    'schema': OrderSchema.margin2,
+                    'symbol_schema': OrderSchema.margin2
+                })
+                symbol_list.append(_symbol_obj.copy())
     return symbol_list
 
 
@@ -80,26 +85,52 @@ def load_futures_exchange_symbol_info(raw_data: list) -> list:
     symbol_list = []
     for d in raw_data:
         if d.get('status') == 'TRADING':
+            system_base_asset = to_system_asset(d.get('baseAsset'))
+            system_quote_asset = to_system_asset(d.get('quoteAsset'))
+            expiration = None
+            system_symbol = f"{system_base_asset}{system_quote_asset}"
+            if d.get('contractType', '').upper() != 'PERPETUAL':
+                try:
+                    expiration = d['symbol'].split('_')[1]
+                    system_symbol = f"{system_symbol}_{expiration}"
+                except (KeyError, IndexError):
+                    expiration = None
+
+            tick = get_tick_from_symbol_filters(d, 'PRICE_FILTER', 'tickSize')
+            volume_tick = get_tick_from_symbol_filters(d, 'LOT_SIZE', 'stepSize')
+
             symbol_list.append(
                 {
                     'symbol': d.get('symbol'),
+                    'system_symbol': system_symbol.lower(),
                     'base_asset': d.get('baseAsset'),
                     'quote_asset': d.get('quoteAsset'),
-                    'expiration': None,
+                    'system_base_asset': system_base_asset,
+                    'system_quote_asset': system_quote_asset,
+                    'expiration': expiration,
                     'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
+                    'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
                     'schema': OrderSchema.futures,
                     'symbol_schema': OrderSchema.futures,
-                    'tick': to_float(d.get('filters', [{}])[0].get('tickSize'))
+                    'tick': tick,
+                    'volume_tick': volume_tick,
                 }
             )
     return symbol_list
 
 
-def _binance_pair(symbol):
-    length = len(symbol)
-    base = length // 2
-    quote = length - base
-    return symbol[:base], symbol[-quote:]
+def get_tick_from_symbol_filters(symbol_data, filter_name, parameter_name):
+    """
+    Extracts tick value (price tick or lot tick) from symbol data
+    based on filter name and parameter name.
+
+    """
+    result = None
+    for data in symbol_data.get('filters', []):
+        if data.get('filterType') == filter_name:
+            result = data.get(parameter_name)
+            break
+    return to_float(result)
 
 
 def load_trade_data(raw_data: dict, state_data: dict) -> dict:
@@ -130,6 +161,17 @@ def load_order_side(order_side: bool) -> int:
     if order_side:
         return api.BUY
     return api.SELL
+
+
+def store_order_side(side: int) -> str:
+    if side:
+        return var.BINANCE_ORDER_SIDE_SELL
+    return var.BINANCE_ORDER_SIDE_BUY
+
+
+def store_order_type(order_type: str) -> str:
+    converter = BinanceOrderTypeConverter
+    return converter.store_type(order_type)
 
 
 def load_order_book_side(order_side: str) -> int:
@@ -242,13 +284,13 @@ def load_quote_bin_data(raw_data: list, state_data: dict) -> dict:
 
 
 def load_order_data(raw_data: dict, state_data: dict) -> dict:
-    order_type_and_exec = var.BINANCE_ORDER_TYPE_AND_EXECUTION_MAP.get(
-        raw_data.get('type', '').upper()
-    ) or {'type': None, 'execution': None}
+    order_type_and_exec = load_order_type_and_exec(state_data.get('schema'),
+                                                   raw_data.get('type').upper())
     data = {
-        'order_id': raw_data.get('orderId') or raw_data.get('clientOrderId'),
+        'order_id': raw_data.get('clientOrderId'),
+        'exchange_order_id': raw_data.get('orderId'),
         'symbol': raw_data.get('symbol'),
-        'origQty': raw_data.get('orderQty'),
+        'volume': raw_data.get('origQty'),
         'stop': raw_data.get('stopPrice'),
         'side': raw_data.get('side'),
         'price': to_float(raw_data.get('price')),
@@ -403,7 +445,7 @@ def ws_spot_balance_data(balances: list, state_balances: dict):
             'maint_margin': to_float(b['l']),
             'init_margin': _currency_state.get('init_margin'),
             'available_margin': round(to_float(b['f']) - to_float(b['l']), 8),
-            'type': to_wallet_state_type(to_float(b['l'])),
+            'type': _currency_state.get('type'),
         })
     return result
 
@@ -503,23 +545,31 @@ def _spot_balance_data(balances: list):
 
 
 def _margin_balance_data(balances: list, max_borrow: float = None, interest_rate: float = None):
-    return [
-        {
+    result = list()
+    for b in balances:
+        _free = to_float(b['free'])
+        _locked = to_float(b['locked'])
+        borrowed = to_float(b['borrowed'])
+        interest = to_float(b['interest'])
+        withdraw_balance = to_float(b['netAsset']) - (borrowed + interest)
+        if withdraw_balance < 0:
+            withdraw_balance = 0
+        result.append({
             'currency': b['asset'],
-            'balance': to_float(b['netAsset']),
-            'withdraw_balance': to_float(b['netAsset']),
-            'borrowed': to_float(b['borrowed']),
+            'balance': _free,
+            'withdraw_balance': withdraw_balance,
+            'borrowed': borrowed,
             'available_borrow': max_borrow,
-            'interest': to_float(b['interest']),
+            'interest': interest,
             'interest_rate': interest_rate,
             'unrealised_pnl': 0,
-            'margin_balance': to_float(b['free']),
-            'maint_margin': to_float(b['locked']),
+            'margin_balance': _free,
+            'maint_margin': _locked,
             'init_margin': None,
-            'available_margin': round(to_float(b['free']) - to_float(b['locked']), 8),
-            'type': to_wallet_state_type(to_float(b['locked'])),
-        } for b in balances
-    ]
+            'available_margin': round(_free - _locked, 8),
+            'type': to_wallet_state_type(_locked),
+        })
+    return result
 
 
 def _margin_max_borrow(data):
@@ -536,7 +586,7 @@ def _futures_balance_data(balances: list):
             'withdraw_balance': to_float(b['maxWithdrawAmount']),
             'borrowed': None,
             'interest': None,
-            'unrealised_pnl': abs(to_float(b['unrealizedProfit'])),
+            'unrealised_pnl': to_float(b['unrealizedProfit']),
             'margin_balance': to_float(b['marginBalance']),
             'maint_margin': to_float(b['maintMargin']),
             'init_margin': to_float(b['initialMargin']),
@@ -627,21 +677,14 @@ def load_transaction_id(raw_data: dict) -> dict:
     return data
 
 
-def load_commission(commissions: dict, currency: str, fee_tier) -> dict:
-    commission = dict()
-    for _c in commissions:
-        if fee_tier == str(_c.get('level')):
-            commission = _c
-            break
-
-    maker = to_float(commission.get('makerCommission'))
-    taker = to_float(commission.get('takerCommission'))
-    return dict(
-        currency=currency.lower(),
-        maker=maker,
-        taker=taker,
-        type=f"VIP{fee_tier}"
-    )
+def load_commissions(commissions: dict) -> list:
+    return [
+        {
+            'maker': to_float(commission['makerCommission']),
+            'taker': to_float(commission['takerCommission']),
+            'type': f'VIP{commission["level"]}',
+        } for commission in commissions
+    ]
 
 
 def load_trade_ws_data(raw_data: dict, state_data: dict) -> dict:
@@ -661,7 +704,7 @@ def load_trade_ws_data(raw_data: dict, state_data: dict) -> dict:
     }
     """
     return {
-        'time': to_date(raw_data.get('E')),
+        'time': to_iso_datetime(raw_data.get('E')),
         'timestamp': raw_data.get('E'),
         'price': to_float(raw_data.get('p')),
         'volume': to_float(raw_data.get('q')),
@@ -699,9 +742,10 @@ def load_quote_bin_ws_data(raw_data: dict, state_data: dict) -> dict:
       }
     }
     """
+    _timestamp = raw_data.get('k', {}).get('t')
     return {
-        'time': to_date(raw_data.get('E')),
-        'timestamp': raw_data.get('E'),
+        'time': to_iso_datetime(_timestamp),
+        'timestamp': _timestamp,
         'open': to_float(raw_data.get('k', {}).get("o")),
         'close': to_float(raw_data.get('k', {}).get("c")),
         'high': to_float(raw_data.get('k', {}).get("h")),
@@ -786,46 +830,52 @@ def load_symbol_ws_data(raw_data: dict, state_data: dict) -> dict:
     }
     """
     symbol = raw_data.get('s')
-    mark_price = to_float(raw_data.get('o'))
-    face_price, _reversed = BinanceFinFactory.calc_face_price(symbol, mark_price)
     price = to_float(raw_data.get('c'))
     price24 = to_float(raw_data.get('w'))
+    face_price, _reversed = BinanceFinFactory.calc_face_price(symbol, price)
     return {
-        'time': to_date(raw_data.get('E')),
+        'time': to_iso_datetime(raw_data.get('E')),
         'timestamp': raw_data.get('E'),
         'symbol': symbol,
         'price': price,
         'price24': price24,
-        'delta': symbol_delta(price, price24),
-        'mark_price': mark_price,
+        'delta': delta(price, price24),
         'face_price': face_price,
-        'bid_price': to_float(raw_data.get('b') or mark_price),
-        'ask_price': to_float(raw_data.get('a') or mark_price),
+        'bid_price': to_float(raw_data.get('b')),
+        'ask_price': to_float(raw_data.get('a')),
         'reversed': _reversed,
         'volume24': to_float(raw_data.get('v')),
         'expiration': state_data.get('expiration'),
         'pair': state_data.get('pair'),
         'tick': state_data.get('tick'),
+        'volume_tick': state_data.get('volume_tick'),
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema'),
         'symbol_schema': state_data.get('symbol_schema'),
-        'created': state_data.get('created'),
+        'created': to_iso_datetime(state_data.get('created')),
     }
-
-
-def symbol_delta(price, price24):
-    if price and price24:
-        return round((price - price24) / price24 * 100, 2)
-    return 100
 
 
 def to_date(token: Union[datetime, int]) -> Optional[datetime]:
     if isinstance(token, datetime):
         return token
     try:
-        return datetime.fromtimestamp(token/1000)
+        return datetime.fromtimestamp(int(token / 1000), tz=timezone.utc)
     except (ValueError, TypeError):
         return None
+
+
+def to_iso_datetime(token: Union[datetime, int, str]) -> Optional[str]:
+    if isinstance(token, str):
+        return token
+    if isinstance(token, datetime):
+        return token.strftime(api.DATETIME_OUT_FORMAT)
+    if isinstance(token, int):
+        try:
+            return datetime.fromtimestamp(int(token / 1000), tz=timezone.utc).strftime(api.DATETIME_OUT_FORMAT)
+        except (ValueError, TypeError):
+            return None
+    return None
 
 
 def to_float(token: Union[int, float, str, None]) -> Optional[float]:
@@ -853,34 +903,38 @@ def load_ws_order_side(order_side: Optional[str]) -> Optional[int]:
 
 
 def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
-    order_type_and_exec = var.BINANCE_ORDER_TYPE_AND_EXECUTION_MAP.get(
-        raw_data.get('o', '').upper()
-    ) or {'type': None, 'execution': None}
-    data = {
+    order_type_and_exec = load_order_type_and_exec(state_data.get('schema'), raw_data.get('o').upper())
+    return {
         'order_id': raw_data.get('c'),
-        'symbol': raw_data.get('s'),
-        'value': to_float(raw_data.get('q')),
-        'stop': to_float(raw_data['P']) if raw_data.get('P') else to_float(raw_data.get('sp')),
+        'exchange_order_id': raw_data.get('i'),
         'side': load_ws_order_side(raw_data.get('S')),
+        'tick_volume': to_float(raw_data.get('l')),
+        'tick_price': to_float(raw_data.get('L')),
+        'volume': to_float(raw_data.get('q')),
         'price': to_float(raw_data.get('p')),
-        'created': to_date(raw_data['O']) if raw_data.get('O') else to_date(raw_data.get('T')),
-        'active': raw_data.get('X') != var.BINANCE_ORDER_STATUS_NEW,
+        'status': load_ws_order_status(raw_data.get('X')),
+        'leaves_volume': calculate_ws_order_leaves_volume(raw_data),
+        'filled_volume': to_float(raw_data.get('z')),
+        'avg_price': calculate_ws_order_avg_price(raw_data),
+        'timestamp': to_date(raw_data.get('E')),
+        'symbol': raw_data.get('s'),
         'system_symbol': state_data.get('system_symbol'),
         'schema': state_data.get('schema'),
+        'stop': to_float(raw_data['P']) if raw_data.get('P') else to_float(raw_data.get('sp')),
+        'created': to_iso_datetime(raw_data['O']) if raw_data.get('O') else to_date(raw_data.get('T')),
         **order_type_and_exec,
     }
-    return data
 
 
-def load_ws_execution_status(binance_order_status: Optional[str]) -> Optional[str]:
-    return var.BINANCE_EXECUTION_STATUS_MAP.get(binance_order_status)
+def load_ws_order_status(binance_order_status: Optional[str]) -> Optional[str]:
+    return var.BINANCE_ORDER_STATUS_MAP.get(binance_order_status)
 
 
-def calculate_ws_execution_leaves_volume(raw_data: dict) -> Optional[float]:
+def calculate_ws_order_leaves_volume(raw_data: dict) -> Optional[float]:
     return to_float(raw_data['q']) - to_float(raw_data['z']) if raw_data.get('q') and raw_data.get('z') else 0.0
 
 
-def calculate_ws_execution_avg_price(raw_data: dict) -> Optional[float]:
+def calculate_ws_order_avg_price(raw_data: dict) -> Optional[float]:
     if raw_data.get('ap'):
         return to_float(raw_data['ap'])
     elif raw_data.get('Z') and raw_data.get('z') and to_float(raw_data['z']):
@@ -889,22 +943,98 @@ def calculate_ws_execution_avg_price(raw_data: dict) -> Optional[float]:
         return 0.0
 
 
-def load_execution_ws_data(message_data: dict, raw_data: dict, state_data: dict) -> Optional[dict]:
-    return {
-        'order_id': raw_data.get('c'),
-        'side': load_ws_order_side(raw_data.get('S')),
-        'tick_volume': to_float(raw_data.get('l')),
-        'tick_price': to_float(raw_data.get('L')),
-        'volume': to_float(raw_data.get('q')),
-        'price': to_float(raw_data.get('p')),
-        'type': raw_data['x'].lower() if raw_data.get('x') else None,
-        'status': load_ws_execution_status(raw_data.get('X')),
-        'is_active': raw_data.get('X') != var.BINANCE_ORDER_STATUS_NEW,
-        'leaves_volume': calculate_ws_execution_leaves_volume(raw_data),
-        'filled_volume': to_float(raw_data.get('z')),
-        'avg_price': calculate_ws_execution_avg_price(raw_data),
-        'timestamp': to_date(message_data.get('E')) if message_data != raw_data else to_date(raw_data.get('E')),
-        'symbol': raw_data.get('s'),
-        'system_symbol': state_data.get('system_symbol'),
-        'schema': state_data.get('schema')
-    }
+def load_funding_rates(funding_rates: list) -> list:
+    return [
+        {
+            'symbol': funding_rate['symbol'].lower(),
+            'funding_rate': to_float(funding_rate['fundingRate']),
+            'time': to_date(funding_rate['fundingTime']),
+        } for funding_rate in funding_rates
+    ]
+
+
+def load_order_type_and_exec(schema: str, exchange_order_type: str) -> dict:
+    converter = BinanceOrderTypeConverter
+    return converter.load_type_and_exec(schema, exchange_order_type)
+
+
+def get_mapping_for_schema(schema: str) -> Optional[dict]:
+    """
+    Retrieves order type parameter mapping data for the specified schema.
+
+    """
+    mapping_data = var.PARAMETERS_BY_ORDER_TYPE_MAP.get(schema)
+    if not mapping_data:
+        raise ConnectorError(f"Invalid schema parameter: {schema}")
+    return mapping_data
+
+
+def store_order_mapping_parameters(exchange_order_type: str, schema: str) -> list:
+    data_for_schema = get_mapping_for_schema(schema)
+    data = data_for_schema.get(exchange_order_type)
+    if data:
+        return data['params']
+    return data_for_schema['LIMIT']['params']
+
+
+def store_order_additional_parameters(exchange_order_type: str, schema: str) -> dict:
+    data_for_schema = get_mapping_for_schema(schema)
+    data = data_for_schema.get(exchange_order_type)
+    if data:
+        return data['additional_params']
+    return data_for_schema['LIMIT']['additional_params']
+
+
+def generate_parameters_by_order_type(main_params: dict, options: dict, schema: str) -> dict:
+    """
+    Fetches specific order parameters based on the order_type value and adds them
+    to the main parameters.
+
+    """
+    order_type = main_params.pop('order_type', None)
+    exchange_order_type = store_order_type(order_type)
+    mapping_parameters = store_order_mapping_parameters(exchange_order_type, schema)
+    options = assign_custom_parameter_values(options)
+    all_params = map_api_parameter_names(
+        {'order_type': exchange_order_type, **main_params, **options}
+    )
+    new_params = dict()
+    for param_name in mapping_parameters:
+        value = all_params.get(param_name)
+        if value:
+            new_params[param_name] = value
+    new_params.update(
+        store_order_additional_parameters(exchange_order_type, schema)
+    )
+    return new_params
+
+
+def assign_custom_parameter_values(options: Optional[dict]) -> dict:
+    """
+    Changes the value of certain parameters according to Binance's specification.
+
+    """
+    new_options = dict()
+    if 'ttl' in options:
+        new_options['timeInForce'] = 'GTC'
+    if options.get('is_passive'):
+        new_options['timeInForce'] = 'GTX'
+    if options.get('is_iceberg'):
+        new_options['icebergQty'] = options['iceberg_volume'] or 0
+        new_options['timeInForce'] = 'GTC'
+    return new_options
+
+
+def map_api_parameter_names(params: dict) -> Optional[dict]:
+    """
+    Changes the name (key) of any parameters that have a different name in the Binance API.
+    Example: 'ttl' becomes 'timeInForce'
+
+    """
+    tmp_params = dict()
+    for param, value in params.items():
+        if value is None:
+            continue
+        _param = var.PARAMETER_NAMES_MAP.get(param) or param
+        tmp_params[_param] = value
+    return tmp_params

@@ -3,7 +3,7 @@ from ..utils import symbol2stock
 
 
 def make_cmd(cmd, args, symbol=None):
-    if symbol is not None:
+    if symbol not in ('*', None):
         symbol = symbol2stock(symbol)
         args = f"{args}:{symbol}"
     return json.dumps({
@@ -21,17 +21,16 @@ def cmd_unsubscribe(subscr_name, symbol=None):
 
 
 def is_ok(response: str) -> bool:
-    data = json.loads(response)
+    try:
+        data = json.loads(response)
+    except json.JSONDecodeError:
+        return False
     return bool(data.get('success'))
 
 
 def is_auth_ok(response: str) -> bool:
-    data = json.loads(response)
-    return not bool(data.get('error'))
-
-
-def parse_message(message: str) -> dict:
     try:
-        return json.loads(message)
+        data = json.loads(response)
     except json.JSONDecodeError:
-        return {'raw': message}
+        return False
+    return not bool(data.get('error'))

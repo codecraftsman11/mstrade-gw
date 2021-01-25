@@ -1,12 +1,14 @@
 # pylint: disable=broad-except
 from ..api.validators import (
     datetime_valid,
+    iso_datetime_valid,
     pair_valid,
     side_valid,
     order_id_valid,
     type_valid,
     schema_valid,
-    execution_valid
+    execution_valid,
+    exchange_order_id_valid
 )
 
 
@@ -44,27 +46,51 @@ SYMBOL_FIELDS = {
     'price24': float,
     'delta': float,
     'tick': float,
-    'mark_price': float,
+    'volume_tick': float,
     'face_price': float,
     'bid_price': float,
     'ask_price': float,
     'reversed': bool,
-    'volume24': float,
+    'volume24': int,
     'schema': schema_valid,
     'system_symbol': str,
     'symbol_schema': schema_valid,
     'created': datetime_valid
 }
 
+WS_SYMBOL_FIELDS = {
+    'time': iso_datetime_valid,
+    'timestamp': int,
+    'pair': pair_valid,
+    'symbol': str,
+    'expiration': str,
+    'price': float,
+    'price24': float,
+    'delta': float,
+    'tick': float,
+    'volume_tick': float,
+    'face_price': float,
+    'bid_price': float,
+    'ask_price': float,
+    'reversed': bool,
+    'volume24': int,
+    'schema': schema_valid,
+    'system_symbol': str,
+    'symbol_schema': schema_valid,
+    'created': iso_datetime_valid
+}
+
 ORDER_FIELDS = {
     'order_id': order_id_valid,
+    'exchange_order_id': exchange_order_id_valid,
     'symbol': str,
-    'value': int,
-    'stop': float,
+    'volume': int,
+    'stop': float,    # trigger level for Stop and Take Profit orders
     'type': type_valid,
     'side': side_valid,
     'price': float,
-    'created': datetime_valid,
+    'time': datetime_valid,
+    'timestamp': int,
     'active': bool,
     'schema': schema_valid,
     'execution': execution_valid,

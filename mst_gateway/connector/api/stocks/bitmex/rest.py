@@ -1,10 +1,7 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from logging import Logger
-from typing import (
-    Optional,
-    Union,
-)
+from typing import Optional
 from bravado.exception import HTTPError
 from .lib import (
     bitmex_connector, APIKeyAuthenticator, SwaggerClient
@@ -12,24 +9,11 @@ from .lib import (
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector.api.types import OrderSchema
 from . import utils, var
+from .utils import binsize2timedelta
 from ...rest import StockRestApi
 from .... import api
-from .....exceptions import ConnectorError
+from .....exceptions import ConnectorError, RecoverableError, NotFoundError
 from .....utils import j_dumps
-
-
-def _make_create_order_args(args, options):
-    if not isinstance(options, dict):
-        return False
-    if 'display_value' in options:
-        args['dispalyQty'] = options['display_value']
-    if 'stop_price' in options:
-        args['stopPx'] = options['stop_price']
-    if 'ttl_type' in options:
-        args['timeInForce'] = options['ttl_type']
-    if 'comment' in options:
-        args['text'] = options['comment']
-    return True
 
 
 class BitmexFactory:
@@ -114,14 +98,19 @@ class BitmexRestApi(StockRestApi):
     def _list_quote_bins_page(self, symbol, schema, binsize='1m', count=100, offset=0,
                               **kwargs):
         state_data = kwargs.pop('state_data', dict())
+        if 'date_to' in kwargs:
+            kwargs['date_to'] += binsize2timedelta(binsize)
+        if 'date_from' in kwargs:
+            kwargs['date_from'] += binsize2timedelta(binsize)
         quote_bins, _ = self._bitmex_api(self._handler.Trade.Trade_getBucketed,
                                          symbol=utils.symbol2stock(symbol),
                                          binSize=binsize,
                                          reverse=True,
+                                         partial=True,
                                          start=offset,
                                          count=count,
                                          **self._api_kwargs(kwargs))
-        return [utils.load_quote_bin_data(data, state_data) for data in quote_bins]
+        return [utils.load_quote_bin_data(data, state_data, binsize=binsize) for data in quote_bins]
 
     def list_quote_bins(self, symbol, schema, binsize='1m', count=100, **kwargs) -> list:
         kwargs['state_data'] = self.storage.get(
@@ -152,7 +141,10 @@ class BitmexRestApi(StockRestApi):
         schema = kwargs.pop('schema', OrderSchema.margin1).lower()
         if schema == OrderSchema.margin1:
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
-            return utils.load_wallet_data(data)
+            currencies = self.storage.get('currency', self.name, schema)
+            assets = kwargs.get('assets', ('btc', 'usd'))
+            fields = ('balance', 'unrealised_pnl', 'margin_balance')
+            return utils.load_wallet_data(data, currencies, assets, fields)
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
@@ -209,43 +201,60 @@ class BitmexRestApi(StockRestApi):
         ).get(symbol.lower(), dict())
         return utils.load_quote_data(quotes[0], state_data)
 
-    def create_order(self, symbol: str,
-                     side: int,
-                     value: float = 1,
+    def create_order(self, symbol: str, schema: str, side: int, volume: float,
                      order_type: str = api.OrderType.market,
-                     price: float = None,
-                     order_id: str = None,
-                     options: dict = None) -> bool:
-        args = dict(
+                     price: float = None, options: dict = None) -> dict:
+        params = dict(
             symbol=utils.symbol2stock(symbol),
+            order_type=order_type,
             side=utils.store_order_side(side),
-            orderQty=value,
-            ordType=utils.store_order_type(order_type)
+            volume=volume,
+            price=price
         )
-        if price is None:
-            args['ordType'] = 'Market'
-        else:
-            args['price'] = price
-        if order_id is not None:
-            args['clOrdID'] = order_id
-        _make_create_order_args(args, options)
-        data, _ = self._bitmex_api(self._handler.Order.Order_new, **args)
-        return bool(data)
+        params = utils.generate_parameters_by_order_type(params, options)
 
-    def cancel_all_orders(self):
+        data, _ = self._bitmex_api(self._handler.Order.Order_new, **params)
+        state_data = self.storage.get(
+            'symbol', self.name, OrderSchema.margin1
+        ).get(symbol.lower(), dict())
+        return utils.load_order_data(data, state_data)
+
+    def update_order(self, exchange_order_id: str, symbol: str,
+                     schema: str, side: int, volume: float,
+                     order_type: str = api.OrderType.market,
+                     price: float = None, options: dict = None) -> dict:
+        """
+        Updates an order by deleting an existing order and creating a new one.
+
+        """
+        self.cancel_order(exchange_order_id, symbol, schema)
+        return self.create_order(symbol, schema, side, volume,
+                                 order_type, price, options=options)
+
+    def cancel_all_orders(self, schema: str):
         data, _ = self._bitmex_api(self._handler.Order.Order_cancelAll)
         return bool(data)
 
-    def cancel_order(self, order_id):
-        data, _ = self._bitmex_api(self._handler.Order.Order_cancel,
-                                   orderID=order_id)
-        return bool(data)
+    def cancel_order(self, exchange_order_id: str, symbol: str, schema: str) -> dict:
+        params = dict(exchange_order_id=exchange_order_id)
+        params = utils.map_api_parameter_names(params)
 
-    def get_order(self, order_id: str) -> Optional[dict]:
+        data, _ = self._bitmex_api(self._handler.Order.Order_cancel, **params)
+        if isinstance(data[0], dict) and data[0].get('error'):
+            error = data[0].get('error')
+            status = data[0].get('ordStatus')
+            if status in ('Filled', 'Canceled'):
+                raise NotFoundError(error)
+            raise ConnectorError(error)
+        return data
+
+    def get_order(self, exchange_order_id: str, symbol: str,
+                  schema: str) -> Optional[dict]:
+        params = dict(exchange_order_id=exchange_order_id)
+        params = utils.map_api_parameter_names(params)
         data, _ = self._bitmex_api(self._handler.Order.Order_getOrders,
-                                   filter=j_dumps({
-                                       'clOrdID': order_id
-                                   }))
+                                   reverse=True,
+                                   filter=j_dumps(params))
         if not data:
             return None
         state_data = self.storage.get(
@@ -253,7 +262,9 @@ class BitmexRestApi(StockRestApi):
         ).get(data[0]['symbol'].lower(), dict())
         return utils.load_order_data(data[0], state_data)
 
-    def list_orders(self, symbol: str,
+    def list_orders(self,
+                    schema: str,
+                    symbol: str,
                     active_only: bool = True,
                     count: int = None,
                     offset: int = 0,
@@ -288,11 +299,11 @@ class BitmexRestApi(StockRestApi):
         ).get(symbol.lower(), dict())
         return [utils.load_trade_data(data, state_data) for data in trades]
 
-    def close_order(self, order_id) -> bool:
-        order = self.get_order(order_id)
-        return self.close_all_orders(order['symbol'])
+    def close_order(self, exchange_order_id: str, symbol: str, schema: str) -> bool:
+        order = self.get_order(exchange_order_id, symbol, schema)
+        return self.close_all_orders(order['symbol'], schema)
 
-    def close_all_orders(self, symbol: str) -> bool:
+    def close_all_orders(self, symbol: str, schema: str) -> bool:
         data, _ = self._bitmex_api(self._handler.Order.Order_closePosition,
                                    symbol=utils.symbol2stock(symbol))
         return bool(data)
@@ -361,22 +372,24 @@ class BitmexRestApi(StockRestApi):
             utils.load_total_wallet_summary(total_summary, total_balance, assets, fields)
         return total_summary
 
-    def get_order_commission(self, schema: str, pair: Union[list, tuple]) -> dict:
+    def list_order_commissions(self, schema: str) -> list:
         if schema == OrderSchema.margin1:
-            symbol = ''.join(pair)
             commissions, _ = self._bitmex_api(self._handler.User.User_getCommission)
-            return utils.load_commission(commissions, pair[0], symbol)
+            return utils.load_commissions(commissions)
         raise ConnectorError(f"Invalid schema {schema}.")
 
-    def get_funding_rate(self, schema: str) -> dict:
-        funding_rates, _ = self._bitmex_api(
-            method=self._handler.Funding.Funding_get,
-            reverse=True,
-            startTime=datetime.now().replace(
-                hour=0, minute=0, second=0, microsecond=0
-            ),
-        )
-        return utils.load_funding_rates(funding_rates)
+    def get_vip_level(self, schema: str) -> str:
+        return '0'
+
+    def list_funding_rates(self, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
+        if schema == OrderSchema.margin1:
+            funding_rates, _ = self._bitmex_api(
+                method=self._handler.Funding.Funding_get,
+                startTime=datetime.now() - timedelta(hours=period_hour*period_multiplier, minutes=1),
+                count=500,
+            )
+            return utils.load_funding_rates(funding_rates)
+        raise ConnectorError(f"Invalid schema {schema}.")
 
     def _bitmex_api(self, method: callable, **kwargs):
         headers = {}
@@ -401,8 +414,12 @@ class BitmexRestApi(StockRestApi):
 
             return resp.result, resp.metadata
         except HTTPError as exc:
-            message = exc.swagger_result.get('error', {}).get('message') \
-                if isinstance(exc.swagger_result, dict) \
-                else ''
-            raise ConnectorError(f"Bitmex api error. Details: {exc.status_code}, {exc.message or message}")
-
+            message = exc.message
+            if not message and isinstance(exc.swagger_result, dict):
+                message = exc.swagger_result.get('error', {}).get('message')
+            full_message = f"Bitmex api error. Details: {exc.status_code}, {message}"
+            if int(exc.status_code) == 429 or int(exc.status_code) >= 500:
+                raise RecoverableError(full_message)
+            elif int(exc.status_code) == 404:
+                raise NotFoundError(full_message)
+            raise ConnectorError(full_message)

@@ -1,0 +1,33 @@
+from .order import OrderType
+
+
+class BaseOrderTypeConverter:
+
+    # Mapping must be defined in specific converters
+    LOAD_TYPE_AND_EXECUTION_MAP = dict()
+    STORE_TYPE_MAP = dict()
+
+    @classmethod
+    def load_type_and_exec(cls, schema: str, exchange_order_type: str) -> dict:
+        """
+        Returns MST 'type' and 'execution' values based on
+        exchange order type.
+
+        """
+        mapping_data = cls.LOAD_TYPE_AND_EXECUTION_MAP.get(schema, dict())
+        order_type_and_exec = mapping_data.get(exchange_order_type)
+        if order_type_and_exec:
+            return order_type_and_exec
+        return {'type': None, 'execution': None}
+
+    @classmethod
+    def store_type(cls, order_type: str) -> str:
+        """
+        Returns exchange order type based on MST order type
+        (market and limit only).
+
+        """
+        exchange_order_type = cls.STORE_TYPE_MAP.get(order_type)
+        if exchange_order_type:
+            return exchange_order_type
+        return OrderType.limit

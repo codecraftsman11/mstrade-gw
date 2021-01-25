@@ -1,14 +1,17 @@
 import asyncio
 from abc import ABCMeta, abstractmethod
 from logging import Logger
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 import websockets
+from datetime import datetime, timedelta
+from copy import deepcopy
 from mst_gateway.storage import StateStorage
 from .router import Router
 from .subscriber import Subscriber
 from .throttle import ThrottleWss
 from .. import errors
 from ..schema import AUTH_SUBSCRIPTIONS, SUBSCRIPTIONS
+from ..utils import parse_message
 from ...base import Connector
 
 
@@ -24,6 +27,8 @@ class StockWssApi(Connector):
     BASE_URL = None
     throttle = ThrottleWss()
     storage = StateStorage()
+    __state_data = {}
+    __state_data_time = datetime.now()
 
     def __init__(self,
                  name: str = None,
@@ -39,8 +44,8 @@ class StockWssApi(Connector):
                  register_state=True):
         self.tasks = list()
         if name is not None:
-            self.name = name
-        self.account_name = account_name or self.name
+            self.name = name.lower()
+        self.account_id, self.account_name = self._parse_account_name(account_name or self.name)
         self._options = options or {}
         self._url = url or self.__class__.BASE_URL
         self._error = errors.ERROR_OK
@@ -54,6 +59,7 @@ class StockWssApi(Connector):
         if state_storage is not None:
             self.storage = StateStorage(state_storage)
         self.register_state = register_state
+        self.__update_state_data()
         super().__init__(auth, logger)
 
     @property
@@ -64,10 +70,18 @@ class StockWssApi(Connector):
     def subscriptions(self):
         return self._subscriptions
 
+    def _parse_account_name(self, account_name: str):
+        _split_acc = account_name.split('.')
+        account_id = None
+        if len(_split_acc) > 2:
+            account_id = _split_acc.pop(2)
+        account_name = '.'.join(_split_acc)
+        return account_id, account_name
+
     def __str__(self):
         return self.name
 
-    def get_data(self, message: str) -> Dict[str, Dict]:
+    def get_data(self, message: dict) -> Dict[str, Dict]:
         return self._router.get_data(message)
 
     @property
@@ -77,65 +91,98 @@ class StockWssApi(Connector):
     def get_state(self, subscr_name: str, symbol: str = None) -> dict:
         return self.router.get_state(subscr_name, symbol)
 
-    async def subscribe(self, subscr_name: str, symbol: str = None,
+    async def subscribe(self, subscr_channel: Optional[str],  subscr_name: str, symbol: str = None,
                         force: bool = False) -> bool:
-        if not force and self.is_registered(subscr_name, symbol):
-            return True
         _subscriber = self._get_subscriber(subscr_name)
         if not _subscriber:
-            self._logger.error("There is no subscriber in %s for %s", self, subscr_name)
+            self._logger.error(f"There is no subscriber in {self} to subscribe for {subscr_name}")
             return False
-        if not await _subscriber.subscribe(self, symbol):
-            self._logger.error("Error subscribing %s to %s", self, subscr_name)
-            return False
-        self.register(subscr_name, symbol)
+        if force or not self.is_registered(subscr_name, symbol):
+            if not await _subscriber.subscribe(self, symbol):
+                self._logger.error(f"Error subscribing {self} to {subscr_name} with args {symbol}")
+                return False
+        if subscr_channel or not force:
+            self.register(subscr_channel, subscr_name, symbol)
         return True
 
-    async def unsubscribe(self, subscr_name: str, symbol: str = None) -> bool:
-        if not self.is_registered(subscr_name, symbol):
-            return True
+    async def unsubscribe(self, subscr_channel: Optional[str], subscr_name: str, symbol: str = None) -> bool:
         _subscriber = self._get_subscriber(subscr_name)
         if not _subscriber:
-            self._logger.error("There is no subscriber in %s to unsubscribe"
-                               " from %s", self, subscr_name)
+            self._logger.error(f"There is no subscriber in {self} to unsubscribe from {subscr_name}")
             return False
-        if not await _subscriber.unsubscribe(self, symbol):
-            self._logger.error("Error unsubscribing from %s in %s", subscr_name, self)
-            return False
-        self.unregister(subscr_name, symbol)
+        _result, symbol = self.unregister(subscr_channel, subscr_name, symbol)
+        if not self._subscriptions and _subscriber.is_close_connection:
+            await self.close()
+        elif _result and self.is_unregistered(subscr_name, symbol):
+            if not await _subscriber.unsubscribe(self, symbol):
+                self._logger.error(f"Error unsubscribing from {subscr_name} with args {symbol} in {self}")
         return True
 
     def is_registered(self, subscr_name, symbol: str = None) -> bool:
-        if subscr_name.lower() not in self._subscriptions:
+        subscr_name = subscr_name.lower()
+        symbol = symbol.lower() if isinstance(symbol, str) else '*'
+        if subscr_name not in self._subscriptions:
             return False
-        if not symbol and isinstance(self._subscriptions[subscr_name.lower()], bool):
+        if '*' in self._subscriptions[subscr_name]:
             return True
-        if symbol is not None and isinstance(self._subscriptions[subscr_name.lower()], dict)\
-                and symbol.lower() in self._subscriptions[subscr_name.lower()]:
+        if symbol in self._subscriptions[subscr_name]:
             return True
         return False
 
-    def register(self, subscr_name, symbol: str = None):
-        if symbol is None:
-            self._subscriptions[subscr_name.lower()] = True
-        elif subscr_name.lower() not in self._subscriptions:
-            self._subscriptions[subscr_name.lower()] = {symbol.lower(): True}
-        else:
-            if isinstance(self._subscriptions[subscr_name.lower()], bool):
-                self._subscriptions[subscr_name.lower()] = {}
-            self._subscriptions[subscr_name.lower()][symbol.lower()] = True
+    def is_unregistered(self, subscr_name, symbol: str = None) -> bool:
+        subscr_name = subscr_name.lower()
+        symbol = symbol.lower() if isinstance(symbol, str) else '*'
+        if subscr_name not in self._subscriptions:
+            return True
+        if symbol not in self._subscriptions[subscr_name]:
+            return True
+        if not self._subscriptions[subscr_name][symbol]:
+            return True
+        return False
 
-    def unregister(self, subscr_name, symbol: str = None):
-        if subscr_name.lower() not in self._subscriptions:
-            return
-        if symbol is None:
-            del self._subscriptions[subscr_name.lower()]
-            return
-        if isinstance(self._subscriptions[subscr_name.lower()], dict):
-            if symbol.lower() in self._subscriptions[subscr_name.lower()]:
-                del self._subscriptions[subscr_name.lower()][symbol.lower()]
-            if not self._subscriptions[subscr_name.lower()]:
-                del self._subscriptions[subscr_name.lower()]
+    def register(self, subscr_channel: str, subscr_name, symbol: str = None):
+        subscr_name = subscr_name.lower()
+        symbol = symbol.lower() if isinstance(symbol, str) else '*'
+        if subscr_name not in self._subscriptions:
+            self._subscriptions[subscr_name] = dict()
+        if '*' in self._subscriptions[subscr_name]:
+            self._subscriptions[subscr_name]['*'].add(subscr_channel)
+            return True, '*'
+        if symbol not in self._subscriptions[subscr_name]:
+            self._subscriptions[subscr_name][symbol] = {subscr_channel}
+        else:
+            self._subscriptions[subscr_name][symbol].add(subscr_channel)
+        if symbol == '*':
+            self.remap_subscriptions(subscr_name)
+        return True, symbol
+
+    def remap_subscriptions(self, subscr_name: str):
+        symbols = set(self._subscriptions[subscr_name].keys())
+        symbols.discard('*')
+        for symbol in symbols:
+            self._subscriptions[subscr_name]['*'].update(
+                self._subscriptions[subscr_name].pop(symbol, set())
+            )
+        return None
+
+    def unregister(self, subscr_channel: str, subscr_name: str, symbol: str = None):
+        subscr_name = subscr_name.lower()
+        if subscr_name not in self._subscriptions:
+            return False, symbol
+        if '*' in self._subscriptions[subscr_name] or symbol is None:
+            symbol = '*'
+        else:
+            symbol = symbol.lower()
+        if symbol in self._subscriptions[subscr_name]:
+            _res = False
+            self._subscriptions[subscr_name][symbol].discard(subscr_channel)
+            if not self._subscriptions[subscr_name][symbol]:
+                del self._subscriptions[subscr_name][symbol]
+                _res = True
+            if not self._subscriptions[subscr_name]:
+                del self._subscriptions[subscr_name]
+            return _res, symbol
+        return False, symbol
 
     async def open(self, **kwargs):
         if not self.throttle.validate(
@@ -160,8 +207,9 @@ class StockWssApi(Connector):
         return _task
 
     def cancel_task(self):
-        for t in self.tasks:
-            t.cancel()
+        for task in self.tasks:
+            task.cancel()
+        self.tasks.clear()
         return True
 
     def run(self, recv_callback, loop=None, **kwargs):
@@ -179,14 +227,13 @@ class StockWssApi(Connector):
             if not self.handler:
                 try:
                     await self.open()
-                except (OSError, TypeError, ValueError):
+                except (OSError, TypeError, ValueError, ConnectionError):
                     continue
-
             if self.handler.closed:
                 await asyncio.sleep(kwargs.get('countdown', 10))
                 try:
                     await self.open(restore=True)
-                except OSError:
+                except (OSError, ConnectionError):
                     continue
             try:
                 message = await self.handler.recv()
@@ -195,51 +242,83 @@ class StockWssApi(Connector):
             await self.process_message(message, recv_callback)
 
     async def _restore_subscriptions(self):
-        for subscr in self._subscriptions:
-            if subscr in self.auth_subscribers:
+        for subscr_name, value in deepcopy(self._subscriptions).items():
+            if subscr_name in self.auth_subscribers:
                 if not await self.authenticate():
+                    del self._subscriptions[subscr_name]
                     continue
-            if not isinstance(self._subscriptions[subscr], dict):
-                await self.subscribe(subscr, force=True)
-            else:
-                for symbol in self._subscriptions[subscr]:
-                    await self.subscribe(subscr, symbol, force=True)
+            for subscr_symbol in value:
+                await self.subscribe(None, subscr_name, subscr_symbol, force=True)
 
     async def _connect(self, **kwargs):
         ws_options = kwargs.get('ws_options', dict())
-        return await websockets.connect(self._url,
-                                        **ws_options)
+        return await websockets.connect(self._url, **ws_options)
 
     async def close(self):
-        self._subscriptions = dict()
+        self._subscriptions = {}
+        self.cancel_task()
         if not self._handler:
             return
         await self._handler.close()
         self._handler = None
 
     async def process_message(self, message, on_message: Optional[callable] = None):
-        try:
-            data = self.get_data(message)
-        except Exception as exc:
-            self._error = errors.ERROR_INVALID_DATA
-            self._logger.error("Error validating incoming message %s; Details: %s", message, exc)
-            return None
-        if not data:
-            return None
-        if on_message:
-            if asyncio.iscoroutinefunction(on_message):
-                return await on_message(data)
-            return on_message(data)
-        return data
+        response = False
+        message = parse_message(message)
+        if not message:
+            return response
+        message = self._lookup_table(message)
+        if not message:
+            return response
+        messages = self._split_message(message)
+        for message in messages:
+            try:
+                data = self.get_data(message)
+            except Exception as exc:
+                self._error = errors.ERROR_INVALID_DATA
+                self._logger.error("Error validating incoming message %s; Details: %s", message, exc)
+                continue
+            if not data:
+                continue
+            if on_message:
+                if asyncio.iscoroutinefunction(on_message):
+                    await on_message(data)
+                else:
+                    on_message(data)
+                response = True
+        return response
 
     def _get_subscriber(self, subscr_name: str) -> Subscriber:
-        if subscr_name.lower() in self.__class__.subscribers:
-            return self.__class__.subscribers[subscr_name.lower()]
-        return self.__class__.auth_subscribers[subscr_name.lower()]
+        subscr_name = subscr_name.lower()
+        if subscr_name in self.subscribers:
+            return self.subscribers[subscr_name]
+        return self.auth_subscribers[subscr_name]
+
+    def _lookup_table(self, message: Union[dict, list]) -> Optional[dict]:
+        if 'table' in message:
+            return message
+        return None
+
+    def _split_message(self, message) -> list:
+        if isinstance(message, list):
+            return message
+        return [message]
 
     @abstractmethod
     async def authenticate(self, auth: dict = None) -> bool:
         pass
+
+    def get_state_data(self, symbol):
+        if not symbol:
+            return None
+        self.__update_state_data()
+        return self.__state_data.get(symbol.lower())
+
+    def __update_state_data(self):
+        _state_data_time = self.__state_data_time + timedelta(hours=1)
+        if _state_data_time <= datetime.now() or not self.__state_data:
+            self.__state_data_time = _state_data_time
+            self.__state_data = self.storage.get('symbol', self.name, self.schema)
 
     def __exit__(self, exc_type, exc_value, traceback):
         pass

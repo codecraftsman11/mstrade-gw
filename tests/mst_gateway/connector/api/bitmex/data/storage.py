@@ -1,9 +1,13 @@
+from mst_gateway.connector.api.stocks.bitmex.utils import to_date
+
+
 STORAGE_DATA = {
     'symbol': {
         'bitmex': {
             'margin1': {
                 'ethusd': {
                     'tick': 0.05,
+                    'volume_tick': 1.0,
                     'pair': [
                         'ETH',
                         'USD'
@@ -14,10 +18,11 @@ STORAGE_DATA = {
                     'system_symbol': 'ethusd',
                     'symbol': 'ethusd',
                     'exchange': 'Bitmex',
-                    'created': '2020-06-25T13:03:00.295118Z'
+                    'created': to_date('2020-06-25T13:03:00.295118Z')
                 },
                 'xbtusd': {
                     'tick': 0.5,
+                    'volume_tick': 1.0,
                     'pair': [
                         'XBT',
                         'USD'
@@ -28,7 +33,7 @@ STORAGE_DATA = {
                     'system_symbol': 'btcusd',
                     'symbol': 'xbtusd',
                     'exchange': 'Bitmex',
-                    'created': '2020-06-25T13:03:00.295118Z'
+                    'created': to_date('2020-06-25T13:03:00.295118Z')
                 }
             }
         },
@@ -36,6 +41,7 @@ STORAGE_DATA = {
             'margin1': {
                 'ethusd': {
                     'tick': 0.05,
+                    'volume_tick': 1.0,
                     'pair': [
                         'ETH',
                         'USD'
@@ -46,10 +52,11 @@ STORAGE_DATA = {
                     'system_symbol': 'ethusd',
                     'symbol': 'ethusd',
                     'exchange': 'tBitmex',
-                    'created': '2020-06-25T13:03:00.295118Z'
+                    'created':  to_date('2020-06-25T13:03:00.295118Z')
                 },
                 'xbtusd': {
                     'tick': 0.5,
+                    'volume_tick': 1.0,
                     'pair': [
                         'XBT',
                         'USD'
@@ -60,7 +67,7 @@ STORAGE_DATA = {
                     'system_symbol': 'btcusd',
                     'symbol': 'xbtusd',
                     'exchange': 'tBitmex',
-                    'created': '2020-06-25T13:03:00.295118Z'
+                    'created':  to_date('2020-06-25T13:03:00.295118Z')
                 }
             }
         }

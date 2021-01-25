@@ -1,14 +1,14 @@
 import asyncio
 from logging import Logger
-from typing import Optional
+from typing import Optional, Union
 from mst_gateway.exceptions import ConnectorError
 from websockets import client
-from . import subscribers as subscr
+from . import subscribers as subscr_class
 from .router import BinanceWssRouter, BinanceFuturesWssRouter
-from .utils import is_auth_ok, make_cmd, parse_message, dump_message
+from .utils import is_auth_ok, make_cmd
 from ..lib import Client
 from ..utils import to_float
-from .... import errors
+from .... import OrderSchema
 from ....wss import StockWssApi
 from .. import var
 
@@ -17,16 +17,15 @@ class BinanceWssApi(StockWssApi):
     BASE_URL = 'wss://stream.binance.com:9443/ws'
     name = 'binance'
     subscribers = {
-        'order_book': subscr.BinanceOrderBookSubscriber(),
-        'trade': subscr.BinanceTradeSubscriber(),
-        'quote_bin': subscr.BinanceQuoteBinSubscriber(),
-        'symbol': subscr.BinanceSymbolSubscriber(),
+        'order_book': subscr_class.BinanceOrderBookSubscriber(),
+        'trade': subscr_class.BinanceTradeSubscriber(),
+        'quote_bin': subscr_class.BinanceQuoteBinSubscriber(),
+        'symbol': subscr_class.BinanceSymbolSubscriber(),
     }
 
     auth_subscribers = {
-        'wallet': subscr.BinanceWalletSubscriber(),
-        'order': subscr.BinanceOrderSubscriber(),
-        'execution': subscr.BinanceExecutionSubscriber(),
+        'wallet': subscr_class.BinanceWalletSubscriber(),
+        'order': subscr_class.BinanceOrderSubscriber(),
     }
     register_state_groups = [
         'wallet'
@@ -73,11 +72,11 @@ class BinanceWssApi(StockWssApi):
 
     def _generate_listen_key(self):
         bin_client = Client(api_key=self.auth.get('api_key'), api_secret=self.auth.get('api_secret'), test=self.test)
-        if self.schema == 'exchange':
+        if self.schema == OrderSchema.exchange:
             key = bin_client.stream_get_listen_key()
-        elif self.schema == 'margin2':
+        elif self.schema == OrderSchema.margin2:
             key = bin_client.margin_stream_get_listen_key()
-        elif self.schema == 'futures':
+        elif self.schema == OrderSchema.futures:
             key = bin_client.futures_stream_get_listen_key()
         else:
             raise ConnectorError(f"Invalid schema {self.schema}.")
@@ -86,6 +85,15 @@ class BinanceWssApi(StockWssApi):
         return key
 
     async def _connect(self, **kwargs):
+        kwargs['ws_options'] = {
+            'close_timeout': 30,
+            'ping_interval': 60,
+            'ping_timeout': 60,
+            'max_size': 2 ** 24,
+            'max_queue': 2 ** 7,
+            'read_limit': 2 ** 18,
+            'write_limit': 2 ** 18,
+        }
         _ws: client.WebSocketClientProtocol = await super()._connect(**kwargs)
         self._logger.info('Binance ws connected successful.')
         return _ws
@@ -96,76 +104,82 @@ class BinanceWssApi(StockWssApi):
     def get_state(self, subscr_name: str, symbol: str = None) -> Optional[dict]:
         return None
 
-    def register(self, subscr_name, symbol: str = None):
-        if self.register_state and subscr_name in self.register_state_groups:
-            self.storage.set(f'{subscr_name}.{self.account_name}'.lower(), {'*': '*'})
-        return super().register(subscr_name, symbol)
-
-    def unregister(self, subscr_name, symbol: str = None):
-        if self.register_state and subscr_name in self.register_state_groups:
-            self.storage.remove(f'{subscr_name}.{self.account_name}'.lower())
-        return super().register(subscr_name, symbol)
-
-    async def process_message(self, message, on_message: Optional[callable] = None):
-        messages = self._split_message(message)
-        if not isinstance(messages, list):
-            messages = [messages]
-        for message in messages:
-            try:
-                data = self.get_data(message)
-            except Exception as exc:
-                self._error = errors.ERROR_INVALID_DATA
-                self._logger.error("Error validating incoming message %s; Details: %s", message, exc)
-                continue
-            if not data:
-                continue
-            if on_message:
-                if asyncio.iscoroutinefunction(on_message):
-                    await on_message(data)
-                else:
-                    on_message(data)
+    def _lookup_table(self, message: Union[dict, list]) -> Optional[dict]:
+        _message = {
+            'table': None,
+            'action': 'update',
+            'data': []
+        }
+        if isinstance(message, list) and message and isinstance(message[0], dict):
+            table = message[0].get('e')
+            _message['table'] = table
+            _message['data'].extend(message)
+            return _message
+        if isinstance(message, dict):
+            _message['table'] = message.get('e') if 'e' in message else self.__book_ticker_table(message)
+            _message['data'].append(message)
+            return _message
         return None
 
+    def __split_message_map(self, key: str) -> Optional[callable]:
+        _map = {
+            'depthUpdate': self.split_order_book,
+            'executionReport': self.split_order,
+            'outboundAccountPosition': self.split_wallet,
+        }
+        return _map.get(key)
+
     def _split_message(self, message):
-        data = parse_message(message)
-        for method in (
-            self.split_order_book,
-            self.split_order,
-            self.split_wallet
-        ):
-            _tmp = method(data)
-            if _tmp:
-                return _tmp
+        method = self.__split_message_map(message['table'])
+        if not method:
+            return super(BinanceWssApi, self)._split_message(message)
+        return super(BinanceWssApi, self)._split_message(method(message=message))
+
+    def split_order_book(self, message):
+        message.pop('action', None)
+        _messages = []
+        _data_delete = []
+        _data_update = []
+        for item in message.pop('data', []):
+            bids = item.pop('b', [])
+            asks = item.pop('a', [])
+            for bid in bids:
+                if to_float(bid[1]):
+                    _data_update.append({'b': bid, **item})
+                else:
+                    _data_delete.append({'b': bid, **item})
+            for ask in asks:
+                if to_float(ask[1]):
+                    _data_update.append({'a': ask, **item})
+                else:
+                    _data_delete.append({'a': ask, **item})
+            _messages.append(dict(**message, action='delete', data=_data_delete))
+            _messages.append(dict(**message, action='update', data=_data_update))
+        return _messages
+
+    def split_wallet(self, message):
+        subscr_name = self.router_class.table_route_map.get('outboundAccountPosition')
+        if subscr_name not in self._subscriptions:
+            return None
+        if "*" not in self._subscriptions[subscr_name]:
+            _balances = []
+            _new_data = []
+            for item in message.pop('data', []):
+                for b in item.pop('B', []):
+                    if b['a'].lower() in self._subscriptions[subscr_name]:
+                        _balances.append(b)
+                item['B'] = _balances
+                _new_data.append(item)
+            message['data'] = _new_data
         return message
 
-    def split_order_book(self, data):
-        if isinstance(data, list) or (isinstance(data, dict) and data.get('e') != 'depthUpdate'):
-            return None
-        bids = data.pop('b')
-        asks = data.pop('a')
-        bid_u, bid_d = list(), list()
-        ask_u, ask_d = list(), list()
-        for bid in bids:
-            bid_d.append(bid) if to_float(bid[1]) else bid_u.append(bid)
-        for ask in asks:
-            ask_d.append(ask) if to_float(ask[1]) else ask_u.append(ask)
-        _data = [
-            dump_message(dict(b=bid_d, a=ask_d, action='delete', **data)),
-            dump_message(dict(b=bid_u, a=ask_u, action='update', **data))
-        ]
-        return _data
-
-    def split_wallet(self, data):
-        if isinstance(data, list) or (isinstance(data, dict) and data.get('e') != 'outboundAccountPosition'):
-            return None
-        if isinstance(self._subscriptions.get('wallet'), dict):
-            _data = list()
-            balances = data.pop('B')
-            for b in balances:
-                if b.get('a', '').lower() in self._subscriptions['wallet'].keys():
-                    data['B'] = [b]
-                    _data.append(dump_message(data))
-            return _data
+    def split_order(self, message):
+        message.pop('action', None)
+        _messages = []
+        for item in message.pop('data', []):
+            action = self.define_action_by_order_status(item.get('X'))
+            _messages.append(dict(**message, action=action, data=[item]))
+        return _messages
 
     def define_action_by_order_status(self, order_status: str) -> str:
         if order_status == var.BINANCE_ORDER_STATUS_NEW:
@@ -174,16 +188,23 @@ class BinanceWssApi(StockWssApi):
             return 'delete'
         return 'update'
 
-    def split_order(self, data):
-        if isinstance(data, list) or (isinstance(data, dict) and data.get('e') != 'executionReport'):
-            return None
-        action = self.define_action_by_order_status(data.get('X'))
-        return dump_message(dict(action=action, **data))
+    @staticmethod
+    def __book_ticker_table(data) -> Optional[str]:
+        if {'u', 'E', 'T', 's', 'b', 'B', 'a', 'A'} >= data.keys():
+            return 'bookTicker'
+        return None
 
 
 class BinanceFuturesWssApi(BinanceWssApi):
     BASE_URL = 'wss://fstream.binance.com/ws'
     TEST_URL = 'wss://stream.binancefuture.com/ws'
+
+    subscribers = {
+        'order_book': subscr_class.BinanceOrderBookSubscriber(),
+        'trade': subscr_class.BinanceTradeSubscriber(),
+        'quote_bin': subscr_class.BinanceQuoteBinSubscriber(),
+        'symbol': subscr_class.BinanceFuturesSymbolSubscriber(),
+    }
 
     router_class = BinanceFuturesWssRouter
 
@@ -211,20 +232,41 @@ class BinanceFuturesWssApi(BinanceWssApi):
             return self.TEST_URL
         return self.BASE_URL
 
-    def split_wallet(self, data):
-        if isinstance(data, list) or (isinstance(data, dict) and data.get('e') != 'ACCOUNT_UPDATE'):
-            return None
-        if isinstance(self._subscriptions.get('wallet'), dict):
-            _data = list()
-            balances = data.get('a').pop('B')
-            for b in balances:
-                if b.get('a', '').lower() in self._subscriptions['wallet'].keys():
-                    data['a']['B'] = [b]
-                    _data.append(dump_message(data))
-            return _data
+    def __split_message_map(self, key: str) -> Optional[callable]:
+        _map = {
+            'depthUpdate': self.split_order_book,
+            'ORDER_TRADE_UPDATE': self.split_order,
+            'ACCOUNT_UPDATE': self.split_wallet,
+        }
+        return _map.get(key)
 
-    def split_order(self, data):
-        if isinstance(data, list) or (isinstance(data, dict) and data.get('e') != 'ORDER_TRADE_UPDATE'):
+    def _split_message(self, message):
+        method = self.__split_message_map(message['table'])
+        if not method:
+            return super(BinanceWssApi, self)._split_message(message)
+        return super(BinanceWssApi, self)._split_message(method(message=message))
+
+    def split_wallet(self, message):
+        subscr_name = self.router_class.table_route_map.get('ACCOUNT_UPDATE')
+        if subscr_name not in self._subscriptions:
             return None
-        action = self.define_action_by_order_status(data.get('o', dict()).get('X'))
-        return dump_message(dict(action=action, **data))
+        if "*" not in self._subscriptions[subscr_name]:
+            _balances = []
+            _new_data = []
+            for item in message.pop('data', []):
+                for b in item['a'].pop('B', []):
+                    if b['a'].lower() in self._subscriptions[subscr_name]:
+                        _balances.append(b)
+                item['a']['B'] = _balances
+                _new_data.append(item)
+            message['data'] = _new_data
+        return message
+
+    def split_order(self, message):
+        message.pop('action', None)
+        _messages = []
+        for item in message.pop('data', []):
+            item.update(**item.pop('o', {}))
+            action = self.define_action_by_order_status(item.get('X'))
+            _messages.append(dict(**message, action=action, data=[item]))
+        return _messages

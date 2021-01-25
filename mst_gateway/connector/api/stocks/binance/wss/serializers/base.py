@@ -19,12 +19,14 @@ class BinanceSerializer(Serializer):
         data.extend(item)
 
     @abstractmethod
-    def _load_data(self, message: dict, item: dict) -> Union[dict, list, None]:
+    def _load_data(self, message: dict, item: dict) -> Optional[dict]:
+        if not self.is_item_valid(message, item):
+            return None
         return item
 
     @abstractmethod
     def is_item_valid(self, message: dict, item: dict) -> bool:
-        return False
+        return bool(item)
 
     def _get_data(self, message: dict) -> Tuple[str, list]:
         data = []
@@ -36,8 +38,5 @@ class BinanceSerializer(Serializer):
         valid_item = self._load_data(message, item)
         if not valid_item:
             return None
-        if isinstance(valid_item, dict):
-            self._update_state(valid_item['symbol'], valid_item)
-        else:
-            [self._update_state(itm['symbol'], itm) for itm in valid_item]
+        self._update_state(valid_item['symbol'], valid_item)
         self._update_data(data, valid_item)

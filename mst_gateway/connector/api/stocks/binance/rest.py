@@ -1,15 +1,14 @@
 from uuid import uuid4
-from typing import Union
 from logging import Logger
 from datetime import datetime, timedelta
 from bravado.exception import HTTPError
 from binance.exceptions import BinanceAPIException, BinanceRequestException
 from mst_gateway.calculator import BinanceFinFactory
-from mst_gateway.connector.api.types import OrderSchema
+from mst_gateway.connector.api.types import OrderSchema, OrderType
 from .lib import Client
 from . import utils, var
 from ...rest import StockRestApi
-from .....exceptions import ConnectorError
+from .....exceptions import ConnectorError, RecoverableError, NotFoundError
 
 
 class BinanceRestApi(StockRestApi):
@@ -49,7 +48,13 @@ class BinanceRestApi(StockRestApi):
 
     def get_symbol(self, symbol, schema) -> dict:
         if schema == OrderSchema.futures:
-            data = self._binance_api(self._handler.futures_ticker, symbol=symbol.upper())
+            data_ticker = self._binance_api(self._handler.futures_ticker, symbol=symbol.upper())
+            data_bid_ask_price = self._binance_api(self._handler.futures_orderbook_ticker, symbol=symbol.upper())
+            data = {
+                'bidPrice': data_bid_ask_price.get('bidPrice'),
+                'askPrice': data_bid_ask_price.get('askPrice'),
+                **data_ticker
+            }
         elif schema in (OrderSchema.margin2, OrderSchema.exchange):
             data = self._binance_api(self._handler.get_ticker, symbol=symbol.upper())
         else:
@@ -116,7 +121,7 @@ class BinanceRestApi(StockRestApi):
 
     def list_quote_bins(self, symbol, schema, binsize='1m', count=100, **kwargs) -> list:
         pages = int((count - 1) / var.BINANCE_MAX_QUOTE_BINS_COUNT + 1)
-        rest = count % var.BINANCE_MAX_QUOTE_BINS_COUNT
+        rest = count % var.BINANCE_MAX_QUOTE_BINS_COUNT or var.BINANCE_MAX_QUOTE_BINS_COUNT
         quote_bins = []
         kwargs = self._api_kwargs(kwargs)
         kwargs['state_data'] = self.storage.get(
@@ -132,46 +137,101 @@ class BinanceRestApi(StockRestApi):
                                                 binsize=binsize,
                                                 count=items_count,
                                                 **kwargs)
-            kwargs['startTime'] = quotes[-1].get('timestamp')+1
-            quote_bins += quotes
+            if not quotes:
+                continue
+            if 'startTime' in kwargs:
+                kwargs['startTime'] = int(quotes[-1].get('timestamp') + 1)
+                quote_bins.extend(quotes)
+            else:
+                kwargs['endTime'] = int(quotes[0].get('timestamp') - 1)
+                quotes.extend(quote_bins)
+                quote_bins = quotes
         return quote_bins
 
-    def create_order(self, symbol: str,
-                     side: str = Client.SIDE_BUY,
-                     value: float = 1,
-                     order_type: str = Client.ORDER_TYPE_MARKET,
-                     **params) -> bool:
-        params.update(
-            dict(
-                symbol=symbol.upper(),
-                side=side,
-                type=order_type,
-                quantity=value
-            )
+    def create_order(self, symbol: str, schema: str, side: int, volume: float,
+                     order_type: str = OrderType.market,
+                     price: float = None, options: dict = None) -> dict:
+        params = dict(
+            symbol=utils.symbol2stock(symbol),
+            order_type=order_type,
+            side=utils.store_order_side(side),
+            volume=volume,
+            price=str(price)
         )
-        if params.get('order_id'):
-            params['newClientOrderId'] = params.get('order_id')
-        data = self._binance_api(self._handler.create_order, **params)
-        return bool(data)
+        params = utils.generate_parameters_by_order_type(params, options, schema)
+        schema_handlers = {
+            OrderSchema.exchange: self._handler.create_order,
+            OrderSchema.margin2: self._handler.create_margin_order,
+            OrderSchema.futures: self._handler.futures_create_order,
+        }
+        if schema not in schema_handlers:
+            raise ConnectorError(f"Invalid schema parameter: {schema}")
 
-    def cancel_all_orders(self):
+        data = self._binance_api(schema_handlers[schema], **params)
+        state_data = self.storage.get('symbol', self.name, schema).get(
+            symbol.lower(), dict())
+        return utils.load_order_data(data, state_data)
+
+    def update_order(self, exchange_order_id: str, symbol: str,
+                     schema: str, side: int, volume: float,
+                     order_type: str = OrderType.market,
+                     price: float = None, options: dict = None) -> dict:
+        """
+        Updates an order by deleting an existing order and creating a new one.
+
+        """
+        self.cancel_order(exchange_order_id, symbol, schema)
+        return self.create_order(symbol, schema, side, volume,
+                                 order_type, price, options=options)
+
+    def cancel_all_orders(self, schema: str):
         open_orders = [dict(symbol=order["symbol"], orderId=order["orderId"]) for order in
                        self._binance_api(self._handler.get_open_orders)]
         data = [self._binance_api(self._handler.cancel_order, **order) for order in open_orders]
         return bool(data)
 
-    def cancel_order(self, **params):
-        data = self._binance_api(self._handler.cancel_order, **params)
-        return bool(data)
+    def cancel_order(self, exchange_order_id: str, symbol: str, schema: str) -> dict:
+        params = dict(
+            exchange_order_id=int(exchange_order_id),
+            symbol=utils.symbol2stock(symbol)
+        )
+        params = utils.map_api_parameter_names(params)
+        schema_handlers = {
+            OrderSchema.exchange: self._handler.cancel_order,
+            OrderSchema.margin2: self._handler.cancel_margin_order,
+            OrderSchema.futures: self._handler.futures_cancel_order,
+        }
+        if schema not in schema_handlers:
+            raise ConnectorError(f"Invalid schema parameter: {schema}")
 
-    def get_order(self, order_id: str, **params):
-        params.update(orderId=order_id)
-        data = self._binance_api(self._handler.get_order, **params)
+        data = self._binance_api(schema_handlers[schema], **params)
+        return data
+
+    def get_order(self, exchange_order_id: str, symbol: str, schema: str):
+        params = dict(
+            exchange_order_id=int(exchange_order_id),
+            symbol=utils.symbol2stock(symbol)
+        )
+        params = utils.map_api_parameter_names(params)
+
+        schema_handlers = {
+            OrderSchema.exchange: self._handler.get_order,
+            OrderSchema.margin2: self._handler.get_margin_order,
+            OrderSchema.futures: self._handler.futures_get_order,
+        }
+        if schema not in schema_handlers:
+            raise ConnectorError(f"Invalid schema parameter: {schema}")
+
+        data = self._binance_api(schema_handlers[schema], **params)
         if not data:
             return None
-        return utils.load_order_data(data, dict())
 
-    def list_orders(self, symbol: str,
+        state_data = self.storage.get(
+            'symbol', self.name, schema
+        ).get(symbol.lower(), dict())
+        return utils.load_order_data(data, state_data)
+
+    def list_orders(self, schema: str, symbol: str,
                     active_only: bool = True,
                     count: int = None,
                     offset: int = 0,
@@ -200,10 +260,10 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(f"Invalid schema {schema}.")
         return [utils.load_trade_data(d, state_data) for d in data]
 
-    def close_order(self, order_id):
+    def close_order(self, exchange_order_id: str, symbol: str, schema: str):
         raise NotImplementedError
 
-    def close_all_orders(self, symbol: str):
+    def close_all_orders(self, symbol: str, schema: str):
         raise NotImplementedError
 
     def get_order_book(
@@ -228,10 +288,13 @@ class BinanceRestApi(StockRestApi):
                     if _l >= offset + depth:
                         limit = _l
                         break
+
         if schema == OrderSchema.futures:
-            data = self._binance_api(self._handler.futures_order_book, symbol=symbol.upper(), limit=limit or 5000)
+            data = self._binance_api(self._handler.futures_order_book, symbol=symbol.upper(),
+                                     limit=limit or var.BINANCE_MAX_ORDER_BOOK_LIMIT)
         elif schema in (OrderSchema.margin2, OrderSchema.exchange):
-            data = self._binance_api(self._handler.get_order_book, symbol=symbol.upper(), limit=limit or 1000)
+            data = self._binance_api(self._handler.get_order_book, symbol=symbol.upper(),
+                                     limit=limit or var.BINANCE_MAX_ORDER_BOOK_LIMIT)
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
         data = utils.filter_order_book_data(data, min_volume_buy, min_volume_sell)
@@ -274,25 +337,25 @@ class BinanceRestApi(StockRestApi):
             return {
                 OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
             }
+
+        try:
+            _spot = self._binance_api(self._handler.get_account, **kwargs)
+        except ConnectorError:
+            _spot = {}
         if schema.lower() == OrderSchema.margin2:
             _margin = self._binance_api(self._handler.get_margin_account, **kwargs)
             _borrow = self._binance_api(self._handler.get_max_margin_loan, asset=asset.upper())
-            try:
-                _vip = utils.get_vip(self._binance_api(self._handler.futures_account_v2))
-            except ConnectorError:
-                _vip = '0'
+            _vip = self.get_vip_level(schema.lower())
             _interest_rate = utils.get_interest_rate(
                 self._binance_api(self._handler.get_public_interest_rate, **kwargs),
                 _vip, asset
             )
-            _spot = self._binance_api(self._handler.get_account, **kwargs)
             return {
                 OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
                 OrderSchema.margin2: utils.load_margin_wallet_detail_data(_margin, asset, _borrow, _interest_rate)
             }
         if schema.lower() == OrderSchema.futures:
             _futures = self._binance_api(self._handler.futures_account, **kwargs)
-            _spot = self._binance_api(self._handler.get_account, **kwargs)
             return {
                 OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
                 OrderSchema.futures: utils.load_futures_wallet_detail_data(_futures, asset)
@@ -385,26 +448,65 @@ class BinanceRestApi(StockRestApi):
             utils.load_total_wallet_summary(total_summary, total_balance, assets, fields)
         return total_summary
 
-    def get_order_commission(self, schema: str, pair: Union[list, tuple]) -> dict:
+    def list_order_commissions(self, schema: str) -> list:
         if schema in (OrderSchema.exchange, OrderSchema.margin2):
             commissions = self._binance_api(self._handler.get_trade_level)
         elif schema == OrderSchema.futures:
             commissions = self._binance_api(self._handler.futures_trade_level)
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
-        fee_tier = utils.get_vip(self._binance_api(self._handler.futures_account_v2))
-        return utils.load_commission(commissions, pair[0], fee_tier)
+        return utils.load_commissions(commissions)
 
-    def get_funding_rate(self, schema: str) -> dict:
-        raise NotImplementedError
+    def get_vip_level(self, schema: str) -> str:
+        try:
+            return utils.get_vip(self._binance_api(self._handler.futures_account_v2))
+        except ConnectorError:
+            return "0"
+
+    def get_alt_currency_commission(self, schema: str) -> dict:
+        if schema in (OrderSchema.exchange, OrderSchema.margin2, OrderSchema.futures):
+            try:
+                result = self._binance_api(self._handler.get_bnb_burn_state)
+                is_active = bool(result.get('spotBNBBurn'))
+            except ConnectorError:
+                is_active = False
+        else:
+            raise ConnectorError(f"Invalid schema {schema}.")
+        return {
+            'is_active': is_active,
+            'currency': 'BNB'
+        }
+
+    def list_funding_rates(self, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
+        if schema == OrderSchema.futures:
+            funding_rates = self._binance_api(
+                self._handler.futures_funding_rate,
+                startTime=int(
+                    (
+                        datetime.now() - timedelta(hours=period_hour*period_multiplier, minutes=1)
+                    ).timestamp() * 1000
+                ),
+                limit=1000
+            )
+            return utils.load_funding_rates(funding_rates)
+        elif schema in (OrderSchema.exchange, OrderSchema.margin2):
+            return []
+        else:
+            raise ConnectorError(f"Invalid schema {schema}.")
 
     def _binance_api(self, method: callable, **kwargs):
         try:
             resp = method(**kwargs)
         except HTTPError as exc:
-            raise ConnectorError(f"Binance api error. Details: {exc.status_code}, {exc.message}")
+            message = f"Binance api error. Details: {exc.status_code}, {exc.message}"
+            if int(exc.status_code) in (418, 429) or int(exc.status_code) >= 500:
+                raise RecoverableError(message)
+            raise ConnectorError(message)
         except BinanceAPIException as exc:
-            raise ConnectorError(f"Binance api error. Details: {exc.code}, {exc.message}")
+            message = f"Binance api error. Details: {exc.code}, {exc.message}"
+            if int(exc.code) == -2011:
+                raise NotFoundError(message)
+            raise ConnectorError(message)
         except BinanceRequestException as exc:
             raise ConnectorError(f"Binance api error. Details: {exc.message}")
 

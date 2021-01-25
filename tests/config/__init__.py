@@ -1,3 +1,4 @@
 # flake8: noqa
-from .bitmex import *
 from .db import *
+from .binance import *
+from .bitmex import *

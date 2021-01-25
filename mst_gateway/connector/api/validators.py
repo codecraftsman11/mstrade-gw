@@ -10,10 +10,11 @@ def side_valid(value):
 
 
 def order_id_valid(value):
-    try:
-        return isinstance(value, str) and value
-    except Exception:
-        return False
+    return True
+
+
+def exchange_order_id_valid(value):
+    return value and (isinstance(value, int) or isinstance(value, str))
 
 
 def type_valid(value):
@@ -33,6 +34,16 @@ def datetime_valid(value):
         return True
     try:
         datetime.strptime(value, api.DATETIME_FORMAT)
+    except ValueError:
+        return False
+    return True
+
+
+def iso_datetime_valid(value):
+    if not isinstance(value, str):
+        return False
+    try:
+        datetime.strptime(value, api.DATETIME_OUT_FORMAT)
     except ValueError:
         return False
     return True

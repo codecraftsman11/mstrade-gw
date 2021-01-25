@@ -19,6 +19,8 @@ class BitmexSerializer(Serializer):
 
     @abstractmethod
     def _load_data(self, message: dict, item: dict) -> Optional[dict]:
+        if not self.is_item_valid(message, item):
+            return None
         return item
 
     @abstractmethod

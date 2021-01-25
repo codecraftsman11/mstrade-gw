@@ -1,4 +1,4 @@
-from mst_gateway.connector.api.stocks.bitmex.utils import to_date
+from mst_gateway.connector.api.stocks.bitmex.utils import to_iso_datetime
 import tests.config as cfg
 
 
@@ -12,14 +12,13 @@ TEST_SYMBOL_MESSAGES = [
             'action': "partial",
             'data': [
                 {
-                    "time": to_date("2020-07-22T10:50:00.794000Z"),
+                    "time": to_iso_datetime("2020-07-22T10:50:00.794000Z"),
                     "timestamp": 1595415000794,
                     "symbol": "XBTUSD",
                     "price": 9339.0,
                     "price24": 9351.0,
                     "delta": -0.13,
-                    "mark_price": 9341.21,
-                    "face_price": 0.0001070525124689414,
+                    "face_price": 0.00010707784559374665,
                     "bid_price": 9339.0,
                     "ask_price": 9339.5,
                     "reversed": True,
@@ -29,11 +28,12 @@ TEST_SYMBOL_MESSAGES = [
                         "USD"
                     ],
                     "tick": 0.5,
+                    "volume_tick": 1.0,
                     "system_symbol": "btcusd",
                     "schema": "margin1",
                     "symbol_schema": "margin1",
                     "expiration": None,
-                    "created": "2020-06-25T13:03:00.295118Z",
+                    "created": to_iso_datetime("2020-06-25T13:03:00.295118Z"),
                 }
             ]
         }
@@ -51,14 +51,13 @@ TEST_SYMBOL_MESSAGES = [
             'action': "update",
             'data': [
                 {
-                    "time": to_date("2020-07-22T10:50:00.794000Z"),
+                    "time": to_iso_datetime("2020-07-22T10:50:00.794000Z"),
                     "timestamp": 1595415000794,
                     "symbol": "XBTUSD",
                     "price": 9339.0,
                     "price24": 9351.0,
                     "delta": -0.13,
-                    "mark_price": 9341.21,
-                    "face_price": 0.0001070525124689414,
+                    "face_price": 0.00010707784559374665,
                     "bid_price": 9339.0,
                     "ask_price": 9339.5,
                     "reversed": True,
@@ -68,11 +67,12 @@ TEST_SYMBOL_MESSAGES = [
                         "USD"
                     ],
                     "tick": 0.5,
+                    "volume_tick": 1.0,
                     "system_symbol": "btcusd",
                     "schema": "margin1",
                     "symbol_schema": "margin1",
                     "expiration": None,
-                    "created": "2020-06-25T13:03:00.295118Z",
+                    "created": to_iso_datetime("2020-06-25T13:03:00.295118Z"),
                 }
             ]
         }
@@ -86,14 +86,13 @@ RESULT_SYMBOL_STATE = {
     'action': "partial",
     'data': [
         {
-            "time": to_date("2020-07-22T10:50:00.794000Z"),
+            "time": to_iso_datetime("2020-07-22T10:50:00.794000Z"),
             "timestamp": 1595415000794,
             "symbol": "XBTUSD",
             "price": 9339.0,
             "price24": 9351.0,
             "delta": -0.13,
-            "mark_price": 9341.21,
-            "face_price": 0.0001070525124689414,
+            "face_price": 0.00010707784559374665,
             "bid_price": 9339.0,
             "ask_price": 9339.5,
             "reversed": True,
@@ -103,11 +102,12 @@ RESULT_SYMBOL_STATE = {
                 "USD"
             ],
             "tick": 0.5,
+            "volume_tick": 1.0,
             "system_symbol": "btcusd",
             "schema": "margin1",
             "symbol_schema": "margin1",
             "expiration": None,
-            "created": "2020-06-25T13:03:00.295118Z",
+            "created": to_iso_datetime("2020-06-25T13:03:00.295118Z"),
         }
     ]
 }

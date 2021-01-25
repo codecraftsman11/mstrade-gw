@@ -70,6 +70,45 @@ class OrderExec(ClassWithAttributes):
     limit = 'limit'
 
 
+class OrderPositionPeriod(ClassWithAttributes):
+    M1 = 'M1'
+    M15 = 'M15'
+    M30 = 'M30'
+    H1 = 'H1'
+    H4 = 'H4'
+    D1 = 'D1'
+
+
+class OrderPositionTrendType(ClassWithAttributes):
+    direct = 'direct'
+    opposite = 'opposite'
+    flat = 'flat'
+
+
+class OrderPositionOpenedBy(ClassWithAttributes):
+    limit = 'limit'
+    market = 'market'
+    box_top = 'box_top'
+    limit_turn = 'limit_turn'
+    stop_turn = 'stop_turn'
+    squeeze = 'squeeze'
+    limit_smart = 'limit_smart'
+
+
+class OrderPositionClosedBy(ClassWithAttributes):
+    take_profit = 'take_profit'
+    stop_loss = 'stop_loss'
+    market = 'market'
+    liquidation = 'liquidation'
+    noloss = 'noloss'
+    trailing_stop = 'trailing_stop'
+
+
+class OrderStandardTypes(ClassWithAttributes):
+    limit = OrderType.limit
+    market = OrderType.market
+
+
 ORDER_STANDARD_TYPES = (
     OrderType.limit,
     OrderType.market,
@@ -108,7 +147,6 @@ ORDER_CLOSE_TYPES = (
 ORDER_POSITION_TYPES = (
     OrderType.position,
 )
-
 
 # Sides
 BUY = 0

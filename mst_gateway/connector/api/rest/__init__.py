@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 from logging import Logger
 from ...base import Connector
 from mst_gateway.storage import StateStorage
@@ -75,38 +75,43 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def create_order(self, symbol: str,
-                     side: int,
-                     value: float = 1,
+    def create_order(self, symbol: str, schema: str, side: int, volume: float,
                      order_type: str = OrderType.market,
-                     price: float = None,
-                     order_id: str = None,
-                     options: dict = None) -> bool:
+                     price: float = None, options: dict = None) -> dict:
         raise NotImplementedError
 
     @abstractmethod
-    def cancel_order(self, order_id: str) -> bool:
+    def update_order(self, exchange_order_id: str, symbol: str,
+                     schema: str, side: int, volume: float,
+                     order_type: str = OrderType.market,
+                     price: float = None, options: dict = None) -> dict:
         raise NotImplementedError
 
     @abstractmethod
-    def get_order(self, order_id: str) -> Optional[dict]:
+    def cancel_order(self, exchange_order_id: str, symbol: str,
+                     schema: str) -> dict:
         raise NotImplementedError
 
     @abstractmethod
-    def list_orders(self, symbol: str, active_only: bool = True,
+    def get_order(self, exchange_order_id: str, symbol: str,
+                  schema: str) -> Optional[dict]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_orders(self, schema: str, symbol: str, active_only: bool = True,
                     count: int = None, offset: int = 0, options: dict = None) -> list:
         raise NotImplementedError
 
     @abstractmethod
-    def cancel_all_orders(self) -> bool:
+    def cancel_all_orders(self, schema: str) -> bool:
         raise NotImplementedError
 
     @abstractmethod
-    def close_order(self, order_id: str) -> bool:
+    def close_order(self, exchange_order_id: str, symbol: str, schema: str) -> bool:
         raise NotImplementedError
 
     @abstractmethod
-    def close_all_orders(self, symbol: str) -> bool:
+    def close_all_orders(self, symbol: str, schema: str) -> bool:
         raise NotImplementedError
 
     def list_order_book(
@@ -171,11 +176,21 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def get_order_commission(self, schema: str, pair: Union[list, tuple]) -> dict:
+    def list_order_commissions(self, schema: str) -> list:
         raise NotImplementedError
 
     @abstractmethod
-    def get_funding_rate(self, schema: str) -> dict:
+    def get_vip_level(self, schema: str) -> str:
+        raise NotImplementedError
+
+    def get_alt_currency_commission(self, schema: str) -> dict:
+        return {
+            'is_active': False,
+            'currency': None
+        }
+
+    @abstractmethod
+    def list_funding_rates(self, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
         raise NotImplementedError
 
     def __setstate__(self, state):
