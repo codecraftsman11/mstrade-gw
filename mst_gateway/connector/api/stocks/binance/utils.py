@@ -36,6 +36,7 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
             'expiration': state_data.get('expiration'),
             'pair': state_data.get('pair'),
             'tick': state_data.get('tick'),
+            'volume_tick': state_data.get('volume_tick'),
             'system_symbol': state_data.get('system_symbol'),
             'schema': state_data.get('schema'),
             'symbol_schema': state_data.get('symbol_schema'),
@@ -51,6 +52,10 @@ def load_exchange_symbol_info(raw_data: list) -> list:
             system_base_asset = to_system_asset(d.get('baseAsset'))
             system_quote_asset = to_system_asset(d.get('quoteAsset'))
             system_symbol = f"{system_base_asset}{system_quote_asset}"
+
+            tick = get_tick_from_symbol_filters(d, 'PRICE_FILTER', 'tickSize')
+            volume_tick = get_tick_from_symbol_filters(d, 'LOT_SIZE', 'stepSize')
+
             _symbol_obj = {
                 'symbol': d.get('symbol'),
                 'system_symbol': system_symbol.lower(),
@@ -61,7 +66,8 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                 'expiration': None,
                 'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
                 'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
-                'tick': to_float(d.get('filters', [{}])[0].get('tickSize'))
+                'tick': tick,
+                'volume_tick': volume_tick,
             }
 
             if d.get('isSpotTradingAllowed'):
@@ -93,6 +99,10 @@ def load_futures_exchange_symbol_info(raw_data: list) -> list:
                     system_symbol = f"{system_symbol}_{expiration}"
                 except (KeyError, IndexError):
                     expiration = None
+
+            tick = get_tick_from_symbol_filters(d, 'PRICE_FILTER', 'tickSize')
+            volume_tick = get_tick_from_symbol_filters(d, 'LOT_SIZE', 'stepSize')
+
             symbol_list.append(
                 {
                     'symbol': d.get('symbol'),
@@ -106,10 +116,25 @@ def load_futures_exchange_symbol_info(raw_data: list) -> list:
                     'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
                     'schema': OrderSchema.futures,
                     'symbol_schema': OrderSchema.futures,
-                    'tick': to_float(d.get('filters', [{}])[0].get('tickSize'))
+                    'tick': tick,
+                    'volume_tick': volume_tick,
                 }
             )
     return symbol_list
+
+
+def get_tick_from_symbol_filters(symbol_data, filter_name, parameter_name):
+    """
+    Extracts tick value (price tick or lot tick) from symbol data
+    based on filter name and parameter name.
+
+    """
+    result = None
+    for data in symbol_data.get('filters', []):
+        if data.get('filterType') == filter_name:
+            result = data.get(parameter_name)
+            break
+    return to_float(result)
 
 
 def load_trade_data(raw_data: dict, state_data: Optional[dict]) -> dict:
@@ -852,6 +877,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
             'expiration': state_data.get('expiration'),
             'pair': state_data.get('pair'),
             'tick': state_data.get('tick'),
+            'volume_tick': state_data.get('volume_tick'),
             'system_symbol': state_data.get('system_symbol'),
             'schema': state_data.get('schema'),
             'symbol_schema': state_data.get('symbol_schema'),
