@@ -1,7 +1,7 @@
 from __future__ import annotations
 import asyncio
 from asyncio import CancelledError
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from websockets.exceptions import ConnectionClosedError
 from ....wss.subscriber import Subscriber
 from .utils import cmd_subscribe, cmd_unsubscribe
@@ -13,10 +13,21 @@ if TYPE_CHECKING:
 
 class BinanceSubscriber(Subscriber):
 
+    def __init__(self):
+        super().__init__()
+        self._task_watcher: Optional[asyncio.Task] = None
+        self._subscribed_symbols = set()
+
     async def _subscribe(self, api: BinanceWssApi, symbol=None):
         for subscription in self.subscriptions:
             if symbol in ('*', None) and not self.general_subscribe_available:
-                asyncio.create_task(self.send_command(cmd_subscribe, api, subscription))
+                symbols = api.state_symbol_list
+                # run task watcher for new symbols
+                self._subscribed_symbols = set(symbols)
+                self._task_watcher = asyncio.create_task(self.subscribe_watcher(api))
+                asyncio.create_task(
+                    self.send_command(cmd_subscribe, api, subscription, symbols)
+                )
             else:
                 if not api.handler or api.handler.closed:
                     return False
@@ -32,7 +43,12 @@ class BinanceSubscriber(Subscriber):
             return True
         for subscription in self.subscriptions:
             if symbol in ('*', None) and not self.general_subscribe_available:
-                asyncio.create_task(self.send_command(cmd_unsubscribe, api, subscription))
+                # stop task watcher for new symbols
+                if self._task_watcher is not None:
+                    self._task_watcher.cancel()
+                asyncio.create_task(
+                    self.send_command(cmd_unsubscribe, api, subscription, list(self._subscribed_symbols))
+                )
             else:
                 if not api.handler or api.handler.closed:
                     return True
@@ -42,8 +58,7 @@ class BinanceSubscriber(Subscriber):
                     api.logger.warning(f"{self.__class__.__name__} - {e}")
         return True
 
-    async def send_command(self, command: callable, api: BinanceWssApi, subscription: str):
-        symbols = api.state_symbol_list
+    async def send_command(self, command: callable, api: BinanceWssApi, subscription: str, symbols: list):
         symbols_count = len(symbols)
         try:
             for i in range(0, symbols_count, 400):
@@ -53,6 +68,23 @@ class BinanceSubscriber(Subscriber):
                 await api.handler.send(command(subscription, symbols[i:i+400]))
         except (CancelledError, ConnectionClosedError) as e:
             api.logger.warning(f"{self.__class__.__name__} - {e}")
+
+    async def subscribe_watcher(self, api: BinanceWssApi):
+        """
+        watcher for new symbol when `general_subscribe_available` is False
+        """
+        while api.handler and not api.handler.closed:
+            await asyncio.sleep(api.state_refresh_period)
+            new_registered_symbols = set(api.state_symbol_list)
+            unsubscribe_symbols = self._subscribed_symbols.difference(new_registered_symbols)
+            subscribe_symbols = new_registered_symbols.difference(self._subscribed_symbols)
+            for symbol in unsubscribe_symbols:
+                await asyncio.sleep(1)
+                await self._unsubscribe(api, symbol)
+            for symbol in subscribe_symbols:
+                await asyncio.sleep(1)
+                await self._subscribe(api, symbol)
+            self._subscribed_symbols = new_registered_symbols
 
 
 class BinanceOrderBookSubscriber(BinanceSubscriber):
