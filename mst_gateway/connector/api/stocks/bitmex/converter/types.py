@@ -22,5 +22,6 @@ class BitmexOrderTypeConverter(BaseOrderTypeConverter):
 
     STORE_TYPE_MAP = {
         OrderType.limit: 'Limit',
-        OrderType.market: 'Market'
+        OrderType.market: 'Market',
+        OrderType.position: 'Market',
     }
