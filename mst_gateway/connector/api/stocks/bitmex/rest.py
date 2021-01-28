@@ -393,6 +393,11 @@ class BitmexRestApi(StockRestApi):
             return utils.load_funding_rates(funding_rates)
         raise ConnectorError(f"Invalid schema {schema}.")
 
+    def change_leverage(self, symbol: str, leverage: float) -> float:
+        response, _ = self._bitmex_api(self._handler.Position.Position_updateLeverage,
+                                       symbol=utils.symbol2stock(symbol), leverage=leverage)
+        return response["leverage"]
+
     def _bitmex_api(self, method: callable, **kwargs):
         headers = {}
         if self._keepalive:

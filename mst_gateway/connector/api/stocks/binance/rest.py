@@ -496,6 +496,12 @@ class BinanceRestApi(StockRestApi):
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
 
+    def change_leverage(self, symbol: str, leverage: float) -> float:
+        response = self._binance_api(self._handler.futures_change_leverage,
+                                     symbol=utils.symbol2stock(symbol), leverage=int(leverage),
+                                     timestamp=datetime.now().timestamp())
+        return float(response["leverage"])
+
     def _binance_api(self, method: callable, **kwargs):
         try:
             resp = method(**kwargs)
