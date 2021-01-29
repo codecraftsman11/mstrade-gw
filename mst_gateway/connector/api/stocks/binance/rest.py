@@ -496,11 +496,18 @@ class BinanceRestApi(StockRestApi):
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
 
-    def change_leverage(self, symbol: str, leverage: float) -> float:
-        response = self._binance_api(self._handler.futures_change_leverage,
-                                     symbol=utils.symbol2stock(symbol), leverage=int(leverage),
-                                     timestamp=datetime.now().timestamp())
-        return float(response["leverage"])
+    def change_leverage(self, symbol: str, leverage: float, leverage_updated: bool,
+                        leverage_type: str, leverage_type_updated: bool) -> tuple:
+        timestamp = datetime.now().timestamp()
+        leverage_update_resp = None
+        if leverage_updated:
+            leverage_update_resp = self._binance_api(self._handler.futures_change_leverage,
+                                                     symbol=utils.symbol2stock(symbol),
+                                                     leverage=int(leverage), timestamp=timestamp)
+        if leverage_type_updated:
+            self._binance_api(self._handler.futures_change_margin_type, symbol=utils.symbol2stock(symbol),
+                              marginType=leverage_type.upper(), timestamp=timestamp)
+        return leverage_type, float(leverage_update_resp["leverage"]) if leverage_update_resp else leverage
 
     def _binance_api(self, method: callable, **kwargs):
         try:
@@ -523,7 +530,7 @@ class BinanceRestApi(StockRestApi):
             **self.__get_limit_header(self.handler.response.headers)
         )
 
-        if isinstance(resp, dict) and resp.get('msg'):
+        if isinstance(resp, dict) and resp.get('code') != 200 and resp.get('msg'):
             try:
                 _, msg = resp['msg'].split('=', 1)
             except ValueError:
