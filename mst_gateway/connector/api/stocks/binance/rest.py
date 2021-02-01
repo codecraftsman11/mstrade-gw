@@ -1,6 +1,7 @@
 from uuid import uuid4
 from logging import Logger
 from datetime import datetime, timedelta
+from typing import Optional
 from bravado.exception import HTTPError
 from binance.exceptions import BinanceAPIException, BinanceRequestException
 from mst_gateway.calculator import BinanceFinFactory
@@ -496,17 +497,23 @@ class BinanceRestApi(StockRestApi):
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
 
-    def change_leverage(self, symbol: str, leverage: float, leverage_updated: bool,
-                        leverage_type: str, leverage_type_updated: bool) -> tuple:
+    def change_leverage(
+        self, schema: str, symbol: str, leverage_type: Optional[str], leverage: Optional[float]
+    ) -> tuple:
+        if schema != OrderSchema.futures:
+            raise ConnectorError(f"Invalid schema {schema}.")
         timestamp = datetime.now().timestamp()
+        if leverage_type:
+            self._binance_api(
+                self._handler.futures_change_margin_type, symbol=utils.symbol2stock(symbol),
+                marginType=leverage_type.upper(), timestamp=timestamp
+            )
         leverage_update_resp = None
-        if leverage_updated:
-            leverage_update_resp = self._binance_api(self._handler.futures_change_leverage,
-                                                     symbol=utils.symbol2stock(symbol),
-                                                     leverage=int(leverage), timestamp=timestamp)
-        if leverage_type_updated:
-            self._binance_api(self._handler.futures_change_margin_type, symbol=utils.symbol2stock(symbol),
-                              marginType=leverage_type.upper(), timestamp=timestamp)
+        if leverage:
+            leverage_update_resp = self._binance_api(
+                self._handler.futures_change_leverage, symbol=utils.symbol2stock(symbol),
+                leverage=int(leverage), timestamp=timestamp
+            )
         return leverage_type, float(leverage_update_resp["leverage"]) if leverage_update_resp else leverage
 
     def _binance_api(self, method: callable, **kwargs):

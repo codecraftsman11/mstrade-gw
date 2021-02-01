@@ -393,11 +393,14 @@ class BitmexRestApi(StockRestApi):
             return utils.load_funding_rates(funding_rates)
         raise ConnectorError(f"Invalid schema {schema}.")
 
-    def change_leverage(self, symbol: str, leverage: float, leverage_updated: bool,
-                        leverage_type: str, leverage_type_updated: bool) -> tuple:
+    def change_leverage(
+        self, schema: str, symbol: str, leverage_type: Optional[str], leverage: Optional[float]
+    ) -> tuple:
+        if schema != OrderSchema.margin1:
+            raise ConnectorError(f"Invalid schema {schema}.")
         response, _ = self._bitmex_api(
             self._handler.Position.Position_updateLeverage, symbol=utils.symbol2stock(symbol),
-            leverage=0 if leverage_type_updated and leverage_type == LeverageType.cross else leverage
+            leverage=0 if leverage_type == LeverageType.cross else leverage
         )
         return LeverageType.cross if response["crossMargin"] else LeverageType.isolated, response["leverage"]
 

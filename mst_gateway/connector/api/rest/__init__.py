@@ -194,8 +194,9 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def change_leverage(self, symbol: str, leverage: float, leverage_updated: bool,
-                        leverage_type: str, leverage_type_updated: bool) -> tuple:
+    def change_leverage(
+        self, schema: str, symbol: str, leverage_type: Optional[str], leverage: Optional[float]
+    ) -> tuple:
         raise NotImplementedError
 
     def __setstate__(self, state):
