@@ -5,7 +5,7 @@ from typing import Optional
 from bravado.exception import HTTPError
 from binance.exceptions import BinanceAPIException, BinanceRequestException
 from mst_gateway.calculator import BinanceFinFactory
-from mst_gateway.connector.api.types import OrderSchema, OrderType
+from mst_gateway.connector.api.types import LeverageType, OrderSchema, OrderType
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
 from .lib import Client
 from . import utils, var
@@ -506,15 +506,16 @@ class BinanceRestApi(StockRestApi):
         if leverage_type:
             self._binance_api(
                 self._handler.futures_change_margin_type, symbol=utils.symbol2stock(symbol),
-                marginType=leverage_type.upper(), timestamp=timestamp
+                marginType="CROSSED" if leverage_type == LeverageType.cross else "ISOLATED",
+                timestamp=timestamp
             )
-        leverage_update_resp = None
+        response = None
         if leverage:
-            leverage_update_resp = self._binance_api(
+            response = self._binance_api(
                 self._handler.futures_change_leverage, symbol=utils.symbol2stock(symbol),
                 leverage=int(leverage), timestamp=timestamp
             )
-        return leverage_type, float(leverage_update_resp["leverage"]) if leverage_update_resp else leverage
+        return leverage_type, float(response["leverage"]) if response else leverage
 
     def _binance_api(self, method: callable, **kwargs):
         try:
