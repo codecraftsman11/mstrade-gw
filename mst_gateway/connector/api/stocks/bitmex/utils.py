@@ -198,7 +198,6 @@ def load_position_ws_data(raw_data: dict, state_data: dict) -> dict:
         'timestamp': time2timestamp(raw_data.get('timestamp')),
         'symbol': raw_data.get('symbol'),
         'mark_price': raw_data.get('markPrice'),
-        'last_price': raw_data.get('lastPrice'),
         'volume': raw_data.get('currentQty'),
         'liquidation_price': raw_data.get('liquidationPrice'),
         'entry_price': raw_data.get('avgEntryPrice'),
