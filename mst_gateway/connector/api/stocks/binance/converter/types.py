@@ -42,4 +42,5 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
     STORE_TYPE_MAP = {
         OrderType.limit: 'LIMIT',
         OrderType.market: 'MARKET',
+        OrderType.position: 'MARKET',
     }
