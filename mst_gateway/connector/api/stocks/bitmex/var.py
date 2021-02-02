@@ -58,3 +58,5 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         'additional_params': {}
     },
 }
+
+BINANCE_CROSS_LEVERAGE_TYPE_PARAM = 0

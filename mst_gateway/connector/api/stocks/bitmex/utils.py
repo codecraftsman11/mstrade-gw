@@ -5,7 +5,7 @@ from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
 from mst_gateway.connector.api.utils import time2timestamp
 from mst_gateway.exceptions import ConnectorError
-from mst_gateway.connector.api.types.order import OrderSchema
+from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
 from mst_gateway.utils import delta
 from . import var
 from .var import BITMEX_ORDER_STATUS_MAP
@@ -555,3 +555,9 @@ def map_api_parameter_names(params: dict) -> Optional[dict]:
         _param = var.PARAMETER_NAMES_MAP.get(param) or param
         tmp_params[_param] = value
     return tmp_params
+
+
+def store_leverage(leverage_type: str, leverage: float) -> float:
+    if leverage_type == LeverageType.cross:
+        return var.BINANCE_CROSS_LEVERAGE_TYPE_PARAM
+    return leverage
