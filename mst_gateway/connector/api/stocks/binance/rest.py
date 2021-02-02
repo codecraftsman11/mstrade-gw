@@ -505,8 +505,7 @@ class BinanceRestApi(StockRestApi):
         if leverage_type:
             self._binance_api(
                 self._handler.futures_change_margin_type, symbol=utils.symbol2stock(symbol),
-                marginType=var.BINANCE_LEVERAGE_TYPE_CROSS
-                if leverage_type == LeverageType.cross else var.BINANCE_LEVERAGE_TYPE_ISOLATED,
+                marginType=utils.store_leverage_type(leverage_type)
             )
         response = None
         if leverage:

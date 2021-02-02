@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Union, Optional
 from mst_gateway.connector import api
 from mst_gateway.calculator.binance import BinanceFinFactory
-from mst_gateway.connector.api.types.order import OrderSchema
+from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
 from mst_gateway.utils import delta
 from .....exceptions import ConnectorError
 from . import var
@@ -1038,3 +1038,9 @@ def map_api_parameter_names(params: dict) -> Optional[dict]:
         _param = var.PARAMETER_NAMES_MAP.get(param) or param
         tmp_params[_param] = value
     return tmp_params
+
+
+def store_leverage_type(leverage_type: str) -> str:
+    if leverage_type == LeverageType.cross:
+        return var.BINANCE_LEVERAGE_TYPE_CROSS
+    return var.BINANCE_LEVERAGE_TYPE_ISOLATED
