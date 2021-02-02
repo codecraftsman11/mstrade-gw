@@ -9,10 +9,6 @@ def side_valid(value):
         return False
 
 
-def order_id_valid(value):
-    return True
-
-
 def exchange_order_id_valid(value):
     return value and (isinstance(value, int) or isinstance(value, str))
 
