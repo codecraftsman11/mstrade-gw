@@ -200,6 +200,7 @@ def load_position_ws_data(raw_data: dict, state_data: dict) -> dict:
         'symbol': raw_data.get('symbol'),
         'mark_price': raw_data.get('markPrice'),
         'volume': raw_data.get('currentQty'),
+        'side': api.SELL if raw_data.get('currentQty') < 0 else api.BUY,
         'liquidation_price': raw_data.get('liquidationPrice'),
         'entry_price': raw_data.get('avgEntryPrice'),
         'unrealised_pnl': raw_data.get('unrealisedPnl'),
