@@ -502,19 +502,17 @@ class BinanceRestApi(StockRestApi):
     ) -> tuple:
         if schema != OrderSchema.futures:
             raise ConnectorError(f"Invalid schema {schema}.")
-        timestamp = datetime.now().timestamp()
         if leverage_type:
             self._binance_api(
                 self._handler.futures_change_margin_type, symbol=utils.symbol2stock(symbol),
                 marginType=var.BINANCE_LEVERAGE_TYPE_CROSS
                 if leverage_type == LeverageType.cross else var.BINANCE_LEVERAGE_TYPE_ISOLATED,
-                timestamp=timestamp
             )
         response = None
         if leverage:
             response = self._binance_api(
-                self._handler.futures_change_leverage, symbol=utils.symbol2stock(symbol),
-                leverage=int(leverage), timestamp=timestamp
+                self._handler.futures_change_leverage,
+                symbol=utils.symbol2stock(symbol), leverage=int(leverage),
             )
         return leverage_type, float(response["leverage"]) if response else leverage
 
