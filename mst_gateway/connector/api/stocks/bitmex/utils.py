@@ -10,8 +10,9 @@ from mst_gateway.utils import delta
 from . import var
 from .var import BITMEX_ORDER_STATUS_MAP
 from .converter import BitmexOrderTypeConverter
-from ...types.binsize import BinSize
 from ...types.asset import to_system_asset
+from ...types.binsize import BinSize
+from ...types.order import LeverageType
 
 
 def load_symbol_data(raw_data: dict, state_data: dict, is_iso_datetime=False) -> dict:
@@ -193,7 +194,7 @@ def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
 
 
 def load_position_ws_data(raw_data: dict, state_data: dict) -> dict:
-    return {
+    data = {
         'time': to_iso_datetime(raw_data.get('timestamp')),
         'timestamp': time2timestamp(raw_data.get('timestamp')),
         'symbol': raw_data.get('symbol'),
@@ -202,9 +203,15 @@ def load_position_ws_data(raw_data: dict, state_data: dict) -> dict:
         'liquidation_price': raw_data.get('liquidationPrice'),
         'entry_price': raw_data.get('avgEntryPrice'),
         'unrealised_pnl': raw_data.get('unrealisedPnl'),
+        'leverage': to_float(raw_data.get('leverage')),
         'schema': state_data.get('schema'),
         'system_symbol': state_data.get('system_symbol')
     }
+    if raw_data.get('crossMargin') is None:
+        data['leverage_type'] = raw_data.get('leverage_type')
+    else:
+        data['leverage_type'] = LeverageType.cross if raw_data.get('crossMargin') else LeverageType.isolated
+    return data
 
 
 def load_user_data(raw_data: dict) -> dict:

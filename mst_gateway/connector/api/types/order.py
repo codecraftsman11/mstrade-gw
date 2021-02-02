@@ -151,3 +151,8 @@ ORDER_POSITION_TYPES = (
 # Sides
 BUY = 0
 SELL = 1
+
+
+class LeverageType(ClassWithAttributes):
+    cross = 'cross'
+    isolated = 'isolated'
