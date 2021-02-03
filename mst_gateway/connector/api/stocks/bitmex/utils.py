@@ -557,7 +557,7 @@ def map_api_parameter_names(params: dict) -> Optional[dict]:
     return tmp_params
 
 
-def store_leverage(leverage_type: str, leverage: float) -> float:
+def store_leverage_type(leverage_type: str, leverage: float) -> float:
     if leverage_type == LeverageType.cross:
-        return var.BINANCE_CROSS_LEVERAGE_TYPE_PARAM
+        return var.BITMEX_CROSS_LEVERAGE_TYPE_PARAM
     return leverage

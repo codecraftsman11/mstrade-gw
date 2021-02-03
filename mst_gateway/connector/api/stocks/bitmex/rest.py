@@ -400,7 +400,7 @@ class BitmexRestApi(StockRestApi):
             raise ConnectorError(f"Invalid schema {schema}.")
         response, _ = self._bitmex_api(
             self._handler.Position.Position_updateLeverage, symbol=utils.symbol2stock(symbol),
-            leverage=utils.store_leverage(leverage_type, leverage)
+            leverage=utils.store_leverage_type(leverage_type, leverage)
         )
         return LeverageType.cross if response["crossMargin"] else LeverageType.isolated, response["leverage"]
 
