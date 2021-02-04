@@ -109,6 +109,11 @@ class OrderStandardTypes(ClassWithAttributes):
     market = OrderType.market
 
 
+class LeverageType(ClassWithAttributes):
+    cross = 'cross'
+    isolated = 'isolated'
+
+
 ORDER_STANDARD_TYPES = (
     OrderType.limit,
     OrderType.market,
@@ -151,8 +156,3 @@ ORDER_POSITION_TYPES = (
 # Sides
 BUY = 0
 SELL = 1
-
-
-class LeverageType(ClassWithAttributes):
-    cross = 'cross'
-    isolated = 'isolated'

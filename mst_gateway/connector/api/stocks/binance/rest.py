@@ -1,11 +1,11 @@
 from uuid import uuid4
 from logging import Logger
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Union
 from bravado.exception import HTTPError
 from binance.exceptions import BinanceAPIException, BinanceRequestException
 from mst_gateway.calculator import BinanceFinFactory
-from mst_gateway.connector.api.types import LeverageType, OrderSchema, OrderType
+from mst_gateway.connector.api.types import OrderSchema, OrderType
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
 from .lib import Client
 from . import utils, var
@@ -497,23 +497,32 @@ class BinanceRestApi(StockRestApi):
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
 
-    def change_leverage(
-        self, schema: str, symbol: str, leverage_type: Optional[str], leverage: Optional[float]
-    ) -> tuple:
-        if schema != OrderSchema.futures:
-            raise ConnectorError(f"Invalid schema {schema}.")
-        if leverage_type:
-            self._binance_api(
-                self._handler.futures_change_margin_type, symbol=utils.symbol2stock(symbol),
-                marginType=utils.store_leverage_type(leverage_type)
-            )
-        response = None
-        if leverage:
-            response = self._binance_api(
-                self._handler.futures_change_leverage,
-                symbol=utils.symbol2stock(symbol), leverage=int(leverage),
-            )
-        return leverage_type, float(response["leverage"]) if response else leverage
+    def get_leverage(self, schema: str, symbol: str, **kwargs) -> tuple:
+        if schema in (OrderSchema.exchange, OrderSchema.margin2):
+            raise ConnectorError(f"Unavailable method for {schema}.")
+        if schema == OrderSchema.futures:
+            response = self._binance_api(self._handler.futures_position_information, symbol=utils.symbol2stock(symbol))
+            return utils.load_leverage_type(response)
+        raise ConnectorError(f"Invalid schema {schema}.")
+
+    def change_leverage(self, schema: str, symbol: str, leverage_type: str,
+                        leverage: Union[float, int], **kwargs) -> tuple:
+        if schema in (OrderSchema.exchange, OrderSchema.margin2):
+            raise ConnectorError(f"Unavailable method for {schema}.")
+        if schema == OrderSchema.futures:
+            if kwargs.get('leverage_type_update'):
+                self._binance_api(
+                    self._handler.futures_change_margin_type, symbol=utils.symbol2stock(symbol),
+                    marginType=utils.store_leverage_type(leverage_type)
+                )
+            if kwargs.get('leverage_update'):
+                response = self._binance_api(
+                    self._handler.futures_change_leverage,
+                    symbol=utils.symbol2stock(symbol), leverage=int(leverage),
+                )
+                leverage = float(response["leverage"])
+            return leverage_type, leverage
+        raise ConnectorError(f"Invalid schema {schema}.")
 
     def _binance_api(self, method: callable, **kwargs):
         try:

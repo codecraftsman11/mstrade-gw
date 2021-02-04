@@ -1040,6 +1040,18 @@ def map_api_parameter_names(params: dict) -> Optional[dict]:
     return tmp_params
 
 
+def load_leverage_type(raw_data: list) -> tuple:
+    for pos in raw_data:
+        if pos.get('positionSide', '') == var.BinancePositionSideMode.BOTH:
+            if pos.get('marginType', '') == LeverageType.cross:
+                leverage_type = LeverageType.cross
+            else:
+                leverage_type = LeverageType.isolated
+            leverage = to_float(pos.get('leverage')) or 20
+            return leverage_type, leverage
+    return LeverageType.cross, 20
+
+
 def store_leverage_type(leverage_type: str) -> str:
     if leverage_type == LeverageType.cross:
         return var.BINANCE_LEVERAGE_TYPE_CROSS

@@ -557,7 +557,16 @@ def map_api_parameter_names(params: dict) -> Optional[dict]:
     return tmp_params
 
 
+def load_leverage_type(raw_data: dict) -> tuple:
+    if not raw_data:
+        return LeverageType.cross, 100  # default leverage
+    if raw_data.get('crossMargin'):
+        return LeverageType.cross, to_float(raw_data.get('leverage'))
+    else:
+        return LeverageType.isolated, to_float(raw_data.get('leverage'))
+
+
 def store_leverage_type(leverage_type: str, leverage: float) -> float:
     if leverage_type == LeverageType.cross:
         return var.BITMEX_CROSS_LEVERAGE_TYPE_PARAM
-    return leverage
+    return leverage or 0
