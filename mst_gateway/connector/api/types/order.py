@@ -46,6 +46,11 @@ class OrderSchemaTradeMode(ClassWithAttributes):
         _d = {i[0]: i[1] for i in cls._attributes()}
         return _d.get(schema)
 
+    @classmethod
+    def position_trade_mode(cls, schema):
+        _d = {i[0]: i[1][0] for i in cls._attributes()}
+        return _d.get(schema)
+
 
 class OrderState(ClassWithAttributes):
     waiting = 'waiting'         # Algorithm is waiting for start
