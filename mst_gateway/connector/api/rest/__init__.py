@@ -63,6 +63,10 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
+    def get_asset_balance(self, schema: str, asset: str, **kwargs) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_symbol(self, symbol, schema) -> dict:
         raise NotImplementedError
 

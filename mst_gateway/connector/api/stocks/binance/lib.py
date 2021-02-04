@@ -224,3 +224,61 @@ class Client(BaseClient):
         :type interestBNBBurn: str
         """
         return self._request_margin_api('post', 'bnbBurn', True, data=params)
+
+    def get_margin_asset_balance(self, asset, **params):
+        """Get current asset balance.
+
+        :param asset: required
+        :type asset: str
+
+        :returns: dictionary or None if not found
+
+        .. code-block:: python
+
+            {
+                "asset": "BTC",
+                "borrowed": "0.00000000",
+                "free": "0.00499500",
+                "interest": "0.00000000",
+                "locked": "0.00000000",
+                "netAsset": "0.00499500"
+            },
+
+        :raises: BinanceRequestException, BinanceAPIException
+
+        """
+        res = self.get_margin_account(**params)
+        # find asset balance in list of balances
+        if "userAssets" in res:
+            for bal in res['userAssets']:
+                if bal['asset'].lower() == asset.lower():
+                    return bal
+        return None
+
+    def get_futures_asset_balance(self, asset, **params):
+        """Get current asset balance.
+
+        :param asset: required
+        :type asset: str
+
+        :returns: dictionary or None if not found
+
+        .. code-block:: python
+
+            {
+                'accountAlias': 'fWXqfWsRTinY',
+                'asset': 'USDT',
+                'balance': '0.00000000',
+                'withdrawAvailable': '0.00000000',
+                'updateTime': 0
+            }
+
+        :raises: BinanceRequestException, BinanceAPIException
+
+        """
+        res = self.futures_account_balance(**params)
+        # find asset balance in list of balances
+        for bal in res:
+            if bal['asset'].lower() == asset.lower():
+                return bal
+        return None

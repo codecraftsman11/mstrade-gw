@@ -411,6 +411,26 @@ def load_futures_wallet_detail_data(raw_data: dict, asset: str) -> dict:
     raise ConnectorError(f"Invalid asset {asset}.")
 
 
+def load_exchange_asset_balance(raw_data: dict) -> dict:
+    data = {
+        'currency': raw_data.get('asset'),
+        'balance': to_float(raw_data.get('free', 0))
+    }
+    return data
+
+
+def load_margin_asset_balance(raw_data: dict) -> dict:
+    return load_exchange_asset_balance(raw_data)
+
+
+def load_futures_asset_balance(raw_data: dict) -> dict:
+    data = {
+        'currency': raw_data.get('asset'),
+        'balance': to_float(raw_data.get('balance', 0))
+    }
+    return data
+
+
 def _ws_wallet(balances: list, state_balances: dict, state_data: dict, currencies: dict,
                assets: Union[list, tuple], fields: Union[list, tuple]):
     balances.extend([v for v in state_balances.values()])

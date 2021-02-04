@@ -10,7 +10,7 @@ from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector.api.types import OrderSchema
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
 from . import utils, var
-from .utils import binsize2timedelta
+from .utils import binsize2timedelta, to_xbt
 from ...rest import StockRestApi
 from .... import api
 from .....exceptions import ConnectorError, RecoverableError, NotFoundError
@@ -154,6 +154,12 @@ class BitmexRestApi(StockRestApi):
             return {
                 OrderSchema.margin1: utils.load_wallet_detail_data(data, asset)
             }
+        raise ConnectorError(f"Invalid schema {schema}.")
+
+    def get_asset_balance(self, schema: str, asset: str, **kwargs) -> dict:
+        if schema == OrderSchema.margin1:
+            data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
+            return utils.load_wallet_asset_balance(data)
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def wallet_transfer(self, from_wallet: str, to_wallet: str, asset: str, amount: float):
