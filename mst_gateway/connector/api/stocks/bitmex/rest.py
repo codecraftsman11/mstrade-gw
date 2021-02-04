@@ -1,7 +1,7 @@
 import json
 from datetime import datetime, timedelta
 from logging import Logger
-from typing import Optional
+from typing import Optional, Union
 from bravado.exception import HTTPError
 from .lib import (
     bitmex_connector, APIKeyAuthenticator, SwaggerClient
@@ -404,7 +404,7 @@ class BitmexRestApi(StockRestApi):
         return utils.load_leverage_type({})     # default leverage
 
     def change_leverage(self, schema: str, symbol: str, leverage_type: str,
-                        leverage: Optional[float, int], **kwargs) -> tuple:
+                        leverage: Union[float, int], **kwargs) -> tuple:
         if schema != OrderSchema.margin1:
             raise ConnectorError(f"Invalid schema {schema}.")
         response, _ = self._bitmex_api(
