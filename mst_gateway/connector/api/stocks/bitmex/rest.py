@@ -7,7 +7,7 @@ from .lib import (
     bitmex_connector, APIKeyAuthenticator, SwaggerClient
 )
 from mst_gateway.calculator import BitmexFinFactory
-from mst_gateway.connector.api.types import OrderSchema
+from mst_gateway.connector.api.types import OrderSchema, LeverageType
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
 from . import utils, var
 from .utils import binsize2timedelta
@@ -400,8 +400,8 @@ class BitmexRestApi(StockRestApi):
             self._handler.Position.Position_get, filter=j_dumps({'symbol': utils.symbol2stock(symbol)})
         )
         if response:
-            return utils.load_leverage_type(response[0])
-        return utils.load_leverage_type({})     # default leverage
+            return utils.load_leverage(response[0])
+        return utils.load_leverage({})     # default leverage
 
     def change_leverage(self, schema: str, symbol: str, leverage_type: str,
                         leverage: Union[float, int], **kwargs) -> tuple:
@@ -409,9 +409,14 @@ class BitmexRestApi(StockRestApi):
             raise ConnectorError(f"Invalid schema {schema}.")
         response, _ = self._bitmex_api(
             self._handler.Position.Position_updateLeverage, symbol=utils.symbol2stock(symbol),
-            leverage=utils.store_leverage_type(leverage_type, leverage)
+            leverage=utils.store_leverage(leverage_type, leverage)
         )
         return leverage_type, utils.to_float(response["leverage"])
+
+    def default_leverage(self, schema: str, symbol: str, **kwargs) -> tuple:
+        if schema != OrderSchema.margin1:
+            raise ConnectorError(f"Invalid schema {schema}.")
+        return LeverageType.cross, 100
 
     def _bitmex_api(self, method: callable, **kwargs):
         headers = {}

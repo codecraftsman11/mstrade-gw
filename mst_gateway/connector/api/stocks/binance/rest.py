@@ -5,7 +5,7 @@ from typing import Union
 from bravado.exception import HTTPError
 from binance.exceptions import BinanceAPIException, BinanceRequestException
 from mst_gateway.calculator import BinanceFinFactory
-from mst_gateway.connector.api.types import OrderSchema, OrderType
+from mst_gateway.connector.api.types import OrderSchema, OrderType, LeverageType
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
 from .lib import Client
 from . import utils, var
@@ -502,7 +502,7 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(f"Unavailable method for {schema}.")
         if schema == OrderSchema.futures:
             response = self._binance_api(self._handler.futures_position_information, symbol=utils.symbol2stock(symbol))
-            return utils.load_leverage_type(response)
+            return utils.load_leverage(response)
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def change_leverage(self, schema: str, symbol: str, leverage_type: str,
@@ -513,7 +513,7 @@ class BinanceRestApi(StockRestApi):
             if kwargs.get('leverage_type_update'):
                 self._binance_api(
                     self._handler.futures_change_margin_type, symbol=utils.symbol2stock(symbol),
-                    marginType=utils.store_leverage_type(leverage_type)
+                    marginType=utils.store_leverage(leverage_type)
                 )
             if kwargs.get('leverage_update'):
                 response = self._binance_api(
@@ -522,6 +522,13 @@ class BinanceRestApi(StockRestApi):
                 )
                 leverage = float(response["leverage"])
             return leverage_type, leverage
+        raise ConnectorError(f"Invalid schema {schema}.")
+
+    def default_leverage(self, schema: str, symbol: str, **kwargs) -> tuple:
+        if schema in (OrderSchema.exchange, OrderSchema.margin2):
+            raise ConnectorError(f"Unavailable method for {schema}.")
+        if schema == OrderSchema.futures:
+            return LeverageType.cross, 20
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def _binance_api(self, method: callable, **kwargs):
