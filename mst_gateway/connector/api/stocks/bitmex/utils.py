@@ -142,7 +142,6 @@ def load_order_data(raw_data: dict, state_data: dict, skip_undef=False) -> dict:
                                                    raw_data.get('ordType'))
     order_time = to_date(raw_data.get('timestamp'))
     data = {
-        'order_id': raw_data.get('clOrdID'),
         'exchange_order_id': raw_data.get('orderID'),
         'symbol': raw_data.get('symbol'),
         'volume': raw_data.get('orderQty'),
@@ -171,7 +170,6 @@ def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
     order_type_and_exec = load_order_type_and_exec(state_data.get('schema'),
                                                    raw_data.get('ordType'))
     return {
-        'order_id': raw_data.get('clOrdID'),
         'exchange_order_id': raw_data.get('orderID'),
         'side': load_order_side(raw_data.get('side')),
         'tick_volume': raw_data.get('lastQty'),
