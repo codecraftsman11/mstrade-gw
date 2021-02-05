@@ -520,7 +520,7 @@ class BinanceRestApi(StockRestApi):
                     self._handler.futures_change_leverage,
                     symbol=utils.symbol2stock(symbol), leverage=int(leverage),
                 )
-                leverage = float(response["leverage"])
+                leverage = utils.to_float(response["leverage"])
             return leverage_type, leverage
         raise ConnectorError(f"Invalid schema {schema}.")
 
