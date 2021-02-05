@@ -41,6 +41,7 @@ def load_symbol_data(raw_data: dict, state_data: dict, is_iso_datetime=False) ->
         'schema': state_data.get('schema'),
         'symbol_schema': state_data.get('symbol_schema'),
         'created': to_iso_datetime(state_data.get('created')) if is_iso_datetime else state_data.get('created'),
+        'max_leverage': state_data.get('max_leverage'),
     }
 
 
@@ -85,6 +86,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
 
         tick = to_float(d.get('tickSize'))
         volume_tick = to_float(d.get('lotSize'))
+        max_leverage = 100 if d.get('initMargin', 0) <= 0 else 1 / d['initMargin']
 
         symbol_list.append(
             {
@@ -101,6 +103,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                 'symbol_schema': symbol_schema,
                 'tick': tick,
                 'volume_tick': volume_tick,
+                'max_leverage': max_leverage
             }
         )
     return symbol_list
@@ -556,8 +559,6 @@ def map_api_parameter_names(params: dict) -> Optional[dict]:
 
 
 def load_leverage(raw_data: dict) -> tuple:
-    if not raw_data:
-        return LeverageType.cross, 100  # default leverage
     if raw_data.get('crossMargin'):
         return LeverageType.cross, to_float(raw_data.get('leverage'))
     else:

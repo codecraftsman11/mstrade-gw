@@ -87,9 +87,15 @@ class BinanceRestApi(StockRestApi):
 
     def get_exchange_symbol_info(self) -> list:
         e_data = self._binance_api(self._handler.get_exchange_info)
-        f_data = self._binance_api(self._handler.futures_exchange_info)
         data = utils.load_exchange_symbol_info(e_data.get('symbols', []))
-        data.extend(utils.load_futures_exchange_symbol_info(f_data.get('symbols', [])))
+        f_data = self._binance_api(self._handler.futures_exchange_info)
+        try:
+            f_leverage_data = self._binance_api(self._handler.futures_leverage_bracket)
+        except ConnectorError:
+            f_leverage_data = []
+        data.extend(utils.load_futures_exchange_symbol_info(
+            f_data.get('symbols', []), utils.load_futures_leverage_bracket_as_dict(f_leverage_data)
+        ))
         return data
 
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:

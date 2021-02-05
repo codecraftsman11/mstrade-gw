@@ -224,3 +224,11 @@ class Client(BaseClient):
         :type interestBNBBurn: str
         """
         return self._request_margin_api('post', 'bnbBurn', True, data=params)
+
+    def futures_leverage_bracket(self, **params):
+        """Notional and Leverage Brackets
+
+        https://binance-docs.github.io/apidocs/futures/en/#notional-and-leverage-brackets-market_data
+
+        """
+        return self._request_futures_api('get', 'leverageBracket', True, data=params)

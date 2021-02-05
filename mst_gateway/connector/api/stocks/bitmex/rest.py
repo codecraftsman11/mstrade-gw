@@ -402,12 +402,12 @@ class BitmexRestApi(StockRestApi):
         if response:
             return utils.load_leverage(response[0])
         response, _ = self._bitmex_api(self._handler.Instrument.Instrument_get, symbol=utils.symbol2stock(symbol))
-        _data = response[0] if response else {}
+        _data = response[0] if response else {'initMargin': 0}
         _tmp = {
             'crossMargin': False,
-            'leverage': 0 if _data.get('initMarginReq', 0) <= 0 else 1 / _data['initMarginReq']
+            'leverage': None if _data.get('initMargin', 0) <= 0 else 1 / _data['initMargin']
         }
-        return utils.load_leverage(_tmp)     # default leverage
+        return utils.load_leverage(_tmp)
 
     def change_leverage(self, schema: str, symbol: str, leverage_type: str,
                         leverage: Union[float, int], **kwargs) -> tuple:
