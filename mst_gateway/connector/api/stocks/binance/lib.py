@@ -44,6 +44,14 @@ class Client(BaseClient):
         uri = self._create_futures_api_v2_uri(path)
         return self._request(method, uri, signed, True, **kwargs)
 
+    def futures_leverage_bracket(self, **params):
+        """Notional and Leverage Brackets
+
+        https://binance-docs.github.io/apidocs/futures/en/#notional-and-leverage-brackets-market_data
+
+        """
+        return self._request_futures_api('get', 'leverageBracket', True, data=params)
+
     def futures_transfer_spot_to_futures(self, **params):
         """Execute transfer between spot account and futures account.
 
@@ -224,11 +232,3 @@ class Client(BaseClient):
         :type interestBNBBurn: str
         """
         return self._request_margin_api('post', 'bnbBurn', True, data=params)
-
-    def futures_leverage_bracket(self, **params):
-        """Notional and Leverage Brackets
-
-        https://binance-docs.github.io/apidocs/futures/en/#notional-and-leverage-brackets-market_data
-
-        """
-        return self._request_futures_api('get', 'leverageBracket', True, data=params)
