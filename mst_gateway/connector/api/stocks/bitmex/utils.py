@@ -193,6 +193,12 @@ def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
     }
 
 
+def load_ws_position_side(current_qty: int):
+    if current_qty is None or current_qty == 0:
+        return None
+    return api.SELL if current_qty < 0 else api.BUY
+
+
 def load_position_ws_data(raw_data: dict, state_data: dict) -> dict:
     data = {
         'time': to_iso_datetime(raw_data.get('timestamp')),
@@ -200,18 +206,20 @@ def load_position_ws_data(raw_data: dict, state_data: dict) -> dict:
         'symbol': raw_data.get('symbol'),
         'mark_price': raw_data.get('markPrice'),
         'volume': raw_data.get('currentQty'),
-        'side': api.SELL if raw_data.get('currentQty') < 0 else api.BUY,
+        'side': load_ws_position_side(raw_data.get('currentQty')),
         'liquidation_price': raw_data.get('liquidationPrice'),
         'entry_price': raw_data.get('avgEntryPrice'),
         'unrealised_pnl': raw_data.get('unrealisedPnl'),
         'leverage': to_float(raw_data.get('leverage')),
         'schema': state_data.get('schema'),
-        'system_symbol': state_data.get('system_symbol')
+        'system_symbol': state_data.get('system_symbol'),
+        'crossMargin': raw_data.get('crossMargin')
     }
     if raw_data.get('crossMargin') is None:
         data['leverage_type'] = raw_data.get('leverage_type')
     else:
-        data['leverage_type'] = LeverageType.cross if raw_data.get('crossMargin') else LeverageType.isolated
+        data['leverage_type'] = LeverageType.cross if raw_data.get('crossMargin') \
+            else LeverageType.isolated
     return data
 
 
