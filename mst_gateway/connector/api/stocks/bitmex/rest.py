@@ -417,7 +417,7 @@ class BitmexRestApi(StockRestApi):
             self._handler.Position.Position_updateLeverage, symbol=utils.symbol2stock(symbol),
             leverage=utils.store_leverage(leverage_type, leverage)
         )
-        return leverage_type, utils.to_float(response["leverage"])
+        return utils.load_leverage(response)
 
     def _bitmex_api(self, method: callable, **kwargs):
         headers = {}
