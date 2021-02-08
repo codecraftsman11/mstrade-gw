@@ -225,6 +225,10 @@ class Client(BaseClient):
         """
         return self._request_margin_api('post', 'bnbBurn', True, data=params)
 
+    def get_asset_balance(self, asset, **params):
+        response = super().get_asset_balance(asset, **params)
+        return response or {'asset': asset}
+
     def get_margin_asset_balance(self, asset, **params):
         """Get current asset balance.
 
@@ -253,7 +257,7 @@ class Client(BaseClient):
             for bal in res['userAssets']:
                 if bal['asset'].lower() == asset.lower():
                     return bal
-        return None
+        return {'asset': asset}
 
     def get_futures_asset_balance(self, asset, **params):
         """Get current asset balance.
@@ -281,4 +285,4 @@ class Client(BaseClient):
         for bal in res:
             if bal['asset'].lower() == asset.lower():
                 return bal
-        return None
+        return {'asset': asset}
