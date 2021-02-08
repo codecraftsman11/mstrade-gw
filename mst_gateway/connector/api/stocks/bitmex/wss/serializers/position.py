@@ -27,4 +27,6 @@ class BitmexPositionSerializer(BitmexSerializer):
                 item['leverage'] = state[0]['leverage']
             if item.get('crossMargin') is None:
                 item['leverage_type'] = state[0]['leverage_type']
+            if item.get('markPrice') is None:
+                item['markPrice'] = state[0]['mark_price']
         return utils.load_position_ws_data(item, state_data)
