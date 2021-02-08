@@ -193,10 +193,10 @@ def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
     }
 
 
-def load_ws_position_side(current_qty: int):
-    if current_qty is None or current_qty == 0:
-        return None
-    return api.SELL if current_qty < 0 else api.BUY
+def load_ws_position_side(current_qty: int) -> Optional[int]:
+    if current_qty:
+        return api.SELL if current_qty < 0 else api.BUY
+    return None
 
 
 def load_position_ws_data(raw_data: dict, state_data: dict) -> dict:
