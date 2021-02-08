@@ -1,5 +1,6 @@
 # flake8: noqa
 from .order import (
+    LeverageType,
     OrderType,
     OrderSchema,
     OrderSchemaTradeMode,

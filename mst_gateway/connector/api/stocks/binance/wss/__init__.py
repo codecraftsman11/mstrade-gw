@@ -205,6 +205,11 @@ class BinanceFuturesWssApi(BinanceWssApi):
         'quote_bin': subscr_class.BinanceQuoteBinSubscriber(),
         'symbol': subscr_class.BinanceFuturesSymbolSubscriber(),
     }
+    auth_subscribers = {
+        'wallet': subscr_class.BinanceWalletSubscriber(),
+        'order': subscr_class.BinanceOrderSubscriber(),
+        'position': subscr_class.BinanceFuturesPositionSubscriber(),
+    }
 
     router_class = BinanceFuturesWssRouter
 
@@ -236,7 +241,7 @@ class BinanceFuturesWssApi(BinanceWssApi):
         _map = {
             'depthUpdate': self.split_order_book,
             'ORDER_TRADE_UPDATE': self.split_order,
-            'ACCOUNT_UPDATE': self.split_wallet,
+            'ACCOUNT_UPDATE': self.split_account_update,
         }
         return _map.get(key)
 
@@ -246,16 +251,13 @@ class BinanceFuturesWssApi(BinanceWssApi):
             return super(BinanceWssApi, self)._split_message(message)
         return super(BinanceWssApi, self)._split_message(method(message=message))
 
-    def split_wallet(self, message):
-        subscr_name = self.router_class.table_route_map.get('ACCOUNT_UPDATE')
-        if subscr_name not in self._subscriptions:
-            return None
-        if "*" not in self._subscriptions[subscr_name]:
+    def split_account_update(self, message):
+        if "wallet" in self._subscriptions and "*" not in self._subscriptions["wallet"]:
             _balances = []
             _new_data = []
             for item in message.pop('data', []):
                 for b in item['a'].pop('B', []):
-                    if b['a'].lower() in self._subscriptions[subscr_name]:
+                    if b['a'].lower() in self._subscriptions["wallet"]:
                         _balances.append(b)
                 item['a']['B'] = _balances
                 _new_data.append(item)

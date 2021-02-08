@@ -89,3 +89,7 @@ class BinanceWalletSubscriber(BinanceSubscriber):
 
 class BinanceOrderSubscriber(BinanceSubscriber):
     subscriptions = ()
+
+
+class BinanceFuturesPositionSubscriber(BinanceSubscriber):
+    subscriptions = ("!markPrice@arr", "markPrice")

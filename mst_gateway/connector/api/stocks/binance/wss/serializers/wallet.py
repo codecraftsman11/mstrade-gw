@@ -53,7 +53,7 @@ class BinanceWalletSerializer(BinanceSerializer):
 class BinanceFuturesWalletSerializer(BinanceWalletSerializer):
 
     def is_item_valid(self, message: dict, item) -> bool:
-        return message['table'] == 'ACCOUNT_UPDATE'
+        return message['table'] == 'ACCOUNT_UPDATE' and self.subscription in self._wss_api.subscriptions
 
     def _wallet_list(self, item, state_data: dict, currencies: dict):
         assets = ('btc', 'usd')

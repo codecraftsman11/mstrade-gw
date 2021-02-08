@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Union, Optional
 from mst_gateway.connector import api
 from mst_gateway.calculator.binance import BinanceFinFactory
-from mst_gateway.connector.api.types.order import OrderSchema
+from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
 from mst_gateway.utils import delta
 from .....exceptions import ConnectorError
 from . import var
@@ -1013,6 +1013,8 @@ def assign_custom_parameter_values(options: Optional[dict]) -> dict:
 
     """
     new_options = dict()
+    if options is None:
+        return new_options
     if 'ttl' in options:
         new_options['timeInForce'] = 'GTC'
     if options.get('is_passive'):
@@ -1036,3 +1038,33 @@ def map_api_parameter_names(params: dict) -> Optional[dict]:
         _param = var.PARAMETER_NAMES_MAP.get(param) or param
         tmp_params[_param] = value
     return tmp_params
+
+
+def load_ws_position_side(position_amount: float) -> Optional[int]:
+    if position_amount:
+        return api.SELL if position_amount < 0 else api.BUY
+    return None
+
+
+def load_ws_leverage_type(margin_type: str) -> str:
+    return LeverageType.cross if margin_type.lower() == 'cross' \
+        else LeverageType.isolated
+
+
+def load_position_ws_data(raw_data: dict, state_data: dict) -> dict:
+    position_amount = to_float(raw_data.get('pa'))
+    return {
+        'time': to_iso_datetime(raw_data.get('timestamp')),
+        'timestamp': raw_data.get('timestamp'),
+        'symbol': raw_data.get('s'),
+        'mark_price': to_float(raw_data.get("mark_price")),
+        'volume': position_amount,
+        'side': load_ws_position_side(position_amount),
+        'liquidation_price': None,
+        'entry_price': to_float(raw_data.get('ep')),
+        'unrealised_pnl': to_float(raw_data.get('up')),
+        'leverage_type': load_ws_leverage_type(raw_data.get('mt')),
+        'leverage': to_float(raw_data.get("leverage")),
+        'schema': state_data.get('schema'),
+        'system_symbol': state_data.get('system_symbol')
+    }
