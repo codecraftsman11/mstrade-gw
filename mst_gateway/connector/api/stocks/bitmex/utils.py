@@ -211,7 +211,6 @@ def load_position_ws_data(raw_data: dict, state_data: dict) -> dict:
         'leverage': to_float(raw_data.get('leverage')),
         'schema': state_data.get('schema'),
         'system_symbol': state_data.get('system_symbol'),
-        'crossMargin': raw_data.get('crossMargin')
     }
     if raw_data.get('crossMargin') is None:
         data['leverage_type'] = raw_data.get('leverage_type')
