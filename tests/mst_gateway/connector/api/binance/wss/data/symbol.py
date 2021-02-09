@@ -442,6 +442,7 @@ FUTURES_SYMBOL_GET_DATA_RESULTS = [
                     "time": "2020-11-30 14:16:36.000000Z",
                     "timestamp": 1606745796712,
                     "volume24": 88743.677,
+                    "volume_tick": None,
                 }
             ],
             "schema": cfg.BINANCE_FUTURES_SCHEMA,

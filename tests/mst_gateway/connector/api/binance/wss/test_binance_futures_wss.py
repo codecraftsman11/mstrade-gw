@@ -22,6 +22,12 @@ from .data.order_book import (
     FUTURES_ORDER_BOOK_SPLIT_MESSAGE_RESULTS,
     FUTURES_ORDER_BOOK_GET_DATA_RESULTS,
 )
+from .data.position import (
+    FUTURES_POSITION_MESSAGE,
+    FUTURES_POSITION_LOOKUP_TABLE_RESULT,
+    FUTURES_POSITION_SPLIT_MESSAGE_RESULTS,
+    FUTURES_POSITION_GET_DATA_RESULTS,
+)
 from .data.quote_bin import (
     FUTURES_QUOTE_BIN_MESSAGE,
     FUTURES_QUOTE_BIN_LOOKUP_TABLE_RESULT,
@@ -180,6 +186,7 @@ class TestBinanceFuturesWssApi:
             ("symbol", subscribers.BinanceFuturesSymbolSubscriber),
             ("trade", subscribers.BinanceTradeSubscriber),
             ("wallet", subscribers.BinanceWalletSubscriber),
+            ("position", subscribers.BinanceFuturesPositionSubscriber),
         ],
     )
     def test_binance_wss_futures__get_subscriber(
@@ -529,6 +536,7 @@ class TestBinanceFuturesWssApi:
             (FUTURES_SYMBOL_MESSAGE, FUTURES_SYMBOL_LOOKUP_TABLE_RESULT),
             (FUTURES_TRADE_MESSAGE, FUTURES_TRADE_LOOKUP_TABLE_RESULT),
             (FUTURES_WALLET_MESSAGE, FUTURES_WALLET_LOOKUP_TABLE_RESULT),
+            (FUTURES_POSITION_MESSAGE, FUTURES_POSITION_LOOKUP_TABLE_RESULT),
         ],
     )
     def test_binance_wss_futures__lookup_table(
@@ -563,25 +571,14 @@ class TestBinanceFuturesWssApi:
             ),
             (FUTURES_SYMBOL_LOOKUP_TABLE_RESULT, FUTURES_SYMBOL_SPLIT_MESSAGE_RESULTS),
             (FUTURES_TRADE_LOOKUP_TABLE_RESULT, FUTURES_TRADE_SPLIT_MESSAGE_RESULTS),
+            (FUTURES_WALLET_LOOKUP_TABLE_RESULT, FUTURES_WALLET_SPLIT_MESSAGE_RESULTS),
+            (FUTURES_POSITION_LOOKUP_TABLE_RESULT, FUTURES_POSITION_SPLIT_MESSAGE_RESULTS),
         ],
     )
     def test_binance_wss_futures__split_message(
         self, _testnet_wss_api: BinanceFuturesWssApi, message, split_results
     ):
         assert _testnet_wss_api._split_message(deepcopy(message)) == split_results
-
-    def test_binance_wss_futures_split_wallet(
-        self, _testnet_wss_api: BinanceFuturesWssApi
-    ):
-        assert (
-            _testnet_wss_api.split_wallet(deepcopy(FUTURES_WALLET_LOOKUP_TABLE_RESULT))
-            is None
-        )
-        _testnet_wss_api._subscriptions = {"wallet": {"usdt": {"1"}}}
-        assert (
-            _testnet_wss_api.split_wallet(deepcopy(FUTURES_WALLET_LOOKUP_TABLE_RESULT))
-            == FUTURES_WALLET_SPLIT_MESSAGE_RESULTS[0]
-        )
 
     @pytest.mark.parametrize(
         "messages, results",
@@ -597,7 +594,6 @@ class TestBinanceFuturesWssApi:
             ),
             (FUTURES_SYMBOL_SPLIT_MESSAGE_RESULTS, FUTURES_SYMBOL_GET_DATA_RESULTS),
             (FUTURES_TRADE_SPLIT_MESSAGE_RESULTS, FUTURES_TRADE_GET_DATA_RESULTS),
-            (FUTURES_WALLET_SPLIT_MESSAGE_RESULTS, FUTURES_WALLET_GET_DATA_RESULTS),
         ],
     )
     def test_binance_wss_futures_get_data(
@@ -605,6 +601,20 @@ class TestBinanceFuturesWssApi:
     ):
         for i, message in enumerate(messages):
             assert _testnet_wss_api.get_data(message) == results[i]
+
+    def test_binance_wss_futures_get_wallet_data(self, _testnet_wss_api: BinanceFuturesWssApi):
+        for i, message in enumerate(FUTURES_WALLET_SPLIT_MESSAGE_RESULTS):
+            assert _testnet_wss_api.get_data(message) == {}
+        _testnet_wss_api._subscriptions = {"wallet": {"usdt": {"1"}}}
+        for i, message in enumerate(FUTURES_WALLET_SPLIT_MESSAGE_RESULTS):
+            assert _testnet_wss_api.get_data(message) == FUTURES_WALLET_GET_DATA_RESULTS[i]
+
+    def test_binance_wss_futures_get_position_data(self, _testnet_wss_api: BinanceFuturesWssApi):
+        for i, message in enumerate(FUTURES_POSITION_SPLIT_MESSAGE_RESULTS):
+            assert _testnet_wss_api.get_data(message) == {}
+        _testnet_wss_api._subscriptions = {"position": {"btcusd": {"1"}}}
+        for i, message in enumerate(FUTURES_POSITION_SPLIT_MESSAGE_RESULTS):
+            assert _testnet_wss_api.get_data(message) == FUTURES_POSITION_GET_DATA_RESULTS[i]
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
@@ -634,9 +644,34 @@ class TestBinanceFuturesWssApi:
     ):
         self.reset()
         assert not self.data
+        await _testnet_wss_api.process_message(
+            json.dumps(deepcopy(FUTURES_WALLET_MESSAGE)), self.on_message
+        )
+        assert not self.data
+        self.reset()
+        assert not self.data
         _testnet_wss_api._subscriptions = {"wallet": {"*": {"1"}}}
         await _testnet_wss_api.process_message(
             json.dumps(deepcopy(FUTURES_WALLET_MESSAGE)), self.on_message
         )
         assert self.data == FUTURES_WALLET_PROCESS_MESSAGE_RESULTS
+        self.reset()
+
+    @pytest.mark.asyncio
+    async def test_binance_wss_futures_process_position_message(
+        self, _testnet_wss_api: BinanceFuturesWssApi
+    ):
+        self.reset()
+        assert not self.data
+        await _testnet_wss_api.process_message(
+            json.dumps(deepcopy(FUTURES_POSITION_MESSAGE)), self.on_message
+        )
+        assert not self.data
+        self.reset()
+        assert not self.data
+        _testnet_wss_api._subscriptions = {"position": {"*": {"1"}}}
+        await _testnet_wss_api.process_message(
+            json.dumps(deepcopy(FUTURES_POSITION_MESSAGE)), self.on_message
+        )
+        assert self.data == FUTURES_POSITION_GET_DATA_RESULTS
         self.reset()

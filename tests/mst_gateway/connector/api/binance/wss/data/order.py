@@ -289,7 +289,6 @@ FUTURES_ORDER_GET_DATA_RESULTS = [
                     "execution": "market",
                     "filled_volume": 0.185,
                     "leaves_volume": 0.815,
-                    "order_id": "9Wn6wm9ygPJqra0LplJiXm",
                     "price": 0.0,
                     "schema": cfg.BINANCE_FUTURES_SCHEMA,
                     "side": 1,
