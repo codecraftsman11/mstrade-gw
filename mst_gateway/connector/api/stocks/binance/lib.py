@@ -1,4 +1,5 @@
 from binance.client import Client as BaseClient
+from binance.exceptions import BinanceRequestException
 
 
 class Client(BaseClient):
@@ -43,6 +44,11 @@ class Client(BaseClient):
     def _request_futures_api_v2(self, method, path, signed=False, **kwargs):
         uri = self._create_futures_api_v2_uri(path)
         return self._request(method, uri, signed, True, **kwargs)
+
+    def _generate_signature(self, data):
+        if not (self.API_SECRET and isinstance(self.API_SECRET, str)):
+            raise BinanceRequestException('API-key format invalid.')
+        return super()._generate_signature(data)
 
     def futures_transfer_spot_to_futures(self, **params):
         """Execute transfer between spot account and futures account.
