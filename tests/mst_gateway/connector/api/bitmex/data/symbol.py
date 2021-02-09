@@ -34,6 +34,7 @@ TEST_SYMBOL_MESSAGES = [
                     "symbol_schema": "margin1",
                     "expiration": None,
                     "created": to_iso_datetime("2020-06-25T13:03:00.295118Z"),
+                    "max_leverage": 100,
                 }
             ]
         }
@@ -73,6 +74,7 @@ TEST_SYMBOL_MESSAGES = [
                     "symbol_schema": "margin1",
                     "expiration": None,
                     "created": to_iso_datetime("2020-06-25T13:03:00.295118Z"),
+                    "max_leverage": 100,
                 }
             ]
         }
@@ -108,6 +110,7 @@ RESULT_SYMBOL_STATE = {
             "symbol_schema": "margin1",
             "expiration": None,
             "created": to_iso_datetime("2020-06-25T13:03:00.295118Z"),
+            "max_leverage": 100,
         }
     ]
 }
