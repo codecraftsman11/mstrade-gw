@@ -26,7 +26,7 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
                     self.leverages[item["ac"]["s"]] = item["ac"].get("l")
 
     @staticmethod
-    def load_position(item: dict):
+    def select_both_sides_position_data(item: dict):
         for p in item.get("a", {}).get("P", []):
             if p.get("ps") == "BOTH":
                 return p
@@ -34,21 +34,23 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
     def is_item_valid(self, message: dict, item: dict) -> bool:
         if message["table"] == "ACCOUNT_UPDATE" and \
                 self.subscription in self._wss_api.subscriptions and \
-                self.load_position(item):
+                self.select_both_sides_position_data(item):
             return True
         return False
 
     def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
             return None
-        position = self.load_position(item)
-        symbol = position.get("s")
+        both_sides_position_data = self.select_both_sides_position_data(item)
+        symbol = both_sides_position_data.get("s")
         state_data = self._wss_api.get_state_data(symbol)
         if not state_data:
             return None
-        position.update({
+        both_sides_position_data.update({
             "timestamp": item.get("E"),
             "mark_price": self.mark_prices.get(symbol),
             "leverage": self.leverages.get(symbol),
         })
-        return utils.load_position_ws_data(position, state_data)
+        return utils.load_futures_position_ws_data(
+            both_sides_position_data, state_data
+        )

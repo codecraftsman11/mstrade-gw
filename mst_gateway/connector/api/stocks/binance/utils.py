@@ -1040,18 +1040,18 @@ def map_api_parameter_names(params: dict) -> Optional[dict]:
     return tmp_params
 
 
-def load_ws_position_side(position_amount: float) -> Optional[int]:
+def load_ws_futures_position_side(position_amount: float) -> Optional[int]:
     if position_amount:
         return api.SELL if position_amount < 0 else api.BUY
     return None
 
 
-def load_ws_leverage_type(margin_type: str) -> str:
+def load_ws_futures_position_leverage_type(margin_type: str) -> str:
     return LeverageType.cross if margin_type.lower() == 'cross' \
         else LeverageType.isolated
 
 
-def load_position_ws_data(raw_data: dict, state_data: dict) -> dict:
+def load_futures_position_ws_data(raw_data: dict, state_data: dict) -> dict:
     position_amount = to_float(raw_data.get('pa'))
     return {
         'time': to_iso_datetime(raw_data.get('timestamp')),
@@ -1059,11 +1059,11 @@ def load_position_ws_data(raw_data: dict, state_data: dict) -> dict:
         'symbol': raw_data.get('s'),
         'mark_price': to_float(raw_data.get("mark_price")),
         'volume': position_amount,
-        'side': load_ws_position_side(position_amount),
+        'side': load_ws_futures_position_side(position_amount),
         'liquidation_price': None,
         'entry_price': to_float(raw_data.get('ep')),
         'unrealised_pnl': to_float(raw_data.get('up')),
-        'leverage_type': load_ws_leverage_type(raw_data.get('mt')),
+        'leverage_type': load_ws_futures_position_leverage_type(raw_data.get('mt')),
         'leverage': to_float(raw_data.get("leverage")),
         'schema': state_data.get('schema'),
         'system_symbol': state_data.get('system_symbol')
