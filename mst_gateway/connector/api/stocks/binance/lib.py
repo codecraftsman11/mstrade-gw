@@ -1,4 +1,5 @@
 from binance.client import Client as BaseClient
+from binance.exceptions import BinanceRequestException
 
 
 class Client(BaseClient):
@@ -44,13 +45,10 @@ class Client(BaseClient):
         uri = self._create_futures_api_v2_uri(path)
         return self._request(method, uri, signed, True, **kwargs)
 
-    def futures_leverage_bracket(self, **params):
-        """Notional and Leverage Brackets
-
-        https://binance-docs.github.io/apidocs/futures/en/#notional-and-leverage-brackets-market_data
-
-        """
-        return self._request_futures_api('get', 'leverageBracket', True, data=params)
+    def _generate_signature(self, data):
+        if not (self.API_SECRET and isinstance(self.API_SECRET, str)):
+            raise BinanceRequestException('API-key format invalid.')
+        return super()._generate_signature(data)
 
     def futures_transfer_spot_to_futures(self, **params):
         """Execute transfer between spot account and futures account.

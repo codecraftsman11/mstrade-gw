@@ -11,7 +11,7 @@ with open('LICENSE') as f:
 
 setup(
     name='mst-gateway',
-    python_requires='>=3.5.0',
+    python_requires='>=3.8.0',
     version=version.VERSION,
     packages=find_packages(exclude=('tests', 'tests.*')),
     author='Vladimir Belinskiy',
