@@ -4,7 +4,6 @@ from ..api.validators import (
     iso_datetime_valid,
     pair_valid,
     side_valid,
-    order_id_valid,
     type_valid,
     schema_valid,
     execution_valid,
@@ -81,7 +80,6 @@ WS_SYMBOL_FIELDS = {
 }
 
 ORDER_FIELDS = {
-    'order_id': order_id_valid,
     'exchange_order_id': exchange_order_id_valid,
     'symbol': str,
     'volume': int,

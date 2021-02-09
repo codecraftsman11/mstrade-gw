@@ -294,7 +294,6 @@ def load_quote_bin_data(raw_data: list, state_data: Optional[dict]) -> dict:
 
 def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     data = {
-        'order_id': raw_data.get('clientOrderId'),
         'exchange_order_id': raw_data.get('orderId'),
         'symbol': raw_data.get('symbol'),
         'volume': raw_data.get('origQty'),
@@ -934,7 +933,6 @@ def load_ws_order_side(order_side: Optional[str]) -> Optional[int]:
 
 def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     data = {
-        'order_id': raw_data.get('c'),
         'exchange_order_id': raw_data.get('i'),
         'side': load_ws_order_side(raw_data.get('S')),
         'tick_volume': to_float(raw_data.get('l')),

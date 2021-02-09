@@ -5,6 +5,7 @@ from bravado.exception import HTTPError
 from binance.exceptions import BinanceAPIException, BinanceRequestException
 from mst_gateway.calculator import BinanceFinFactory
 from mst_gateway.connector.api.types import OrderSchema, OrderType
+from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
 from .lib import Client
 from . import utils, var
 from ...rest import StockRestApi
@@ -191,6 +192,7 @@ class BinanceRestApi(StockRestApi):
         return bool(data)
 
     def cancel_order(self, exchange_order_id: str, symbol: str, schema: str) -> dict:
+        validate_exchange_order_id(exchange_order_id)
         params = dict(
             exchange_order_id=int(exchange_order_id),
             symbol=utils.symbol2stock(symbol)

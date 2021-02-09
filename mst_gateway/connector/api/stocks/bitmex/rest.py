@@ -8,6 +8,7 @@ from .lib import (
 )
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector.api.types import OrderSchema
+from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
 from . import utils, var
 from .utils import binsize2timedelta
 from ...rest import StockRestApi
@@ -235,6 +236,7 @@ class BitmexRestApi(StockRestApi):
         return bool(data)
 
     def cancel_order(self, exchange_order_id: str, symbol: str, schema: str) -> dict:
+        validate_exchange_order_id(exchange_order_id)
         params = dict(exchange_order_id=exchange_order_id)
         params = utils.map_api_parameter_names(params)
 

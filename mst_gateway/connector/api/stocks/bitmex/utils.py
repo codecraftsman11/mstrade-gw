@@ -142,7 +142,6 @@ def load_order_side(order_side: str) -> int:
 def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     order_time = to_date(raw_data.get('timestamp'))
     data = {
-        'order_id': raw_data.get('clOrdID'),
         'exchange_order_id': raw_data.get('orderID'),
         'symbol': raw_data.get('symbol'),
         'volume': raw_data.get('orderQty'),
