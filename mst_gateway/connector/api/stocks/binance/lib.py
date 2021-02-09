@@ -224,3 +224,80 @@ class Client(BaseClient):
         :type interestBNBBurn: str
         """
         return self._request_margin_api('post', 'bnbBurn', True, data=params)
+
+    def create_futures_loan(self, **params):
+        """Apply for a loan.
+
+        https://binance-docs.github.io/apidocs/spot/en/#borrow-for-cross-collateral-trade
+
+        :param coin: name of the asset
+        :type coin: str
+        :param amount: amount to transfer(when collateralAmount is empty)
+        :type amount: str
+        :param collateralCoin: name of the collateral coin
+        :type collateralCoin: str
+        :param collateralAmount: amount to transfer(when amount is empty)
+        :type collateralAmount: str
+        :param recvWindow: the number of milliseconds the request is valid for
+        :type recvWindow: int
+
+        .. code:: python
+
+            transaction = client.create_futures_loan(
+                                    coin='USDT',
+                                    collateralCoin='BUSD',
+                                    amount='4.5',
+                                    collateralAmount=5.0
+                                    )
+
+        :returns: API response
+
+        .. code-block:: python
+
+            {
+                "coin": "USDT",
+                "amount": "4.50000000",
+                "collateralCoin": "BUSD",
+                "collateralAmount": "5.00000000",
+                "time": 1582540328433,
+                "borrowId": "438648398970089472"
+            }
+
+        :raises: BinanceRequestException, BinanceAPIException
+
+        """
+        return self._request_margin_api('post', 'futures/loan/borrow', signed=True, data=params)
+
+    def repay_futures_loan(self, **params):
+        """Repay loan for futures account.
+
+        https://binance-docs.github.io/apidocs/spot/en/#repay-for-cross-collateral-trade
+
+        :param coin: name of the asset
+        :type coin: str
+        :param amount: amount to transfer(when collateralAmount is empty)
+        :type amount: str
+        :param collateralCoin: name of the collateral coin
+        :type collateralCoin: str
+        :param recvWindow: the number of milliseconds the request is valid for
+        :type recvWindow: int
+
+        .. code:: python
+
+            transaction = client.repay_futures_loan(coin='USDT', collateralCoin='BUSD' amount='1.6')
+
+        :returns: API response
+
+        .. code-block:: python
+
+            {
+                "coin": "USDT",
+                "amount": "1.68",
+                "collateralCoin": "BUSD",
+                "repayId": "439659223998894080"
+            }
+
+        :raises: BinanceRequestException, BinanceAPIException
+
+        """
+        return self._request_margin_api('post', 'futures/loan/repay', signed=True, data=params)
