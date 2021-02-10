@@ -31,8 +31,8 @@ def _rest(_debug) -> BitmexRestApi:
                        state_storage=STORAGE_DATA) as rest:
         rest.open()
         yield rest
-        rest.cancel_all_orders()
-        rest.close_all_orders(symbol=cfg.BITMEX_SYMBOL)
+        rest.cancel_all_orders(schema=cfg.BITMEX_SCHEMA)
+        rest.close_all_orders(symbol=cfg.BITMEX_SYMBOL, schema=cfg.BITMEX_SCHEMA)
 
 
 @pytest.fixture

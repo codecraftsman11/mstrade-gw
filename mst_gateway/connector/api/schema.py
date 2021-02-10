@@ -54,7 +54,8 @@ SYMBOL_FIELDS = {
     'schema': schema_valid,
     'system_symbol': str,
     'symbol_schema': schema_valid,
-    'created': datetime_valid
+    'created': datetime_valid,
+    'max_leverage': float,
 }
 
 WS_SYMBOL_FIELDS = {
@@ -76,7 +77,8 @@ WS_SYMBOL_FIELDS = {
     'schema': schema_valid,
     'system_symbol': str,
     'symbol_schema': schema_valid,
-    'created': iso_datetime_valid
+    'created': iso_datetime_valid,
+    'max_leverage': float,
 }
 
 ORDER_FIELDS = {
