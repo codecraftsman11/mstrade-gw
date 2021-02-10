@@ -18,7 +18,8 @@ STORAGE_DATA = {
                     'system_symbol': 'ethusd',
                     'symbol': 'ethusd',
                     'exchange': 'Bitmex',
-                    'created': to_date('2020-06-25T13:03:00.295118Z')
+                    'created': to_date('2020-06-25T13:03:00.295118Z'),
+                    'max_leverage': 50.0,
                 },
                 'xbtusd': {
                     'tick': 0.5,
@@ -33,7 +34,8 @@ STORAGE_DATA = {
                     'system_symbol': 'btcusd',
                     'symbol': 'xbtusd',
                     'exchange': 'Bitmex',
-                    'created': to_date('2020-06-25T13:03:00.295118Z')
+                    'created': to_date('2020-06-25T13:03:00.295118Z'),
+                    'max_leverage': 100.0,
                 }
             }
         },
@@ -52,7 +54,8 @@ STORAGE_DATA = {
                     'system_symbol': 'ethusd',
                     'symbol': 'ethusd',
                     'exchange': 'tBitmex',
-                    'created':  to_date('2020-06-25T13:03:00.295118Z')
+                    'created':  to_date('2020-06-25T13:03:00.295118Z'),
+                    'max_leverage': 50.0,
                 },
                 'xbtusd': {
                     'tick': 0.5,
@@ -67,7 +70,8 @@ STORAGE_DATA = {
                     'system_symbol': 'btcusd',
                     'symbol': 'xbtusd',
                     'exchange': 'tBitmex',
-                    'created':  to_date('2020-06-25T13:03:00.295118Z')
+                    'created':  to_date('2020-06-25T13:03:00.295118Z'),
+                    'max_leverage': 100.0,
                 }
             }
         }

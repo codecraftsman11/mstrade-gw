@@ -25,6 +25,7 @@ SPOT_SYMBOL_DETAIL_MESSAGE = {
     "L": 1161,
     "n": 20,
 }
+
 SPOT_SYMBOL_DETAIL_LOOKUP_TABLE_RESULT = {
     "action": "update",
     "data": [
@@ -56,6 +57,7 @@ SPOT_SYMBOL_DETAIL_LOOKUP_TABLE_RESULT = {
     ],
     "table": "24hrTicker",
 }
+
 SPOT_SYMBOL_DETAIL_SPLIT_MESSAGE_RESULTS = [
     {
         "action": "update",
@@ -89,6 +91,7 @@ SPOT_SYMBOL_DETAIL_SPLIT_MESSAGE_RESULTS = [
         "table": "24hrTicker",
     }
 ]
+
 SPOT_SYMBOL_DETAIL_GET_DATA_RESULTS = [
     {
         "symbol": {
@@ -114,6 +117,7 @@ SPOT_SYMBOL_DETAIL_GET_DATA_RESULTS = [
                     "time": "2020-11-23 09:41:59.000000Z",
                     "timestamp": 1606124519688,
                     "volume24": 3.346,
+                    "max_leverage": None,
                 }
             ],
             "schema": cfg.BINANCE_SPOT_SCHEMA,
@@ -174,6 +178,7 @@ SPOT_SYMBOL_MESSAGE = [
         "n": 20,
     },
 ]
+
 SPOT_SYMBOL_LOOKUP_TABLE_RESULT = {
     "action": "update",
     "data": [
@@ -230,6 +235,7 @@ SPOT_SYMBOL_LOOKUP_TABLE_RESULT = {
     ],
     "table": "24hrTicker",
 }
+
 SPOT_SYMBOL_SPLIT_MESSAGE_RESULTS = [
     {
         "action": "update",
@@ -288,6 +294,7 @@ SPOT_SYMBOL_SPLIT_MESSAGE_RESULTS = [
         "table": "24hrTicker",
     }
 ]
+
 SPOT_SYMBOL_GET_DATA_RESULTS = [
     {
         "symbol": {
@@ -313,6 +320,7 @@ SPOT_SYMBOL_GET_DATA_RESULTS = [
                     "time": "2020-11-23 09:41:38.000000Z",
                     "timestamp": 1606124498337,
                     "volume24": 8786.81,
+                    "max_leverage": None,
                 },
                 {
                     "ask_price": 0.0,
@@ -333,6 +341,7 @@ SPOT_SYMBOL_GET_DATA_RESULTS = [
                     "time": "2020-11-23 09:41:38.000000Z",
                     "timestamp": 1606124498763,
                     "volume24": 3.346,
+                    "max_leverage": None,
                 },
             ],
             "schema": cfg.BINANCE_SPOT_SCHEMA,
@@ -363,6 +372,7 @@ FUTURES_SYMBOL_MESSAGE = [
         "n": 20799,
     }
 ]
+
 FUTURES_SYMBOL_LOOKUP_TABLE_RESULT = {
     "action": "update",
     "data": [
@@ -389,6 +399,7 @@ FUTURES_SYMBOL_LOOKUP_TABLE_RESULT = {
     ],
     "table": "24hrTicker",
 }
+
 FUTURES_SYMBOL_SPLIT_MESSAGE_RESULTS = [
     {
         "action": "update",
@@ -417,6 +428,7 @@ FUTURES_SYMBOL_SPLIT_MESSAGE_RESULTS = [
         "table": "24hrTicker",
     }
 ]
+
 FUTURES_SYMBOL_GET_DATA_RESULTS = [
     {
         "symbol": {
@@ -442,6 +454,7 @@ FUTURES_SYMBOL_GET_DATA_RESULTS = [
                     "time": "2020-11-30 14:16:36.000000Z",
                     "timestamp": 1606745796712,
                     "volume24": 88743.677,
+                    "max_leverage": 125.0
                 }
             ],
             "schema": cfg.BINANCE_FUTURES_SCHEMA,
