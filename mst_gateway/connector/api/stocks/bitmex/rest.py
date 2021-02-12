@@ -10,7 +10,7 @@ from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector.api.types import OrderSchema
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
 from . import utils, var
-from .utils import binsize2timedelta, to_xbt
+from .utils import binsize2timedelta
 from ...rest import StockRestApi
 from .... import api
 from .....exceptions import ConnectorError, RecoverableError, NotFoundError
