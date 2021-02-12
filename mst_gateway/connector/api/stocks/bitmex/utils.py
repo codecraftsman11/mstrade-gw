@@ -208,14 +208,14 @@ def load_position_ws_data(raw_data: dict, state_data: dict) -> dict:
         'symbol': raw_data.get('symbol'),
         'mark_price': to_float(raw_data.get('markPrice')),
         'volume': to_float(raw_data.get('currentQty')),
-        'side': side,
         'liquidation_price': to_float(raw_data.get('liquidationPrice')),
         'entry_price': to_float(raw_data.get('avgEntryPrice')),
-        'unrealised_pnl': to_float(raw_data.get('unrealisedPnl')),
-        'leverage_type': leverage_type,
-        'leverage': leverage,
         'schema': state_data.get('schema'),
         'system_symbol': state_data.get('system_symbol'),
+        'side': side,
+        'unrealised_pnl': to_xbt(raw_data.get('unrealisedPnl')),
+        'leverage_type': leverage_type,
+        'leverage': leverage,
     }
     return data
 
