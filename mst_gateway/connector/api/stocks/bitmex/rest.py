@@ -1,7 +1,7 @@
 import json
 from datetime import datetime, timedelta
 from logging import Logger
-from typing import Optional
+from typing import Optional, Union
 from bravado.exception import HTTPError
 from .lib import (
     bitmex_connector, APIKeyAuthenticator, SwaggerClient
@@ -392,6 +392,32 @@ class BitmexRestApi(StockRestApi):
             )
             return utils.load_funding_rates(funding_rates)
         raise ConnectorError(f"Invalid schema {schema}.")
+
+    def get_leverage(self, schema: str, symbol: str, **kwargs) -> tuple:
+        if schema != OrderSchema.margin1:
+            raise ConnectorError(f"Invalid schema {schema}.")
+        response, _ = self._bitmex_api(
+            self._handler.Position.Position_get, filter=j_dumps({'symbol': utils.symbol2stock(symbol)})
+        )
+        if response:
+            return utils.load_leverage(response[0])
+        response, _ = self._bitmex_api(self._handler.Instrument.Instrument_get, symbol=utils.symbol2stock(symbol))
+        _data = response[0] if response else {'initMargin': 0}
+        _tmp = {
+            'crossMargin': False,
+            'leverage': None if _data.get('initMargin', 0) <= 0 else 1 / _data['initMargin']
+        }
+        return utils.load_leverage(_tmp)
+
+    def change_leverage(self, schema: str, symbol: str, leverage_type: str,
+                        leverage: Union[float, int], **kwargs) -> tuple:
+        if schema != OrderSchema.margin1:
+            raise ConnectorError(f"Invalid schema {schema}.")
+        response, _ = self._bitmex_api(
+            self._handler.Position.Position_updateLeverage, symbol=utils.symbol2stock(symbol),
+            leverage=utils.store_leverage(leverage_type, leverage)
+        )
+        return utils.load_leverage(response)
 
     def _bitmex_api(self, method: callable, **kwargs):
         headers = {}

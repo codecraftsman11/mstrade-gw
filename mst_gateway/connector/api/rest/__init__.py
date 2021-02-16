@@ -193,6 +193,15 @@ class StockRestApi(Connector):
     def list_funding_rates(self, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
         raise NotImplementedError
 
+    @abstractmethod
+    def get_leverage(self, schema: str, symbol: str, **kwargs) -> tuple:
+        raise NotImplementedError
+
+    @abstractmethod
+    def change_leverage(self, schema: str, symbol: str, leverage_type: str,
+                        leverage: Union[float, int], **kwargs) -> tuple:
+        raise NotImplementedError
+
     def __setstate__(self, state):
         self.__dict__ = state
         self.open()
