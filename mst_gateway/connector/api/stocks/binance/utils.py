@@ -1064,3 +1064,32 @@ def store_leverage(leverage_type: str) -> str:
     if leverage_type == LeverageType.cross:
         return var.BINANCE_LEVERAGE_TYPE_CROSS
     return var.BINANCE_LEVERAGE_TYPE_ISOLATED
+
+
+def load_ws_futures_position_side(position_amount: float) -> Optional[int]:
+    if position_amount:
+        return api.SELL if position_amount < 0 else api.BUY
+    return None
+
+
+def load_ws_futures_position_leverage_type(margin_type: str) -> str:
+    return LeverageType.cross if margin_type.lower() == 'cross' else LeverageType.isolated
+
+
+def load_futures_position_ws_data(raw_data: dict, state_data: dict) -> dict:
+    position_amount = to_float(raw_data.get('pa'))
+    return {
+        'time': to_iso_datetime(raw_data.get('timestamp')),
+        'timestamp': raw_data.get('timestamp'),
+        'schema': state_data.get('schema'),
+        'symbol': raw_data.get('s'),
+        'system_symbol': state_data.get('system_symbol'),
+        'side': load_ws_futures_position_side(position_amount),
+        'volume': position_amount,
+        'entry_price': to_float(raw_data.get('ep')),
+        'mark_price': to_float(raw_data.get("mark_price")),
+        'unrealised_pnl': to_float(raw_data.get('up')),
+        'leverage_type': load_ws_futures_position_leverage_type(raw_data.get('mt')),
+        'leverage': to_float(raw_data.get("leverage")),
+        'liquidation_price': None,
+    }
