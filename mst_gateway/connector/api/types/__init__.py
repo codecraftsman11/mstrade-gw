@@ -1,6 +1,5 @@
 # flake8: noqa
 from .order import (
-    LeverageType,
     OrderType,
     OrderSchema,
     OrderSchemaTradeMode,
@@ -19,6 +18,7 @@ from .order import (
     OrderPositionOpenedBy,
     OrderPositionClosedBy,
     OrderStandardTypes,
+    LeverageType
 )
 from .converters import (
     BaseOrderTypeConverter

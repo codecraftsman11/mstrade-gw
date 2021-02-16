@@ -130,7 +130,6 @@ SPOT_ORDER_GET_DATA_RESULTS = [
                     "execution": "market",
                     "filled_volume": 0.0,
                     "leaves_volume": 1.0,
-                    "order_id": "3B3mTlkU0o35huD5Cq0tPw",
                     "price": 0.0,
                     "schema": cfg.BINANCE_SPOT_SCHEMA,
                     "side": 0,
