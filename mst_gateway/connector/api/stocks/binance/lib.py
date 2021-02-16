@@ -231,64 +231,78 @@ class Client(BaseClient):
         """
         return self._request_margin_api('post', 'bnbBurn', True, data=params)
 
-    def get_asset_balance(self, asset, **params):
-        response = super().get_asset_balance(asset, **params)
-        return response or {'asset': asset}
+    def get_assets_balance(self, **params):
+        """Get assets balance.
 
-    def get_margin_asset_balance(self, asset, **params):
-        """Get current asset balance.
+        https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md#account-information-user_data
 
-        :param asset: required
-        :type asset: str
-
-        :returns: dictionary or None if not found
+        :returns: list
 
         .. code-block:: python
 
-            {
-                "asset": "BTC",
-                "borrowed": "0.00000000",
-                "free": "0.00499500",
-                "interest": "0.00000000",
-                "locked": "0.00000000",
-                "netAsset": "0.00499500"
-            },
+            [
+                {
+                    "asset": "BTC",
+                    "free": "4723846.89208129",
+                    "locked": "0.00000000"
+                },
+            ]
+
+        :raises: BinanceRequestException, BinanceAPIException
+
+        """
+        res = self.get_account(**params)
+        if "balances" in res:
+            return res['balances']
+        return []
+
+    def get_margin_assets_balance(self, **params):
+        """Get assets balance.
+
+        :returns: list
+
+        .. code-block:: python
+
+            [
+                {
+                    "asset": "BTC",
+                    "borrowed": "0.00000000",
+                    "free": "0.00499500",
+                    "interest": "0.00000000",
+                    "locked": "0.00000000",
+                    "netAsset": "0.00499500"
+                },
+            ]
 
         :raises: BinanceRequestException, BinanceAPIException
 
         """
         res = self.get_margin_account(**params)
-        # find asset balance in list of balances
         if "userAssets" in res:
-            for bal in res['userAssets']:
-                if bal['asset'].lower() == asset.lower():
-                    return bal
-        return {'asset': asset}
+            return res['userAssets']
+        return []
 
-    def get_futures_asset_balance(self, asset, **params):
-        """Get current asset balance.
+    def get_futures_assets_balance(self, **params):
+        """Get assets balance.
 
-        :param asset: required
-        :type asset: str
-
-        :returns: dictionary or None if not found
+        :returns: list
 
         .. code-block:: python
 
-            {
-                'accountAlias': 'fWXqfWsRTinY',
-                'asset': 'USDT',
-                'balance': '0.00000000',
-                'withdrawAvailable': '0.00000000',
-                'updateTime': 0
-            }
+            [
+                {
+                    'accountAlias': 'fWXqfWsRTinY',
+                    'asset': 'USDT',
+                    'balance': '0.00000000',
+                    'withdrawAvailable': '0.00000000',
+                    'updateTime': 0
+                },
+            ]
 
         :raises: BinanceRequestException, BinanceAPIException
 
         """
         res = self.futures_account_balance(**params)
-        # find asset balance in list of balances
-        for bal in res:
-            if bal['asset'].lower() == asset.lower():
-                return bal
-        return {'asset': asset}
+        if res:
+            return res
+        return {}

@@ -156,7 +156,7 @@ class BitmexRestApi(StockRestApi):
             }
         raise ConnectorError(f"Invalid schema {schema}.")
 
-    def get_asset_balance(self, schema: str, asset: str, **kwargs) -> dict:
+    def get_assets_balance(self, schema: str, **kwargs) -> dict:
         if schema == OrderSchema.margin1:
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
             return utils.load_wallet_asset_balance(data)

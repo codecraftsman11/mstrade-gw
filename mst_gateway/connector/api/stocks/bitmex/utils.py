@@ -328,10 +328,9 @@ def load_wallet_detail_data(raw_data: dict, asset: str = None) -> dict:
     }
 
 
-def load_wallet_asset_balance(raw_data: dict, asset: str = None) -> dict:
+def load_wallet_asset_balance(raw_data: dict) -> dict:
     data = {
-        'currency': raw_data.get('currency'),
-        'balance': to_xbt(raw_data.get('walletBalance')),
+        raw_data.get('currency', '').lower(): to_xbt(raw_data.get('walletBalance')),
     }
     return data
 
