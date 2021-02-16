@@ -10,8 +10,8 @@ from mst_gateway.utils import delta
 from . import var
 from .var import BITMEX_ORDER_STATUS_MAP
 from .converter import BitmexOrderTypeConverter
-from ...types.binsize import BinSize
 from ...types.asset import to_system_asset
+from ...types.binsize import BinSize
 
 
 def load_symbol_data(raw_data: dict, state_data: dict, is_iso_datetime=False) -> dict:
@@ -193,19 +193,31 @@ def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
     }
 
 
+def load_ws_position_side(current_qty: int) -> Optional[int]:
+    if current_qty:
+        return api.SELL if current_qty < 0 else api.BUY
+    return None
+
+
 def load_position_ws_data(raw_data: dict, state_data: dict) -> dict:
-    return {
+    side = load_ws_position_side(raw_data.get('currentQty'))
+    leverage_type, leverage = load_leverage(raw_data)
+    data = {
         'time': to_iso_datetime(raw_data.get('timestamp')),
         'timestamp': time2timestamp(raw_data.get('timestamp')),
         'symbol': raw_data.get('symbol'),
-        'mark_price': raw_data.get('markPrice'),
-        'last_price': raw_data.get('lastPrice'),
-        'volume': raw_data.get('currentQty'),
-        'liquidation_price': raw_data.get('liquidationPrice'),
-        'entry_price': raw_data.get('avgEntryPrice'),
+        'mark_price': to_float(raw_data.get('markPrice')),
+        'volume': to_float(raw_data.get('currentQty')),
+        'liquidation_price': to_float(raw_data.get('liquidationPrice')),
+        'entry_price': to_float(raw_data.get('avgEntryPrice')),
         'schema': state_data.get('schema'),
-        'system_symbol': state_data.get('system_symbol')
+        'system_symbol': state_data.get('system_symbol'),
+        'side': side,
+        'unrealised_pnl': to_xbt(raw_data.get('unrealisedPnl')),
+        'leverage_type': leverage_type,
+        'leverage': leverage,
     }
+    return data
 
 
 def load_user_data(raw_data: dict) -> dict:
@@ -539,6 +551,8 @@ def assign_custom_parameter_values(options: Optional[dict]) -> dict:
 
     """
     new_options = dict()
+    if options is None:
+        return new_options
     if options.get('comments'):
         new_options['text'] = options['comments']
     if options.get('ttl'):
