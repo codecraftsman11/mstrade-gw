@@ -1,6 +1,7 @@
 from typing import Optional
 from .base import BitmexSerializer
 from ... import utils
+from mst_gateway.connector.api.types.order import LeverageType
 
 
 class BitmexPositionSerializer(BitmexSerializer):
@@ -21,4 +22,12 @@ class BitmexPositionSerializer(BitmexSerializer):
                 item['avgEntryPrice'] = state[0]['entry_price']
             if item.get('liquidationPrice') is None:
                 item['liquidationPrice'] = state[0]['liquidation_price']
+            if item.get('unrealisedPnl') is None:
+                item['unrealisedPnl'] = state[0]['unrealised_pnl']
+            if item.get('leverage') is None:
+                item['leverage'] = state[0]['leverage']
+            if item.get('crossMargin') is None:
+                item['crossMargin'] = state[0]['leverage_type'] == LeverageType.cross
+            if item.get('markPrice') is None:
+                item['markPrice'] = state[0]['mark_price']
         return utils.load_position_ws_data(item, state_data)
