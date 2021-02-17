@@ -186,9 +186,10 @@ def load_order_book_side(order_side: str) -> int:
 
 
 def generate_order_book_id(symbol: str, price: float) -> int:
-    hash_object = hashlib.sha1(symbol.encode())
-    res = int(re.sub(r'[^0-9.]+', r'', hash_object.hexdigest())[-15:])
-    result = int(res - price * 10 ** 8)
+    unique_string = symbol + str(price)
+    hashed_string = hashlib.sha256(unique_string.encode('utf-8')).hexdigest()
+    string_to_int = int(hashed_string, 16)
+    result = string_to_int % 10 ** 8
     return result
 
 
