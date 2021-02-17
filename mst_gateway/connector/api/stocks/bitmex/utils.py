@@ -5,13 +5,13 @@ from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
 from mst_gateway.connector.api.utils import time2timestamp
 from mst_gateway.exceptions import ConnectorError
-from mst_gateway.connector.api.types.order import OrderSchema
+from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
 from mst_gateway.utils import delta
 from . import var
 from .var import BITMEX_ORDER_STATUS_MAP
 from .converter import BitmexOrderTypeConverter
-from ...types.binsize import BinSize
 from ...types.asset import to_system_asset
+from ...types.binsize import BinSize
 
 
 def load_symbol_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime=False) -> dict:
@@ -32,7 +32,7 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime
         'bid_price': to_float(raw_data.get('bidPrice')),
         'ask_price': to_float(raw_data.get('askPrice')),
         'reversed': _reversed,
-        'volume24': raw_data.get('volume24h')
+        'volume24': raw_data.get('volume24h'),
     }
     if isinstance(state_data, dict):
         data.update({
@@ -43,7 +43,8 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime
             'system_symbol': state_data.get('system_symbol'),
             'schema': state_data.get('schema'),
             'symbol_schema': state_data.get('symbol_schema'),
-            'created': to_iso_datetime(state_data.get('created')) if is_iso_datetime else state_data.get('created')
+            'created': to_iso_datetime(state_data.get('created')) if is_iso_datetime else state_data.get('created'),
+            'max_leverage': state_data.get('max_leverage')
         })
     return data
 
@@ -88,6 +89,8 @@ def load_exchange_symbol_info(raw_data: list) -> list:
         system_symbol = f"{system_base_asset}{system_quote_asset}"
         tick = to_float(d.get('tickSize'))
         volume_tick = to_float(d.get('lotSize'))
+        max_leverage = 100 if d.get('initMargin', 0) <= 0 else 1 / d['initMargin']
+
         symbol_list.append(
             {
                 'symbol': symbol,
@@ -103,6 +106,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                 'symbol_schema': symbol_schema,
                 'tick': tick,
                 'volume_tick': volume_tick,
+                'max_leverage': max_leverage
             }
         )
     return symbol_list
@@ -194,16 +198,27 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     return data
 
 
+def load_ws_position_side(current_qty: int) -> Optional[int]:
+    if current_qty:
+        return api.SELL if current_qty < 0 else api.BUY
+    return None
+
+
 def load_position_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+    side = load_ws_position_side(raw_data.get('currentQty'))
+    leverage_type, leverage = load_leverage(raw_data)
     data = {
         'time': to_iso_datetime(raw_data.get('timestamp')),
         'timestamp': time2timestamp(raw_data.get('timestamp')),
         'symbol': raw_data.get('symbol'),
-        'mark_price': raw_data.get('markPrice'),
-        'last_price': raw_data.get('lastPrice'),
-        'volume': raw_data.get('currentQty'),
-        'liquidation_price': raw_data.get('liquidationPrice'),
-        'entry_price': raw_data.get('avgEntryPrice')
+        'mark_price': to_float(raw_data.get('markPrice')),
+        'volume': to_float(raw_data.get('currentQty')),
+        'liquidation_price': to_float(raw_data.get('liquidationPrice')),
+        'entry_price': to_float(raw_data.get('avgEntryPrice')),
+        'side': side,
+        'unrealised_pnl': to_xbt(raw_data.get('unrealisedPnl')),
+        'leverage_type': leverage_type,
+        'leverage': leverage,
     }
     if isinstance(state_data, dict):
         data.update({
@@ -546,6 +561,8 @@ def assign_custom_parameter_values(options: Optional[dict]) -> dict:
 
     """
     new_options = dict()
+    if options is None:
+        return new_options
     if options.get('comments'):
         new_options['text'] = options['comments']
     if options.get('ttl'):
@@ -570,3 +587,16 @@ def map_api_parameter_names(params: dict) -> Optional[dict]:
         _param = var.PARAMETER_NAMES_MAP.get(param) or param
         tmp_params[_param] = value
     return tmp_params
+
+
+def load_leverage(raw_data: dict) -> tuple:
+    if raw_data.get('crossMargin'):
+        return LeverageType.cross, to_float(raw_data.get('leverage'))
+    else:
+        return LeverageType.isolated, to_float(raw_data.get('leverage'))
+
+
+def store_leverage(leverage_type: str, leverage: float) -> float:
+    if leverage_type == LeverageType.cross:
+        return var.BITMEX_CROSS_LEVERAGE_TYPE_PARAM
+    return leverage or 0

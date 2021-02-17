@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Union, Optional
 from mst_gateway.connector import api
 from mst_gateway.calculator.binance import BinanceFinFactory
-from mst_gateway.connector.api.types.order import OrderSchema
+from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
 from mst_gateway.utils import delta
 from .....exceptions import ConnectorError
 from . import var
@@ -29,7 +29,7 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'bid_price': to_float(raw_data.get('bidPrice')),
         'ask_price': to_float(raw_data.get('askPrice')),
         'reversed': _reversed,
-        'volume24': to_float(raw_data.get('volume'))
+        'volume24': to_float(raw_data.get('volume')),
     }
     if isinstance(state_data, dict):
         data.update({
@@ -40,7 +40,8 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
             'system_symbol': state_data.get('system_symbol'),
             'schema': state_data.get('schema'),
             'symbol_schema': state_data.get('symbol_schema'),
-            'created': state_data.get('created')
+            'created': state_data.get('created'),
+            'max_leverage': state_data.get('max_leverage')
         })
     return data
 
@@ -68,6 +69,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                 'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
                 'tick': tick,
                 'volume_tick': volume_tick,
+                'max_leverage': None
             }
 
             if d.get('isSpotTradingAllowed'):
@@ -85,7 +87,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
     return symbol_list
 
 
-def load_futures_exchange_symbol_info(raw_data: list) -> list:
+def load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict) -> list:
     symbol_list = []
     for d in raw_data:
         if d.get('status') == 'TRADING':
@@ -102,6 +104,8 @@ def load_futures_exchange_symbol_info(raw_data: list) -> list:
 
             tick = get_tick_from_symbol_filters(d, 'PRICE_FILTER', 'tickSize')
             volume_tick = get_tick_from_symbol_filters(d, 'LOT_SIZE', 'stepSize')
+            _symbol = d.get('symbol') if expiration is None else d.get('symbol', '')[:len(f"_{expiration}")]
+            max_leverage = to_float(leverage_data.get(_symbol.lower(), {}).get('initialLeverage')) or 100
 
             symbol_list.append(
                 {
@@ -118,6 +122,7 @@ def load_futures_exchange_symbol_info(raw_data: list) -> list:
                     'symbol_schema': OrderSchema.futures,
                     'tick': tick,
                     'volume_tick': volume_tick,
+                    'max_leverage': max_leverage
                 }
             )
     return symbol_list
@@ -652,6 +657,10 @@ def load_currencies_as_list(currencies: list):
     return [{cur['symbol'].lower(): to_float(cur['price'])} for cur in currencies]
 
 
+def load_futures_leverage_bracket_as_dict(data: list) -> dict:
+    return {d['symbol'].lower(): d['brackets'][0] for d in data if d.get('brackets')}
+
+
 def load_total_wallet_summary(total: dict, summary: dict, assets: Union[list, tuple], fields: Union[list, tuple]):
     for schema in summary.keys():
         for field in fields:
@@ -869,7 +878,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'bid_price': to_float(raw_data.get('b')),
         'ask_price': to_float(raw_data.get('a')),
         'reversed': _reversed,
-        'volume24': to_float(raw_data.get('v'))
+        'volume24': to_float(raw_data.get('v')),
     }
     if isinstance(state_data, dict):
         data.update({
@@ -880,7 +889,8 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
             'system_symbol': state_data.get('system_symbol'),
             'schema': state_data.get('schema'),
             'symbol_schema': state_data.get('symbol_schema'),
-            'created': to_iso_datetime(state_data.get('created'))
+            'created': to_iso_datetime(state_data.get('created')),
+            'max_leverage': state_data.get('max_leverage')
         })
     return data
 
@@ -1072,3 +1082,21 @@ def map_api_parameter_names(params: dict) -> Optional[dict]:
         _param = var.PARAMETER_NAMES_MAP.get(param) or param
         tmp_params[_param] = value
     return tmp_params
+
+
+def load_leverage(raw_data: list) -> tuple:
+    for pos in raw_data:
+        if pos.get('positionSide', '') == var.BinancePositionSideMode.BOTH:
+            if pos.get('marginType', '') == LeverageType.cross:
+                leverage_type = LeverageType.cross
+            else:
+                leverage_type = LeverageType.isolated
+            leverage = to_float(pos.get('leverage')) or 20
+            return leverage_type, leverage
+    return LeverageType.cross, 20
+
+
+def store_leverage(leverage_type: str) -> str:
+    if leverage_type == LeverageType.cross:
+        return var.BINANCE_LEVERAGE_TYPE_CROSS
+    return var.BINANCE_LEVERAGE_TYPE_ISOLATED
