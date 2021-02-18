@@ -1,5 +1,3 @@
-import hashlib
-import re
 from datetime import datetime, timezone
 from typing import Union, Optional
 from mst_gateway.connector import api
@@ -192,11 +190,18 @@ def load_order_book_side(order_side: str) -> int:
     return api.SELL
 
 
-def generate_order_book_id(symbol: str, price: float) -> int:
-    hash_object = hashlib.sha1(symbol.encode())
-    res = int(re.sub(r'[^0-9.]+', r'', hash_object.hexdigest())[-15:])
-    result = int(res - price * 10 ** 8)
-    return result
+def generate_order_book_id(price: float) -> int:
+    if price > 1:
+        slice_length = len(str(int(price))) + 8
+        formatted_price = f'{price * 10 ** 8:.0f}'
+    else:
+        slice_length = 16
+        formatted_price = f'{price * 10 ** 16:.0f}'
+
+    formatted_price = int(formatted_price[:slice_length])
+    base_value = 10 ** (slice_length + 1)
+
+    return base_value - formatted_price
 
 
 def filter_order_book_data(data: dict, min_volume_buy: float = None, min_volume_sell: float = None) -> dict:
@@ -234,7 +239,7 @@ def load_order_book_data(raw_data: dict, symbol: str, side, split,
             continue
         for item in v:
             _i = {
-                'id': generate_order_book_id(symbol, to_float(item[0])),
+                'id': generate_order_book_id(to_float(item[0])),
                 'symbol': symbol,
                 'price': to_float(item[0]),
                 'volume': to_float(item[1]),
@@ -426,6 +431,24 @@ def load_futures_wallet_detail_data(raw_data: dict, asset: str) -> dict:
         if a.get('asset', '').upper() == asset.upper():
             return _futures_balance_data([a])[0]
     raise ConnectorError(f"Invalid asset {asset}.")
+
+
+def load_exchange_asset_balance(raw_data: list) -> dict:
+    balances = {}
+    for balance in raw_data:
+        balances[balance.get('asset', '').lower()] = to_float(balance.get('free', 0))
+    return balances
+
+
+def load_margin_asset_balance(raw_data: list) -> dict:
+    return load_exchange_asset_balance(raw_data)
+
+
+def load_futures_asset_balance(raw_data: dict) -> dict:
+    balances = {}
+    for balance in raw_data:
+        balances[balance.get('asset', '').lower()] = to_float(balance.get('balance', 0))
+    return balances
 
 
 def _ws_wallet(balances: list, state_balances: dict, state_data: dict, currencies: dict,
@@ -821,7 +844,7 @@ def load_order_book_ws_data(raw_data: dict, order: list, side: int, state_data: 
     price = to_float(order[0])
 
     data = {
-        'id': generate_order_book_id(symbol, price),
+        'id': generate_order_book_id(price),
         'symbol': symbol,
         'price': price,
         'volume': to_float(order[1]),

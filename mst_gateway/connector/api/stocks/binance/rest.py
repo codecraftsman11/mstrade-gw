@@ -371,6 +371,18 @@ class BinanceRestApi(StockRestApi):
             }
         raise ConnectorError(f"Invalid schema {schema}.")
 
+    def get_assets_balance(self, schema: str, **kwargs) -> dict:
+        if schema == OrderSchema.exchange:
+            raw_data = self._binance_api(self._handler.get_assets_balance)
+            return utils.load_exchange_asset_balance(raw_data)
+        if schema == OrderSchema.margin2:
+            raw_data = self._binance_api(self._handler.get_margin_assets_balance)
+            return utils.load_margin_asset_balance(raw_data)
+        if schema == OrderSchema.futures:
+            raw_data = self._binance_api(self._handler.get_futures_assets_balance)
+            return utils.load_futures_asset_balance(raw_data)
+        raise ConnectorError(f"Invalid schema {schema}.")
+
     def wallet_transfer(self, from_wallet: str, to_wallet: str, asset: str, amount: float) -> dict:
         if from_wallet.lower() == OrderSchema.exchange and to_wallet.lower() == OrderSchema.margin2:
             method = self._handler.transfer_spot_to_margin
