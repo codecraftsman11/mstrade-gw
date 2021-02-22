@@ -17,7 +17,7 @@ cmds+=("mkdir -p ${destfolder}"
 if [ $redeploy_launch -eq 1 ]; then
  bb_token=${bb_token:-$(getToken)}
  for repo in ${REDEPLOY_REPOS[@]}; do 
-  cmds+=("curl -s -X POST -H \"Content-Type: application/json\" -H \"Authorization: Bearer ${bb_token}\" --data '{\"target\":{\"type\":\"pipeline_ref_target\",\"ref_type\":\"branch\",\"ref_name\":\"master\",\"selector\":{\"type\":\"pull-requests\",\"pattern\":\"**\"}}}' \"${projectrepo}/${repo}/pipelines/\"")
+  cmds+=("curl --output /dev/null -s -X POST -H \"Content-Type: application/json\" -H \"Authorization: Bearer ${bb_token}\" --data '{\"target\":{\"type\":\"pipeline_ref_target\",\"ref_type\":\"branch\",\"ref_name\":\"master\",\"selector\":{\"type\":\"pull-requests\",\"pattern\":\"**\"}}}' \"${projectrepo}/${repo}/pipelines/\"")
  done 
 fi
 [[ $rmoldbuildfolder -eq 1 ]] && cmds+=("find ../../ -maxdepth 1 -type d \( -name \"${BITBUCKET_REPO_SLUG}---*\" -and -not -name \"${destfolder}\" \) -exec rm -r \"{}\" \;")
