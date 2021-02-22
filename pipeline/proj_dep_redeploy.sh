@@ -1,9 +1,11 @@
 echo "------------------------ [ Dependant ReDeploy ]" 
 redeploy_launch=${REDEPLOY_LAUNCH:-0}
+rmoldbuildfolder=${REDEPLOY_OLD_FOLDER_RM:-0}
 projectrepo="${BB_API}/${BITBUCKET_REPO_OWNER}"
 gittag=$(git describe --always --abbrev --tags --long)
 createdate=$(date +%Y%m%d%H%M%S)
 destfolder="${BITBUCKET_REPO_SLUG}---${gittag}-${createdate}"
+
 
 cd ..
 declare -a cmds=()
@@ -18,6 +20,8 @@ if [ $redeploy_launch -eq 1 ]; then
   cmds+=("curl -s -X POST -H \"Content-Type: application/json\" -H \"Authorization: Bearer ${bb_token}\" --data '{\"target\":{\"type\":\"pipeline_ref_target\",\"ref_type\":\"branch\",\"ref_name\":\"master\",\"selector\":{\"type\":\"pull-requests\",\"pattern\":\"**\"}}}' \"${projectrepo}/${repo}/pipelines/\"")
  done 
 fi
+[[ $rmoldbuildfolder -eq 1 ]] && cmds+=("find ../../ -maxdepth 1 -type d \( -name \"${BITBUCKET_REPO_SLUG}---*\" -and -not -name \"${destfolder}\" \) -exec rm -r \"{}\" \;")
+
 runCommands "${cmds[@]}"
 unset cmds
 #-----
