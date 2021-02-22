@@ -11,7 +11,7 @@ cd ..
 declare -a cmds=()
 cmds+=("mkdir -p ${destfolder}"
        "cp -r ${BITBUCKET_REPO_SLUG}/mst_gateway ./${destfolder}/" 
-       "ln -sfn $(pwd)/$destfolder ${HOME}/${BITBUCKET_REPO_SLUG}-${BITBUCKET_DEPLOYMENT_ENVIRONMENT}"
+       "ln -sfn $(pwd)/$destfolder ${HOME}/${BITBUCKET_REPO_SLUG}-ready"
       )
 
 if [ $redeploy_launch -eq 1 ]; then
