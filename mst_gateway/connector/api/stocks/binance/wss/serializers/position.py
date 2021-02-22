@@ -9,48 +9,46 @@ from mst_gateway.connector.api.stocks.binance.wss.serializers.base import (
 class BinanceFuturesPositionSerializer(BinanceSerializer):
     subscription = "position"
 
-    def __init__(self, wss_api):
-        self.mark_prices = {}
-        self.leverages = {}
-        super().__init__(wss_api)
-
-    def prefetch(self, message: dict) -> None:
-        table = message.get("table")
-        if table == "markPriceUpdate":
-            for item in message.get("data", []):
-                if item.get("s"):
-                    self.mark_prices[item["s"]] = item.get("p")
-        if table == "ACCOUNT_CONFIG_UPDATE":
-            for item in message.get("data", []):
-                if item.get("ac", {}).get("s"):
-                    self.leverages[item["ac"]["s"]] = item["ac"].get("l")
-
-    @staticmethod
-    def select_both_sides_position_data(item: dict):
-        for p in item.get("a", {}).get("P", []):
-            if p.get("ps") == "BOTH":
-                return p
-
     def is_item_valid(self, message: dict, item: dict) -> bool:
-        if message["table"] == "ACCOUNT_UPDATE" and \
-                self.subscription in self._wss_api.subscriptions and \
-                self.select_both_sides_position_data(item):
+        if message["table"] in (
+            "ACCOUNT_UPDATE", "ACCOUNT_CONFIG_UPDATE", "markPriceUpdate"
+        ) and self.subscription in self._wss_api.subscriptions:
             return True
         return False
+
+    @staticmethod
+    def select_raw_data(message: dict, item: dict):
+        table = message.get("table")
+        if table == "markPriceUpdate":
+            return dict(**item)
+        if table == "ACCOUNT_UPDATE":
+            for p in item.get("a", {}).get("P", []):
+                if p.get("ps") == "BOTH":
+                    return dict(**p, E=item.get("E"))
+        if table == "ACCOUNT_CONFIG_UPDATE":
+            return dict(**item.get("ac"), E=item.get("E"))
+        return {}
 
     def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
             return None
-        both_sides_position_data = self.select_both_sides_position_data(item)
-        symbol = both_sides_position_data.get("s")
+        raw_data = self.select_raw_data(message, item)
+        symbol = raw_data.get("s")
         state_data = self._wss_api.get_state_data(symbol)
         if not state_data:
             return None
-        both_sides_position_data.update({
-            "timestamp": item.get("E"),
-            "mark_price": self.mark_prices.get(symbol),
-            "leverage": self.leverages.get(symbol),
-        })
-        return utils.load_futures_position_ws_data(
-            both_sides_position_data, state_data
-        )
+        state = self._get_state(symbol)
+        if state:
+            if raw_data.get('pa') is None:
+                raw_data['pa'] = state[0]['volume']
+            if raw_data.get('ep') is None:
+                raw_data['ep'] = state[0]['entry_price']
+            if raw_data.get('p') is None:
+                raw_data['p'] = state[0]['mark_price']
+            if raw_data.get('up') is None:
+                raw_data['up'] = state[0]['unrealised_pnl']
+            if raw_data.get('mt') is None:
+                raw_data['mt'] = state[0]['leverage_type']
+            if raw_data.get('l') is None:
+                raw_data['l'] = state[0]['leverage']
+        return utils.load_futures_position_ws_data(raw_data, state_data)

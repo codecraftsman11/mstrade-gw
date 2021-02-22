@@ -1097,24 +1097,26 @@ def load_ws_futures_position_side(position_amount: float) -> Optional[int]:
     return None
 
 
-def load_ws_futures_position_leverage_type(margin_type: str) -> str:
-    return LeverageType.cross if margin_type.lower() == 'cross' else LeverageType.isolated
+def load_ws_futures_position_leverage_type(margin_type: Optional[str]) -> Optional[str]:
+    if margin_type:
+        return LeverageType.cross if margin_type.lower() == 'cross' else LeverageType.isolated
+    return None
 
 
 def load_futures_position_ws_data(raw_data: dict, state_data: dict) -> dict:
     position_amount = to_float(raw_data.get('pa'))
     return {
-        'time': to_iso_datetime(raw_data.get('timestamp')),
-        'timestamp': raw_data.get('timestamp'),
+        'time': to_iso_datetime(raw_data.get('E')),
+        'timestamp': raw_data.get('E'),
         'schema': state_data.get('schema'),
         'symbol': raw_data.get('s'),
         'system_symbol': state_data.get('system_symbol'),
         'side': load_ws_futures_position_side(position_amount),
         'volume': position_amount,
         'entry_price': to_float(raw_data.get('ep')),
-        'mark_price': to_float(raw_data.get("mark_price")),
+        'mark_price': to_float(raw_data.get("p")),
         'unrealised_pnl': to_float(raw_data.get('up')),
         'leverage_type': load_ws_futures_position_leverage_type(raw_data.get('mt')),
-        'leverage': to_float(raw_data.get("leverage")),
+        'leverage': to_float(raw_data.get("l")),
         'liquidation_price': None,
     }
