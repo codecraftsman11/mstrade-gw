@@ -41,7 +41,7 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
             return None
         state_data = None
         if self._wss_api.register_state:
-            if state_data := self._wss_api.get_state_data(item.get('symbol')) is None:
+            if (state_data := self._wss_api.get_state_data(item.get('symbol'))) is None:
                 return None
         if self._bin_closed(message, item, state_data):
             return copy(self._reset_quote_bin(message, item, state_data))

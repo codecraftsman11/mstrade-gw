@@ -19,6 +19,6 @@ class BinanceTradeSerializer(BinanceSerializer):
             return None
         state_data = None
         if self._wss_api.register_state:
-            if state_data := self._wss_api.get_state_data(item.get('s')) is None:
+            if (state_data := self._wss_api.get_state_data(item.get('s'))) is None:
                 return None
         return load_trade_ws_data(item, state_data)

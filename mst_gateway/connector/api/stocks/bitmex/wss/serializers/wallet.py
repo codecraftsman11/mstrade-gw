@@ -21,8 +21,8 @@ class BitmexWalletSerializer(BitmexSerializer):
         try:
             currencies = {}
             if self._wss_api.register_state:
-                if currencies := self._wss_api.storage.get(
-                        'currency', self._wss_api.name, self._wss_api.schema) is None:
+                if (currencies := self._wss_api.storage.get(
+                        'currency', self._wss_api.name, self._wss_api.schema)) is None:
                     return None
             assets = ('btc', 'usd')
             fields = ('balance', 'unrealised_pnl', 'margin_balance')

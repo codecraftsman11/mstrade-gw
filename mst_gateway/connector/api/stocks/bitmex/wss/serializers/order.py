@@ -14,6 +14,6 @@ class BitmexOrderSerializer(BitmexSerializer):
             return None
         state_data = None
         if self._wss_api.register_state:
-            if state_data := self._wss_api.get_state_data(item.get('symbol')) is None:
+            if (state_data := self._wss_api.get_state_data(item.get('symbol'))) is None:
                 return None
         return load_order_ws_data(item, state_data)
