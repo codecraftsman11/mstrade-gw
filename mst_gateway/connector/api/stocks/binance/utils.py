@@ -159,11 +159,12 @@ def load_trade_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'volume': raw_data.get('qty'),
         'side': load_order_side(raw_data.get('isBuyerMaker'))
     }
-    data.update({
-        'symbol': state_data.get('symbol'),
-        'system_symbol': state_data.get('system_symbol'),
-        'schema': state_data.get('schema')
-    })
+    if isinstance(state_data, dict):
+        data.update({
+            'symbol': state_data.get('symbol'),
+            'system_symbol': state_data.get('system_symbol'),
+            'schema': state_data.get('schema')
+        })
     return data
 
 
