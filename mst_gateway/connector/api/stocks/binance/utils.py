@@ -101,7 +101,10 @@ def load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict) -> li
             tick = get_tick_from_symbol_filters(d, 'PRICE_FILTER', 'tickSize')
             volume_tick = get_tick_from_symbol_filters(d, 'LOT_SIZE', 'stepSize')
             _symbol = d.get('symbol') if expiration is None else d.get('symbol', '')[:len(f"_{expiration}")]
-            max_leverage = to_float(leverage_data.get(_symbol.lower(), {}).get('initialLeverage')) or 100
+            leverage_brackets = leverage_data.get(_symbol.lower(), None)
+            max_leverage = 100
+            if leverage_brackets and leverage_brackets[0].get('initialLeverage'):
+                max_leverage = to_float(leverage_brackets[0]['initialLeverage'])
 
             symbol_list.append(
                 {
@@ -119,6 +122,7 @@ def load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict) -> li
                     'tick': tick,
                     'volume_tick': volume_tick,
                     'max_leverage': max_leverage,
+                    'leverage_brackets': leverage_brackets,
                 }
             )
     return symbol_list
@@ -669,8 +673,8 @@ def load_currencies_as_list(currencies: list):
     return [{cur['symbol'].lower(): to_float(cur['price'])} for cur in currencies]
 
 
-def load_futures_leverage_bracket_as_dict(data: list) -> dict:
-    return {d['symbol'].lower(): d['brackets'][0] for d in data if d.get('brackets')}
+def load_futures_leverage_brackets_as_dict(data: list) -> dict:
+    return {d['symbol'].lower(): d['brackets'] for d in data if d.get('brackets')}
 
 
 def load_total_wallet_summary(total: dict, summary: dict, assets: Union[list, tuple], fields: Union[list, tuple]):
