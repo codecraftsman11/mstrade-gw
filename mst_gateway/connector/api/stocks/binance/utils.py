@@ -387,9 +387,10 @@ def get_interest_rate(asset_rates: list, vip_level: str, asset: str):
     return _h1_rate
 
 
-def load_futures_wallet_data(raw_data: dict, currencies: dict,
-                             assets: Union[list, tuple], fields: Union[list, tuple]) -> dict:
+def load_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
+                             fields: Union[list, tuple], cross_collaterals: list) -> dict:
     balances = _futures_balance_data(raw_data.get('assets'))
+    _update_futures_balances(balances, cross_collaterals)
     total_balance = dict()
     for asset in assets:
         total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
@@ -404,15 +405,57 @@ def load_futures_wallet_data(raw_data: dict, currencies: dict,
     }
 
 
+def _update_futures_balances(balances, cross_collaterals):
+    for balance in balances:
+        for collateral in cross_collaterals:
+            if balance['currency'] == collateral['loanCoin']:
+                balance['borrowed'] += to_float(collateral['loanAmount']) or 0
+                balance['interest'] += to_float(collateral['interest']) or 0
+    return balances
+
+
 def load_future_wallet_balances(raw_data: dict) -> list:
     return _futures_balance_data(raw_data.get('assets'))
 
 
-def load_futures_wallet_detail_data(raw_data: dict, asset: str) -> dict:
+def load_futures_wallet_detail_data(raw_data: dict, asset: str,
+                                    cross_collaterals: list, collateral_configs: list) -> dict:
     for a in raw_data.get('assets'):
         if a.get('asset', '').upper() == asset.upper():
-            return _futures_balance_data([a])[0]
+            balance = _futures_balance_data([a])[0]
+            cross_collaterals = _load_cross_collaterals_data(
+                cross_collaterals, collateral_configs, asset
+            )
+            balance['cross_collaterals'] = cross_collaterals
+            return balance
     raise ConnectorError(f"Invalid asset {asset}.")
+
+
+def _load_cross_collaterals_data(cross_collaterals_data, collateral_configs, asset):
+    collaterals = {}
+    for collateral_coin in cross_collaterals_data:
+        if collateral_coin.get('loanCoin', '').upper() == asset.upper():
+            data = {
+                'collateral_currency': collateral_coin.get('collateralCoin'),
+                'borrowed_currency': collateral_coin.get('loanCoin'),
+                'locked': to_float(collateral_coin.get('locked')),
+                'borrowed': to_float(collateral_coin.get('loanAmount')),
+                'current_collateral_rate': to_float(collateral_coin.get('currentCollateralRate')),
+                'principal_for_interest': to_float(collateral_coin.get('principalForInterest')),
+                'interest': to_float(collateral_coin.get('interest')),
+                'interest_free_limit_used': to_float(collateral_coin.get('interestFreeLimitUsed')),
+            }
+            collaterals[collateral_coin.get('collateralCoin')] = data
+    cross_collaterals = [{
+        'rate': to_float(config.get('rate')),
+        'margin_call_collateral_rate': to_float(config.get('marginCallCollateralRate')),
+        'liquidation_collateral_rate': to_float(config.get('liquidationCollateralRate')),
+        'current_collateral_rate': to_float(config.get('currentCollateralRate')),
+        'interest_rate': to_float(config.get('interestRate')),
+        'interest_grace_period': to_float(config.get('interestGracePeriod')),
+        **collaterals.get(config.get('collateralCoin'), {})
+    } for config in collateral_configs]
+    return cross_collaterals
 
 
 def _ws_wallet(balances: list, state_balances: dict, state_data: dict, currencies: dict,
@@ -588,8 +631,8 @@ def _futures_balance_data(balances: list):
             'currency': b['asset'],
             'balance': to_float(b['walletBalance']),
             'withdraw_balance': to_float(b['maxWithdrawAmount']),
-            'borrowed': None,
-            'interest': None,
+            'borrowed': 0,
+            'interest': 0,
             'unrealised_pnl': to_float(b['unrealizedProfit']),
             'margin_balance': to_float(b['marginBalance']),
             'maint_margin': to_float(b['maintMargin']),
@@ -681,6 +724,16 @@ def to_wallet_state_type(value):
 def load_transaction_id(raw_data: dict) -> dict:
     data = {
         'transaction': raw_data.get('tranId')
+    }
+    return data
+
+
+def load_borrow_data(raw_data: dict) -> dict:
+    data = {
+        'amount': raw_data.get('amount'),
+        'collateral_asset': raw_data.get('collateralCoin'),
+        'collateral_amount': raw_data.get('collateralAmount'),
+        'transaction': raw_data.get('borrowId')
     }
     return data
 
