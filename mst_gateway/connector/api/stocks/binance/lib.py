@@ -239,6 +239,82 @@ class Client(BaseClient):
         """
         return self._request_margin_api('post', 'bnbBurn', True, data=params)
 
+    def get_assets_balance(self, **params):
+        """Get assets balance.
+
+        https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md#account-information-user_data
+
+        :returns: list
+
+        .. code-block:: python
+
+            [
+                {
+                    "asset": "BTC",
+                    "free": "4723846.89208129",
+                    "locked": "0.00000000"
+                },
+            ]
+
+        :raises: BinanceRequestException, BinanceAPIException
+
+        """
+        res = self.get_account(**params)
+        if "balances" in res:
+            return res['balances']
+        return []
+
+    def get_margin_assets_balance(self, **params):
+        """Get assets balance.
+
+        :returns: list
+
+        .. code-block:: python
+
+            [
+                {
+                    "asset": "BTC",
+                    "borrowed": "0.00000000",
+                    "free": "0.00499500",
+                    "interest": "0.00000000",
+                    "locked": "0.00000000",
+                    "netAsset": "0.00499500"
+                },
+            ]
+
+        :raises: BinanceRequestException, BinanceAPIException
+
+        """
+        res = self.get_margin_account(**params)
+        if "userAssets" in res:
+            return res['userAssets']
+        return []
+
+    def get_futures_assets_balance(self, **params):
+        """Get assets balance.
+
+        :returns: list
+
+        .. code-block:: python
+
+            [
+                {
+                    'accountAlias': 'fWXqfWsRTinY',
+                    'asset': 'USDT',
+                    'balance': '0.00000000',
+                    'withdrawAvailable': '0.00000000',
+                    'updateTime': 0
+                },
+            ]
+
+        :raises: BinanceRequestException, BinanceAPIException
+
+        """
+        res = self.futures_account_balance(**params)
+        if res:
+            return res
+        return {}
+
     def create_futures_loan(self, **params):
         """Apply for a loan.
 
