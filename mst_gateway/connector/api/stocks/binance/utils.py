@@ -1107,10 +1107,11 @@ def load_ws_futures_position_leverage_type(margin_type: Optional[str]) -> Option
     return None
 
 
-def filter_leverage_brackets(leverage_brackets: list, notional_value: float) -> tuple:
-    for lb in leverage_brackets:
-        if lb['notionalFloor'] < notional_value < lb['notionalCap']:
-            return lb['maintMarginRatio'], lb['cum']
+def filter_leverage_brackets(leverage_brackets: Optional[list], notional_value: float) -> tuple:
+    if leverage_brackets:
+        for lb in leverage_brackets:
+            if lb['notionalFloor'] <= notional_value < lb['notionalCap']:
+                return lb['maintMarginRatio'], lb['cum']
     return None, None
 
 
