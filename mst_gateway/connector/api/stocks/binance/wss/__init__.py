@@ -241,7 +241,6 @@ class BinanceFuturesWssApi(BinanceWssApi):
         _map = {
             'depthUpdate': self.split_order_book,
             'ORDER_TRADE_UPDATE': self.split_order,
-            'ACCOUNT_UPDATE': self.split_account_update,
         }
         return _map.get(key)
 
@@ -250,19 +249,6 @@ class BinanceFuturesWssApi(BinanceWssApi):
         if not method:
             return super(BinanceWssApi, self)._split_message(message)
         return super(BinanceWssApi, self)._split_message(method(message=message))
-
-    def split_account_update(self, message):
-        if "wallet" in self._subscriptions and "*" not in self._subscriptions["wallet"]:
-            _balances = []
-            _new_data = []
-            for item in message.pop('data', []):
-                for b in item['a'].pop('B', []):
-                    if b['a'].lower() in self._subscriptions["wallet"]:
-                        _balances.append(b)
-                item['a']['B'] = _balances
-                _new_data.append(item)
-            message['data'] = _new_data
-        return message
 
     def split_order(self, message):
         message.pop('action', None)

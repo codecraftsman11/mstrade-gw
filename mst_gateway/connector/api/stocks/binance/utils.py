@@ -1107,20 +1107,78 @@ def load_ws_futures_position_leverage_type(margin_type: Optional[str]) -> Option
     return None
 
 
-def load_futures_position_ws_data(raw_data: dict, state_data: dict) -> dict:
-    position_amount = to_float(raw_data.get('pa'))
+def filter_leverage_brackets(leverage_brackets: list, notional_value: float) -> tuple:
+    for lb in leverage_brackets:
+        if lb['notionalFloor'] < notional_value < lb['notionalCap']:
+            return lb['maintMarginRatio'], lb['cum']
+    return None, None
+
+
+def load_futures_position_ws_data(
+    account_id: int, mark_prices: dict, raw_data: dict, symbols_state: dict, positions_state: dict,
+) -> dict:
+    symbol = raw_data['s']
+    symbol_state = symbols_state.pop(symbol.lower())
+    system_symbol = symbol_state.get('system_symbol')
+    schema = symbol_state.get('schema')
+    volume = to_float(raw_data.get('pa'))
+    side = load_ws_futures_position_side(volume)
+    mark_price = mark_prices.get(symbol.lower())
+    entry_price = to_float(raw_data.get('ep'))
+    leverage_type = load_ws_futures_position_leverage_type(raw_data.get('mt'))
+    liquidation_price = None
+    wallet_balance = None
+    if leverage_type and leverage_type == LeverageType.isolated:
+        wallet_balance = to_float(raw_data.get('iw'))
+    if leverage_type and leverage_type == LeverageType.cross:
+        wallet_balance = to_float(raw_data.get('cw'))
+    if wallet_balance is not None:
+        other_symbols_maintenance_margin = 0
+        other_symbols_upnl = 0
+        for p_key, p_data in positions_state.items():
+            another_symbol = p_key.split(f"position.{account_id}.{schema}.")[1]
+            another_symbol_mark_price = mark_prices.get(another_symbol)
+            if another_symbol_mark_price:
+                p_volume = p_data['volume']
+                notional_value = p_volume * another_symbol_mark_price
+                another_symbol_state = symbols_state.get(another_symbol)
+                leverage_brackets = another_symbol_state.get('leverage_brackets', [])
+                maintenance_margin_rate, maintenance_amount = filter_leverage_brackets(
+                    leverage_brackets, notional_value
+                )
+                if maintenance_margin_rate and maintenance_amount is not None:
+                    maintenance_margin = notional_value * maintenance_margin_rate - maintenance_amount
+                    other_symbols_maintenance_margin += maintenance_margin
+                another_symbol_entry_price = p_data['price']
+                unrealized_pnl = (another_symbol_mark_price - another_symbol_entry_price) * p_volume
+                other_symbols_upnl += unrealized_pnl
+        if side is not None and volume is not None and mark_price and entry_price:
+            notional_value = abs(volume) * mark_price
+            leverage_brackets = symbol_state.get('leverage_brackets', [])
+            maintenance_margin_rate, maintenance_amount = filter_leverage_brackets(
+                leverage_brackets, notional_value
+            )
+            if maintenance_margin_rate and maintenance_amount is not None:
+                direction = 1 if side == api.BUY else -1
+                liquidation_price = (
+                    wallet_balance -
+                    other_symbols_maintenance_margin +
+                    other_symbols_upnl +
+                    maintenance_amount -
+                    direction * abs(volume) * entry_price
+                ) / (abs(volume) * maintenance_margin_rate - direction * abs(volume))
     return {
         'time': to_iso_datetime(raw_data.get('E')),
         'timestamp': raw_data.get('E'),
-        'schema': state_data.get('schema'),
+        'schema': schema,
         'symbol': raw_data.get('s'),
-        'system_symbol': state_data.get('system_symbol'),
-        'side': load_ws_futures_position_side(position_amount),
-        'volume': position_amount,
-        'entry_price': to_float(raw_data.get('ep')),
-        'mark_price': to_float(raw_data.get("p")),
+        'system_symbol': system_symbol,
+        'side': side,
+        'volume': volume,
+        'entry_price': entry_price,
+        'mark_price': mark_price,
         'unrealised_pnl': to_float(raw_data.get('up')),
-        'leverage_type': load_ws_futures_position_leverage_type(raw_data.get('mt')),
+        'leverage_type': leverage_type,
         'leverage': to_float(raw_data.get("l")),
-        'liquidation_price': None,
+        'liquidation_price': liquidation_price,
     }

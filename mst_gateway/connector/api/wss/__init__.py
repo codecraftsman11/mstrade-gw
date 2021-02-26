@@ -70,6 +70,10 @@ class StockWssApi(Connector):
     def subscriptions(self):
         return self._subscriptions
 
+    @property
+    def state_data(self):
+        return self.__state_data
+
     def _parse_account_name(self, account_name: str):
         _split_acc = account_name.split('.')
         account_id = None

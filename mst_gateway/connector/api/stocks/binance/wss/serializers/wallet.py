@@ -1,4 +1,5 @@
 from __future__ import annotations
+from copy import deepcopy
 from typing import Optional
 from mst_gateway.connector.api.types import OrderSchema
 from .base import BinanceSerializer
@@ -10,6 +11,15 @@ class BinanceWalletSerializer(BinanceSerializer):
 
     def is_item_valid(self, message: dict, item) -> bool:
         return message['table'] == 'outboundAccountPosition'
+
+    def filter_balances(self, item) -> dict:
+        filtered = deepcopy(item)
+        _balances = []
+        for b in item['a'].pop('B', []):
+            if b['a'].lower() in self._wss_api.subscriptions["wallet"]:
+                _balances.append(b)
+        filtered['a']['B'] = _balances
+        return filtered
 
     def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
@@ -25,6 +35,7 @@ class BinanceWalletSerializer(BinanceSerializer):
                 return None
             return self._wallet_list(item, state_data, currencies)
         else:
+            item = self.filter_balances(item)
             return self._wallet_detail(item, state_data)
 
     def _wallet_list(self, item, state_data: dict, currencies: dict):
