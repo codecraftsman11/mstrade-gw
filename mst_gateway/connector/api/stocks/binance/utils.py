@@ -1135,23 +1135,24 @@ def load_futures_position_ws_data(
     if wallet_balance is not None:
         other_symbols_maintenance_margin = 0
         other_symbols_upnl = 0
-        for p_key, p_data in positions_state.items():
-            another_symbol = p_key.split(f"position.{account_id}.{schema}.")[1]
-            another_symbol_mark_price = mark_prices.get(another_symbol)
-            if another_symbol_mark_price:
-                p_volume = p_data['volume']
-                notional_value = p_volume * another_symbol_mark_price
-                another_symbol_state = symbols_state.get(another_symbol)
-                leverage_brackets = another_symbol_state.get('leverage_brackets', [])
-                maintenance_margin_rate, maintenance_amount = filter_leverage_brackets(
-                    leverage_brackets, notional_value
-                )
-                if maintenance_margin_rate and maintenance_amount is not None:
-                    maintenance_margin = notional_value * maintenance_margin_rate - maintenance_amount
-                    other_symbols_maintenance_margin += maintenance_margin
-                another_symbol_entry_price = p_data['price']
-                unrealized_pnl = (another_symbol_mark_price - another_symbol_entry_price) * p_volume
-                other_symbols_upnl += unrealized_pnl
+        if positions_state:
+            for p_key, p_data in positions_state.items():
+                another_symbol = p_key.split(f"position.{account_id}.{schema}.")[1]
+                another_symbol_mark_price = mark_prices.get(another_symbol)
+                if another_symbol_mark_price:
+                    p_volume = p_data['volume']
+                    notional_value = p_volume * another_symbol_mark_price
+                    another_symbol_state = symbols_state.get(another_symbol)
+                    leverage_brackets = another_symbol_state.get('leverage_brackets', [])
+                    maintenance_margin_rate, maintenance_amount = filter_leverage_brackets(
+                        leverage_brackets, notional_value
+                    )
+                    if maintenance_margin_rate and maintenance_amount is not None:
+                        maintenance_margin = notional_value * maintenance_margin_rate - maintenance_amount
+                        other_symbols_maintenance_margin += maintenance_margin
+                    another_symbol_entry_price = p_data['price']
+                    unrealized_pnl = (another_symbol_mark_price - another_symbol_entry_price) * p_volume
+                    other_symbols_upnl += unrealized_pnl
         if side is not None and volume is not None and mark_price and entry_price:
             notional_value = abs(volume) * mark_price
             leverage_brackets = symbol_state.get('leverage_brackets', [])
