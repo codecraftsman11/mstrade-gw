@@ -16,7 +16,7 @@ class BinanceWalletSerializer(BinanceSerializer):
         filtered = deepcopy(item)
         _balances = []
         for b in item['a'].pop('B', []):
-            if b['a'].lower() in self._wss_api.subscriptions["wallet"]:
+            if b['a'].lower() in self._wss_api.subscriptions[self.subscription]:
                 _balances.append(b)
         filtered['a']['B'] = _balances
         return filtered
