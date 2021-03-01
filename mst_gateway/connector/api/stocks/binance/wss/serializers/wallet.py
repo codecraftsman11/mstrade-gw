@@ -22,8 +22,8 @@ class BinanceWalletSerializer(BinanceSerializer):
         if "*" in self._wss_api.subscriptions.get(self.subscription, {}):
             currencies = {}
             if self._wss_api.register_state:
-                if currencies := self._wss_api.storage.get(
-                        'currency', self._wss_api.name, self._wss_api.schema) is None:
+                if (currencies := self._wss_api.storage.get(
+                        'currency', self._wss_api.name, self._wss_api.schema)) is None:
                     return None
             return self._wallet_list(item, state_data, currencies)
         else:
