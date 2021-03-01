@@ -68,7 +68,7 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
         account_id = self._wss_api.account_id
         other_positions_state = self._wss_api.storage.get_pattern(
             f"{self.subscription}.{account_id}.{self._wss_api.schema}.*"
-        )
+        ) or {}
         if other_positions_state:
             other_positions_state.pop(
                 f"{self.subscription}.{account_id}.{self._wss_api.schema}.{symbol}",
