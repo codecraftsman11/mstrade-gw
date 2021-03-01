@@ -101,7 +101,7 @@ def load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict) -> li
             tick = get_tick_from_symbol_filters(d, 'PRICE_FILTER', 'tickSize')
             volume_tick = get_tick_from_symbol_filters(d, 'LOT_SIZE', 'stepSize')
             _symbol = d.get('symbol') if expiration is None else d.get('symbol', '')[:len(f"_{expiration}")]
-            leverage_brackets = leverage_data.get(_symbol.lower(), None)
+            leverage_brackets = leverage_data.get(_symbol.lower(), [])
             max_leverage = 100
             if leverage_brackets and leverage_brackets[0].get('initialLeverage'):
                 max_leverage = to_float(leverage_brackets[0]['initialLeverage'])
