@@ -15,6 +15,15 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
         self.mark_prices = {}
         self.leverages = {}
 
+    @classmethod
+    def _get_data_action(cls, message) -> str:
+        if message.get("table") == "ACCOUNT_UPDATE":
+            for item in message.get("data", []):
+                for p in item.get("a", {}).get("P", []):
+                    if p["ps"] == "BOTH" and not utils.to_float(p["pa"]):
+                        return "delete"
+        return super()._get_data_action(message)
+
     def prefetch(self, message: dict) -> None:
         if message.get("table") == "markPriceUpdate":
             for item in message.get("data", []):
