@@ -72,6 +72,10 @@ class StockWssApi(Connector):
     def state_refresh_period(self):
         return self.__state_refresh_period
 
+    @property
+    def state_data(self):
+        return self.__state_data
+
     def _parse_account_name(self, account_name: str):
         _split_acc = account_name.split('.')
         account_id = None
