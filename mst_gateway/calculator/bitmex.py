@@ -66,6 +66,8 @@ class BitmexFinFactory(FinFactory):
                 result = (2e-6 * price, False)
             elif _symbol == 'linkusdt':
                 result = (0.0001 * price, False)
+            elif _symbol == 'dogeusdt':
+                result = (0.001 * price, False)
             elif re.match(r'(bnb|dot|eos|link|xtz)usdt[fghjkmnquvxz]\d{2}', _symbol):
                 result = (0.0001 * price, False)
             elif _symbol == 'xrpusd':
@@ -105,6 +107,8 @@ class BitmexFinFactory(FinFactory):
                 result = 2e+6 * face_price
             elif _symbol == 'linkusdt':
                 result = face_price / 0.0001
+            elif _symbol == 'dogeusdt':
+                result = face_price / 0.001
             elif re.match(r'(bnb|dot|eos|link|xtz)usdt[fghjkmnquvxz]\d{2}', _symbol):
                 result = face_price / 0.0001
             elif _symbol == 'xrpusd':
