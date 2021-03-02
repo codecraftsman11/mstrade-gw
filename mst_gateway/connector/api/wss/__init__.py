@@ -3,7 +3,6 @@ from abc import ABCMeta, abstractmethod
 from logging import Logger
 from typing import Dict, Optional, Union
 import websockets
-from datetime import datetime, timedelta
 from copy import deepcopy
 from mst_gateway.storage import StateStorage
 from .router import Router
@@ -28,7 +27,7 @@ class StockWssApi(Connector):
     throttle = ThrottleWss()
     storage = StateStorage()
     __state_data = {}
-    __state_data_time = datetime.now()
+    __state_refresh_period = 15 * 60
 
     def __init__(self,
                  name: str = None,
@@ -59,7 +58,6 @@ class StockWssApi(Connector):
         if state_storage is not None:
             self.storage = StateStorage(state_storage)
         self.register_state = register_state
-        self.__update_state_data()
         super().__init__(auth, logger)
 
     @property
@@ -71,8 +69,8 @@ class StockWssApi(Connector):
         return self._subscriptions
 
     @property
-    def state_data(self):
-        return self.__state_data
+    def state_refresh_period(self):
+        return self.__state_refresh_period
 
     def _parse_account_name(self, account_name: str):
         _split_acc = account_name.split('.')
@@ -195,6 +193,8 @@ class StockWssApi(Connector):
         ):
             raise ConnectionError
         restore = kwargs.get('restore', False)
+        if not restore:
+            self.tasks.append(asyncio.create_task(self.__load_state_data()))
         self._handler = await self._connect(**kwargs)
         if restore:
             await self._restore_subscriptions()
@@ -315,14 +315,16 @@ class StockWssApi(Connector):
     def get_state_data(self, symbol):
         if not symbol:
             return None
-        self.__update_state_data()
         return self.__state_data.get(symbol.lower())
 
-    def __update_state_data(self):
-        _state_data_time = self.__state_data_time + timedelta(hours=1)
-        if _state_data_time <= datetime.now() or not self.__state_data:
-            self.__state_data_time = _state_data_time
+    async def __load_state_data(self):
+        while True:
             self.__state_data = self.storage.get('symbol', self.name, self.schema)
+            await asyncio.sleep(self.__state_refresh_period)
+
+    @property
+    def state_symbol_list(self) -> list:
+        return list(self.__state_data.keys())
 
     def __exit__(self, exc_type, exc_value, traceback):
         pass

@@ -24,15 +24,17 @@ class BinanceWalletSerializer(BinanceSerializer):
     def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
             return None
-        state_data = self._wss_api.storage.get(
-            f'{self.subscription}.{self._wss_api.account_id}', schema=self._wss_api.schema
-        )
-        if not state_data:
-            return None
-        if "*" in self._wss_api.subscriptions.get(self.subscription, {}):
-            currencies = self._wss_api.storage.get('currency', self._wss_api.name, self._wss_api.schema)
-            if not currencies:
+        state_data = None
+        if self._wss_api.register_state:
+            if (state_data := self._wss_api.storage.get(
+                    f'{self.subscription}.{self._wss_api.account_id}', schema=self._wss_api.schema)) is None:
                 return None
+        if "*" in self._wss_api.subscriptions.get(self.subscription, {}):
+            currencies = {}
+            if self._wss_api.register_state:
+                if (currencies := self._wss_api.storage.get(
+                        'currency', self._wss_api.name, self._wss_api.schema)) is None:
+                    return None
             return self._wallet_list(item, state_data, currencies)
         else:
             item = self.filter_balances(item)

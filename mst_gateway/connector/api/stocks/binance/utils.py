@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Union, Optional, Tuple
+from typing import Union, Optional
 from mst_gateway.connector import api
 from mst_gateway.calculator.binance import BinanceFinFactory
 from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
@@ -10,13 +10,13 @@ from .converter import BinanceOrderTypeConverter
 from ...types.asset import to_system_asset
 
 
-def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
+def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     symbol = raw_data.get('symbol')
     symbol_time = to_date(raw_data.get('closeTime'))
     price = to_float(raw_data.get('lastPrice'))
     price24 = to_float(raw_data.get('weightedAvgPrice'))
     face_price, _reversed = BinanceFinFactory.calc_face_price(symbol, price)
-    return {
+    data = {
         'time': symbol_time,
         'timestamp': raw_data.get('closeTime'),
         'symbol': symbol,
@@ -28,16 +28,20 @@ def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
         'ask_price': to_float(raw_data.get('askPrice')),
         'reversed': _reversed,
         'volume24': to_float(raw_data.get('volume')),
-        'expiration': state_data.get('expiration'),
-        'pair': state_data.get('pair'),
-        'tick': state_data.get('tick'),
-        'volume_tick': state_data.get('volume_tick'),
-        'system_symbol': state_data.get('system_symbol'),
-        'schema': state_data.get('schema'),
-        'symbol_schema': state_data.get('symbol_schema'),
-        'created': state_data.get('created'),
-        'max_leverage': state_data.get('max_leverage'),
     }
+    if isinstance(state_data, dict):
+        data.update({
+            'expiration': state_data.get('expiration'),
+            'pair': state_data.get('pair'),
+            'tick': state_data.get('tick'),
+            'volume_tick': state_data.get('volume_tick'),
+            'system_symbol': state_data.get('system_symbol'),
+            'schema': state_data.get('schema'),
+            'symbol_schema': state_data.get('symbol_schema'),
+            'created': state_data.get('created'),
+            'max_leverage': state_data.get('max_leverage')
+        })
+    return data
 
 
 def load_exchange_symbol_info(raw_data: list) -> list:
@@ -99,10 +103,7 @@ def load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict) -> li
             tick = get_tick_from_symbol_filters(d, 'PRICE_FILTER', 'tickSize')
             volume_tick = get_tick_from_symbol_filters(d, 'LOT_SIZE', 'stepSize')
             _symbol = d.get('symbol') if expiration is None else d.get('symbol', '')[:len(f"_{expiration}")]
-            leverage_brackets = leverage_data.get(_symbol.lower(), [])
-            max_leverage = 100
-            if leverage_brackets and leverage_brackets[0].get('initialLeverage'):
-                max_leverage = to_float(leverage_brackets[0]['initialLeverage'])
+            max_leverage = to_float(leverage_data.get(_symbol.lower(), {}).get('initialLeverage')) or 100
 
             symbol_list.append(
                 {
@@ -119,8 +120,7 @@ def load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict) -> li
                     'symbol_schema': OrderSchema.futures,
                     'tick': tick,
                     'volume_tick': volume_tick,
-                    'max_leverage': max_leverage,
-                    'leverage_brackets': leverage_brackets,
+                    'max_leverage': max_leverage
                 }
             )
     return symbol_list
@@ -140,7 +140,7 @@ def get_tick_from_symbol_filters(symbol_data, filter_name, parameter_name):
     return to_float(result)
 
 
-def load_trade_data(raw_data: dict, state_data: dict) -> dict:
+def load_trade_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     """
     {
         "id": 28457,
@@ -152,16 +152,20 @@ def load_trade_data(raw_data: dict, state_data: dict) -> dict:
         "isBestMatch": true
       }
     """
-    return {
+    data = {
         'time': to_date(raw_data.get('time')),
         'timestamp': raw_data.get('time'),
         'price': to_float(raw_data.get('price')),
         'volume': raw_data.get('qty'),
-        'side': load_order_side(raw_data.get('isBuyerMaker')),
-        'symbol': state_data.get('symbol'),
-        'system_symbol': state_data.get('system_symbol'),
-        'schema': state_data.get('schema'),
+        'side': load_order_side(raw_data.get('isBuyerMaker'))
     }
+    if isinstance(state_data, dict):
+        data.update({
+            'symbol': state_data.get('symbol'),
+            'system_symbol': state_data.get('system_symbol'),
+            'schema': state_data.get('schema')
+        })
+    return data
 
 
 def load_order_side(order_side: bool) -> int:
@@ -213,7 +217,7 @@ def filter_order_book_data(data: dict, min_volume_buy: float = None, min_volume_
 
 
 def load_order_book_data(raw_data: dict, symbol: str, side, split,
-                         offset, depth, state_data: dict) -> Union[list, dict]:
+                         offset, depth, state_data: Optional[dict]) -> Union[list, dict]:
     _raw_data = dict()
     if offset and depth:
         _raw_data['asks'] = raw_data['asks'][offset:depth + offset]
@@ -229,38 +233,32 @@ def load_order_book_data(raw_data: dict, symbol: str, side, split,
         _raw_data['bids'] = raw_data['bids']
     _raw_data['asks'] = reversed(_raw_data.get('asks', []))
 
-    resp = list() if not split else dict()
+    resp = {} if split else []
     for k, v in _raw_data.items():
         _side = load_order_book_side(k)
         if side is not None and not side == _side:
             continue
-        if split:
-            resp.update({_side: list()})
-            for item in v:
-                resp[_side].append(dict(
-                    id=generate_order_book_id(to_float(item[0])),
-                    symbol=symbol,
-                    price=to_float(item[0]),
-                    volume=to_float(item[1]),
-                    side=_side,
-                    schema=state_data.get('schema'),
-                    system_symbol=state_data.get('system_symbol'),
-                ))
-        else:
-            for item in v:
-                resp.append(dict(
-                    id=generate_order_book_id(to_float(item[0])),
-                    symbol=symbol,
-                    price=to_float(item[0]),
-                    volume=to_float(item[1]),
-                    side=_side,
-                    schema=state_data.get('schema'),
-                    system_symbol=state_data.get('system_symbol'),
-                ))
+        for item in v:
+            _i = {
+                'id': generate_order_book_id(to_float(item[0])),
+                'symbol': symbol,
+                'price': to_float(item[0]),
+                'volume': to_float(item[1]),
+                'side': _side
+            }
+            if isinstance(state_data, dict):
+                _i.update({
+                    'schema': state_data.get('schema'),
+                    'system_symbol': state_data.get('system_symbol'),
+                })
+            if split:
+                resp.setdefault(_side, []).append(_i)
+            else:
+                resp.append(_i)
     return resp
 
 
-def load_quote_data(raw_data: dict, state_data: dict) -> dict:
+def load_quote_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     """
         {'id': 170622457,
         'isBestMatch': True,
@@ -270,36 +268,42 @@ def load_quote_data(raw_data: dict, state_data: dict) -> dict:
         'quoteQty': '0.37410232',
         'time': 1585491048725}
     """
-    return {
+    data = {
         'time': to_date(raw_data.get('time')),
         'timestamp': raw_data.get('time'),
         'price': to_float(raw_data.get('price')),
         'volume': raw_data.get('qty'),
-        'side': load_order_side(raw_data.get('isBuyerMaker')),
-        'symbol': state_data.get('symbol'),
-        'system_symbol': state_data.get('system_symbol'),
-        'schema': state_data.get('schema'),
+        'side': load_order_side(raw_data.get('isBuyerMaker'))
     }
+    if isinstance(state_data, dict):
+        data.update({
+            'symbol': state_data.get('symbol'),
+            'system_symbol': state_data.get('system_symbol'),
+            'schema': state_data.get('schema')
+        })
+    return data
 
 
-def load_quote_bin_data(raw_data: list, state_data: dict) -> dict:
-    return {
+def load_quote_bin_data(raw_data: list, state_data: Optional[dict]) -> dict:
+    data = {
         'time': to_date(raw_data[0]),
         'timestamp': raw_data[0],
         'open': to_float(raw_data[1]),
         'close': to_float(raw_data[4]),
         'high': to_float(raw_data[2]),
         'low': to_float(raw_data[3]),
-        'volume': raw_data[5],
-        'symbol': state_data.get('symbol'),
-        'system_symbol': state_data.get('system_symbol'),
-        'schema': state_data.get('schema'),
+        'volume': raw_data[5]
     }
+    if isinstance(state_data, dict):
+        data.update({
+            'symbol': state_data.get('symbol'),
+            'system_symbol': state_data.get('system_symbol'),
+            'schema': state_data.get('schema')
+        })
+    return data
 
 
-def load_order_data(raw_data: dict, state_data: dict) -> dict:
-    order_type_and_exec = load_order_type_and_exec(state_data.get('schema'),
-                                                   raw_data.get('type').upper())
+def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     data = {
         'exchange_order_id': raw_data.get('orderId'),
         'symbol': raw_data.get('symbol'),
@@ -309,10 +313,16 @@ def load_order_data(raw_data: dict, state_data: dict) -> dict:
         'price': to_float(raw_data.get('price')),
         'created': to_date(raw_data.get('time')),
         'active': raw_data.get('status') != "NEW",
-        'system_symbol': state_data.get('system_symbol'),
-        'schema': state_data.get('schema'),
-        **order_type_and_exec,
+        'type': raw_data.get('type'),
+        'execution': raw_data.get('type'),
     }
+    if isinstance(state_data, dict):
+        order_type_and_exec = load_order_type_and_exec(state_data.get('schema'), raw_data.get('type').upper())
+        data.update({
+            'system_symbol': state_data.get('system_symbol'),
+            'schema': state_data.get('schema'),
+            **order_type_and_exec
+        })
     return data
 
 
@@ -671,8 +681,8 @@ def load_currencies_as_list(currencies: list):
     return [{cur['symbol'].lower(): to_float(cur['price'])} for cur in currencies]
 
 
-def load_futures_leverage_brackets_as_dict(data: list) -> dict:
-    return {d['symbol'].lower(): d['brackets'] for d in data if d.get('brackets')}
+def load_futures_leverage_bracket_as_dict(data: list) -> dict:
+    return {d['symbol'].lower(): d['brackets'][0] for d in data if d.get('brackets')}
 
 
 def load_total_wallet_summary(total: dict, summary: dict, assets: Union[list, tuple], fields: Union[list, tuple]):
@@ -722,7 +732,7 @@ def load_commissions(commissions: dict) -> list:
     ]
 
 
-def load_trade_ws_data(raw_data: dict, state_data: dict) -> dict:
+def load_trade_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     """
     {
         "e":"trade",
@@ -738,19 +748,23 @@ def load_trade_ws_data(raw_data: dict, state_data: dict) -> dict:
         "M":true
     }
     """
-    return {
+    data = {
         'time': to_iso_datetime(raw_data.get('E')),
         'timestamp': raw_data.get('E'),
         'price': to_float(raw_data.get('p')),
         'volume': to_float(raw_data.get('q')),
         'side': load_order_side(raw_data.get('m')),
-        'symbol': state_data.get('symbol'),
-        'system_symbol': state_data.get('system_symbol'),
-        'schema': state_data.get('schema'),
+        'symbol': raw_data.get('s')
     }
+    if isinstance(state_data, dict):
+        data.update({
+            'system_symbol': state_data.get('system_symbol'),
+            'schema': state_data.get('schema')
+        })
+    return data
 
 
-def load_quote_bin_ws_data(raw_data: dict, state_data: dict) -> dict:
+def load_quote_bin_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     """
     {
       "e": "kline",     // Event type
@@ -777,22 +791,27 @@ def load_quote_bin_ws_data(raw_data: dict, state_data: dict) -> dict:
       }
     }
     """
-    _timestamp = raw_data.get('k', {}).get('t')
-    return {
+    raw_data = raw_data.get('k', {})
+    _timestamp = raw_data.get('t')
+    data = {
         'time': to_iso_datetime(_timestamp),
         'timestamp': _timestamp,
-        'open': to_float(raw_data.get('k', {}).get("o")),
-        'close': to_float(raw_data.get('k', {}).get("c")),
-        'high': to_float(raw_data.get('k', {}).get("h")),
-        'low': to_float(raw_data.get('k', {}).get('l')),
-        'volume': to_float(raw_data.get('k', {}).get('v')),
-        'symbol': state_data.get('symbol'),
-        'system_symbol': state_data.get('system_symbol'),
-        'schema': state_data.get('schema'),
+        'open': to_float(raw_data.get("o")),
+        'close': to_float(raw_data.get("c")),
+        'high': to_float(raw_data.get("h")),
+        'low': to_float(raw_data.get('l')),
+        'volume': to_float(raw_data.get('v'))
     }
+    if isinstance(state_data, dict):
+        data.update({
+            'symbol': state_data.get('symbol'),
+            'system_symbol': state_data.get('system_symbol'),
+            'schema': state_data.get('schema')
+        })
+    return data
 
 
-def load_order_book_ws_data(raw_data: dict, order: list, side: int, state_data: dict) -> dict:
+def load_order_book_ws_data(raw_data: dict, order: list, side: int, state_data: Optional[dict]) -> dict:
     """
     {
       "e": "depthUpdate",
@@ -825,18 +844,22 @@ def load_order_book_ws_data(raw_data: dict, order: list, side: int, state_data: 
     symbol = raw_data.get('s', '').lower()
     price = to_float(order[0])
 
-    return {
+    data = {
         'id': generate_order_book_id(price),
         'symbol': symbol,
         'price': price,
         'volume': to_float(order[1]),
-        'side': side,
-        'schema': state_data.get('schema'),
-        'system_symbol': state_data.get('system_symbol')
+        'side': side
     }
+    if isinstance(state_data, dict):
+        data.update({
+            'schema': state_data.get('schema'),
+            'system_symbol': state_data.get('system_symbol')
+        })
+    return data
 
 
-def load_symbol_ws_data(raw_data: dict, state_data: dict) -> dict:
+def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     """
     {
       "e": "24hrTicker",  // Event type
@@ -868,7 +891,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: dict) -> dict:
     price = to_float(raw_data.get('c'))
     price24 = to_float(raw_data.get('w'))
     face_price, _reversed = BinanceFinFactory.calc_face_price(symbol, price)
-    return {
+    data = {
         'time': to_iso_datetime(raw_data.get('E')),
         'timestamp': raw_data.get('E'),
         'symbol': symbol,
@@ -880,16 +903,20 @@ def load_symbol_ws_data(raw_data: dict, state_data: dict) -> dict:
         'ask_price': to_float(raw_data.get('a')),
         'reversed': _reversed,
         'volume24': to_float(raw_data.get('v')),
-        'expiration': state_data.get('expiration'),
-        'pair': state_data.get('pair'),
-        'tick': state_data.get('tick'),
-        'volume_tick': state_data.get('volume_tick'),
-        'system_symbol': state_data.get('system_symbol'),
-        'schema': state_data.get('schema'),
-        'symbol_schema': state_data.get('symbol_schema'),
-        'created': to_iso_datetime(state_data.get('created')),
-        'max_leverage': state_data.get('max_leverage'),
     }
+    if isinstance(state_data, dict):
+        data.update({
+            'expiration': state_data.get('expiration'),
+            'pair': state_data.get('pair'),
+            'tick': state_data.get('tick'),
+            'volume_tick': state_data.get('volume_tick'),
+            'system_symbol': state_data.get('system_symbol'),
+            'schema': state_data.get('schema'),
+            'symbol_schema': state_data.get('symbol_schema'),
+            'created': to_iso_datetime(state_data.get('created')),
+            'max_leverage': state_data.get('max_leverage')
+        })
+    return data
 
 
 def to_date(token: Union[datetime, int]) -> Optional[datetime]:
@@ -938,9 +965,8 @@ def load_ws_order_side(order_side: Optional[str]) -> Optional[int]:
         return None
 
 
-def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
-    order_type_and_exec = load_order_type_and_exec(state_data.get('schema'), raw_data.get('o').upper())
-    return {
+def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+    data = {
         'exchange_order_id': raw_data.get('i'),
         'side': load_ws_order_side(raw_data.get('S')),
         'tick_volume': to_float(raw_data.get('l')),
@@ -953,12 +979,19 @@ def load_order_ws_data(raw_data: dict, state_data: dict) -> dict:
         'avg_price': calculate_ws_order_avg_price(raw_data),
         'timestamp': to_date(raw_data.get('E')),
         'symbol': raw_data.get('s'),
-        'system_symbol': state_data.get('system_symbol'),
-        'schema': state_data.get('schema'),
         'stop': to_float(raw_data['P']) if raw_data.get('P') else to_float(raw_data.get('sp')),
         'created': to_iso_datetime(raw_data['O']) if raw_data.get('O') else to_date(raw_data.get('T')),
-        **order_type_and_exec,
+        'type': raw_data.get('o', '').lower(),
+        'execution': raw_data.get('o', '').lower(),
     }
+    if isinstance(state_data, dict):
+        order_type_and_exec = load_order_type_and_exec(state_data.get('schema'), raw_data.get('o', '').upper())
+        data.update({
+            'system_symbol': state_data.get('system_symbol'),
+            'schema': state_data.get('schema'),
+            **order_type_and_exec
+        })
+    return data
 
 
 def load_ws_order_status(binance_order_status: Optional[str]) -> Optional[str]:
@@ -1091,122 +1124,3 @@ def store_leverage(leverage_type: str) -> str:
     if leverage_type == LeverageType.cross:
         return var.BINANCE_LEVERAGE_TYPE_CROSS
     return var.BINANCE_LEVERAGE_TYPE_ISOLATED
-
-
-def load_ws_futures_position_side(position_amount: float) -> Optional[int]:
-    if position_amount:
-        return api.SELL if position_amount < 0 else api.BUY
-    return None
-
-
-def load_ws_futures_position_leverage_type(margin_type: Optional[str]) -> Optional[str]:
-    if margin_type:
-        return LeverageType.cross if margin_type.lower() == 'cross' else LeverageType.isolated
-    return None
-
-
-def load_ws_futures_wallet_balance(raw_data: dict, leverage_type: str) -> Optional[float]:
-    if leverage_type and leverage_type == LeverageType.isolated:
-        return to_float(raw_data.get('iw'))
-    if leverage_type and leverage_type == LeverageType.cross:
-        return to_float(raw_data.get('cw'))
-    return None
-
-
-def filter_leverage_brackets(leverage_brackets: Optional[list], notional_value: float) -> tuple:
-    if leverage_brackets:
-        for lb in leverage_brackets:
-            if lb['notionalFloor'] <= notional_value < lb['notionalCap']:
-                return lb['maintMarginRatio'], lb['cum']
-    return None, None
-
-
-def calculate_other_futures_positions_sum(
-    account_id: int, schema: str, mark_prices: dict, symbols_state: dict, other_positions_state: dict
-) -> Tuple[float, float]:
-    maintenance_margin_sum = 0.0
-    unrealised_pnl_sum = 0.0
-    for position_key, position_data in other_positions_state.items():
-        try:
-            symbol = position_key.split(f"position.{account_id}.{schema}.")[1]
-        except IndexError:
-            continue
-        mark_price = mark_prices.get(symbol)
-        if mark_price:
-            volume = position_data['volume']
-            notional_value = volume * mark_price
-            symbol_state = symbols_state.get(symbol)
-            leverage_brackets = symbol_state.get('leverage_brackets', [])
-            maintenance_margin_rate, maintenance_amount = filter_leverage_brackets(
-                leverage_brackets, notional_value
-            )
-            if maintenance_margin_rate and maintenance_amount is not None:
-                maintenance_margin = notional_value * maintenance_margin_rate - maintenance_amount
-                maintenance_margin_sum += maintenance_margin
-            entry_price = position_data['price']
-            unrealized_pnl = (mark_price - entry_price) * volume
-            unrealised_pnl_sum += unrealized_pnl
-    return maintenance_margin_sum, unrealised_pnl_sum
-
-
-def calculate_futures_position_liquidation_price(
-    leverage_brackets: list, wallet_balance, side: int, direction: int, abs_volume: float,
-    mark_price: float, entry_price: float, maintenance_margin_sum: float, unrealised_pnl_sum: float,
-) -> Optional[float]:
-    liquidation_price = None
-    if side is not None and abs_volume is not None and mark_price and entry_price:
-        notional_value = abs_volume * mark_price
-        maintenance_margin_rate, maintenance_amount = filter_leverage_brackets(
-            leverage_brackets, notional_value
-        )
-        if maintenance_margin_rate and maintenance_amount is not None:
-            liquidation_price = (
-                wallet_balance - maintenance_margin_sum + unrealised_pnl_sum + maintenance_amount -
-                direction * abs_volume * entry_price
-            ) / (abs_volume * maintenance_margin_rate - direction * abs_volume)
-    return liquidation_price
-
-
-def load_futures_position_ws_data(
-    account_id: int, mark_prices: dict, leverages: dict, raw_data: dict,
-    symbols_state: dict, other_positions_state: dict,
-) -> dict:
-    symbol = raw_data['s']
-    symbol_state = symbols_state.pop(symbol.lower())
-    schema = symbol_state.get('schema')
-    volume = to_float(raw_data.get('pa'))
-    side = load_ws_futures_position_side(volume)
-    mark_price = mark_prices.get(symbol.lower())
-    entry_price = to_float(raw_data.get('ep'))
-    leverage_type = load_ws_futures_position_leverage_type(raw_data.get('mt'))
-    leverage = leverages.get(symbol.lower()) or to_float(raw_data.get("l"))
-
-    liquidation_price = None
-    wallet_balance = load_ws_futures_wallet_balance(raw_data, leverage_type)
-    if wallet_balance is not None:
-        maintenance_margin_sum, unrealised_pnl_sum = calculate_other_futures_positions_sum(
-            account_id, schema, mark_prices, symbols_state, other_positions_state
-        )
-        direction = 1 if side == api.BUY else -1
-        leverage_brackets = symbol_state.get('leverage_brackets', [])
-        liquidation_price = calculate_futures_position_liquidation_price(
-            leverage_brackets, wallet_balance, side, direction, abs(volume),
-            mark_price, entry_price, maintenance_margin_sum, unrealised_pnl_sum,
-        )
-    liquidation_price = liquidation_price or raw_data.get('liquidation_price')
-
-    return {
-        'time': to_iso_datetime(raw_data.get('E')),
-        'timestamp': raw_data.get('E'),
-        'schema': schema,
-        'symbol': raw_data.get('s'),
-        'system_symbol': symbol_state.get('system_symbol'),
-        'side': side,
-        'volume': volume,
-        'entry_price': entry_price,
-        'mark_price': mark_price,
-        'unrealised_pnl': to_float(raw_data.get('up')),
-        'leverage_type': leverage_type,
-        'leverage': leverage,
-        'liquidation_price': liquidation_price,
-    }

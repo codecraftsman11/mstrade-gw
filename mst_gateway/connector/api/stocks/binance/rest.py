@@ -81,7 +81,7 @@ class BinanceRestApi(StockRestApi):
         symbols = []
         for d in data:
             symbol_state = state_data.get(d.get('symbol').lower())
-            if symbol_state and (not _param or (_param and utils.to_float(d[_param]))):
+            if not _param or (_param and utils.to_float(d[_param])):
                 symbols.append(utils.load_symbol_data(d, symbol_state))
         return symbols
 
