@@ -411,40 +411,37 @@ class BinanceRestApi(StockRestApi):
         data = self._binance_api(method, asset=asset.upper(), amount=str(amount))
         return utils.load_transaction_id(data)
 
-    def wallet_borrow(self, schema: str, asset: str, amount: float, collateral_asset: str, collateral_amount: float):
+    def wallet_borrow(self, schema: str, asset: str, amount: float, **kwargs):
         if schema.lower() == OrderSchema.margin2:
-            method = self._handler.create_margin_loan
-            data = self._binance_api(method, asset=asset.upper(), amount=str(amount))
+            data = self._binance_api(self._handler.create_margin_loan, asset=asset.upper(), amount=str(amount))
             return utils.load_transaction_id(data)
         elif schema.lower() == OrderSchema.futures:
-            method = self._handler.create_futures_loan
-            kwargs = {
-                'coin': asset.upper(),
-                'collateralCoin': collateral_asset.upper()
-            }
+            collateral_asset = kwargs.get('collateral_asset', '')
+            collateral_amount = kwargs.get('collateral_amount')
+            amount_kwargs = {}
             if amount is not None:
-                kwargs['amount'] = str(amount)
+                amount_kwargs['amount'] = str(amount)
             if collateral_amount is not None:
-                kwargs['collateralAmount'] = str(collateral_amount)
-            data = self._binance_api(method, **kwargs)
+                amount_kwargs['collateralAmount'] = str(collateral_amount)
+            data = self._binance_api(
+                self._handler.create_futures_loan, coin=asset.upper(),
+                collateralCoin=collateral_asset.upper(), **amount_kwargs
+            )
             return utils.load_borrow_data(data)
         raise ConnectorError(f"Invalid schema {schema}.")
 
-    def wallet_repay(self, schema: str, asset: str, amount: float, collateral_asset: str):
+    def wallet_repay(self, schema: str, asset: str, amount: float, **kwargs):
         if schema.lower() == OrderSchema.margin2:
-            method = self._handler.repay_margin_loan
-            data = self._binance_api(method, asset=asset.upper(), amount=str(amount))
+            data = self._binance_api(self._handler.repay_margin_loan, asset=asset.upper(), amount=str(amount))
         elif schema.lower() == OrderSchema.futures:
-            method = self._handler.repay_futures_loan
-            kwargs = {
-                'coin': asset.upper(),
-                'amount': str(amount),
-                'collateralCoin': collateral_asset.upper(),
-            }
-            data = self._binance_api(method, **kwargs)
+            collateral_asset = kwargs.get('collateral_asset', '')
+            data = self._binance_api(
+                self._handler.repay_futures_loan, coin=asset.upper(),
+                amount=str(amount), collateralCoin=collateral_asset.upper()
+            )
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
-        return utils.load_transaction_id(data)
+        return utils.load_repay_data(data)
 
     def currency_exchange_symbols(self, schema: str, symbol: str = None) -> list:
         if schema.lower() in (OrderSchema.exchange, OrderSchema.margin2):

@@ -767,10 +767,20 @@ def load_transaction_id(raw_data: dict) -> dict:
 
 def load_borrow_data(raw_data: dict) -> dict:
     data = {
+        'amount': to_float(raw_data.get('amount')),
+        'collateral_asset': raw_data.get('collateralCoin'),
+        'collateral_amount': to_float(raw_data.get('collateralAmount')),
+        'transaction': raw_data.get('borrowId')
+    }
+    return data
+
+
+def load_repay_data(raw_data: dict) -> dict:
+    data = {
         'amount': raw_data.get('amount'),
         'collateral_asset': raw_data.get('collateralCoin'),
         'collateral_amount': raw_data.get('collateralAmount'),
-        'transaction': raw_data.get('borrowId')
+        'transaction': raw_data.get('repayId')
     }
     return data
 
