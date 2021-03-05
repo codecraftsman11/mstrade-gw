@@ -450,7 +450,9 @@ def load_futures_wallet_detail_data(raw_data: dict, asset: str,
     raise ConnectorError(f"Invalid asset {asset}.")
 
 
-def _load_cross_collaterals_data(cross_collaterals_data, collateral_configs, asset):
+def _load_cross_collaterals_data(cross_collaterals_data: list, collateral_configs: list, asset: str) -> list:
+    """ combining cross_collaterals data and collateral_configs data """
+
     collaterals = {}
     for collateral_coin in cross_collaterals_data:
         if collateral_coin.get('loanCoin', '').upper() == asset.upper():
