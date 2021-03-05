@@ -424,7 +424,7 @@ def load_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union[lis
     }
 
 
-def _update_futures_balances(balances, cross_collaterals):
+def _update_futures_balances(balances: list, cross_collaterals: list) -> list:
     for balance in balances:
         for collateral in cross_collaterals:
             if balance['currency'] == collateral['loanCoin']:
