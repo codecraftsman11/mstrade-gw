@@ -190,7 +190,8 @@ class BitmexRestApi(StockRestApi):
         symbols = []
         for d in data:
             symbol_state = state_data.get(utils.stock2symbol(d.get('symbol')))
-            symbols.append(utils.load_symbol_data(d, symbol_state))
+            if symbol_state:
+                symbols.append(utils.load_symbol_data(d, symbol_state))
         return symbols
 
     def get_exchange_symbol_info(self) -> list:
