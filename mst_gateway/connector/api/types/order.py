@@ -60,6 +60,7 @@ class OrderState(ClassWithAttributes):
     deleted = 'deleted'         # Limit order is deleted
     active = 'active'           # Limit Order is activated
     closed = 'closed'           # Active order is closed
+    reversed = 'reversed'       # Active order is reversed
     liquidated = 'liquidated'   # Active order is liquidated
 
 
