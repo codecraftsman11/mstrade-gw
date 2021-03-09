@@ -458,7 +458,6 @@ def _load_cross_collaterals_data(cross_collaterals_data: list, collateral_config
         if collateral_coin.get('loanCoin', '').upper() == asset.upper():
             data = {
                 'collateral_currency': collateral_coin.get('collateralCoin'),
-                'borrowed_currency': collateral_coin.get('loanCoin'),
                 'locked': to_float(collateral_coin.get('locked')),
                 'borrowed': to_float(collateral_coin.get('loanAmount')),
                 'current_collateral_rate': to_float(collateral_coin.get('currentCollateralRate')),
@@ -477,6 +476,16 @@ def _load_cross_collaterals_data(cross_collaterals_data: list, collateral_config
         **collaterals.get(config.get('collateralCoin'), {})
     } for config in collateral_configs]
     return cross_collaterals
+
+
+def load_futures_cross_collaterals_data(cross_collaterals: list) -> list:
+    data = [{
+        'collateral_currency': cross.get('collateralCoin'),
+        'borrowed_currency': cross.get('loanCoin'),
+        'locked': to_float(cross.get('locked')),
+        'borrowed': to_float(cross.get('loanAmount')),
+    } for cross in cross_collaterals if to_float(cross.get('loanAmount'))]
+    return data
 
 
 def load_exchange_asset_balance(raw_data: list) -> dict:
