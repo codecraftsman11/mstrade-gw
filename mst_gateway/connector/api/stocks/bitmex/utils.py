@@ -14,7 +14,7 @@ from ...types.asset import to_system_asset
 from ...types.binsize import BinSize
 
 
-def load_symbol_data(raw_data: dict, state_data: dict, is_iso_datetime=False) -> dict:
+def load_symbol_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime=False) -> dict:
     symbol = raw_data.get('symbol')
     symbol_datetime = to_date(raw_data.get('timestamp'))
     symbol_time = to_iso_datetime(symbol_datetime) if is_iso_datetime else symbol_datetime
@@ -33,17 +33,19 @@ def load_symbol_data(raw_data: dict, state_data: dict, is_iso_datetime=False) ->
         'ask_price': to_float(raw_data.get('askPrice')),
         'reversed': _reversed,
         'volume24': raw_data.get('volume24h'),
-        'expiration': state_data.get('expiration'),
-        'pair': state_data.get('pair'),
-        'tick': state_data.get('tick'),
-        'volume_tick': state_data.get('volume_tick'),
-        'system_symbol': state_data.get('system_symbol'),
-        'schema': state_data.get('schema'),
-        'symbol_schema': state_data.get('symbol_schema'),
-        'created': to_iso_datetime(state_data.get('created'))
-        if is_iso_datetime else state_data.get('created'),
-        'max_leverage': state_data.get('max_leverage'),
     }
+    if isinstance(state_data, dict):
+        data.update({
+            'expiration': state_data.get('expiration'),
+            'pair': state_data.get('pair'),
+            'tick': state_data.get('tick'),
+            'volume_tick': state_data.get('volume_tick'),
+            'system_symbol': state_data.get('system_symbol'),
+            'schema': state_data.get('schema'),
+            'symbol_schema': state_data.get('symbol_schema'),
+            'created': to_iso_datetime(state_data.get('created')) if is_iso_datetime else state_data.get('created'),
+            'max_leverage': state_data.get('max_leverage')
+        })
     return data
 
 

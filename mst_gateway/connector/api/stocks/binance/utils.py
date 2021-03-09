@@ -10,7 +10,7 @@ from .converter import BinanceOrderTypeConverter
 from ...types.asset import to_system_asset
 
 
-def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
+def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     symbol = raw_data.get('symbol')
     symbol_time = to_date(raw_data.get('closeTime'))
     price = to_float(raw_data.get('lastPrice'))
@@ -28,16 +28,19 @@ def load_symbol_data(raw_data: dict, state_data: dict) -> dict:
         'ask_price': to_float(raw_data.get('askPrice')),
         'reversed': _reversed,
         'volume24': to_float(raw_data.get('volume')),
-        'expiration': state_data.get('expiration'),
-        'pair': state_data.get('pair'),
-        'tick': state_data.get('tick'),
-        'volume_tick': state_data.get('volume_tick'),
-        'system_symbol': state_data.get('system_symbol'),
-        'schema': state_data.get('schema'),
-        'symbol_schema': state_data.get('symbol_schema'),
-        'created': state_data.get('created'),
-        'max_leverage': state_data.get('max_leverage'),
     }
+    if isinstance(state_data, dict):
+        data.update({
+            'expiration': state_data.get('expiration'),
+            'pair': state_data.get('pair'),
+            'tick': state_data.get('tick'),
+            'volume_tick': state_data.get('volume_tick'),
+            'system_symbol': state_data.get('system_symbol'),
+            'schema': state_data.get('schema'),
+            'symbol_schema': state_data.get('symbol_schema'),
+            'created': state_data.get('created'),
+            'max_leverage': state_data.get('max_leverage')
+        })
     return data
 
 
