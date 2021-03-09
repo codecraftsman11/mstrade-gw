@@ -9,6 +9,7 @@ class Client(BaseClient):
     WEBSITE_URL = 'https://www.binance.{}'
     TEST_FUTURES_URL = 'https://testnet.binancefuture.com/fapi'
     FUTURES_API_V2_VERSION = 'v2'
+    MARGIN_API_V2_VERSION = 'v2'
 
     def __init__(self, api_key=None, api_secret=None, requests_params=None, tld='com', test=False):
         super().__init__(api_key=api_key, api_secret=api_secret, requests_params=requests_params, tld=tld)
@@ -37,6 +38,13 @@ class Client(BaseClient):
         if test:
             return self.TEST_FUTURES_URL
         return self.FUTURES_URL.format(tld)
+
+    def _create_margin_v2_api_uri(self, path):
+        return self.MARGIN_API_URL + '/' + self.MARGIN_API_V2_VERSION + '/' + path
+
+    def _request_margin_v2_api(self, method, path, signed=False, **kwargs):
+        uri = self._create_margin_v2_api_uri(path)
+        return self._request(method, uri, signed, **kwargs)
 
     def _create_futures_api_v2_uri(self, path):
         return self.FUTURES_URL + '/' + self.FUTURES_API_V2_VERSION + '/' + path
@@ -306,3 +314,153 @@ class Client(BaseClient):
         if res:
             return res
         return {}
+
+    def create_futures_loan(self, **params):
+        """Apply for a loan.
+
+        https://binance-docs.github.io/apidocs/spot/en/#borrow-for-cross-collateral-trade
+
+        :param coin: name of the asset
+        :type coin: str
+        :param amount: amount to transfer(when collateralAmount is empty)
+        :type amount: str
+        :param collateralCoin: name of the collateral coin
+        :type collateralCoin: str
+        :param collateralAmount: amount to transfer(when amount is empty)
+        :type collateralAmount: str
+        :param recvWindow: the number of milliseconds the request is valid for
+        :type recvWindow: int
+
+        .. code:: python
+
+            transaction = client.create_futures_loan(
+                                    coin='USDT',
+                                    collateralCoin='BUSD',
+                                    amount='4.5',
+                                    collateralAmount=5.0
+                                    )
+
+        :returns: API response
+
+        .. code-block:: python
+
+            {
+                "coin": "USDT",
+                "amount": "4.50000000",
+                "collateralCoin": "BUSD",
+                "collateralAmount": "5.00000000",
+                "time": 1582540328433,
+                "borrowId": "438648398970089472"
+            }
+
+        :raises: BinanceRequestException, BinanceAPIException
+
+        """
+        return self._request_margin_api('post', 'futures/loan/borrow', signed=True, data=params)
+
+    def repay_futures_loan(self, **params):
+        """Repay loan for futures account.
+
+        https://binance-docs.github.io/apidocs/spot/en/#repay-for-cross-collateral-trade
+
+        :param coin: name of the asset
+        :type coin: str
+        :param amount: amount to transfer(when collateralAmount is empty)
+        :type amount: str
+        :param collateralCoin: name of the collateral coin
+        :type collateralCoin: str
+        :param recvWindow: the number of milliseconds the request is valid for
+        :type recvWindow: int
+
+        .. code:: python
+
+            transaction = client.repay_futures_loan(coin='USDT', collateralCoin='BUSD' amount='1.6')
+
+        :returns: API response
+
+        .. code-block:: python
+
+            {
+                "coin": "USDT",
+                "amount": "1.68",
+                "collateralCoin": "BUSD",
+                "repayId": "439659223998894080"
+            }
+
+        :raises: BinanceRequestException, BinanceAPIException
+
+        """
+        return self._request_margin_api('post', 'futures/loan/repay', signed=True, data=params)
+
+    def futures_loan_configs(self, **params):
+        """Cross-Collateral Information V2
+
+        https://binance-docs.github.io/apidocs/spot/en/#cross-collateral-information-v2-user_data
+
+        :param loanCoin: name of the asset
+        :type loanCoin: str
+        :param collateralCoin: name of the collateral coin
+        :type collateralCoin: str
+        :param recvWindow: the number of milliseconds the request is valid for
+        :type recvWindow: int
+
+        .. code:: python
+
+            information = client.futures_loan_configs(loanCoin='USDT', collateralCoin='BUSD')
+
+        :returns: API response
+
+        [
+            {
+                'collateralCoin': 'BTC',
+                'rate': '0.65',
+                'marginCallCollateralRate': '0.8',
+                'liquidationCollateralRate': '0.9',
+                'currentCollateralRate': '0',
+                'interestRate': '0.0024',
+                'interestGracePeriod': '2',
+                'loanCoin': 'USDT'
+           },
+        ]
+
+        :raises: BinanceRequestException, BinanceAPIException
+
+        """
+        return self._request_margin_v2_api('get', 'futures/loan/configs', signed=True, data=params)
+
+    def futures_loan_wallet(self, **params):
+        """Cross-Collateral Information V2
+
+        https://binance-docs.github.io/apidocs/spot/en/#cross-collateral-wallet-user_data
+
+        :param recvWindow: the number of milliseconds the request is valid for
+        :type recvWindow: int
+
+        .. code:: python
+
+            information = client.futures_loan_configs(**params)
+
+        :returns: API response
+
+        {
+            'totalCrossCollateral': '1.69737752',
+            'totalBorrowed': '0.99990001', 'asset': 'USD',
+            'totalInterest': '0', 'interestFreeLimit': '0',
+            'crossCollaterals': [
+                {
+                    'collateralCoin': 'BTC',
+                    'loanCoin': 'BUSD',
+                    'locked': '0',
+                    'loanAmount': '0',
+                    'currentCollateralRate': '0',
+                    'principalForInterest': '0',
+                    'interest': '0',
+                    'interestFreeLimitUsed': '0'
+                },
+            ]
+        }
+
+        :raises: BinanceRequestException, BinanceAPIException
+
+        """
+        return self._request_margin_v2_api('get', 'futures/loan/wallet', signed=True, data=params)
