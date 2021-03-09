@@ -328,7 +328,7 @@ class BinanceRestApi(StockRestApi):
 
     def _margin_wallet(self, **kwargs):
         assets = kwargs.get('assets', ('btc', 'usd'))
-        fields = ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed')
+        fields = ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed', 'interest')
         data = self._binance_api(self._handler.get_margin_account, **kwargs)
         currencies = self.storage.get('currency', self.name, OrderSchema.margin2)
         return utils.load_margin_wallet_data(data, currencies, assets, fields)
