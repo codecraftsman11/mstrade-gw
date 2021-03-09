@@ -156,6 +156,9 @@ class BitmexRestApi(StockRestApi):
             }
         raise ConnectorError(f"Invalid schema {schema}.")
 
+    def get_cross_collaterals(self, schema: str, **kwargs) -> list:
+        raise ConnectorError('Bitmex api error. Details: Invalid method.')
+
     def get_assets_balance(self, schema: str, **kwargs) -> dict:
         if schema == OrderSchema.margin1:
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
