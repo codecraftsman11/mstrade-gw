@@ -987,7 +987,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
             'system_symbol': state_data.get('system_symbol'),
             'schema': state_data.get('schema'),
             'symbol_schema': state_data.get('symbol_schema'),
-            'created': state_data.get('created'),
+            'created': to_iso_datetime(state_data.get('created')),
             'max_leverage': state_data.get('max_leverage')
         })
     return data
