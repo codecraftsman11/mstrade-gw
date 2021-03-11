@@ -38,7 +38,7 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
             'system_symbol': state_data.get('system_symbol'),
             'schema': state_data.get('schema'),
             'symbol_schema': state_data.get('symbol_schema'),
-            'created': state_data.get('created'),
+            'created': to_date(state_data.get('created')),
             'max_leverage': state_data.get('max_leverage')
         })
     return data
@@ -987,15 +987,17 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
             'system_symbol': state_data.get('system_symbol'),
             'schema': state_data.get('schema'),
             'symbol_schema': state_data.get('symbol_schema'),
-            'created': to_iso_datetime(state_data.get('created')),
+            'created': to_iso_datetime(to_date(state_data.get('created'))),
             'max_leverage': state_data.get('max_leverage')
         })
     return data
 
 
-def to_date(token: Union[datetime, int]) -> Optional[datetime]:
+def to_date(token: Union[datetime, int, str]) -> Optional[datetime]:
     if isinstance(token, datetime):
         return token
+    if isinstance(token, str):
+        return datetime.strptime(token, api.DATETIME_FORMAT)
     try:
         return datetime.fromtimestamp(int(token / 1000), tz=timezone.utc)
     except (ValueError, TypeError):
