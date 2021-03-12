@@ -86,9 +86,6 @@ class BinanceWssApi(StockWssApi):
 
     async def _connect(self, **kwargs):
         kwargs['ws_options'] = {
-            'close_timeout': 30,
-            'ping_interval': 60,
-            'ping_timeout': 60,
             'max_size': 2 ** 24,
             'max_queue': 2 ** 7,
             'read_limit': 2 ** 18,
