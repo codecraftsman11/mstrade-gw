@@ -1276,7 +1276,7 @@ def load_futures_position_ws_data(
     mark_price = mark_prices.get(symbol.lower())
     entry_price = to_float(raw_data.get('ep'))
     leverage_type = load_ws_futures_position_leverage_type(raw_data.get('mt'))
-    leverage = leverages.get(symbol.lower()) or to_float(raw_data.get("l"))
+    leverage = to_float(raw_data.get("l")) or leverages.get(symbol.lower())
     wallet_balance = load_ws_futures_wallet_balance(raw_data, leverage_type)
     liquidation_price = None
     if (

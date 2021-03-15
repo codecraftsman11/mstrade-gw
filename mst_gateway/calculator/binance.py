@@ -47,7 +47,7 @@ class BinanceFinFactory(FinFactory):
 
     @classmethod
     def calc_liquidation_cross_price(cls, entry_price: float, maint_margin: float, direction: int, **kwargs):
-        return cls.calc_liquidation_isolated_price(entry_price, maint_margin, direction, kwargs)
+        return cls.calc_liquidation_isolated_price(entry_price, maint_margin, direction, **kwargs)
 
     @classmethod
     def calc_leverage_level(cls, quantity: Union[int, float], entry_price: float, wallet_balance: float,
