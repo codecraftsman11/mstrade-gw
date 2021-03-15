@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Union, Optional, Tuple
 from mst_gateway.connector import api
-from mst_gateway.calculator.binance import BinanceFinFactory
+from mst_gateway.calculator import BinanceFinFactory
 from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
 from mst_gateway.utils import delta
 from .....exceptions import ConnectorError
@@ -1207,14 +1207,18 @@ def store_leverage(leverage_type: str) -> str:
 
 
 def load_ws_futures_position_side(position_amount: float) -> Optional[int]:
-    if position_amount:
-        return api.SELL if position_amount < 0 else api.BUY
+    if position_amount and position_amount < 0:
+        return api.SELL
+    if position_amount and position_amount > 0:
+        return api.BUY
     return None
 
 
 def load_ws_futures_position_leverage_type(margin_type: Optional[str]) -> Optional[str]:
-    if margin_type:
-        return LeverageType.cross if margin_type.lower() == 'cross' else LeverageType.isolated
+    if margin_type and margin_type.lower() == LeverageType.cross:
+        return LeverageType.cross
+    if margin_type and margin_type.lower() == LeverageType.cross:
+        return LeverageType.isolated
     return None
 
 
@@ -1226,18 +1230,16 @@ def load_ws_futures_wallet_balance(raw_data: dict, leverage_type: str) -> Option
     return None
 
 
-def filter_leverage_brackets(leverage_brackets: Optional[list], notional_value: float) -> tuple:
-    if leverage_brackets:
-        for lb in leverage_brackets:
-            if lb['notionalFloor'] <= notional_value < lb['notionalCap']:
-                return lb['maintMarginRatio'], lb['cum']
-    return None, None
+def load_ws_future_position_direction(side: int) -> int:
+    if side == api.BUY:
+        return 1
+    return -1
 
 
-def calculate_other_futures_positions_sum(
+def calculate_futures_positions_sum(
     account_id: int, schema: str, mark_prices: dict, symbols_state: dict, other_positions_state: dict
 ) -> Tuple[float, float]:
-    maintenance_margin_sum = 0.0
+    maint_margin_sum = 0.0
     unrealised_pnl_sum = 0.0
     for position_key, position_data in other_positions_state.items():
         try:
@@ -1245,47 +1247,29 @@ def calculate_other_futures_positions_sum(
         except IndexError:
             continue
         mark_price = mark_prices.get(symbol)
-        if mark_price:
+        symbol_state = symbols_state.get(symbol, {})
+        leverage_brackets = symbol_state.get('leverage_brackets', [])
+        if mark_price is not None and leverage_brackets:
             volume = position_data['volume']
             notional_value = volume * mark_price
-            symbol_state = symbols_state.get(symbol)
-            leverage_brackets = symbol_state.get('leverage_brackets', [])
-            maintenance_margin_rate, maintenance_amount = filter_leverage_brackets(
+            maint_margin_rate, maint_amount = BinanceFinFactory.filter_leverage_brackets(
                 leverage_brackets, notional_value
             )
-            if maintenance_margin_rate and maintenance_amount is not None:
-                maintenance_margin = notional_value * maintenance_margin_rate - maintenance_amount
-                maintenance_margin_sum += maintenance_margin
+            if maint_margin_rate is not None and maint_amount is not None:
+                maint_margin = notional_value * maint_margin_rate - maint_amount
+                maint_margin_sum += maint_margin
             entry_price = position_data['price']
             unrealized_pnl = (mark_price - entry_price) * volume
             unrealised_pnl_sum += unrealized_pnl
-    return maintenance_margin_sum, unrealised_pnl_sum
-
-
-def calculate_futures_position_liquidation_price(
-    leverage_brackets: list, wallet_balance, side: int, direction: int, abs_volume: float,
-    mark_price: float, entry_price: float, maintenance_margin_sum: float, unrealised_pnl_sum: float,
-) -> Optional[float]:
-    liquidation_price = None
-    if side is not None and abs_volume is not None and mark_price and entry_price:
-        notional_value = abs_volume * mark_price
-        maintenance_margin_rate, maintenance_amount = filter_leverage_brackets(
-            leverage_brackets, notional_value
-        )
-        if maintenance_margin_rate and maintenance_amount is not None:
-            liquidation_price = (
-                wallet_balance - maintenance_margin_sum + unrealised_pnl_sum + maintenance_amount -
-                direction * abs_volume * entry_price
-            ) / (abs_volume * maintenance_margin_rate - direction * abs_volume)
-    return liquidation_price
+    return maint_margin_sum, unrealised_pnl_sum
 
 
 def load_futures_position_ws_data(
-    account_id: int, mark_prices: dict, leverages: dict, raw_data: dict,
-    symbols_state: dict, other_positions_state: dict,
+    account_id: int, mark_prices: dict, leverages: dict,
+    raw_data: dict, symbols_state: dict, other_positions_state: dict,
 ) -> dict:
     symbol = raw_data['s']
-    symbol_state = symbols_state.pop(symbol.lower())
+    symbol_state = symbols_state.get(symbol.lower(), {})
     schema = symbol_state.get('schema')
     volume = to_float(raw_data.get('pa'))
     side = load_ws_futures_position_side(volume)
@@ -1293,18 +1277,33 @@ def load_futures_position_ws_data(
     entry_price = to_float(raw_data.get('ep'))
     leverage_type = load_ws_futures_position_leverage_type(raw_data.get('mt'))
     leverage = leverages.get(symbol.lower()) or to_float(raw_data.get("l"))
-    liquidation_price = None
     wallet_balance = load_ws_futures_wallet_balance(raw_data, leverage_type)
-    if wallet_balance is not None:
-        maintenance_margin_sum, unrealised_pnl_sum = calculate_other_futures_positions_sum(
+    liquidation_price = None
+    if (
+        side is not None
+        and mark_price is not None
+        and entry_price is not None
+        and wallet_balance is not None
+    ):
+        maint_margin, unrealised_pnl = calculate_futures_positions_sum(
             account_id, schema, mark_prices, symbols_state, other_positions_state
         )
-        direction = 1 if side == api.BUY else -1
-        leverage_brackets = symbol_state.get('leverage_brackets', [])
-        liquidation_price = calculate_futures_position_liquidation_price(
-            leverage_brackets, wallet_balance, side, direction, abs(volume),
-            mark_price, entry_price, maintenance_margin_sum, unrealised_pnl_sum,
-        )
+        direction = load_ws_future_position_direction(side)
+        params = {
+            'abs_volume': abs(volume),
+            'mark_price': mark_price,
+            'wallet_balance': wallet_balance,
+            'unrealised_pnl': unrealised_pnl,
+            'leverage_brackets': symbol_state.get('leverage_brackets', []),
+        }
+        if leverage_type == LeverageType.isolated:
+            liquidation_price = BinanceFinFactory.calc_liquidation_isolated_price(
+                entry_price, maint_margin, direction, **params
+            )
+        else:
+            liquidation_price = BinanceFinFactory.calc_liquidation_cross_price(
+                entry_price, maint_margin, direction, **params
+            )
     liquidation_price = liquidation_price or raw_data.get('liquidation_price')
     return {
         'time': to_iso_datetime(raw_data.get('E')),

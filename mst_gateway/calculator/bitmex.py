@@ -1,35 +1,39 @@
 import re
-from . import FinFactory
-from typing import (
-    Union, Tuple, Optional
-)
+from typing import Union, Tuple, Optional
+from mst_gateway.calculator import FinFactory
 
 
 class BitmexFinFactory(FinFactory):
 
     @classmethod
-    def calc_liquidation_isolated_price(cls, entry_price: float, leverage: float, maint_margin: float,
-                                        taker_fee: float, funding_rate: float, position: str = 'short'):
-        p = 1 if position == 'short' else -1
-        result = round(
-            entry_price / (
-                    1 +
-                    (-p * ((100 / leverage / 100) + 2 * taker_fee / 100)) +
-                    (p * (maint_margin + taker_fee + funding_rate) / 100)
-            ), 8)
+    def calc_liquidation_isolated_price(cls, entry_price: float, maint_margin: float, direction: int, **kwargs):
+        leverage = kwargs.get('leverage')
+        taker_fee = kwargs.get('taker_fee')
+        funding_rate = kwargs.get('funding_rate')
+        result = None
+        if leverage is not None and taker_fee is not None and funding_rate is not None:
+            result = round(
+                entry_price / (
+                        1 +
+                        (-direction * ((100 / leverage / 100) + 2 * taker_fee / 100)) +
+                        (direction * (maint_margin + taker_fee + funding_rate) / 100)
+                ), 8)
         return result
 
     @classmethod
-    def calc_liquidation_cross_price(cls, quantity: Union[int, float], entry_price: float, margin_balance: float,
-                                     maint_margin: float, taker_fee: float, funding_rate: float,
-                                     position: str = 'short'):
-        p = 1 if position == 'short' else -1
-        result = round(
-            (p * quantity * entry_price) / (
-                (-margin_balance * entry_price) +
-                ((maint_margin + taker_fee + funding_rate) / 100 * quantity) +
-                (p * quantity)
-            ), 8)
+    def calc_liquidation_cross_price(cls, entry_price: float, maint_margin: float, direction: int, **kwargs):
+        quantity = kwargs.get('quantity')
+        margin_balance = kwargs.get('margin_balance')
+        taker_fee = kwargs.get('taker_fee')
+        funding_rate = kwargs.get('funding_rate')
+        result = None
+        if quantity is not None and margin_balance is not None and taker_fee is not None and funding_rate is not None:
+            result = round(
+                (direction * quantity * entry_price) / (
+                    (-margin_balance * entry_price) +
+                    ((maint_margin + taker_fee + funding_rate) / 100 * quantity) +
+                    (direction * quantity)
+                ), 8)
         return result
 
     @classmethod
