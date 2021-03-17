@@ -81,7 +81,7 @@ class BinanceRestApi(StockRestApi):
         symbols = []
         for d in data:
             symbol_state = state_data.get(d.get('symbol').lower())
-            if not _param or (_param and utils.to_float(d[_param])):
+            if symbol_state and (not _param or (_param and utils.to_float(d[_param]))):
                 symbols.append(utils.load_symbol_data(d, symbol_state))
         return symbols
 
@@ -328,17 +328,23 @@ class BinanceRestApi(StockRestApi):
 
     def _margin_wallet(self, **kwargs):
         assets = kwargs.get('assets', ('btc', 'usd'))
-        fields = ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed')
+        fields = ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed', 'interest')
         data = self._binance_api(self._handler.get_margin_account, **kwargs)
         currencies = self.storage.get('currency', self.name, OrderSchema.margin2)
         return utils.load_margin_wallet_data(data, currencies, assets, fields)
 
     def _futures_wallet(self, **kwargs):
         assets = kwargs.get('assets', ('btc', 'usd'))
-        fields = ('balance', 'unrealised_pnl', 'margin_balance')
+        fields = ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed', 'interest')
         data = self._binance_api(self._handler.futures_account, **kwargs)
+        try:
+            cross_collaterals = self._binance_api(self._handler.futures_loan_wallet, **kwargs)
+        except ConnectorError:
+            cross_collaterals = {}
         currencies = self.storage.get('currency', self.name, OrderSchema.futures)
-        return utils.load_futures_wallet_data(data, currencies, assets, fields)
+        return utils.load_futures_wallet_data(
+            data, currencies, assets, fields, cross_collaterals.get('crossCollaterals', [])
+        )
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
         if schema.lower() == OrderSchema.exchange:
@@ -365,10 +371,24 @@ class BinanceRestApi(StockRestApi):
             }
         if schema.lower() == OrderSchema.futures:
             _futures = self._binance_api(self._handler.futures_account, **kwargs)
+            try:
+                cross_collaterals = self._binance_api(self._handler.futures_loan_wallet, **kwargs)
+                collateral_configs = self._binance_api(self._handler.futures_loan_configs, loanCoin=asset, **kwargs)
+            except ConnectorError:
+                cross_collaterals = {}
+                collateral_configs = []
             return {
                 OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
-                OrderSchema.futures: utils.load_futures_wallet_detail_data(_futures, asset)
+                OrderSchema.futures: utils.load_futures_wallet_detail_data(
+                    _futures, asset, cross_collaterals.get('crossCollaterals', []), collateral_configs
+                )
             }
+        raise ConnectorError(f"Invalid schema {schema}.")
+
+    def get_cross_collaterals(self, schema: str, **kwargs) -> list:
+        if schema.lower() == OrderSchema.futures:
+            cross_collaterals = self._binance_api(self._handler.futures_loan_wallet, **kwargs)
+            return utils.load_futures_cross_collaterals_data(cross_collaterals.get('crossCollaterals', []))
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_assets_balance(self, schema: str, **kwargs) -> dict:
@@ -397,25 +417,37 @@ class BinanceRestApi(StockRestApi):
         data = self._binance_api(method, asset=asset.upper(), amount=str(amount))
         return utils.load_transaction_id(data)
 
-    def wallet_borrow(self, schema: str, asset: str, amount: float):
+    def wallet_borrow(self, schema: str, asset: str, amount: float, **kwargs):
         if schema.lower() == OrderSchema.margin2:
-            method = self._handler.create_margin_loan
+            data = self._binance_api(self._handler.create_margin_loan, asset=asset.upper(), amount=str(amount))
+            return utils.load_transaction_id(data)
         elif schema.lower() == OrderSchema.futures:
-            raise ConnectorError(f"Unavailable method for {schema}.")
-        else:
-            raise ConnectorError(f"Invalid schema {schema}.")
-        data = self._binance_api(method, asset=asset.upper(), amount=str(amount))
-        return utils.load_transaction_id(data)
+            collateral_asset = kwargs.get('collateral_asset', '')
+            collateral_amount = kwargs.get('collateral_amount')
+            amount_kwargs = {}
+            if amount is not None:
+                amount_kwargs['amount'] = str(amount)
+            if collateral_amount is not None:
+                amount_kwargs['collateralAmount'] = str(collateral_amount)
+            data = self._binance_api(
+                self._handler.create_futures_loan, coin=asset.upper(),
+                collateralCoin=collateral_asset.upper(), **amount_kwargs
+            )
+            return utils.load_borrow_data(data)
+        raise ConnectorError(f"Invalid schema {schema}.")
 
-    def wallet_repay(self, schema: str, asset: str, amount: float):
+    def wallet_repay(self, schema: str, asset: str, amount: float, **kwargs):
         if schema.lower() == OrderSchema.margin2:
-            method = self._handler.repay_margin_loan
+            data = self._binance_api(self._handler.repay_margin_loan, asset=asset.upper(), amount=str(amount))
         elif schema.lower() == OrderSchema.futures:
-            raise ConnectorError(f"Unavailable method for {schema}.")
+            collateral_asset = kwargs.get('collateral_asset', '')
+            data = self._binance_api(
+                self._handler.repay_futures_loan, coin=asset.upper(),
+                amount=str(amount), collateralCoin=collateral_asset.upper()
+            )
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
-        data = self._binance_api(method, asset=asset.upper(), amount=str(amount))
-        return utils.load_transaction_id(data)
+        return utils.load_repay_data(data)
 
     def currency_exchange_symbols(self, schema: str, symbol: str = None) -> list:
         if schema.lower() in (OrderSchema.exchange, OrderSchema.margin2):
