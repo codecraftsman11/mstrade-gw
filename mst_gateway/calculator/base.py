@@ -35,3 +35,13 @@ class FinFactory:
     def calc_leverage_level(cls, quantity: Union[int, float], entry_price: float, wallet_balance: float,
                             liquidation_price: float = None):
         raise NotImplementedError
+
+    @classmethod
+    def calc_unrealised_pnl(cls, volume: Union[int, float], entry_price: float,
+                            mark_price: float, side: int) -> Optional[float]:
+        try:
+            if side:
+                return (entry_price - mark_price) * volume
+            return (mark_price - entry_price) * volume
+        except TypeError:
+            return None

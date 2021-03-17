@@ -5,7 +5,7 @@ from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
 from mst_gateway.connector.api.utils import time2timestamp
 from mst_gateway.exceptions import ConnectorError
-from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
+from mst_gateway.connector.api.types.order import LeverageType, OrderSchema, BUY, SELL
 from mst_gateway.utils import delta
 from . import var
 from .var import BITMEX_ORDER_STATUS_MAP
@@ -607,3 +607,24 @@ def store_leverage(leverage_type: str, leverage: float) -> float:
     if leverage_type == LeverageType.cross:
         return var.BITMEX_CROSS_LEVERAGE_TYPE_PARAM
     return leverage or 0
+
+
+def load_position(raw_data: dict, schema) -> dict:
+    if to_float(raw_data.get('currentQty')) == 0:
+        return {}
+    return {
+        'schema': schema,
+        'symbol': raw_data.get('symbol'),
+        'side': BUY if (to_float(raw_data.get('currentQty')) > 0) else SELL,
+        'volume': to_float(raw_data.get('currentQty')),
+        'entry_price': to_float(raw_data.get('avgEntryPrice')),
+        'mark_price': to_float(raw_data.get('markPrice')),
+        'unrealised_pnl': to_xbt(raw_data.get('unrealisedPnl')),
+        'leverage_type': load_leverage(raw_data)[0],
+        'leverage': to_float(raw_data.get('leverage')),
+        'liquidation_price': to_float(raw_data.get('liquidationPrice')),
+        }
+
+
+def load_positions_list(raw_data: list, schema) -> list:
+    return [load_position(data, schema) for data in raw_data if to_float(data.get('currentQty')) != 0]

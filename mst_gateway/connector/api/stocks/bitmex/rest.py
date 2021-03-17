@@ -424,6 +424,26 @@ class BitmexRestApi(StockRestApi):
         )
         return utils.load_leverage(response)
 
+    def get_position(self, schema: str, symbol: str, **kwargs) -> dict:
+        if schema != OrderSchema.margin1:
+            raise ConnectorError(f"Invalid schema {schema}.")
+        response, _ = self._bitmex_api(
+            self._handler.Position.Position_get, **{'filter': j_dumps({'symbol': symbol})}
+        )
+        try:
+            response = response[0]
+        except IndexError:
+            return {}
+        return utils.load_position(response, schema)
+
+    def list_positions(self, schema: str, **kwargs) -> list:
+        if schema != OrderSchema.margin1:
+            raise ConnectorError(f"Invalid schema {schema}.")
+        response, _ = self._bitmex_api(
+            self._handler.Position.Position_get
+        )
+        return utils.load_positions_list(response, schema)
+
     def _bitmex_api(self, method: callable, **kwargs):
         headers = {}
         if self._keepalive:
