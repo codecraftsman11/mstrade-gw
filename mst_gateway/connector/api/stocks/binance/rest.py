@@ -583,7 +583,7 @@ class BinanceRestApi(StockRestApi):
                 return {}
             return utils.load_futures_position(response, schema)
         account_id = kwargs.get('account_id')
-        position_state_key = f"position.{account_id}.{schema}.{symbol}".lower()
+        position_state_key = f"position.{account_id}.{self.name}.{schema}.{symbol}".lower()
         position = self.storage.get(position_state_key)
         symbol_data = self._binance_api(self._handler.get_ticker, symbol=symbol.upper())
         if schema == OrderSchema.exchange:
@@ -597,7 +597,7 @@ class BinanceRestApi(StockRestApi):
             response = self._binance_api(self._handler.futures_position_information)
             return utils.load_futures_position_list(response, schema)
         account_id = kwargs.get('account_id')
-        position_state_key = f"position.{account_id}.{schema}.*".lower()
+        position_state_key = f"position.{account_id}.{self.name}.{schema}.*".lower()
         positions = self.storage.get_pattern(position_state_key)
         symbol_list = self._binance_api(self._handler.get_ticker)
         if schema == OrderSchema.exchange:
