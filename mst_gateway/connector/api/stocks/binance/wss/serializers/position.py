@@ -100,8 +100,7 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
                 raw_data["mt"] = state[0]["leverage_type"]
             if raw_data.get("l") is None:
                 raw_data["l"] = state[0]["leverage"]
-            if raw_data.get("iw") is None or raw_data.get("cw") is None:
-                raw_data["liquidation_price"] = state[0]["liquidation_price"]
+            raw_data["liquidation_price"] = state[0]["liquidation_price"]
         return utils.load_futures_position_ws_data(
             account_id, self.mark_prices, self.leverages, raw_data, symbols_state, other_positions_state
         )

@@ -9,6 +9,7 @@ class BinanceFinFactory(FinFactory):
         for lb in leverage_brackets:
             if lb['notionalFloor'] <= notional_value < lb['notionalCap']:
                 return lb['maintMarginRatio'], lb['cum']
+        return None, None
 
     @classmethod
     def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float],
