@@ -1300,11 +1300,13 @@ def load_futures_position_ws_data(
             liquidation_price = BinanceFinFactory.calc_liquidation_isolated_price(
                 entry_price, maint_margin, direction, **params
             )
-        else:
+        if leverage_type == LeverageType.cross:
             liquidation_price = BinanceFinFactory.calc_liquidation_cross_price(
                 entry_price, maint_margin, direction, **params
             )
     liquidation_price = liquidation_price or raw_data.get('liquidation_price')
+    if liquidation_price < 0:
+        liquidation_price = None
     return {
         'time': to_iso_datetime(raw_data.get('E')),
         'timestamp': raw_data.get('E'),
