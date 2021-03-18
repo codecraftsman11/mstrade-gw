@@ -170,12 +170,10 @@ class TestBinanceFuturesWssApi:
         self, _testnet_wss_api: BinanceFuturesWssApi
     ):
         assert _testnet_wss_api.auth_connect is False
-        assert not _testnet_wss_api.tasks
         await _testnet_wss_api.close()
         assert not _testnet_wss_api.handler
         assert await _testnet_wss_api.open(is_auth=True)
         assert _testnet_wss_api.auth_connect
-        assert _testnet_wss_api.tasks
 
     @pytest.mark.parametrize(
         "subscr_name, subscriber_class",
