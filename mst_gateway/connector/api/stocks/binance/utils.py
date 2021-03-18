@@ -1217,7 +1217,7 @@ def load_ws_futures_position_side(position_amount: float) -> Optional[int]:
 def load_ws_futures_position_leverage_type(margin_type: Optional[str]) -> Optional[str]:
     if margin_type and margin_type.lower() == LeverageType.cross:
         return LeverageType.cross
-    if margin_type and margin_type.lower() == LeverageType.cross:
+    if margin_type and margin_type.lower() == LeverageType.isolated:
         return LeverageType.isolated
     return None
 
