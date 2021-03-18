@@ -1305,7 +1305,7 @@ def load_futures_position_ws_data(
                 entry_price, maint_margin, direction, **params
             )
     liquidation_price = liquidation_price or raw_data.get('liquidation_price')
-    if liquidation_price < 0:
+    if liquidation_price and liquidation_price < 0:
         liquidation_price = None
     return {
         'time': to_iso_datetime(raw_data.get('E')),
