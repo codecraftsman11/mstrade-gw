@@ -1237,15 +1237,14 @@ def load_ws_futures_position_direction(side: int) -> int:
 
 
 def calculate_futures_other_positions_sum(
-    is_cross_position: bool, account_id: int, schema: str, mark_prices: dict,
-    symbols_state: dict, other_positions_state: dict
+    is_cross_position: bool, mark_prices: dict, symbols_state: dict, other_positions_state: dict
 ) -> Tuple[float, float]:
     maint_margin_sum = 0.0
     unrealised_pnl_sum = 0.0
     if is_cross_position:
         for position_key, position_data in other_positions_state.items():
             try:
-                symbol = position_key.split(f"position.{account_id}.{schema}.")[1]
+                symbol = position_key.split('.')[-1]
             except IndexError:
                 continue
             mark_price = mark_prices.get(symbol)
@@ -1267,11 +1266,10 @@ def calculate_futures_other_positions_sum(
 
 
 def load_futures_position_ws_data(
-    account_id: int, mark_prices: dict, raw_data: dict, symbols_state: dict, other_positions_state: dict
+    raw_data: dict, mark_prices: dict, symbols_state: dict, other_positions_state: dict
 ) -> dict:
     symbol = raw_data['s']
     symbol_state = symbols_state.get(symbol.lower(), {})
-    schema = symbol_state.get('schema')
     volume = to_float(raw_data.get('pa'))
     side = load_ws_futures_position_side(volume)
     mark_price = mark_prices.get(symbol.lower())
@@ -1288,7 +1286,7 @@ def load_futures_position_ws_data(
     ):
         is_cross_position = leverage_type == LeverageType.cross
         maint_margin, unrealised_pnl = calculate_futures_other_positions_sum(
-            is_cross_position, account_id, schema, mark_prices, symbols_state, other_positions_state
+            is_cross_position, mark_prices, symbols_state, other_positions_state
         )
         direction = load_ws_futures_position_direction(side)
         params = {
@@ -1312,7 +1310,7 @@ def load_futures_position_ws_data(
     return {
         'time': to_iso_datetime(raw_data.get('E')),
         'timestamp': raw_data.get('E'),
-        'schema': schema,
+        'schema': symbol_state.get('schema'),
         'symbol': raw_data.get('s'),
         'system_symbol': symbol_state.get('system_symbol'),
         'side': side,

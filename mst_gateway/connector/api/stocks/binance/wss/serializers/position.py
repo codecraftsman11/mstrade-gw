@@ -104,5 +104,5 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
                 raw_data["l"] = state[0]["leverage"]
             raw_data["liquidation_price"] = state[0]["liquidation_price"]
         return utils.load_futures_position_ws_data(
-            account_id, self.mark_prices, raw_data, symbols_state, other_positions_state
+            raw_data, self.mark_prices, symbols_state, other_positions_state
         )
