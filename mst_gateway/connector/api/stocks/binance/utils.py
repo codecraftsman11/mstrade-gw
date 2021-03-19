@@ -1236,7 +1236,7 @@ def load_ws_futures_position_direction(side: int) -> int:
     return -1
 
 
-def calculate_futures_positions_sum(
+def calculate_futures_other_positions_sum(
     is_cross_position: bool, account_id: int, schema: str, mark_prices: dict,
     symbols_state: dict, other_positions_state: dict
 ) -> Tuple[float, float]:
@@ -1287,7 +1287,7 @@ def load_futures_position_ws_data(
         and wallet_balance is not None
     ):
         is_cross_position = leverage_type == LeverageType.cross
-        maint_margin, unrealised_pnl = calculate_futures_positions_sum(
+        maint_margin, unrealised_pnl = calculate_futures_other_positions_sum(
             is_cross_position, account_id, schema, mark_prices, symbols_state, other_positions_state
         )
         direction = load_ws_futures_position_direction(side)
