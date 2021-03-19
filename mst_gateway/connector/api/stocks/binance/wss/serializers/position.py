@@ -1,6 +1,6 @@
 from __future__ import annotations
 from copy import copy
-from typing import Optional
+from typing import Optional, Tuple
 from mst_gateway.connector.api.stocks.binance import utils
 from mst_gateway.connector.api.stocks.binance.wss.serializers.base import (
     BinanceSerializer,
@@ -20,10 +20,13 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
         if message.get("table") == "ACCOUNT_UPDATE":
             for item in message.get("data", []):
                 for position in item.get("a", {}).get("P", []):
+                    position_side = position["ps"]
+                    position_amount = utils.to_float(position["pa"])
+                    event_reason = item["a"].get('m')
                     if (
-                        position["ps"] == "BOTH" and
-                        not utils.to_float(position["pa"]) and
-                        item["a"].get('m') != 'MARGIN_TYPE_CHANGE'
+                        position_side == "BOTH" and
+                        not position_amount and
+                        event_reason != 'MARGIN_TYPE_CHANGE'
                     ):
                         return "delete"
         return super()._get_data_action(message)
@@ -31,11 +34,14 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
     def prefetch(self, message: dict) -> None:
         if message.get("table") == "markPriceUpdate":
             for item in message.get("data", []):
-                self.mark_prices[item["s"].lower()] = utils.to_float(item["p"])
+                symbol = item.get("s")
+                if symbol:
+                    self.mark_prices[symbol.lower()] = utils.to_float(item.get("p"))
         if message.get("table") == "ACCOUNT_CONFIG_UPDATE":
             for item in message.get("data", []):
-                if item.get("ac", {}).get("s"):
-                    self.leverages[item["ac"]["s"].lower()] = item["ac"].get("l")
+                symbol = item.get("ac", {}).get("s")
+                if symbol:
+                    self.leverages[symbol.lower()] = item["ac"].get("l")
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
         if (
@@ -58,10 +64,24 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
                     return raw_data
         if message.get("table") == "ACCOUNT_CONFIG_UPDATE":
             if item.get("ac", {}).get("s"):
-                raw_data = item["ac"]
+                raw_data = copy(item["ac"])
                 raw_data["E"] = item.get("E")
                 return raw_data
         return {}
+
+    def get_positions_states(self, symbol: str) -> Tuple[dict, dict]:
+        account_id = self._wss_api.account_id
+        exchange = self._wss_api.name
+        schema = self._wss_api.schema
+        all_positions_state = self._wss_api.storage.get_pattern(
+            f"{self.subscription}.{account_id}.{exchange}.{schema}.*".lower()
+        ) or {}
+        position_state = all_positions_state.pop(
+            f"{self.subscription}.{account_id}.{exchange}.{schema}.{symbol}".lower(),
+            {},
+        )
+        other_positions_state = all_positions_state
+        return position_state, other_positions_state
 
     def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
@@ -74,22 +94,12 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
         symbol_state = symbols_state.get(symbol)
         if not symbol_state:
             return None
-        account_id = self._wss_api.account_id
-        exchange = self._wss_api.name
-        schema = self._wss_api.schema
-        all_positions_state = self._wss_api.storage.get_pattern(
-            f"{self.subscription}.{account_id}.{exchange}.{schema}.*".lower()
-        ) or {}
-        position_state = all_positions_state.pop(
-            f"{self.subscription}.{account_id}.{exchange}.{schema}.{symbol}".lower(),
-            None,
-        )
+        position_state, other_positions_state = self.get_positions_states(symbol)
         if raw_data.get("l") is None:
             if position_state:
                 raw_data["l"] = position_state["leverage"]
             else:
                 raw_data["l"] = self.leverages.get(symbol.lower())
-        other_positions_state = all_positions_state
         state = self._get_state(symbol)
         if state:
             if raw_data.get("pa") is None:
