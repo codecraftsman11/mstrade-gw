@@ -1243,10 +1243,7 @@ def calculate_futures_other_positions_sum(
     unrealised_pnl_sum = 0.0
     if is_cross_position:
         for position_key, position_data in other_positions_state.items():
-            try:
-                symbol = position_key.split('.')[-1]
-            except IndexError:
-                continue
+            symbol = position_key.split('.')[-1]
             mark_price = mark_prices.get(symbol)
             symbol_state = symbols_state.get(symbol, {})
             leverage_brackets = symbol_state.get('leverage_brackets', [])
