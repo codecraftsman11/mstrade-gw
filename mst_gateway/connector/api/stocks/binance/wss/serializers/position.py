@@ -77,10 +77,10 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
         account_id = self._wss_api.account_id
         exchange = self._wss_api.name
         schema = self._wss_api.schema
-        positions_state = self._wss_api.storage.get_pattern(
+        all_positions_state = self._wss_api.storage.get_pattern(
             f"{self.subscription}.{account_id}.{exchange}.{schema}.*".lower()
         ) or {}
-        position_state = positions_state.pop(
+        position_state = all_positions_state.pop(
             f"{self.subscription}.{account_id}.{exchange}.{schema}.{symbol}".lower(),
             None,
         )
@@ -89,7 +89,7 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
                 raw_data["l"] = position_state["leverage"]
             else:
                 raw_data["l"] = self.leverages.get(symbol.lower())
-        other_positions_state = positions_state
+        other_positions_state = all_positions_state
         state = self._get_state(symbol)
         if state:
             if raw_data.get("pa") is None:
