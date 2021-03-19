@@ -13,7 +13,6 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
     def __init__(self, wss_api):
         super().__init__(wss_api)
         self.mark_prices = {}
-        self.leverages = {}
 
     @classmethod
     def _get_data_action(cls, message) -> str:
@@ -37,11 +36,6 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
                 symbol = item.get("s")
                 if symbol:
                     self.mark_prices[symbol.lower()] = utils.to_float(item.get("p"))
-        if message.get("table") == "ACCOUNT_CONFIG_UPDATE":
-            for item in message.get("data", []):
-                symbol = item.get("ac", {}).get("s")
-                if symbol:
-                    self.leverages[symbol.lower()] = item["ac"].get("l")
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
         if (
@@ -95,11 +89,8 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
         if not symbol_state:
             return None
         position_state, other_positions_state = self.get_positions_states(symbol)
-        if raw_data.get("l") is None:
-            if position_state:
-                raw_data["l"] = position_state["leverage"]
-            else:
-                raw_data["l"] = self.leverages.get(symbol.lower())
+        if position_state and raw_data.get("l") is None:
+            raw_data["l"] = position_state["leverage"]
         state = self._get_state(symbol)
         if state:
             if raw_data.get("pa") is None:
