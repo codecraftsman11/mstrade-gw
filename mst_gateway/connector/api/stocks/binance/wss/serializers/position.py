@@ -20,7 +20,11 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
         if message.get("table") == "ACCOUNT_UPDATE":
             for item in message.get("data", []):
                 for p in item.get("a", {}).get("P", []):
-                    if p["ps"] == "BOTH" and not utils.to_float(p["pa"]):
+                    if (
+                        p["ps"] == "BOTH" and
+                        not utils.to_float(p["pa"]) and
+                        item["a"].get('m') != 'MARGIN_TYPE_CHANGE'
+                    ):
                         return "delete"
         return super()._get_data_action(message)
 
@@ -41,10 +45,6 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
             return True
         return False
 
-    def is_state_exists(self, symbol: str) -> bool:
-        state = self._get_state(symbol.lower())
-        return bool(state and state[0]["volume"])
-
     def get_raw_data(self, message: dict, item: dict) -> dict:
         table = message.get("table")
         if table == "ACCOUNT_UPDATE":
@@ -58,10 +58,9 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
                     return raw_data
         if message.get("table") == "ACCOUNT_CONFIG_UPDATE":
             if item.get("ac", {}).get("s"):
-                if self.is_state_exists(symbol=item["ac"]["s"]):
-                    raw_data = item["ac"]
-                    raw_data["E"] = item.get("E")
-                    return raw_data
+                raw_data = item["ac"]
+                raw_data["E"] = item.get("E")
+                return raw_data
         return {}
 
     def _load_data(self, message: dict, item: dict) -> Optional[dict]:
@@ -85,9 +84,12 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
             f"{self.subscription}.{account_id}.{exchange}.{schema}.{symbol}".lower(),
             None,
         )
+        if raw_data.get("l") is None:
+            if position_state:
+                raw_data["l"] = position_state["leverage"]
+            else:
+                raw_data["l"] = self.leverages.get(symbol.lower())
         other_positions_state = positions_state
-        if raw_data.get("l") is None and position_state:
-            raw_data["l"] = position_state["leverage"]
         state = self._get_state(symbol)
         if state:
             if raw_data.get("pa") is None:
@@ -102,5 +104,5 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
                 raw_data["l"] = state[0]["leverage"]
             raw_data["liquidation_price"] = state[0]["liquidation_price"]
         return utils.load_futures_position_ws_data(
-            account_id, self.mark_prices, self.leverages, raw_data, symbols_state, other_positions_state
+            account_id, self.mark_prices, raw_data, symbols_state, other_positions_state
         )

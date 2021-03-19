@@ -1267,8 +1267,7 @@ def calculate_futures_positions_sum(
 
 
 def load_futures_position_ws_data(
-    account_id: int, mark_prices: dict, leverages: dict,
-    raw_data: dict, symbols_state: dict, other_positions_state: dict,
+    account_id: int, mark_prices: dict, raw_data: dict, symbols_state: dict, other_positions_state: dict
 ) -> dict:
     symbol = raw_data['s']
     symbol_state = symbols_state.get(symbol.lower(), {})
@@ -1278,7 +1277,7 @@ def load_futures_position_ws_data(
     mark_price = mark_prices.get(symbol.lower())
     entry_price = to_float(raw_data.get('ep'))
     leverage_type = load_ws_futures_position_leverage_type(raw_data.get('mt'))
-    leverage = to_float(raw_data.get("l")) or leverages.get(symbol.lower())
+    leverage = to_float(raw_data.get("l"))
     wallet_balance = load_ws_futures_wallet_balance(raw_data, leverage_type)
     liquidation_price = None
     if (
