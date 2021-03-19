@@ -1230,7 +1230,7 @@ def load_ws_futures_wallet_balance(raw_data: dict, leverage_type: str) -> Option
     return None
 
 
-def load_ws_future_position_direction(side: int) -> int:
+def load_ws_futures_position_direction(side: int) -> int:
     if side == api.BUY:
         return 1
     return -1
@@ -1290,7 +1290,7 @@ def load_futures_position_ws_data(
         maint_margin, unrealised_pnl = calculate_futures_positions_sum(
             is_cross_position, account_id, schema, mark_prices, symbols_state, other_positions_state
         )
-        direction = load_ws_future_position_direction(side)
+        direction = load_ws_futures_position_direction(side)
         params = {
             'abs_volume': abs(volume),
             'mark_price': mark_price,
