@@ -19,10 +19,10 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
     def _get_data_action(cls, message) -> str:
         if message.get("table") == "ACCOUNT_UPDATE":
             for item in message.get("data", []):
-                for p in item.get("a", {}).get("P", []):
+                for position in item.get("a", {}).get("P", []):
                     if (
-                        p["ps"] == "BOTH" and
-                        not utils.to_float(p["pa"]) and
+                        position["ps"] == "BOTH" and
+                        not utils.to_float(position["pa"]) and
                         item["a"].get('m') != 'MARGIN_TYPE_CHANGE'
                     ):
                         return "delete"
@@ -48,13 +48,13 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
     def get_raw_data(self, message: dict, item: dict) -> dict:
         table = message.get("table")
         if table == "ACCOUNT_UPDATE":
-            for p in item.get("a", {}).get("P", []):
-                if p["ps"] == "BOTH":
-                    raw_data = copy(p)
+            for position in item.get("a", {}).get("P", []):
+                if position["ps"] == "BOTH":
+                    raw_data = copy(position)
                     raw_data["E"] = item.get("E")
-                    for b in item.get("a", {}).get("B", []):
-                        if b["a"] == "USDT":
-                            raw_data.update(b)
+                    for balance in item.get("a", {}).get("B", []):
+                        if balance["a"] == "USDT":
+                            raw_data.update(balance)
                     return raw_data
         if message.get("table") == "ACCOUNT_CONFIG_UPDATE":
             if item.get("ac", {}).get("s"):
