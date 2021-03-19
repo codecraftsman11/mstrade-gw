@@ -75,7 +75,7 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
         if not symbol_state:
             return None
         account_id = self._wss_api.account_id
-        exchange = symbol_state['exchange']
+        exchange = self._wss_api.name
         schema = self._wss_api.schema
         positions_state = self._wss_api.storage.get_pattern(
             f"{self.subscription}.{account_id}.{exchange}.{schema}.*".lower()
