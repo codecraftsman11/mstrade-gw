@@ -1237,10 +1237,10 @@ def load_ws_futures_position_direction(side: int) -> int:
 
 
 def calculate_futures_position_unrealised_pnl(
-    mark_price: Optional[float], entry_price: Optional[float], volume: Optional[float]
+    mark_price: Optional[float], entry_price: Optional[float], direction: Optional[int], abs_volume: Optional[float]
 ) -> Optional[float]:
-    if mark_price is not None and entry_price is not None and volume is not None:
-        return (mark_price - entry_price) * volume
+    if mark_price is not None and entry_price is not None and direction and abs_volume is not None:
+        return (mark_price - entry_price) * direction * abs_volume
     return None
 
 
@@ -1265,7 +1265,8 @@ def calculate_futures_other_positions_sum(
                     maint_margin = notional_value * maint_margin_rate - maint_amount
                     maint_margin_sum += maint_margin
                 entry_price = position_data['price']
-                unrealized_pnl = (mark_price - entry_price) * volume
+                direction = load_ws_futures_position_direction(position_data['side'])
+                unrealized_pnl = calculate_futures_position_unrealised_pnl(mark_price, entry_price, direction, abs(volume))
                 unrealised_pnl_sum += unrealized_pnl
     return maint_margin_sum, unrealised_pnl_sum
 
@@ -1277,10 +1278,11 @@ def load_futures_position_ws_data(
     symbol_state = symbols_state.get(symbol.lower(), {})
     volume = to_float(raw_data.get('pa'))
     side = raw_data.get('side') or load_ws_futures_position_side(volume)
+    direction = load_ws_futures_position_direction(side)
     mark_price = mark_prices.get(symbol.lower())
     entry_price = to_float(raw_data.get('ep'))
     unrealised_pnl = to_float(raw_data.get('up')) or calculate_futures_position_unrealised_pnl(
-        mark_price, entry_price, abs(volume)
+        mark_price, entry_price, direction, abs(volume)
     )
     leverage_type = load_ws_futures_position_leverage_type(raw_data.get('mt'))
     leverage = to_float(raw_data.get("l"))
@@ -1296,7 +1298,6 @@ def load_futures_position_ws_data(
         other_positions_maint_margin, other_positions_unrealised_pnl = calculate_futures_other_positions_sum(
             is_cross_position, mark_prices, symbols_state, other_positions_state
         )
-        direction = load_ws_futures_position_direction(side)
         params = {
             'abs_volume': abs(volume),
             'mark_price': mark_price,
