@@ -26,8 +26,7 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
                 for position in item.get("a", {}).get("P", []):
                     position_side = position["ps"]
                     position_amount = utils.to_float(position["pa"])
-                    event_reason = item["a"].get('m')
-                    if position_side == "BOTH" and not position_amount and event_reason != 'MARGIN_TYPE_CHANGE':
+                    if position_side == "BOTH" and not position_amount:
                         return "delete"
         return super()._get_data_action(message)
 
@@ -72,16 +71,39 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
                 return raw_data
         return {}
 
-    def get_positions_states(self, symbol: str) -> Tuple[dict, dict]:
-        all_positions_state = deepcopy(self.__positions_state)
+    def get_position_state_key(self, symbol: str) -> str:
         subscription = self.subscription
         account_id = self._wss_api.account_id
         exchange = self._wss_api.name
         schema = self._wss_api.schema
         position_state_key = f"{subscription}.{account_id}.{exchange}.{schema}.{symbol}".lower()
+        return position_state_key
+
+    def get_position_state_data(self, data: dict) -> dict:
+        position_state_data = {
+            'symbol': data['symbol'].lower(),
+            'side': data['side'],
+            'volume': data['volume'],
+            'price': data['entry_price'],
+            'leverage_type': data['leverage_type'],
+            'leverage': data['leverage'],
+        }
+        return position_state_data
+
+    def get_positions_states(self, symbol: str) -> Tuple[dict, dict]:
+        all_positions_state = deepcopy(self.__positions_state)
+        position_state_key = self.get_position_state_key(symbol)
         position_state = all_positions_state.pop(position_state_key, {})
         other_positions_state = all_positions_state
         return position_state, other_positions_state
+
+    def __update_position_state(self, position_data: dict) -> None:
+        position_state_key = self.get_position_state_key(position_data["symbol"].lower())
+        if position_data["volume"]:
+            position_state_data = self.get_position_state_data(position_data)
+            self.__positions_state[position_state_key] = position_state_data
+        else:
+            self.__positions_state.pop(position_state_key, None)
 
     def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
@@ -106,4 +128,6 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
             raw_data["mt"] = position_state["leverage_type"]
         if raw_data.get("l") is None:
             raw_data["l"] = position_state["leverage"]
-        return utils.load_futures_position_ws_data(raw_data, self.mark_prices, symbols_state, other_positions_state)
+        position_data = utils.load_futures_position_ws_data(raw_data, self.mark_prices, symbols_state, other_positions_state)
+        self.__update_position_state(position_data)
+        return position_data
