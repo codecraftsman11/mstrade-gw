@@ -1236,6 +1236,14 @@ def load_ws_futures_position_direction(side: int) -> int:
     return -1
 
 
+def calculate_futures_position_unrealised_pnl(
+    mark_price: Optional[float], entry_price: Optional[float], volume: Optional[float]
+) -> Optional[float]:
+    if mark_price is not None and entry_price is not None and volume is not None:
+        return (mark_price - entry_price) * volume
+    return None
+
+
 def calculate_futures_other_positions_sum(
     is_cross_position: bool, mark_prices: dict, symbols_state: dict, other_positions_state: dict
 ) -> Tuple[float, float]:
@@ -1268,9 +1276,12 @@ def load_futures_position_ws_data(
     symbol = raw_data['s']
     symbol_state = symbols_state.get(symbol.lower(), {})
     volume = to_float(raw_data.get('pa'))
-    side = load_ws_futures_position_side(volume)
+    side = raw_data.get('side') or load_ws_futures_position_side(volume)
     mark_price = mark_prices.get(symbol.lower())
     entry_price = to_float(raw_data.get('ep'))
+    unrealised_pnl = to_float(raw_data.get('up')) or calculate_futures_position_unrealised_pnl(
+        mark_price, entry_price, abs(volume)
+    )
     leverage_type = load_ws_futures_position_leverage_type(raw_data.get('mt'))
     leverage = to_float(raw_data.get("l"))
     wallet_balance = load_ws_futures_wallet_balance(raw_data, leverage_type)
@@ -1282,7 +1293,7 @@ def load_futures_position_ws_data(
         and wallet_balance is not None
     ):
         is_cross_position = leverage_type == LeverageType.cross
-        maint_margin, unrealised_pnl = calculate_futures_other_positions_sum(
+        other_positions_maint_margin, other_positions_unrealised_pnl = calculate_futures_other_positions_sum(
             is_cross_position, mark_prices, symbols_state, other_positions_state
         )
         direction = load_ws_futures_position_direction(side)
@@ -1290,16 +1301,16 @@ def load_futures_position_ws_data(
             'abs_volume': abs(volume),
             'mark_price': mark_price,
             'wallet_balance': wallet_balance,
-            'unrealised_pnl': unrealised_pnl,
+            'unrealised_pnl': other_positions_unrealised_pnl,
             'leverage_brackets': symbol_state.get('leverage_brackets', []),
         }
         if leverage_type == LeverageType.isolated:
             liquidation_price = BinanceFinFactory.calc_liquidation_isolated_price(
-                entry_price, maint_margin, direction, **params
+                entry_price, other_positions_maint_margin, direction, **params
             )
         if leverage_type == LeverageType.cross:
             liquidation_price = BinanceFinFactory.calc_liquidation_cross_price(
-                entry_price, maint_margin, direction, **params
+                entry_price, other_positions_maint_margin, direction, **params
             )
     liquidation_price = liquidation_price or raw_data.get('liquidation_price')
     if liquidation_price and liquidation_price < 0:
@@ -1314,7 +1325,7 @@ def load_futures_position_ws_data(
         'volume': volume,
         'entry_price': entry_price,
         'mark_price': mark_price,
-        'unrealised_pnl': to_float(raw_data.get('up')),
+        'unrealised_pnl': unrealised_pnl,
         'leverage_type': leverage_type,
         'leverage': leverage,
         'liquidation_price': liquidation_price,

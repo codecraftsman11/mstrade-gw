@@ -10,6 +10,7 @@ class Subscriber:
     __metaclass__ = ABCMeta
     subscriptions = ()
     general_subscribe_available = True
+    detail_subscribe_available = True
     is_close_connection = True
 
     def __init__(self):

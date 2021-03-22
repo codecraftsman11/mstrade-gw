@@ -28,6 +28,12 @@ class BinanceSubscriber(Subscriber):
                 asyncio.create_task(
                     self.send_command(cmd_subscribe, api, subscription, symbols)
                 )
+            elif symbol not in ('*', None) and not self.detail_subscribe_available:
+                try:
+                    await api.handler.send(cmd_subscribe(subscription))
+                except (CancelledError, ConnectionClosedError) as e:
+                    api.logger.warning(f"{self.__class__.__name__} - {e}")
+                    return False
             else:
                 if not api.handler or api.handler.closed:
                     return False
@@ -49,6 +55,13 @@ class BinanceSubscriber(Subscriber):
                 asyncio.create_task(
                     self.send_command(cmd_unsubscribe, api, subscription, list(self._subscribed_symbols))
                 )
+            elif symbol not in ('*', None) and not self.detail_subscribe_available:
+                if not api.handler or api.handler.closed:
+                    return True
+                try:
+                    await api.handler.send(cmd_unsubscribe(subscription))
+                except (CancelledError, ConnectionClosedError) as e:
+                    api.logger.warning(f"{self.__class__.__name__} - {e}")
             else:
                 if not api.handler or api.handler.closed:
                     return True
@@ -124,4 +137,5 @@ class BinanceOrderSubscriber(BinanceSubscriber):
 
 
 class BinanceFuturesPositionSubscriber(BinanceSubscriber):
-    subscriptions = ("!markPrice@arr", "markPrice")
+    subscriptions = ("!markPrice@arr",)
+    detail_subscribe_available = False
