@@ -105,6 +105,13 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
         else:
             self.__positions_state.pop(position_state_key, None)
 
+    def __update_wallet_balances(self, raw_data: dict) -> None:
+        wallet_balances = {
+            'isolated': utils.to_float(raw_data.get('iw')),
+            'cross': utils.to_float(raw_data.get('cw')),
+        }
+        self._wss_api.update_wallet_balances(wallet_balances)
+
     def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
             return None
@@ -119,10 +126,6 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
         position_state, other_positions_state = self.get_positions_states(symbol)
         if not position_state:
             return None
-        if raw_data.get("iw") is None:
-            raw_data['iw'] = self._wss_api.wallet_balances.get('isolated')
-        if raw_data.get("cw") is None:
-            raw_data['cw'] = self._wss_api.wallet_balances.get('cross')
         if raw_data.get("pa") is None:
             raw_data["pa"] = position_state["volume"]
             raw_data["side"] = position_state["side"]
@@ -132,8 +135,14 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
             raw_data["mt"] = position_state["leverage_type"]
         if raw_data.get("l") is None:
             raw_data["l"] = position_state["leverage"]
-        position_data = utils.load_futures_position_ws_data(raw_data, self.mark_prices, symbols_state, other_positions_state)
+        wallet_balances = self._wss_api.get_wallet_balances()
+        if raw_data.get("iw") is None:
+            raw_data['iw'] = wallet_balances.get('isolated')
+        if raw_data.get("cw") is None:
+            raw_data['cw'] = wallet_balances.get('cross')
+        position_data = utils.load_futures_position_ws_data(
+            raw_data, self.mark_prices, symbols_state, other_positions_state
+        )
         self.__update_position_state(position_data)
-        wallet_balances = {'isolated': utils.to_float(raw_data.get('iw')), 'cross': utils.to_float(raw_data.get('cw'))}
-        self._wss_api.update_wallet_balances(wallet_balances)
+        self.__update_wallet_balances(raw_data)
         return position_data
