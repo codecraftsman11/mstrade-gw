@@ -45,10 +45,11 @@ class BinanceWssApi(StockWssApi):
                  throttle_storage=None,
                  schema='exchange',
                  state_storage=None,
-                 register_state=True):
+                 register_state=True,
+                 wallet_balances=None):
         self.test = self._is_test(url)
         super().__init__(name, account_name, url, auth, logger, options, throttle_rate,
-                         throttle_storage, schema, state_storage, register_state)
+                         throttle_storage, schema, state_storage, register_state, wallet_balances)
 
     def _is_test(self, url):
         return url != self.BASE_URL
@@ -221,9 +222,10 @@ class BinanceFuturesWssApi(BinanceWssApi):
                  throttle_storage=None,
                  schema='futures',
                  state_storage=None,
-                 register_state=True):
+                 register_state=True,
+                 wallet_balances=None):
         super().__init__(name, account_name, url, auth, logger, options,
-                         throttle_rate, throttle_storage, schema, state_storage, register_state)
+                         throttle_rate, throttle_storage, schema, state_storage, register_state, wallet_balances)
         self._url = self._generate_url()
 
     def _is_test(self, url):

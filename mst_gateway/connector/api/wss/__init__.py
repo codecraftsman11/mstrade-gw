@@ -40,7 +40,8 @@ class StockWssApi(Connector):
                  throttle_storage=None,
                  schema='margin1',
                  state_storage=None,
-                 register_state=True):
+                 register_state=True,
+                 wallet_balances=None):
         self.tasks = list()
         if name is not None:
             self.name = name.lower()
@@ -58,6 +59,7 @@ class StockWssApi(Connector):
         if state_storage is not None:
             self.storage = StateStorage(state_storage)
         self.register_state = register_state
+        self.wallet_balances = wallet_balances or {}
         super().__init__(auth, logger)
 
     @property
@@ -329,6 +331,9 @@ class StockWssApi(Connector):
     @property
     def state_symbol_list(self) -> list:
         return list(self.__state_data.keys())
+
+    def update_wallet_balances(self, wallet_balances: dict) -> None:
+        self.wallet_balances = wallet_balances
 
     def __exit__(self, exc_type, exc_value, traceback):
         pass

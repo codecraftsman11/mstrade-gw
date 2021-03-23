@@ -460,3 +460,6 @@ class BitmexRestApi(StockRestApi):
             elif int(exc.status_code) == 404:
                 raise NotFoundError(full_message)
             raise ConnectorError(full_message)
+
+    def get_wallet_balances(self, schema: str) -> Optional[dict]:
+        return None

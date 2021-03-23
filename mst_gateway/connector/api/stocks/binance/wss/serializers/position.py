@@ -119,6 +119,10 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
         position_state, other_positions_state = self.get_positions_states(symbol)
         if not position_state:
             return None
+        if raw_data.get("iw") is None:
+            raw_data['iw'] = self._wss_api.wallet_balances.get('isolated')
+        if raw_data.get("cw") is None:
+            raw_data['cw'] = self._wss_api.wallet_balances.get('cross')
         if raw_data.get("pa") is None:
             raw_data["pa"] = position_state["volume"]
             raw_data["side"] = position_state["side"]
@@ -130,4 +134,6 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
             raw_data["l"] = position_state["leverage"]
         position_data = utils.load_futures_position_ws_data(raw_data, self.mark_prices, symbols_state, other_positions_state)
         self.__update_position_state(position_data)
+        wallet_balances = {'isolated': utils.to_float(raw_data.get('iw')), 'cross': utils.to_float(raw_data.get('cw'))}
+        self._wss_api.update_wallet_balances(wallet_balances)
         return position_data
