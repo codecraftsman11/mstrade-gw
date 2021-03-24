@@ -193,6 +193,9 @@ class BinanceWssApi(StockWssApi):
             return 'bookTicker'
         return None
 
+    def init_wallet_balances(self):
+        pass
+
 
 class BinanceFuturesWssApi(BinanceWssApi):
     BASE_URL = 'wss://fstream.binance.com/ws'

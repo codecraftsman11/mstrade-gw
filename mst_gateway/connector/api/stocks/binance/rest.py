@@ -1,7 +1,7 @@
 from uuid import uuid4
 from logging import Logger
 from datetime import datetime, timedelta
-from typing import Optional, Union
+from typing import Union
 from bravado.exception import HTTPError
 from binance.exceptions import BinanceAPIException, BinanceRequestException
 from mst_gateway.calculator import BinanceFinFactory
@@ -650,8 +650,8 @@ class BinanceRestApi(StockRestApi):
         duration = {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}.get(period.lower(), 60)
         return int((now + timedelta(seconds=((num * duration) - now.second))).timestamp())
 
-    def get_wallet_balances(self, schema: str) -> Optional[dict]:
-        wallet_balances = None
+    def get_wallet_balances(self, schema: str) -> dict:
+        wallet_balances = {}
         if schema == OrderSchema.futures:
             response = self._binance_api(self._handler.futures_account_v2)
             for asset in response.get('assets', []):

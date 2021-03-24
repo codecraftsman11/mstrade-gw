@@ -110,7 +110,7 @@ class StockWssApi(Connector):
 
     @abstractmethod
     def init_wallet_balances(self):
-        pass
+        raise NotImplementedError
 
     async def subscribe(self, subscr_channel: Optional[str],  subscr_name: str, symbol: str = None,
                         force: bool = False) -> bool:

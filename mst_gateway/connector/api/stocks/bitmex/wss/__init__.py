@@ -85,3 +85,6 @@ class BitmexWssApi(StockWssApi):
         elif order_status in var.BITMEX_ORDER_DELETE_ACTION_STATUSES:
             return 'delete'
         return 'update'
+
+    def init_wallet_balances(self):
+        pass

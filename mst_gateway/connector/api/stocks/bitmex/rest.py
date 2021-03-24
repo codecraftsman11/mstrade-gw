@@ -461,5 +461,5 @@ class BitmexRestApi(StockRestApi):
                 raise NotFoundError(full_message)
             raise ConnectorError(full_message)
 
-    def get_wallet_balances(self, schema: str) -> Optional[dict]:
-        return None
+    def get_wallet_balances(self, schema: str) -> dict:
+        return {}
