@@ -11,12 +11,7 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
     def __init__(self, wss_api):
         super().__init__(wss_api)
         self.mark_prices = {}
-
-        subscription = self.subscription
-        account_id = self._wss_api.account_id
-        exchange = self._wss_api.name
-        schema = self._wss_api.schema
-        positions_state_key_pattern = f"{subscription}.{account_id}.{exchange}.{schema}.*".lower()
+        positions_state_key_pattern = self.get_position_state_key(symbol="*")
         self.__positions_state = self._wss_api.storage.get_pattern(positions_state_key_pattern) or {}
 
     @classmethod
