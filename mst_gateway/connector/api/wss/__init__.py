@@ -37,11 +37,11 @@ class StockWssApi(Connector):
                  logger: Logger = None,
                  options: dict = None,
                  throttle_rate: int = 30,
+                 throttle_hash_name: str = '*',
                  throttle_storage=None,
                  schema='margin1',
                  state_storage=None,
-                 register_state=True,
-                 wallet_balances=None):
+                 register_state=True):
         self.tasks = list()
         if name is not None:
             self.name = name.lower()
@@ -59,7 +59,16 @@ class StockWssApi(Connector):
         if state_storage is not None:
             self.storage = StateStorage(state_storage)
         self.register_state = register_state
-        self.__wallet_balances = wallet_balances or {}
+        self.stock_rest_api_params = {
+            "name": name,
+            "url": url,
+            "auth": auth,
+            "logger": logger,
+            "throttle_storage": throttle_storage,
+            "throttle_hash_name": throttle_hash_name,
+            "state_storage": state_storage,
+        }
+        self.__wallet_balances = {}
         super().__init__(auth, logger)
 
     @property
@@ -99,12 +108,18 @@ class StockWssApi(Connector):
     def get_state(self, subscr_name: str, symbol: str = None) -> dict:
         return self.router.get_state(subscr_name, symbol)
 
+    @abstractmethod
+    def init_wallet_balances(self):
+        pass
+
     async def subscribe(self, subscr_channel: Optional[str],  subscr_name: str, symbol: str = None,
                         force: bool = False) -> bool:
         _subscriber = self._get_subscriber(subscr_name)
         if not _subscriber:
             self._logger.error(f"There is no subscriber in {self} to subscribe for {subscr_name}")
             return False
+        if subscr_name == "position" and subscr_name not in self.subscriptions:
+            self.init_wallet_balances()
         if force or not self.is_registered(subscr_name, symbol):
             if not await _subscriber.subscribe(self, symbol):
                 self._logger.error(f"Error subscribing {self} to {subscr_name} with args {symbol}")

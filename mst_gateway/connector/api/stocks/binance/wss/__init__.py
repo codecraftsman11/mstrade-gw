@@ -1,6 +1,7 @@
 import asyncio
 from logging import Logger
 from typing import Optional, Union
+from mst_gateway.connector.api.stocks.binance.rest import BinanceRestApi
 from mst_gateway.exceptions import ConnectorError
 from websockets import client
 from . import subscribers as subscr_class
@@ -42,14 +43,14 @@ class BinanceWssApi(StockWssApi):
                  logger: Logger = None,
                  options: dict = None,
                  throttle_rate: int = 30,
+                 throttle_hash_name: str = '*',
                  throttle_storage=None,
                  schema='exchange',
                  state_storage=None,
-                 register_state=True,
-                 wallet_balances=None):
+                 register_state=True):
         self.test = self._is_test(url)
-        super().__init__(name, account_name, url, auth, logger, options, throttle_rate,
-                         throttle_storage, schema, state_storage, register_state, wallet_balances)
+        super().__init__(name, account_name, url, auth, logger, options, throttle_rate, throttle_hash_name,
+                         throttle_storage, schema, state_storage, register_state)
 
     def _is_test(self, url):
         return url != self.BASE_URL
@@ -219,13 +220,13 @@ class BinanceFuturesWssApi(BinanceWssApi):
                  logger: Logger = None,
                  options: dict = None,
                  throttle_rate: int = 30,
+                 throttle_hash_name: str = '*',
                  throttle_storage=None,
                  schema='futures',
                  state_storage=None,
-                 register_state=True,
-                 wallet_balances=None):
-        super().__init__(name, account_name, url, auth, logger, options,
-                         throttle_rate, throttle_storage, schema, state_storage, register_state, wallet_balances)
+                 register_state=True):
+        super().__init__(name, account_name, url, auth, logger, options, throttle_rate, throttle_hash_name,
+                         throttle_storage, schema, state_storage, register_state)
         self._url = self._generate_url()
 
     def _is_test(self, url):
@@ -257,3 +258,14 @@ class BinanceFuturesWssApi(BinanceWssApi):
             action = self.define_action_by_order_status(item.get('X'))
             _messages.append(dict(**message, action=action, data=[item]))
         return _messages
+
+    def init_wallet_balances(self):
+        try:
+            stock_rest_api = BinanceRestApi(**self.stock_rest_api_params)
+            if stock_rest_api.open():
+                wallet_balances = stock_rest_api.get_wallet_balances(self.schema)
+                self.update_wallet_balances(wallet_balances)
+            else:
+                self._logger.warning("Failed to open connection with stock REST API")
+        except Exception as e:
+            self._logger.error(e)
