@@ -8,7 +8,7 @@ class BitmexTradeSerializer(BitmexSerializer):
     subscription = "trade"
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
-        return message['table'] == "trade"
+        return message['table'] == "trade" and self.subscription in self._wss_api.subscriptions
 
     def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):

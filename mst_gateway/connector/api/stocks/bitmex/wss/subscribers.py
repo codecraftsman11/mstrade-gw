@@ -40,7 +40,7 @@ class BitmexSymbolSubscriber(BitmexSubscriber):
 
 
 class BitmexQuoteBinSubscriber(BitmexSubscriber):
-    subscriptions = ("trade", "tradeBin1m")
+    subscriptions = ("tradeBin1m", "trade")
     is_close_connection = False
 
 
