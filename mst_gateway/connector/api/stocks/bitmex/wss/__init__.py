@@ -86,5 +86,14 @@ class BitmexWssApi(StockWssApi):
             return 'delete'
         return 'update'
 
-    def init_wallet_balances(self):
+    def init_positions_state(self) -> None:
+        pass
+
+    def get_position_state(self, symbol: str) -> dict:
+        return {'symbol': symbol.lower()}
+
+    def is_position_exists(self, symbol: str) -> bool:
+        return False
+
+    def update_positions_state(self, data: dict, partial: bool = False) -> None:
         pass

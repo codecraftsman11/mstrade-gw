@@ -68,7 +68,7 @@ class StockWssApi(Connector):
             "throttle_hash_name": throttle_hash_name,
             "state_storage": state_storage,
         }
-        self.__wallet_balances = {}
+        self.positions_state = {}
         super().__init__(auth, logger)
 
     @property
@@ -109,7 +109,19 @@ class StockWssApi(Connector):
         return self.router.get_state(subscr_name, symbol)
 
     @abstractmethod
-    def init_wallet_balances(self):
+    def init_positions_state(self) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_position_state(self, symbol: str) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
+    def is_position_exists(self, symbol: str) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_positions_state(self, data: dict, partial: bool = False) -> None:
         raise NotImplementedError
 
     async def subscribe(self, subscr_channel: Optional[str],  subscr_name: str, symbol: str = None,
@@ -119,7 +131,7 @@ class StockWssApi(Connector):
             self._logger.error(f"There is no subscriber in {self} to subscribe for {subscr_name}")
             return False
         if subscr_name == "position" and subscr_name not in self.subscriptions:
-            self.init_wallet_balances()
+            self.init_positions_state()
         if force or not self.is_registered(subscr_name, symbol):
             if not await _subscriber.subscribe(self, symbol):
                 self._logger.error(f"Error subscribing {self} to {subscr_name} with args {symbol}")
@@ -346,12 +358,6 @@ class StockWssApi(Connector):
     @property
     def state_symbol_list(self) -> list:
         return list(self.__state_data.keys())
-
-    def get_wallet_balances(self) -> dict:
-        return self.__wallet_balances
-
-    def update_wallet_balances(self, wallet_balances: dict) -> None:
-        self.__wallet_balances = wallet_balances
 
     def __exit__(self, exc_type, exc_value, traceback):
         pass

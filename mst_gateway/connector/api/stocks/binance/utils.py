@@ -1245,14 +1245,14 @@ def calculate_futures_position_unrealised_pnl(
 
 
 def calculate_futures_other_positions_sum(
-    is_cross_position: bool, mark_prices: dict, symbols_state: dict, other_positions_state: dict
+    is_cross_position: bool, symbols_state: dict, other_positions_state: dict
 ) -> Tuple[float, float]:
     maint_margin_sum = 0.0
     unrealised_pnl_sum = 0.0
     if is_cross_position:
         for position_key, position_data in other_positions_state.items():
             symbol = position_key.split('.')[-1]
-            mark_price = mark_prices.get(symbol)
+            mark_price = position_data['mark_price']
             symbol_state = symbols_state.get(symbol, {})
             leverage_brackets = symbol_state.get('leverage_brackets', [])
             if mark_price is not None and leverage_brackets:
@@ -1264,22 +1264,22 @@ def calculate_futures_other_positions_sum(
                 if maint_margin_rate is not None and maint_amount is not None:
                     maint_margin = notional_value * maint_margin_rate - maint_amount
                     maint_margin_sum += maint_margin
-                entry_price = position_data['price']
+
                 direction = load_ws_futures_position_direction(position_data['side'])
-                unrealized_pnl = calculate_futures_position_unrealised_pnl(mark_price, entry_price, direction, abs(volume))
+                unrealized_pnl = calculate_futures_position_unrealised_pnl(
+                    mark_price, position_data['entry_price'], direction, abs(volume)
+                )
                 unrealised_pnl_sum += unrealized_pnl
     return maint_margin_sum, unrealised_pnl_sum
 
 
-def load_futures_position_ws_data(
-    raw_data: dict, mark_prices: dict, symbols_state: dict, other_positions_state: dict
-) -> dict:
+def load_futures_position_ws_data(raw_data: dict, symbols_state: dict, other_positions_state: dict) -> dict:
     symbol = raw_data['s']
     symbol_state = symbols_state.get(symbol.lower(), {})
     volume = to_float(raw_data.get('pa'))
     side = raw_data.get('side') or load_ws_futures_position_side(volume)
     direction = load_ws_futures_position_direction(side)
-    mark_price = mark_prices.get(symbol.lower())
+    mark_price = to_float(raw_data.get('p'))
     entry_price = to_float(raw_data.get('ep'))
     unrealised_pnl = to_float(raw_data.get('up')) or calculate_futures_position_unrealised_pnl(
         mark_price, entry_price, direction, abs(volume)
@@ -1288,15 +1288,10 @@ def load_futures_position_ws_data(
     leverage = to_float(raw_data.get("l"))
     wallet_balance = load_ws_futures_wallet_balance(raw_data, leverage_type)
     liquidation_price = None
-    if (
-        side is not None
-        and mark_price is not None
-        and entry_price is not None
-        and wallet_balance is not None
-    ):
+    if side is not None and mark_price is not None and entry_price is not None and wallet_balance is not None:
         is_cross_position = leverage_type == LeverageType.cross
         other_positions_maint_margin, other_positions_unrealised_pnl = calculate_futures_other_positions_sum(
-            is_cross_position, mark_prices, symbols_state, other_positions_state
+            is_cross_position, symbols_state, other_positions_state
         )
         params = {
             'abs_volume': abs(volume),
@@ -1330,3 +1325,38 @@ def load_futures_position_ws_data(
         'leverage': leverage,
         'liquidation_price': liquidation_price,
     }
+
+
+def load_wallet_balances(account_info: dict) -> dict:
+    for asset in account_info.get('assets', []):
+        if asset.get('asset') == "USDT":
+            return {
+                'isolated_wallet_balance': to_float(asset.get('walletBalance')),
+                'cross_wallet_balance': to_float(asset.get('crossWalletBalance')),
+            }
+    return {}
+
+
+def load_position_leverage_type(position_data: dict) -> str:
+    if position_data['isolated']:
+        return LeverageType.isolated
+    return LeverageType.cross
+
+
+def load_positions_state(account_info: dict) -> dict:
+    wallet_balances = load_wallet_balances(account_info)
+    positions_state = {}
+    for position_data in account_info.get('positions', []):
+        symbol = position_data['symbol'].lower()
+        volume = to_float(position_data['positionAmt'])
+        positions_state[symbol] = {
+            'symbol': symbol,
+            'volume': volume,
+            'side': load_ws_futures_position_side(volume),
+            'entry_price': to_float(position_data['entryPrice']),
+            'leverage_type': load_position_leverage_type(position_data),
+            'leverage': to_float(position_data['leverage']),
+            'isolated_wallet_balance': wallet_balances.get('isolated_wallet_balance'),
+            'cross_wallet_balance': wallet_balances.get('cross_wallet_balance'),
+        }
+    return positions_state

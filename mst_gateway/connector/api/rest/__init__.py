@@ -211,7 +211,7 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def get_wallet_balances(self, schema: str) -> dict:
+    def get_positions_state(self, schema: str) -> dict:
         raise NotImplementedError
 
     def __setstate__(self, state):

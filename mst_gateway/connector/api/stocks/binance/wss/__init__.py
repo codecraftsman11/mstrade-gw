@@ -193,7 +193,16 @@ class BinanceWssApi(StockWssApi):
             return 'bookTicker'
         return None
 
-    def init_wallet_balances(self):
+    def init_positions_state(self) -> None:
+        pass
+
+    def get_position_state(self, symbol: str) -> dict:
+        return {'symbol': symbol.lower()}
+
+    def is_position_exists(self, symbol: str) -> bool:
+        return False
+
+    def update_positions_state(self, data: dict, partial: bool = False) -> None:
         pass
 
 
@@ -262,13 +271,44 @@ class BinanceFuturesWssApi(BinanceWssApi):
             _messages.append(dict(**message, action=action, data=[item]))
         return _messages
 
-    def init_wallet_balances(self):
+    def init_positions_state(self) -> None:
         try:
             stock_rest_api = BinanceRestApi(**self.stock_rest_api_params)
             if stock_rest_api.open():
-                wallet_balances = stock_rest_api.get_wallet_balances(self.schema)
-                self.update_wallet_balances(wallet_balances)
+                self.positions_state = stock_rest_api.get_positions_state(self.schema)
             else:
-                self._logger.warning("Failed to open connection with stock REST API")
-        except Exception as e:
-            self._logger.error(e)
+                self._logger.warning('Failed to open connection with stock REST API')
+        except:
+            self._logger.warning('Positions state initialization failed')
+
+    def get_position_state(self, symbol: str) -> dict:
+        return self.positions_state.get(symbol.lower(), {'symbol': symbol.lower()})
+
+    def is_position_exists(self, symbol: str) -> bool:
+        return bool(self.get_position_state(symbol).get('volume'))
+
+    @staticmethod
+    def prepare_position_state(data: dict) -> dict:
+        position_state = {
+            'symbol': data['symbol'].lower(),
+            'volume': data['volume'],
+            'side': data['side'],
+            'mark_price': data['mark_price'],
+            'entry_price': data['entry_price'],
+            'leverage_type': data['leverage_type'],
+            'leverage': data['leverage'],
+            'isolated_wallet_balance': data['isolated_wallet_balance'],
+            'cross_wallet_balance': data['cross_wallet_balance'],
+        }
+        return position_state
+
+    def update_positions_state(self, data: dict, partial: bool = False) -> None:
+        symbol = data["symbol"].lower()
+        if partial:
+            position_state = self.get_position_state(symbol)
+            for k, v in data.items():
+                position_state[k] = v
+            self.positions_state[symbol] = position_state
+        else:
+            position_new_state = self.prepare_position_state(data)
+            self.positions_state[symbol] = position_new_state
