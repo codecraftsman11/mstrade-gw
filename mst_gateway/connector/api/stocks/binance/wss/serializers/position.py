@@ -13,9 +13,10 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
         if message.get("table") == "ACCOUNT_UPDATE":
             for item in message.get("data", []):
                 for position in item.get("a", {}).get("P", []):
-                    position_side = position["ps"]
-                    position_amount = utils.to_float(position["pa"])
-                    if position_side == "BOTH" and not position_amount:
+                    symbol = position.get("s")
+                    position_side = position.get("ps")
+                    position_amount = utils.to_float(position.get("pa"))
+                    if symbol and position_side == "BOTH" and not position_amount:
                         return "delete"
         return super()._get_data_action(message)
 
@@ -33,7 +34,7 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
                 event_reason = item.get("a", {}).get("m")
                 if event_reason == "MARGIN_TYPE_CHANGE":
                     for position in item["a"].get("P", []):
-                        symbol = item.get("s")
+                        symbol = position.get("s")
                         position_side = position.get("ps")
                         if symbol and position_side == "BOTH" and not self._wss_api.is_position_exists(symbol):
                             leverage_type = utils.load_ws_futures_position_leverage_type(position.get("mt"))
