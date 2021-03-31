@@ -25,7 +25,7 @@ class Serializer:
         pass
 
     @abstractmethod
-    def _get_data(self, message: any) -> Tuple[str, list]:
+    async def _get_data(self, message: any) -> Tuple[str, list]:
         raise NotImplementedError
 
     def _get_state(self, symbol: str = None) -> Optional[list]:
@@ -42,8 +42,8 @@ class Serializer:
             self._state = dict()
         self._state[symbol.lower()] = data
 
-    def data(self, message) -> Optional[dict]:
-        (action, data) = self._get_data(message)
+    async def data(self, message) -> Optional[dict]:
+        (action, data) = await self._get_data(message)
         if not data:
             return None
         return {

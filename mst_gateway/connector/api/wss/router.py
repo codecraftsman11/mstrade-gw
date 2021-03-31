@@ -22,11 +22,11 @@ class Router:
         self._wss_api = wss_api
         self._routed_data = None
 
-    def get_data(self, message: dict) -> dict:
+    async def get_data(self, message: dict) -> dict:
         data = {}
         serializers = self._get_serializers(message)
         for subscr_name, subscr_serializer in serializers.items():
-            _data = subscr_serializer.data(self._routed_data[subscr_name])
+            _data = await subscr_serializer.data(self._routed_data[subscr_name])
             if _data:
                 data[subscr_name] = _data
         return data

@@ -10,7 +10,7 @@ class BitmexWalletSerializer(BitmexSerializer):
     def is_item_valid(self, message: dict, item: dict) -> bool:
         return message.get('table') == "margin"
 
-    def _load_data(self, message: dict, item: dict) -> Optional[dict]:
+    async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
             return None
         state = self._get_state('wallet')
@@ -21,7 +21,7 @@ class BitmexWalletSerializer(BitmexSerializer):
         try:
             currencies = {}
             if self._wss_api.register_state:
-                if (currencies := self._wss_api.storage.get(
+                if (currencies := await self._wss_api.storage.get(
                         'currency', self._wss_api.name, self._wss_api.schema)) is None:
                     return None
             assets = ('btc', 'usd')
@@ -46,8 +46,8 @@ class BitmexWalletSerializer(BitmexSerializer):
             if _mapped_key:
                 item[_mapped_key] = balance[k]
 
-    def _append_item(self, data: list, message: dict, item: dict):
-        valid_item = self._load_data(message, item)
+    async def _append_item(self, data: list, message: dict, item: dict):
+        valid_item = await self._load_data(message, item)
         if not valid_item:
             return None
         self._update_state('wallet', valid_item)

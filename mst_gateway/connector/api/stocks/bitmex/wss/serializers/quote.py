@@ -36,7 +36,7 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
             return True
         return message['table'] in ("trade", "tradeBin1m")
 
-    def _load_data(self, message: dict, item: dict) -> Optional[dict]:
+    async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
             return None
         state_data = None

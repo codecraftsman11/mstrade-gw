@@ -11,18 +11,18 @@ class BinanceWalletSerializer(BinanceSerializer):
     def is_item_valid(self, message: dict, item) -> bool:
         return message['table'] == 'outboundAccountPosition'
 
-    def _load_data(self, message: dict, item: dict) -> Optional[dict]:
+    async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
             return None
         state_data = None
         if self._wss_api.register_state:
-            if (state_data := self._wss_api.storage.get(
+            if (state_data := await self._wss_api.storage.get(
                     f'{self.subscription}.{self._wss_api.account_id}', schema=self._wss_api.schema)) is None:
                 return None
         if "*" in self._wss_api.subscriptions.get(self.subscription, {}):
             currencies = {}
             if self._wss_api.register_state:
-                if (currencies := self._wss_api.storage.get(
+                if (currencies := await self._wss_api.storage.get(
                         'currency', self._wss_api.name, self._wss_api.schema)) is None:
                     return None
             return self._wallet_list(item, state_data, currencies)
@@ -45,8 +45,8 @@ class BinanceWalletSerializer(BinanceSerializer):
         elif self._wss_api.schema == OrderSchema.margin2:
             return dict(balances=utils.ws_margin_balance_data(item.get('B'), _state_balances))
 
-    def _append_item(self, data: list, message: dict, item: dict):
-        valid_item = self._load_data(message, item)
+    async def _append_item(self, data: list, message: dict, item: dict):
+        valid_item = await self._load_data(message, item)
         if not valid_item:
             return None
         self._update_data(data, valid_item)

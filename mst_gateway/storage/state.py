@@ -1,37 +1,19 @@
-from .base import BaseStorage
+from .base import BaseAsyncStorage, BaseSyncStorage
 
 
-class StateStorage(BaseStorage):
+class StateStorage(BaseSyncStorage):
 
-    def set(self, key, value: dict):
-        self._set(self._key(key), value)
+    def set(self, key, value) -> None:
+        super().set(key=key, value=value)
 
     def get(self, key, exchange: str = None, schema: str = None) -> dict:
-        result = self._get(self._key(key)) or dict()
-        if exchange and schema:
-            try:
-                return result[exchange.lower()][schema.lower()]
-            except KeyError:
-                return dict()
-        elif exchange or schema:
-            _key = exchange or schema
-            try:
-                return result[_key.lower()]
-            except KeyError:
-                return dict()
-        return result
+        return super().get(key=key, exchange=exchange, schema=schema)
 
-    def get_pattern(self, key):
-        return self._get_pattern(self._key(key))
 
-    def remove(self, key):
-        try:
-            self._remove(self._key(key))
-        except KeyError:
-            pass
+class AsyncStateStorage(BaseAsyncStorage):
 
-    def remove_pattern(self, key):
-        try:
-            return self._remove_pattern(self._key(key))
-        except KeyError:
-            pass
+    async def set(self, key, value) -> None:
+        await super().set(key=key, value=value)
+
+    async def get(self, key, exchange: str = None, schema: str = None) -> dict:
+        return await super(AsyncStateStorage, self).get(key=key, exchange=exchange, schema=schema)

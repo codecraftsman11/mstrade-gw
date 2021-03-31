@@ -1,15 +1,14 @@
-from abc import abstractmethod
-from typing import Optional
 from hashlib import sha1
+from typing import Optional
 
 
 class BaseStorage:
-    timeout = None
+    _timeout = None
 
-    def __init__(self, storage=None, timeout: Optional[int] = None):
-        self._storage = storage or dict()
+    def __init__(self, storage=None, timeout: Optional[int] = None) -> None:
+        self._storage = storage or {}
         if isinstance(timeout, int):
-            self.timeout = timeout
+            self._timeout = timeout
 
     @property
     def storage(self):
@@ -19,100 +18,9 @@ class BaseStorage:
     def storage(self, _storage):
         self._storage = _storage
 
-    @abstractmethod
-    def set(self, *args, **kwargs):
-        raise NotImplementedError
-
-    @abstractmethod
-    def get(self, *args, **kwargs):
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_pattern(self, *args, **kwargs):
-        raise NotImplementedError
-
-    @abstractmethod
-    def remove(self, *args, **kwargs):
-        raise NotImplementedError
-
-    def get_keys(self, key):
-        if isinstance(self._storage, dict):
-            return [key] if key in self._storage else list()
-        return self._get_cache_keys(key)
-
-    def _set(self, key: str, data):
-        if isinstance(self._storage, dict):
-            if isinstance(self._get_dict(key), dict):
-                self._add_dict[key].update(data)
-            else:
-                self._add_dict[key] = data
-        else:
-            _tmp = self._get_cache(key, None)
-            if isinstance(_tmp, dict):
-                _tmp.update(data)
-                self._set_cache(key, _tmp, timeout=self.timeout)
-            else:
-                self._set_cache(key, data, timeout=self.timeout)
-
     @property
-    def _get(self):
-        return self._get_dict if isinstance(self._storage, dict) else self._get_cache
-
-    @property
-    def _get_pattern(self):
-        return self._get_dict if isinstance(self._storage, dict) else self._get_cache_pattern
-
-    @property
-    def _remove(self):
-        return self._remove_dict if isinstance(self._storage, dict) else self._remove_cache
-
-    @property
-    def _remove_pattern(self):
-        return self._remove_dict if isinstance(self._storage, dict) else self._remove_cache_pattern
-
-    @property
-    def _set_dict(self):
-        return self._storage.update
-
-    @property
-    def _add_dict(self):
-        return self._storage
-
-    @property
-    def _get_dict(self):
-        return self._storage.get
-
-    @property
-    def _remove_dict(self):
-        return self._storage.pop
-
-    @property
-    def _set_cache(self):
-        return self._storage.set
-
-    @property
-    def _add_cache(self):
-        return self._storage.add
-
-    @property
-    def _get_cache(self):
-        return self._storage.get
-
-    @property
-    def _get_cache_pattern(self):
-        return self._storage.get_pattern
-
-    @property
-    def _get_cache_keys(self):
-        return self._storage.get_keys
-
-    @property
-    def _remove_cache_pattern(self):
-        return self._storage.delete_pattern
-
-    @property
-    def _remove_cache(self):
-        return self._storage.delete
+    def is_dict(self) -> bool:
+        return isinstance(self._storage, dict)
 
     @staticmethod
     def _key(key: (str, list, tuple, dict)) -> str:
@@ -121,3 +29,145 @@ class BaseStorage:
         if isinstance(key, dict):
             return sha1('|'.join(key.values()).encode().lower()).hexdigest()
         return str(key).lower()
+
+    def _set_dict(self, key: str, value) -> None:
+        if isinstance(self._storage.get(key), dict) and isinstance(value, dict):
+            self._storage[key].update(value)
+        else:
+            self._storage[key] = value
+
+    def _get_dict(self, key: str, exchange: str = None, schema: str = None) -> dict:
+        result = self._storage.get(key, {})
+        if exchange:
+            result = result.get(exchange.lower(), {})
+        if schema:
+            result = result.get(schema.lower(), {})
+        return result or None
+
+    def _remove_dict(self, key: str) -> None:
+        self._storage.pop(key, None)
+
+
+class BaseSyncStorage(BaseStorage):
+
+    def set(self, *args, **kwargs) -> None:
+        key = kwargs.get("key")
+        value = kwargs.get("value")
+        if key and value:
+            _key = self._key(key)
+            if self.is_dict:
+                _tmp = self._get_dict(_key)
+            else:
+                _tmp = self._storage.get(_key)
+            if isinstance(_tmp, dict) and isinstance(value, dict):
+                _tmp.update(value)
+            else:
+                _tmp = value
+            if self.is_dict:
+                self._set_dict(_key, _tmp)
+            else:
+                self._storage.set(_key, _tmp, timeout=self._timeout)
+
+    def get(self, *args, **kwargs) -> dict:
+        result = {}
+        key = kwargs.get("key")
+        exchange = kwargs.get("exchange")
+        schema = kwargs.get("schema")
+        if key:
+            _key = self._key(key)
+            if self.is_dict:
+                result = self._get_dict(key) or {}
+            else:
+                result = self._storage.get(key) or {}
+            if exchange:
+                result = result.get(exchange.lower(), {})
+            if schema:
+                result = result.get(schema.lower(), {})
+        return result
+
+    def get_pattern(self, pattern) -> dict:
+        _pattern = self._key(pattern)
+        if self.is_dict:
+            return self._get_dict(_pattern)
+        return self._storage.get_pattern(_pattern) or {}
+
+    def get_keys(self, pattern) -> list:
+        _pattern = self._key(pattern)
+        if self.is_dict:
+            return [_pattern] if self._get_dict(_pattern) else []
+        return self._storage.get_keys(_pattern) or []
+
+    def remove_pattern(self, pattern) -> None:
+        _pattern = self._key(pattern)
+        if self.is_dict:
+            self._remove_dict(_pattern)
+        self._storage.delete_pattern(_pattern)
+
+
+class BaseAsyncStorage(BaseStorage):
+
+    async def set(self, *args, **kwargs) -> None:
+        key = kwargs.get("key")
+        value = kwargs.get("value")
+        if key and value:
+            _key = self._key(key)
+            if self.is_dict:
+                _tmp = self._get_dict(_key)
+            else:
+                _tmp = await self._storage.get_async(_key)
+            if isinstance(_tmp, dict) and isinstance(_tmp, dict):
+                _tmp.update(value)
+            else:
+                _tmp = value
+            if self.is_dict:
+                self._set_dict(_key, _tmp)
+            else:
+                await self._storage.set_async(_key, _tmp, timeout=self._timeout)
+
+    async def get(self, *args, **kwargs):
+        result = {}
+        key = kwargs.get("key")
+        exchange = kwargs.get("exchange")
+        schema = kwargs.get("schema")
+        _key = self._key(key)
+        if key:
+            if self.is_dict:
+                result = self._get_dict(key) or {}
+            else:
+                result = await self._storage.get_async(key) or {}
+            if exchange:
+                result = result.get(exchange.lower(), {})
+            if schema:
+                result = result.get(schema.lower(), {})
+        return result
+
+    async def get_pattern(self, pattern) -> dict:
+        _pattern = self._key(pattern)
+        if self.is_dict:
+            return self._get_dict(_pattern)
+        keys = await self._storage.keys_async(_pattern)
+        result = {}
+        for key in keys:
+            value = await self.get(key)
+            if value:
+                result[key] = value
+        return result
+
+    async def get_keys(self, pattern) -> list:
+        _pattern = self._key(pattern)
+        if self.is_dict:
+            return [_pattern] if self._get_dict(_pattern) else []
+        keys = await self._storage.keys_async(_pattern)
+        return keys or []
+
+    async def remove(self, key) -> None:
+        _key = self._key(key)
+        if self.is_dict:
+            self._remove_dict(_key)
+        await self._storage.delete_async(_key)
+
+    async def remove_pattern(self, pattern) -> None:
+        _pattern = self._key(pattern)
+        if self.is_dict:
+            self._remove_dict(_pattern)
+        await self._storage.delete_pattern_async(_pattern)
