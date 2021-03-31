@@ -74,17 +74,21 @@ class BinanceSubscriber(Subscriber):
         watcher for new symbol when `general_subscribe_available` is False
         """
         while api.handler and not api.handler.closed:
-            await asyncio.sleep(api.state_refresh_period)
-            new_registered_symbols = set(api.state_symbol_list)
-            unsubscribe_symbols = self._subscribed_symbols.difference(new_registered_symbols)
-            subscribe_symbols = new_registered_symbols.difference(self._subscribed_symbols)
-            for symbol in unsubscribe_symbols:
-                await asyncio.sleep(1)
-                await self._unsubscribe(api, symbol)
-            for symbol in subscribe_symbols:
-                await asyncio.sleep(1)
-                await self._subscribe(api, symbol)
-            self._subscribed_symbols = new_registered_symbols
+            redis = await api.storage.client.get_client()
+            channels = await redis.subscribe('symbol')
+            if channels:
+                channel = channels[0]
+                while (await channel.wait_message()):
+                    new_registered_symbols = set(api.state_symbol_list)
+                    unsubscribe_symbols = self._subscribed_symbols.difference(new_registered_symbols)
+                    subscribe_symbols = new_registered_symbols.difference(self._subscribed_symbols)
+                    for symbol in unsubscribe_symbols:
+                        await asyncio.sleep(1)
+                        await self._unsubscribe(api, symbol)
+                    for symbol in subscribe_symbols:
+                        await asyncio.sleep(1)
+                        await self._subscribe(api, symbol)
+                    self._subscribed_symbols = new_registered_symbols
 
 
 class BinanceOrderBookSubscriber(BinanceSubscriber):

@@ -27,7 +27,6 @@ class StockWssApi(Connector):
     throttle = ThrottleWss()
     storage = AsyncStateStorage()
     __state_data = {}
-    __state_refresh_period = 15 * 60
 
     def __init__(self,
                  name: str = None,
@@ -67,10 +66,6 @@ class StockWssApi(Connector):
     @property
     def subscriptions(self):
         return self._subscriptions
-
-    @property
-    def state_refresh_period(self):
-        return self.__state_refresh_period
 
     def _parse_account_name(self, account_name: str):
         _split_acc = account_name.split('.')
@@ -320,9 +315,15 @@ class StockWssApi(Connector):
         return self.__state_data.get(symbol.lower())
 
     async def __load_state_data(self):
-        while True:
-            self.__state_data = await self.storage.get('symbol', self.name, self.schema)
-            await asyncio.sleep(self.__state_refresh_period)
+        self.__state_data = await self.storage.get('symbol', self.name, self.schema)
+        redis = await self.storage.storage.client.get_client()
+        channels = await redis.subscribe('symbol')
+        if channels:
+            channel = channels[0]
+            while (await channel.wait_message()):
+                symbols = await channel.get_json()
+                if symbols:
+                    self.__state_data = symbols.get(self.name, {}).get(self.schema, {})
 
     @property
     def state_symbol_list(self) -> list:
