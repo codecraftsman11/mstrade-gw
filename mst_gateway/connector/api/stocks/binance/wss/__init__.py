@@ -1,13 +1,12 @@
 import asyncio
 from logging import Logger
 from typing import Optional, Union
-from mst_gateway.connector.api.stocks.binance.rest import BinanceRestApi
 from mst_gateway.exceptions import ConnectorError
 from websockets import client
 from . import subscribers as subscr_class
 from .router import BinanceWssRouter, BinanceFuturesWssRouter
 from .utils import is_auth_ok, make_cmd
-from ..lib import Client
+from ..lib import AsyncClient
 from ..utils import to_float
 from .... import OrderSchema
 from ....wss import StockWssApi
@@ -43,13 +42,12 @@ class BinanceWssApi(StockWssApi):
                  logger: Logger = None,
                  options: dict = None,
                  throttle_rate: int = 30,
-                 throttle_hash_name: str = '*',
                  throttle_storage=None,
                  schema='exchange',
                  state_storage=None,
                  register_state=True):
         self.test = self._is_test(url)
-        super().__init__(name, account_name, url, auth, logger, options, throttle_rate, throttle_hash_name,
+        super().__init__(name, account_name, url, auth, logger, options, throttle_rate,
                          throttle_storage, schema, state_storage, register_state)
 
     def _is_test(self, url):
@@ -58,33 +56,38 @@ class BinanceWssApi(StockWssApi):
     async def _refresh_key(self):
         while True:
             await asyncio.sleep(self.refresh_key_time)
-            self._generate_auth_url()
+            await self._generate_auth_url()
 
     async def open(self, **kwargs):
         if kwargs.get('is_auth') or self.auth_connect:
             self.auth_connect = True
-            self._generate_auth_url()
+            await self._generate_auth_url()
             _task = asyncio.create_task(self._refresh_key())
             self.tasks.append(_task)
         return await super().open(**kwargs)
 
-    def _generate_auth_url(self):
-        key = self._generate_listen_key()
+    async def _generate_auth_url(self):
+        key = await self._generate_listen_key()
         self._url = f"{self._url}/{key}"
 
-    def _generate_listen_key(self):
-        bin_client = Client(api_key=self.auth.get('api_key'), api_secret=self.auth.get('api_secret'), test=self.test)
-        if self.schema == OrderSchema.exchange:
-            key = bin_client.stream_get_listen_key()
-        elif self.schema == OrderSchema.margin2:
-            key = bin_client.margin_stream_get_listen_key()
-        elif self.schema == OrderSchema.futures:
-            key = bin_client.futures_stream_get_listen_key()
-        else:
-            raise ConnectorError(f"Invalid schema {self.schema}.")
-        if not key:
-            raise ConnectorError(f"Binance api error. Details: Invalid listen key")
-        return key
+    async def _generate_listen_key(self):
+        async with AsyncClient(
+                api_key=self.auth.get('api_key'), api_secret=self.auth.get('api_secret'), test=self.test
+        ) as bin_client:
+            try:
+                if self.schema == OrderSchema.exchange:
+                    key = await bin_client.stream_get_listen_key()
+                elif self.schema == OrderSchema.margin2:
+                    key = await bin_client.margin_stream_get_listen_key()
+                elif self.schema == OrderSchema.futures:
+                    key = await bin_client.futures_stream_get_listen_key()
+                else:
+                    raise ConnectorError(f"Invalid schema {self.schema}.")
+            except Exception as e:
+                raise ConnectorError(e)
+            if not key:
+                raise ConnectorError(f"Binance api error. Details: Invalid listen key")
+            return key
 
     async def _connect(self, **kwargs):
         kwargs['ws_options'] = {
@@ -115,7 +118,7 @@ class BinanceWssApi(StockWssApi):
             _message['data'].extend(message)
             return _message
         if isinstance(message, dict):
-            _message['table'] = message.get('e') if 'e' in message else self.__book_ticker_table(message)
+            _message['table'] = message.get('e')
             _message['data'].append(message)
             return _message
         return None
@@ -187,24 +190,6 @@ class BinanceWssApi(StockWssApi):
             return 'delete'
         return 'update'
 
-    @staticmethod
-    def __book_ticker_table(data) -> Optional[str]:
-        if {'u', 'E', 'T', 's', 'b', 'B', 'a', 'A'} >= data.keys():
-            return 'bookTicker'
-        return None
-
-    def init_positions_state(self) -> None:
-        pass
-
-    def get_position_state(self, symbol: str) -> dict:
-        return {'symbol': symbol.lower()}
-
-    def is_position_exists(self, symbol: str) -> bool:
-        return False
-
-    def update_positions_state(self, data: dict, partial: bool = False) -> None:
-        pass
-
 
 class BinanceFuturesWssApi(BinanceWssApi):
     BASE_URL = 'wss://fstream.binance.com/ws'
@@ -232,12 +217,11 @@ class BinanceFuturesWssApi(BinanceWssApi):
                  logger: Logger = None,
                  options: dict = None,
                  throttle_rate: int = 30,
-                 throttle_hash_name: str = '*',
                  throttle_storage=None,
                  schema='futures',
                  state_storage=None,
                  register_state=True):
-        super().__init__(name, account_name, url, auth, logger, options, throttle_rate, throttle_hash_name,
+        super().__init__(name, account_name, url, auth, logger, options, throttle_rate,
                          throttle_storage, schema, state_storage, register_state)
         self._url = self._generate_url()
 
@@ -270,45 +254,3 @@ class BinanceFuturesWssApi(BinanceWssApi):
             action = self.define_action_by_order_status(item.get('X'))
             _messages.append(dict(**message, action=action, data=[item]))
         return _messages
-
-    def init_positions_state(self) -> None:
-        try:
-            stock_rest_api = BinanceRestApi(**self.stock_rest_api_params)
-            if stock_rest_api.open():
-                self.positions_state = stock_rest_api.get_positions_state(self.schema)
-            else:
-                self._logger.warning('Failed to open connection with stock REST API')
-        except:
-            self._logger.warning('Positions state initialization failed')
-
-    def get_position_state(self, symbol: str) -> dict:
-        return self.positions_state.get(symbol.lower(), {'symbol': symbol.lower()})
-
-    def is_position_exists(self, symbol: str) -> bool:
-        return bool(self.get_position_state(symbol).get('volume'))
-
-    @staticmethod
-    def prepare_position_state(data: dict) -> dict:
-        position_state = {
-            'symbol': data['symbol'].lower(),
-            'volume': data['volume'],
-            'side': data['side'],
-            'mark_price': data['mark_price'],
-            'entry_price': data['entry_price'],
-            'leverage_type': data['leverage_type'],
-            'leverage': data['leverage'],
-            'isolated_wallet_balance': data['isolated_wallet_balance'],
-            'cross_wallet_balance': data['cross_wallet_balance'],
-        }
-        return position_state
-
-    def update_positions_state(self, data: dict, partial: bool = False) -> None:
-        symbol = data["symbol"].lower()
-        if partial:
-            position_state = self.get_position_state(symbol)
-            for k, v in data.items():
-                position_state[k] = v
-            self.positions_state[symbol] = position_state
-        else:
-            position_new_state = self.prepare_position_state(data)
-            self.positions_state[symbol] = position_new_state

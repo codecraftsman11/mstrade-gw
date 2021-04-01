@@ -460,6 +460,3 @@ class BitmexRestApi(StockRestApi):
             elif int(exc.status_code) == 404:
                 raise NotFoundError(full_message)
             raise ConnectorError(full_message)
-
-    def get_positions_state(self, schema: str) -> dict:
-        return {}

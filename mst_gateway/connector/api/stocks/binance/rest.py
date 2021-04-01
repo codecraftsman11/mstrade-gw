@@ -649,10 +649,3 @@ class BinanceRestApi(StockRestApi):
         period = rate[len(rate)-1:]
         duration = {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}.get(period.lower(), 60)
         return int((now + timedelta(seconds=((num * duration) - now.second))).timestamp())
-
-    def get_positions_state(self, schema: str) -> dict:
-        positions_state = {}
-        if schema == OrderSchema.futures:
-            account_info = self._binance_api(self._handler.futures_account_v2)
-            positions_state = utils.load_positions_state(account_info)
-        return positions_state

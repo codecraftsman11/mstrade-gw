@@ -210,10 +210,6 @@ class StockRestApi(Connector):
                         leverage: Union[float, int], **kwargs) -> tuple:
         raise NotImplementedError
 
-    @abstractmethod
-    def get_positions_state(self, schema: str) -> dict:
-        raise NotImplementedError
-
     def __setstate__(self, state):
         self.__dict__ = state
         self.open()

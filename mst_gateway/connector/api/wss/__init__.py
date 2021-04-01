@@ -26,6 +26,7 @@ class StockWssApi(Connector):
     BASE_URL = None
     throttle = ThrottleWss()
     storage = StateStorage()
+    partial_state_data = {}
     __state_data = {}
     __state_refresh_period = 15 * 60
 
@@ -37,7 +38,6 @@ class StockWssApi(Connector):
                  logger: Logger = None,
                  options: dict = None,
                  throttle_rate: int = 30,
-                 throttle_hash_name: str = '*',
                  throttle_storage=None,
                  schema='margin1',
                  state_storage=None,
@@ -59,16 +59,6 @@ class StockWssApi(Connector):
         if state_storage is not None:
             self.storage = StateStorage(state_storage)
         self.register_state = register_state
-        self.stock_rest_api_params = {
-            "name": name,
-            "url": url,
-            "auth": auth,
-            "logger": logger,
-            "throttle_storage": throttle_storage,
-            "throttle_hash_name": throttle_hash_name,
-            "state_storage": state_storage,
-        }
-        self.positions_state = {}
         super().__init__(auth, logger)
 
     @property
@@ -108,30 +98,12 @@ class StockWssApi(Connector):
     def get_state(self, subscr_name: str, symbol: str = None) -> dict:
         return self.router.get_state(subscr_name, symbol)
 
-    @abstractmethod
-    def init_positions_state(self) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_position_state(self, symbol: str) -> dict:
-        raise NotImplementedError
-
-    @abstractmethod
-    def is_position_exists(self, symbol: str) -> bool:
-        raise NotImplementedError
-
-    @abstractmethod
-    def update_positions_state(self, data: dict, partial: bool = False) -> None:
-        raise NotImplementedError
-
     async def subscribe(self, subscr_channel: Optional[str],  subscr_name: str, symbol: str = None,
                         force: bool = False) -> bool:
         _subscriber = self._get_subscriber(subscr_name)
         if not _subscriber:
             self._logger.error(f"There is no subscriber in {self} to subscribe for {subscr_name}")
             return False
-        if subscr_name == "position" and subscr_name not in self.subscriptions:
-            self.init_positions_state()
         if force or not self.is_registered(subscr_name, symbol):
             if not await _subscriber.subscribe(self, symbol):
                 self._logger.error(f"Error subscribing {self} to {subscr_name} with args {symbol}")
@@ -359,16 +331,17 @@ class StockWssApi(Connector):
     def state_symbol_list(self) -> list:
         return list(self.__state_data.keys())
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, exc_tb):
         pass
 
     def __del__(self):
         pass
 
     async def __aenter__(self):
+        await self.open()
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(self, exc_type, exc_value, exc_tb):
         await self.close()
 
     async def __adel__(self):

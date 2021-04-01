@@ -1,96 +1,108 @@
 from __future__ import annotations
-from copy import copy, deepcopy
-from typing import Optional, Tuple
+from copy import deepcopy
+from typing import Optional, Tuple, TYPE_CHECKING
+from mst_gateway.calculator.binance import BinanceFinFactory
+from mst_gateway.connector.api.types import LeverageType
 from mst_gateway.connector.api.stocks.binance import utils
+from mst_gateway.connector.api.stocks.binance.var import BinancePositionSideMode
 from mst_gateway.connector.api.stocks.binance.wss.serializers.base import BinanceSerializer
+
+
+if TYPE_CHECKING:
+    from ... import BinanceWssApi
 
 
 class BinanceFuturesPositionSerializer(BinanceSerializer):
     subscription = "position"
 
-    @classmethod
-    def _get_data_action(cls, message) -> str:
-        if message.get("table") == "ACCOUNT_UPDATE":
-            for item in message.get("data", []):
-                for position in item.get("a", {}).get("P", []):
-                    symbol = position.get("s")
-                    position_side = position.get("ps")
-                    position_amount = utils.to_float(position.get("pa"))
-                    if symbol and position_side == "BOTH" and not position_amount:
-                        return "delete"
-        return super()._get_data_action(message)
+    def __init__(self, wss_api: BinanceWssApi):
+        super().__init__(wss_api)
+        self._initialized = bool(self.subscription in self._wss_api.subscriptions)
+        self._position_state = wss_api.partial_state_data[self.subscription].get('position_state', {})
+        self._leverage_brackets_state = wss_api.partial_state_data[self.subscription].get('leverage_brackets', {})
+        self._item_symbol = None
 
     def prefetch(self, message: dict) -> None:
+        if not self._initialized:
+            return None
         table = message.get("table")
         if table == "markPriceUpdate":
             for item in message.get("data", []):
-                symbol = item.get("s")
-                if symbol:
-                    mark_price = utils.to_float(item.get("p"))
-                    data = {'symbol': symbol.lower(), 'mark_price': mark_price}
-                    self._wss_api.update_positions_state(data, partial=True)
+                if symbol := item.get("s"):
+                    self.update_positions_state(
+                        symbol,
+                        mark_price=utils.to_float(item.get('p')),
+                        action='update'
+                    )
         if table == "ACCOUNT_UPDATE":
             for item in message.get("data", []):
-                event_reason = item.get("a", {}).get("m")
-                if event_reason == "MARGIN_TYPE_CHANGE":
-                    for position in item["a"].get("P", []):
-                        symbol = position.get("s")
-                        position_side = position.get("ps")
-                        if symbol and position_side == "BOTH" and not self._wss_api.is_position_exists(symbol):
-                            leverage_type = utils.load_ws_futures_position_leverage_type(position.get("mt"))
-                            data = {"symbol": symbol.lower(), "leverage_type": leverage_type}
-                            self._wss_api.update_positions_state(data, partial=True)
+                _balances = {}
+                for balance in item['a'].get('B', []):
+                    _balances.setdefault(
+                        balance['a'].lower(),
+                        {
+                            'cross_wallet_balance': utils.to_float(balance['cw'])
+                        }
+                    )
+                for position in item['a'].get('P', []):
+                    if (symbol := position.get('s')) and position.get('ps') == BinancePositionSideMode.BOTH:
+                        _wallet_asset = position.get('ma', '').lower()
+                        volume = utils.to_float(position.get('pa'))
+                        entry_price = utils.to_float(position.get('ep'))
+                        unrealised_pnl = utils.to_float(position.get('up'))
+                        self.update_positions_state(
+                            symbol,
+                            volume=volume,
+                            side=utils.load_ws_futures_position_side(volume),
+                            entry_price=entry_price,
+                            mark_price=BinanceFinFactory.calc_mark_price(volume, entry_price, unrealised_pnl),
+                            unrealised_pnl=unrealised_pnl,
+                            leverage_type=utils.load_ws_futures_position_leverage_type(position.get('mt')),
+                            isolated_wallet_balance=utils.to_float(position.get('iw')),
+                            cross_wallet_balance=_balances.get(_wallet_asset, {}).get('cross_wallet_balance'),
+                            action=self.get_position_action(symbol, volume)
+                        )
         if table == "ACCOUNT_CONFIG_UPDATE":
             for item in message.get("data", []):
-                symbol = item.get("ac", {}).get("s")
-                if symbol:
-                    leverage = utils.to_float(item["ac"].get("l"))
-                    data = {'symbol': symbol.lower(), 'leverage': leverage}
-                    self._wss_api.update_positions_state(data, partial=True)
+                if symbol := item.get("ac", {}).get("s"):
+                    self.update_positions_state(
+                        symbol,
+                        leverage=utils.to_float(item["ac"].get("l"))
+                    )
+
+    def get_position_action(self, symbol: str, volume: Optional[float]):
+        action = 'update'
+        try:
+            position_state_volume = self._position_state[symbol.lower()]['volume']
+            if not bool(position_state_volume) and bool(volume):
+                action = 'insert'
+            elif bool(position_state_volume) and not bool(volume):
+                action = 'delete'
+        except (KeyError, IndexError, AttributeError):
+            pass
+        return action
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
-        if (
-            message["table"] in ("ACCOUNT_UPDATE", "ACCOUNT_CONFIG_UPDATE", "markPriceUpdate")
-            and self.subscription in self._wss_api.subscriptions
-        ):
-            return True
+        table = message['table']
+        if self._initialized:
+            try:
+                if table == "ACCOUNT_UPDATE":
+                    self._item_symbol = item['a']['P'][0]['s']
+                elif table == 'ACCOUNT_CONFIG_UPDATE':
+                    self._item_symbol = item['ac']['s']
+                elif table == 'markPriceUpdate':
+                    self._item_symbol = item['s']
+                else:
+                    return False
+            except (KeyError, ValueError, IndexError):
+                return False
+            if not isinstance(self._item_symbol, str):
+                return False
+            return self.is_position_exists(self._item_symbol)
         return False
 
-    def get_raw_data(self, message: dict, item: dict) -> dict:
-        table = message.get("table")
-        if table == "markPriceUpdate":
-            symbol = item.get("s")
-            if symbol and self._wss_api.is_position_exists(symbol):
-                raw_data = copy(item)
-                return raw_data
-        if table == "ACCOUNT_UPDATE":
-            for position in item.get("a", {}).get("P", []):
-                symbol = position.get("s")
-                position_side = position.get("ps")
-                if symbol and position_side == "BOTH":
-                    event_reason = item.get("a", {}).get("m")
-                    if (
-                        event_reason != "MARGIN_TYPE_CHANGE" or
-                        event_reason == "MARGIN_TYPE_CHANGE" and
-                        self._wss_api.is_position_exists(symbol)
-                    ):
-                        raw_data = copy(position)
-                        raw_data["E"] = item.get("E")
-                        for balance in item.get("a", {}).get("B", []):
-                            balance_asset = balance.get("a")
-                            if balance_asset == "USDT":
-                                raw_data.update(balance)
-                        return raw_data
-        if table == "ACCOUNT_CONFIG_UPDATE":
-            symbol = item.get("ac", {}).get("s")
-            if symbol and self._wss_api.is_position_exists(symbol):
-                raw_data = copy(item["ac"])
-                raw_data["E"] = item.get("E")
-                return raw_data
-        return {}
-
     def split_positions_state(self, symbol: str) -> Tuple[dict, dict]:
-        all_positions_state = deepcopy(self._wss_api.positions_state)
+        all_positions_state = deepcopy(self._position_state)
         position_state = all_positions_state.pop(symbol.lower(), {})
         other_positions_state = all_positions_state
         return position_state, other_positions_state
@@ -98,31 +110,129 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
     def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
             return None
-        raw_data = self.get_raw_data(message, item)
-        if not raw_data:
-            return None
-        symbol = raw_data["s"].lower()
-        symbols_state = self._wss_api.state_data
-        if not symbols_state.get(symbol):
-            return None
+        symbol = self._item_symbol.lower()
+        state_data = None
+        if self._wss_api.register_state:
+            if (state_data := self._wss_api.get_state_data(symbol)) is None:
+                return None
+
         position_state, other_positions_state = self.split_positions_state(symbol)
-        if raw_data.get("pa") is None:
-            raw_data["pa"] = position_state.get("volume")
-            raw_data["side"] = position_state.get("side")
-        if raw_data.get("p") is None:
-            raw_data["p"] = position_state.get("mark_price")
-        if raw_data.get("ep") is None:
-            raw_data["ep"] = position_state.get("entry_price")
-        if raw_data.get("mt") is None:
-            raw_data["mt"] = position_state.get("leverage_type")
-        if raw_data.get("l") is None:
-            raw_data["l"] = position_state.get("leverage")
-        if raw_data.get("iw") is None:
-            raw_data["iw"] = position_state.get("isolated_wallet_balance")
-        if raw_data.get("cw") is None:
-            raw_data["cw"] = position_state.get("cross_wallet_balance")
-        response = utils.load_futures_position_ws_data(raw_data, symbols_state, other_positions_state)
-        position_data = copy(response)
-        position_data.update({"isolated_wallet_balance": raw_data["iw"], "cross_wallet_balance": raw_data["cw"]})
-        self._wss_api.update_positions_state(position_data)
-        return response
+        other_positions_maint_margin, other_positions_unrealised_pnl = self.calc_other_positions_sum(
+            position_state['leverage_type'], self._leverage_brackets_state, other_positions_state)
+
+        entry_price = position_state['entry_price']
+        mark_price = position_state['mark_price']
+        volume = position_state['volume']
+        side = position_state['side']
+        position_margin = self.position_margin(
+            position_state['leverage_type'],
+            position_state['isolated_wallet_balance'],
+            position_state['cross_wallet_balance']
+        )
+
+        position_state['liquidation_price'] = self.calc_liquidation_price(
+            entry_price=entry_price,
+            mark_price=mark_price,
+            volume=volume,
+            side=side,
+            leverage_type=position_state['leverage_type'],
+            position_margin=position_margin,
+            leverage_brackets=self._leverage_brackets_state.get(symbol, {}),
+            other_positions_maint_margin=other_positions_maint_margin,
+            other_positions_unrealised_pnl=other_positions_unrealised_pnl
+        )
+        position_state['unrealised_pnl'] = BinanceFinFactory.calc_unrealised_pnl_by_side(
+            entry_price, mark_price, volume, side
+        )
+        return utils.load_futures_position_ws_data(item, position_state, state_data)
+
+    @staticmethod
+    def calc_liquidation_price(entry_price, mark_price, volume, side, leverage_type, position_margin,
+                               leverage_brackets, other_positions_maint_margin,
+                               other_positions_unrealised_pnl) -> Optional[float]:
+        liquidation_price = None
+        if None not in (side, mark_price, entry_price, position_margin):
+            params = {
+                'volume': volume,
+                'mark_price': mark_price,
+                'position_margin': position_margin,
+                'unrealised_pnl': other_positions_unrealised_pnl,
+                'leverage_brackets': leverage_brackets,
+            }
+            direction = BinanceFinFactory.direction_by_side(side)
+            if leverage_type == LeverageType.isolated:
+                liquidation_price = BinanceFinFactory.calc_liquidation_isolated_price(
+                    entry_price, other_positions_maint_margin, direction, **params
+                )
+            if leverage_type == LeverageType.cross:
+                liquidation_price = BinanceFinFactory.calc_liquidation_cross_price(
+                    entry_price, other_positions_maint_margin, direction, **params
+                )
+        if liquidation_price and liquidation_price < 0:
+            liquidation_price = None
+        return liquidation_price
+
+    @staticmethod
+    def calc_other_positions_sum(leverage_type: str, leverage_brackets_state: dict,
+                                 other_positions_state: dict) -> Tuple[float, float]:
+        maint_margin_sum = 0.0
+        unrealised_pnl_sum = 0.0
+        if leverage_type == LeverageType.cross:
+            for position_symbol, position_data in other_positions_state.items():
+                if not position_data['volume'] or not position_data['side']:
+                    continue
+                mark_price = position_data['mark_price']
+                leverage_bracket = leverage_brackets_state.get(position_symbol, {})
+                if mark_price is not None and leverage_bracket:
+                    volume = position_data['volume']
+                    notional_value = volume * mark_price
+                    maint_margin_rate, maint_amount = BinanceFinFactory.filter_leverage_brackets(
+                        leverage_bracket, notional_value
+                    )
+                    if maint_margin_rate is not None and maint_amount is not None:
+                        maint_margin = notional_value * maint_margin_rate - maint_amount
+                        maint_margin_sum += maint_margin
+
+                    unrealized_pnl = BinanceFinFactory.calc_unrealised_pnl_by_side(
+                        position_data['entry_price'], mark_price, volume, position_data['side']
+                    )
+                    unrealised_pnl_sum += unrealized_pnl
+        return maint_margin_sum, unrealised_pnl_sum
+
+    @staticmethod
+    def position_margin(leverage_type: str, isolated_balance: float, cross_balance: float) -> Optional[float]:
+        if leverage_type == LeverageType.isolated:
+            return isolated_balance
+        if leverage_type == LeverageType.cross:
+            return cross_balance
+        return None
+
+    def is_position_exists(self, symbol: str) -> bool:
+        try:
+            position = self._position_state[symbol.lower()]
+            return bool(position['volume']) or position['action'] != 'update'
+        except (KeyError, AttributeError):
+            return False
+
+    @staticmethod
+    def prepare_position_state(symbol: str, data: dict) -> dict:
+        position_state = {
+            'symbol': symbol.lower(),
+            'volume': data.get('volume'),
+            'side': data.get('side'),
+            'mark_price': data.get('mark_price', 0),
+            'entry_price': data.get('entry_price', 0),
+            'leverage_type': data.get('leverage_type', LeverageType.cross),
+            'leverage': data.get('leverage', 20),
+            'isolated_wallet_balance': data.get('isolated_wallet_balance', 0),
+            'cross_wallet_balance': data.get('cross_wallet_balance', 0),
+            'action': data.get('action', 'update')
+        }
+        return position_state
+
+    def update_positions_state(self, symbol: str, **fields) -> None:
+        symbol = symbol.lower()
+        if symbol not in self._position_state:
+            self._position_state[symbol] = self.prepare_position_state(symbol, fields)
+            return None
+        self._position_state[symbol].update(fields)

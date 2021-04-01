@@ -1222,141 +1222,54 @@ def load_ws_futures_position_leverage_type(margin_type: Optional[str]) -> Option
     return None
 
 
-def load_ws_futures_wallet_balance(raw_data: dict, leverage_type: str) -> Optional[float]:
-    if leverage_type and leverage_type == LeverageType.isolated:
-        return to_float(raw_data.get('iw'))
-    if leverage_type and leverage_type == LeverageType.cross:
-        return to_float(raw_data.get('cw'))
-    return None
-
-
-def load_ws_futures_position_direction(side: int) -> int:
-    if side == api.BUY:
-        return 1
-    return -1
-
-
-def calculate_futures_position_unrealised_pnl(
-    mark_price: Optional[float], entry_price: Optional[float], direction: Optional[int], abs_volume: Optional[float]
-) -> Optional[float]:
-    if mark_price is not None and entry_price is not None and direction and abs_volume is not None:
-        return (mark_price - entry_price) * direction * abs_volume
-    return None
-
-
-def calculate_futures_other_positions_sum(
-    is_cross_position: bool, symbols_state: dict, other_positions_state: dict
-) -> Tuple[float, float]:
-    maint_margin_sum = 0.0
-    unrealised_pnl_sum = 0.0
-    if is_cross_position:
-        for position_key, position_data in other_positions_state.items():
-            symbol = position_key.split('.')[-1]
-            mark_price = position_data['mark_price']
-            symbol_state = symbols_state.get(symbol, {})
-            leverage_brackets = symbol_state.get('leverage_brackets', [])
-            if mark_price is not None and leverage_brackets:
-                volume = position_data['volume']
-                notional_value = volume * mark_price
-                maint_margin_rate, maint_amount = BinanceFinFactory.filter_leverage_brackets(
-                    leverage_brackets, notional_value
-                )
-                if maint_margin_rate is not None and maint_amount is not None:
-                    maint_margin = notional_value * maint_margin_rate - maint_amount
-                    maint_margin_sum += maint_margin
-
-                direction = load_ws_futures_position_direction(position_data['side'])
-                unrealized_pnl = calculate_futures_position_unrealised_pnl(
-                    mark_price, position_data['entry_price'], direction, abs(volume)
-                )
-                unrealised_pnl_sum += unrealized_pnl
-    return maint_margin_sum, unrealised_pnl_sum
-
-
-def load_futures_position_ws_data(raw_data: dict, symbols_state: dict, other_positions_state: dict) -> dict:
-    symbol = raw_data['s']
-    symbol_state = symbols_state.get(symbol.lower(), {})
-    volume = to_float(raw_data.get('pa'))
-    side = raw_data.get('side') or load_ws_futures_position_side(volume)
-    direction = load_ws_futures_position_direction(side)
-    mark_price = to_float(raw_data.get('p'))
-    entry_price = to_float(raw_data.get('ep'))
-    unrealised_pnl = to_float(raw_data.get('up')) or calculate_futures_position_unrealised_pnl(
-        mark_price, entry_price, direction, abs(volume)
-    )
-    leverage_type = load_ws_futures_position_leverage_type(raw_data.get('mt'))
-    leverage = to_float(raw_data.get("l"))
-    wallet_balance = load_ws_futures_wallet_balance(raw_data, leverage_type)
-    liquidation_price = None
-    if side is not None and mark_price is not None and entry_price is not None and wallet_balance is not None:
-        is_cross_position = leverage_type == LeverageType.cross
-        other_positions_maint_margin, other_positions_unrealised_pnl = calculate_futures_other_positions_sum(
-            is_cross_position, symbols_state, other_positions_state
-        )
-        params = {
-            'abs_volume': abs(volume),
-            'mark_price': mark_price,
-            'wallet_balance': wallet_balance,
-            'unrealised_pnl': other_positions_unrealised_pnl,
-            'leverage_brackets': symbol_state.get('leverage_brackets', []),
-        }
-        if leverage_type == LeverageType.isolated:
-            liquidation_price = BinanceFinFactory.calc_liquidation_isolated_price(
-                entry_price, other_positions_maint_margin, direction, **params
-            )
-        if leverage_type == LeverageType.cross:
-            liquidation_price = BinanceFinFactory.calc_liquidation_cross_price(
-                entry_price, other_positions_maint_margin, direction, **params
-            )
-    if liquidation_price and liquidation_price < 0:
-        liquidation_price = None
-    return {
+def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, state_data: Optional[dict]) -> dict:
+    data = {
         'time': to_iso_datetime(raw_data.get('E')),
         'timestamp': raw_data.get('E'),
-        'schema': symbol_state.get('schema'),
-        'symbol': raw_data.get('s'),
-        'system_symbol': symbol_state.get('system_symbol'),
-        'side': side,
-        'volume': volume,
-        'entry_price': entry_price,
-        'mark_price': mark_price,
-        'unrealised_pnl': unrealised_pnl,
-        'leverage_type': leverage_type,
-        'leverage': leverage,
-        'liquidation_price': liquidation_price,
+        'symbol': position_state_data['symbol'].lower(),
+        'side': position_state_data['side'],
+        'volume': position_state_data['volume'],
+        'entry_price': position_state_data['entry_price'],
+        'mark_price': position_state_data['mark_price'],
+        'unrealised_pnl': position_state_data['unrealised_pnl'],
+        'leverage_type': position_state_data['leverage_type'],
+        'leverage': position_state_data['leverage'],
+        'liquidation_price': position_state_data['liquidation_price'],
     }
-
-
-def load_wallet_balances(account_info: dict) -> dict:
-    for asset in account_info.get('assets', []):
-        if asset.get('asset') == "USDT":
-            return {
-                'isolated_wallet_balance': to_float(asset.get('walletBalance')),
-                'cross_wallet_balance': to_float(asset.get('crossWalletBalance')),
-            }
-    return {}
+    if isinstance(state_data, dict):
+        data.update({
+            'system_symbol': state_data.get('system_symbol'),
+            'schema': state_data.get('schema')
+        })
+    return data
 
 
 def load_position_leverage_type(position_data: dict) -> str:
-    if position_data['isolated']:
+    if position_data.get('isolated'):
         return LeverageType.isolated
     return LeverageType.cross
 
 
 def load_positions_state(account_info: dict) -> dict:
-    wallet_balances = load_wallet_balances(account_info)
     positions_state = {}
-    for position_data in account_info.get('positions', []):
-        symbol = position_data['symbol'].lower()
-        volume = to_float(position_data['positionAmt'])
+    cross_wallet_balance = to_float(account_info.get('totalCrossWalletBalance'))
+    for position in account_info.get('positions', []):
+        symbol = position['symbol'].lower()
+        volume = to_float(position['positionAmt'])
+        side = load_ws_futures_position_side(volume)
+        entry_price = to_float(position['entryPrice'])
+        _unrealised_pnl = to_float(position['unrealizedProfit'])
+        mark_price = BinanceFinFactory.calc_mark_price(volume, entry_price, _unrealised_pnl)
         positions_state[symbol] = {
             'symbol': symbol,
             'volume': volume,
-            'side': load_ws_futures_position_side(volume),
-            'entry_price': to_float(position_data['entryPrice']),
-            'leverage_type': load_position_leverage_type(position_data),
-            'leverage': to_float(position_data['leverage']),
-            'isolated_wallet_balance': wallet_balances.get('isolated_wallet_balance'),
-            'cross_wallet_balance': wallet_balances.get('cross_wallet_balance'),
+            'side': side,
+            'entry_price': entry_price,
+            'mark_price': mark_price,
+            'leverage_type': load_position_leverage_type(position),
+            'leverage': to_float(position['leverage']),
+            'isolated_wallet_balance': to_float(position.get('isolatedWallet')),
+            'cross_wallet_balance': cross_wallet_balance,
+            'action': 'update'
         }
     return positions_state
