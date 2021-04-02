@@ -184,7 +184,7 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
                 mark_price = position_data['mark_price']
                 leverage_bracket = leverage_brackets_state.get(position_symbol, {})
                 if mark_price is not None and leverage_bracket:
-                    volume = position_data['volume']
+                    volume = abs(position_data['volume'])
                     notional_value = volume * mark_price
                     maint_margin_rate, maint_amount = BinanceFinFactory.filter_leverage_brackets(
                         leverage_bracket, notional_value
