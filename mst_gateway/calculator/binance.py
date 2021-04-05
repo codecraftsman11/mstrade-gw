@@ -48,7 +48,10 @@ class BinanceFinFactory(FinFactory):
 
     @classmethod
     def filter_leverage_brackets(cls, leverage_brackets: list, notional_value: float) -> tuple:
+        maint_margin_rate = None
+        maint_amount = None
         for lb in leverage_brackets:
             if lb['notionalFloor'] <= notional_value < lb['notionalCap']:
-                return lb['maintMarginRatio'], lb['cum']
-        return None, None
+                maint_margin_rate = lb['maintMarginRatio']
+                maint_amount = lb['cum']
+        return maint_margin_rate, maint_amount
