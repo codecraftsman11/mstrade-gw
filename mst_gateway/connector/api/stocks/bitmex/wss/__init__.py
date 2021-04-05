@@ -7,7 +7,7 @@ from .utils import is_auth_ok, make_cmd
 from .. import var
 from ..lib import bitmex_signature
 from ....wss import StockWssApi
-from ....wss.subscriber import Subscriber
+
 
 BITMEX_WSS_DEFAULT_TIMEOUT = 5
 
@@ -20,7 +20,7 @@ class BitmexWssApi(StockWssApi):
         'symbol': subscr_class.BitmexSymbolSubscriber(),
         'quote_bin': subscr_class.BitmexQuoteBinSubscriber(),
         'order_book': subscr_class.BitmexOrderBookSubscriber(),
-        # 'trade': subscr_class.BitmexTradeSubscriber()
+        'trade': subscr_class.BitmexTradeSubscriber()
     }
 
     auth_subscribers = {
@@ -47,11 +47,6 @@ class BitmexWssApi(StockWssApi):
                                                    signature]))
         self.auth_connect = is_auth_ok(await wss.recv())
         return self.auth_connect
-
-    def _get_subscriber(self, subscr_name: str) -> Subscriber:
-        if subscr_name.lower() == "trade":
-            return super()._get_subscriber("quote_bin")
-        return super()._get_subscriber(subscr_name)
 
     def _lookup_table(self, message: Union[dict, list]) -> Optional[dict]:
         if 'table' in message and isinstance(message, dict) and message.get('data'):

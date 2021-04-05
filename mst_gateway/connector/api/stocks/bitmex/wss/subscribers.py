@@ -36,13 +36,13 @@ class BitmexSubscriber(Subscriber):
 
 class BitmexSymbolSubscriber(BitmexSubscriber):
     subscription = "symbol"
-    subscriptions = ("instrument", "quote")
+    subscriptions = ("instrument",)
     is_close_connection = False
 
 
 class BitmexQuoteBinSubscriber(BitmexSubscriber):
     subscription = "quote_bin"
-    subscriptions = ("trade", "tradeBin1m")
+    subscriptions = ("tradeBin1m", "trade")
     is_close_connection = False
 
 

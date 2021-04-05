@@ -17,7 +17,7 @@ class BitmexWssRouter(Router):
     table_route_map = {
         'instrument': "symbol",
         'quote': "symbol",
-        'trade': ["quote_bin", "trade"],
+        'trade': ["trade", "quote_bin"],
         'tradeBin1m': "quote_bin",
         'execution': "order",
         'orderBookL2_25': "order_book",
