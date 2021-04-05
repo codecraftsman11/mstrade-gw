@@ -75,7 +75,7 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
         try:
             position_state_volume = self._position_state[symbol.lower()]['volume']
             if not bool(position_state_volume) and bool(volume):
-                action = 'insert'
+                action = 'create'
             elif bool(position_state_volume) and not bool(volume):
                 action = 'delete'
         except (KeyError, IndexError, AttributeError):

@@ -1235,6 +1235,7 @@ def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, sta
         'leverage_type': position_state_data['leverage_type'],
         'leverage': position_state_data['leverage'],
         'liquidation_price': position_state_data['liquidation_price'],
+        'action': position_state_data['action']
     }
     if isinstance(state_data, dict):
         data.update({
