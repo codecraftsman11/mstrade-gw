@@ -35,7 +35,7 @@ class BitmexSubscriber(Subscriber):
 
 
 class BitmexSymbolSubscriber(BitmexSubscriber):
-    subscriptions = ("instrument", "quote")
+    subscriptions = ("instrument",)
     is_close_connection = False
 
 
