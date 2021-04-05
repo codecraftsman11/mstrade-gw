@@ -289,9 +289,8 @@ class BinanceRestApi(StockRestApi):
         state_data = self.storage.get(
             'symbol', self.name, schema
         ).get(symbol.lower(), dict())
-        limit = None
+        limit = var.BINANCE_MAX_ORDER_BOOK_LIMIT
         if min_volume_buy is None and min_volume_sell is None:
-            limit = 100
             if depth:
                 for _l in [100, 500, 1000]:
                     if _l >= offset + depth:
@@ -300,10 +299,10 @@ class BinanceRestApi(StockRestApi):
 
         if schema == OrderSchema.futures:
             data = self._binance_api(self._handler.futures_order_book, symbol=symbol.upper(),
-                                     limit=limit or var.BINANCE_MAX_ORDER_BOOK_LIMIT)
+                                     limit=limit)
         elif schema in (OrderSchema.margin2, OrderSchema.exchange):
             data = self._binance_api(self._handler.get_order_book, symbol=symbol.upper(),
-                                     limit=limit or var.BINANCE_MAX_ORDER_BOOK_LIMIT)
+                                     limit=limit)
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
         data = utils.filter_order_book_data(data, min_volume_buy, min_volume_sell)
