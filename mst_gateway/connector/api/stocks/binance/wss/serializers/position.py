@@ -105,10 +105,9 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
         return symbol
 
     def split_positions_state(self, symbol: str) -> Tuple[dict, dict]:
-        all_positions_state = deepcopy(self._position_state)
-        position_state = all_positions_state.pop(symbol.lower(), {})
-        other_positions_state = all_positions_state
-        return position_state, other_positions_state
+        positions_state = deepcopy(self._position_state)
+        symbol_position_state = positions_state.pop(symbol.lower(), {})
+        return symbol_position_state, positions_state
 
     def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
