@@ -118,35 +118,35 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
             if (state_data := self._wss_api.get_state_data(symbol)) is None:
                 return None
 
-        position_state, other_positions_state = self.split_positions_state(symbol)
+        symbol_position_state, positions_state = self.split_positions_state(symbol)
         other_positions_maint_margin, other_positions_unrealised_pnl = self.calc_other_positions_sum(
-            position_state['leverage_type'], self._leverage_brackets_state, other_positions_state)
+            symbol_position_state['leverage_type'], self._leverage_brackets_state, positions_state)
 
-        entry_price = position_state['entry_price']
-        mark_price = position_state['mark_price']
-        volume = position_state['volume']
-        side = position_state['side']
+        entry_price = symbol_position_state['entry_price']
+        mark_price = symbol_position_state['mark_price']
+        volume = symbol_position_state['volume']
+        side = symbol_position_state['side']
         position_margin = self.position_margin(
-            position_state['leverage_type'],
-            position_state['isolated_wallet_balance'],
-            position_state['cross_wallet_balance']
+            symbol_position_state['leverage_type'],
+            symbol_position_state['isolated_wallet_balance'],
+            symbol_position_state['cross_wallet_balance']
         )
 
-        position_state['liquidation_price'] = self.calc_liquidation_price(
+        symbol_position_state['liquidation_price'] = self.calc_liquidation_price(
             entry_price=entry_price,
             mark_price=mark_price,
             volume=volume,
             side=side,
-            leverage_type=position_state['leverage_type'],
+            leverage_type=symbol_position_state['leverage_type'],
             position_margin=position_margin,
             leverage_brackets=self._leverage_brackets_state.get(symbol, {}),
             other_positions_maint_margin=other_positions_maint_margin,
             other_positions_unrealised_pnl=other_positions_unrealised_pnl
         )
-        position_state['unrealised_pnl'] = BinanceFinFactory.calc_unrealised_pnl_by_side(
+        symbol_position_state['unrealised_pnl'] = BinanceFinFactory.calc_unrealised_pnl_by_side(
             entry_price, mark_price, volume, side
         )
-        return utils.load_futures_position_ws_data(item, position_state, state_data)
+        return utils.load_futures_position_ws_data(item, symbol_position_state, state_data)
 
     @staticmethod
     def calc_liquidation_price(entry_price, mark_price, volume, side, leverage_type, position_margin,
