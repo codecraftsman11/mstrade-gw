@@ -85,21 +85,24 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
     def is_item_valid(self, message: dict, item: dict) -> bool:
         table = message['table']
         if self._initialized:
-            try:
-                if table == "ACCOUNT_UPDATE":
-                    self._item_symbol = item['a']['P'][0]['s']
-                elif table == 'ACCOUNT_CONFIG_UPDATE':
-                    self._item_symbol = item['ac']['s']
-                elif table == 'markPriceUpdate':
-                    self._item_symbol = item['s']
-                else:
-                    return False
-            except (KeyError, ValueError, IndexError):
-                return False
-            if not isinstance(self._item_symbol, str):
-                return False
-            return self.is_position_exists(self._item_symbol)
+            self._item_symbol = self._get_item_symbol(table, item)
+            if self._item_symbol:
+                return self.is_position_exists(self._item_symbol)
         return False
+
+    def _get_item_symbol(self, table: str, item: dict) -> Optional[str]:
+        try:
+            if table == "ACCOUNT_UPDATE":
+                symbol = item['a']['P'][0]['s']
+            elif table == 'ACCOUNT_CONFIG_UPDATE':
+                symbol = item['ac']['s']
+            elif table == 'markPriceUpdate':
+                symbol = item['s']
+            else:
+                return None
+        except (KeyError, ValueError, IndexError):
+            return None
+        return symbol
 
     def split_positions_state(self, symbol: str) -> Tuple[dict, dict]:
         all_positions_state = deepcopy(self._position_state)
