@@ -78,6 +78,11 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
                 action = 'create'
             elif bool(position_state_volume) and not bool(volume):
                 action = 'delete'
+            elif position_state_volume and volume and (
+                    not (position_state_volume > 0 and volume > 0) or
+                    not (position_state_volume < 0 and volume < 0)
+            ):
+                action = 'reverse'
         except (KeyError, IndexError, AttributeError):
             pass
         return action
@@ -237,4 +242,6 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
         if symbol not in self._position_state:
             self._position_state[symbol] = self.prepare_position_state(symbol, fields)
             return None
+        if fields.get('side') is None:
+            fields.pop('side', None)
         self._position_state[symbol].update(fields)
