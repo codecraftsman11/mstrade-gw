@@ -501,11 +501,17 @@ class AsyncClient:
         :type requests_params: dict.
 
         """
+        self.test = test
         self.tld = tld
         self.WITHDRAW_API_URL = self.WITHDRAW_API_URL.format(tld)
         self.MARGIN_API_URL = self.MARGIN_API_URL.format(tld)
         self.WEBSITE_URL = self.WEBSITE_URL.format(tld)
         self.FUTURES_URL = self.FUTURES_URL.format(tld)
+
+        self.API_URL = self._api_url(self.test, self.tld)
+        self.WITHDRAW_API_URL = self._withdraw_api_url(self.test, self.tld)
+        self.MARGIN_API_URL = self._margin_api_url(self.test, self.tld)
+        self.FUTURES_URL = self._futures_api_url(self.test, self.tld)
 
         self.API_KEY = api_key
         self.API_SECRET = api_secret
@@ -513,14 +519,8 @@ class AsyncClient:
         self._requests_params = requests_params
         self.response = None
 
-        self.test = test
-
     async def open(self):
         self.session = await self._init_session()
-        self.API_URL = await self._api_url(self.test, self.tld)
-        self.WITHDRAW_API_URL = await self._withdraw_api_url(self.test, self.tld)
-        self.MARGIN_API_URL = await self._margin_api_url(self.test, self.tld)
-        self.FUTURES_URL = await self._futures_api_url(self.test, self.tld)
 
     async def close(self):
         await self.session.close()
@@ -534,65 +534,65 @@ class AsyncClient:
                                 'X-MBX-APIKEY': self.API_KEY})
         return session
 
-    async def _api_url(self, test, tld):
+    def _api_url(self, test, tld):
         if test:
             return self.TEST_API_URL
         return self.API_URL.format(tld)
 
-    async def _withdraw_api_url(self, test, tld):
+    def _withdraw_api_url(self, test, tld):
         if test:
             return self.TEST_WITHDRAW_API_URL
         return self.WITHDRAW_API_URL.format(tld)
 
-    async def _margin_api_url(self, test, tld):
+    def _margin_api_url(self, test, tld):
         if test:
             return self.TEST_MARGIN_API_URL
         return self.MARGIN_API_URL.format(tld)
 
-    async def _futures_api_url(self, test, tld):
+    def _futures_api_url(self, test, tld):
         if test:
             return self.TEST_FUTURES_URL
         return self.FUTURES_URL.format(tld)
 
-    async def _create_margin_v2_api_uri(self, path):
+    def _create_margin_v2_api_uri(self, path):
         return self.MARGIN_API_URL + '/' + self.MARGIN_API_V2_VERSION + '/' + path
 
     async def _request_margin_v2_api(self, method, path, signed=False, **kwargs):
-        uri = await self._create_margin_v2_api_uri(path)
+        uri = self._create_margin_v2_api_uri(path)
         return await self._request(method, uri, signed, **kwargs)
 
-    async def _create_futures_api_v2_uri(self, path):
+    def _create_futures_api_v2_uri(self, path):
         return self.FUTURES_URL + '/' + self.FUTURES_API_V2_VERSION + '/' + path
 
     async def _request_futures_api_v2(self, method, path, signed=False, **kwargs):
-        uri = await self._create_futures_api_v2_uri(path)
+        uri = self._create_futures_api_v2_uri(path)
         return await self._request(method, uri, signed, True, **kwargs)
 
-    async def _create_api_uri(self, path, signed=True, version=PUBLIC_API_VERSION):
+    def _create_api_uri(self, path, signed=True, version=PUBLIC_API_VERSION):
         v = self.PRIVATE_API_VERSION if signed else version
         return self.API_URL + '/' + v + '/' + path
 
-    async def _create_withdraw_api_uri(self, path):
+    def _create_withdraw_api_uri(self, path):
         return self.WITHDRAW_API_URL + '/' + self.WITHDRAW_API_VERSION + '/' + path
 
-    async def _create_margin_api_uri(self, path):
+    def _create_margin_api_uri(self, path):
         return self.MARGIN_API_URL + '/' + self.MARGIN_API_VERSION + '/' + path
 
-    async def _create_website_uri(self, path):
+    def _create_website_uri(self, path):
         return self.WEBSITE_URL + '/' + path
 
-    async def _create_futures_api_uri(self, path):
+    def _create_futures_api_uri(self, path):
         return self.FUTURES_URL + '/' + self.FUTURES_API_VERSION + '/' + path
 
-    async def _generate_signature(self, data):
+    def _generate_signature(self, data):
         if not (self.API_SECRET and isinstance(self.API_SECRET, str)):
             raise BinanceRequestException('API-key format invalid.')
-        ordered_data = await self._order_params(data)
+        ordered_data = self._order_params(data)
         query_string = '&'.join(["{}={}".format(d[0], d[1]) for d in ordered_data])
         m = hmac.new(self.API_SECRET.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256)
         return m.hexdigest()
 
-    async def _order_params(self, data):
+    def _order_params(self, data):
         """Convert params to list with signature as last element
 
         :param data:
@@ -634,12 +634,12 @@ class AsyncClient:
         if signed:
             # generate signature
             kwargs['data']['timestamp'] = int(time.time() * 1000)
-            kwargs['data']['signature'] = await self._generate_signature(kwargs['data'])
+            kwargs['data']['signature'] = self._generate_signature(kwargs['data'])
 
         # sort get and post params to match signature order
         if data:
             # sort post params
-            kwargs['data'] = await self._order_params(kwargs['data'])
+            kwargs['data'] = self._order_params(kwargs['data'])
             # Remove any arguments with values of None.
             null_args = [i for i, (key, value) in enumerate(kwargs['data']) if value is None]
             for i in reversed(null_args):
@@ -654,23 +654,23 @@ class AsyncClient:
         return await self._handle_response()
 
     async def _request_api(self, method, path, signed=False, version=PUBLIC_API_VERSION, **kwargs):
-        uri = await self._create_api_uri(path, signed, version)
+        uri = self._create_api_uri(path, signed, version)
         return await self._request(method, uri, signed, **kwargs)
 
     async def _request_withdraw_api(self, method, path, signed=False, **kwargs):
-        uri = await self._create_withdraw_api_uri(path)
+        uri = self._create_withdraw_api_uri(path)
         return await self._request(method, uri, signed, True, **kwargs)
 
     async def _request_margin_api(self, method, path, signed=False, **kwargs):
-        uri = await self._create_margin_api_uri(path)
+        uri = self._create_margin_api_uri(path)
         return await self._request(method, uri, signed, **kwargs)
 
     async def _request_website(self, method, path, signed=False, **kwargs):
-        uri = await self._create_website_uri(path)
+        uri = self._create_website_uri(path)
         return await self._request(method, uri, signed, **kwargs)
 
     async def _request_futures_api(self, method, path, signed=False, **kwargs):
-        uri = await self._create_futures_api_uri(path)
+        uri = self._create_futures_api_uri(path)
         return await self._request(method, uri, signed, True, **kwargs)
 
     async def _handle_response(self):

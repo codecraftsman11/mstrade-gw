@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Union, Optional, Tuple
+from typing import Union, Optional
 from mst_gateway.connector import api
 from mst_gateway.calculator import BinanceFinFactory
 from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
@@ -1240,7 +1240,6 @@ def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, sta
     if isinstance(state_data, dict):
         data.update({
             'system_symbol': state_data.get('system_symbol'),
-            'schema': state_data.get('schema')
         })
     return data
 
