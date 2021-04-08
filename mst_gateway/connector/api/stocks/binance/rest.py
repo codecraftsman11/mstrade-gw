@@ -94,7 +94,7 @@ class BinanceRestApi(StockRestApi):
         except ConnectorError:
             f_leverage_data = []
         data.extend(utils.load_futures_exchange_symbol_info(
-            f_data.get('symbols', []), utils.load_futures_leverage_bracket_as_dict(f_leverage_data)
+            f_data.get('symbols', []), utils.load_futures_leverage_brackets_as_dict(f_leverage_data)
         ))
         return data
 

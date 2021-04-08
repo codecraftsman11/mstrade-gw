@@ -26,6 +26,7 @@ class StockWssApi(Connector):
     BASE_URL = None
     throttle = ThrottleWss()
     storage = StateStorage()
+    partial_state_data = {}
     __state_data = {}
     __state_refresh_period = 15 * 60
 
@@ -71,6 +72,10 @@ class StockWssApi(Connector):
     @property
     def state_refresh_period(self):
         return self.__state_refresh_period
+
+    @property
+    def state_data(self):
+        return self.__state_data
 
     def _parse_account_name(self, account_name: str):
         _split_acc = account_name.split('.')
@@ -326,16 +331,17 @@ class StockWssApi(Connector):
     def state_symbol_list(self) -> list:
         return list(self.__state_data.keys())
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, exc_tb):
         pass
 
     def __del__(self):
         pass
 
     async def __aenter__(self):
+        await self.open()
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(self, exc_type, exc_value, exc_tb):
         await self.close()
 
     async def __adel__(self):

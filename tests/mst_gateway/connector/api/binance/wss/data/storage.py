@@ -18,7 +18,7 @@ STORAGE_DATA = {
                     "system_symbol": "btcusd",
                     "symbol": "btcusdt",
                     "exchange": "Binance",
-                    "max_leverage": 50,
+                    "max_leverage": None,
                 },
                 "ethusdt": {
                     "tick": 0.01,
@@ -33,8 +33,40 @@ STORAGE_DATA = {
                     "system_symbol": "ethusd",
                     "symbol": "ethusdt",
                     "exchange": "Binance",
-                    "max_leverage": 50,
+                    "max_leverage": None,
                 }
+            },
+            cfg.BINANCE_FUTURES_SCHEMA: {
+                "btcusdt": {
+                    "tick": 0.01,
+                    "volume_tick": 0.01,
+                    "pair": ["BTC", "USDT"],
+                    "schema": cfg.BINANCE_FUTURES_SCHEMA,
+                    "symbol_schema": cfg.BINANCE_FUTURES_SCHEMA,
+                    "expiration": None,
+                    "created": datetime(
+                        2020, 9, 29, 11, 24, 2, 687353, tzinfo=timezone.utc
+                    ),
+                    "system_symbol": "btcusd",
+                    "symbol": "btcusdt",
+                    "exchange": "Binance",
+                    "max_leverage": 50,
+                },
+                "ethusdt": {
+                    "tick": 0.01,
+                    "volume_tick": 0.01,
+                    "pair": ["ETH", "USDT"],
+                    "schema": cfg.BINANCE_FUTURES_SCHEMA,
+                    "symbol_schema": cfg.BINANCE_FUTURES_SCHEMA,
+                    "expiration": None,
+                    "created": datetime(
+                        2020, 9, 29, 11, 24, 2, 687408, tzinfo=timezone.utc
+                    ),
+                    "system_symbol": "ethusd",
+                    "symbol": "ethusdt",
+                    "exchange": "Binance",
+                    "max_leverage": 50,
+                },
             },
         },
     },

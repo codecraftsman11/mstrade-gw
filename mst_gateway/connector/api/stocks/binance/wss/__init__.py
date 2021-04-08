@@ -6,7 +6,7 @@ from websockets import client
 from . import subscribers as subscr_class
 from .router import BinanceWssRouter, BinanceFuturesWssRouter
 from .utils import is_auth_ok, make_cmd
-from ..lib import Client
+from ..lib import AsyncClient
 from ..utils import to_float
 from .... import OrderSchema
 from ....wss import StockWssApi
@@ -56,33 +56,38 @@ class BinanceWssApi(StockWssApi):
     async def _refresh_key(self):
         while True:
             await asyncio.sleep(self.refresh_key_time)
-            self._generate_auth_url()
+            await self._generate_auth_url()
 
     async def open(self, **kwargs):
         if kwargs.get('is_auth') or self.auth_connect:
             self.auth_connect = True
-            self._generate_auth_url()
+            await self._generate_auth_url()
             _task = asyncio.create_task(self._refresh_key())
             self.tasks.append(_task)
         return await super().open(**kwargs)
 
-    def _generate_auth_url(self):
-        key = self._generate_listen_key()
+    async def _generate_auth_url(self):
+        key = await self._generate_listen_key()
         self._url = f"{self._url}/{key}"
 
-    def _generate_listen_key(self):
-        bin_client = Client(api_key=self.auth.get('api_key'), api_secret=self.auth.get('api_secret'), test=self.test)
-        if self.schema == OrderSchema.exchange:
-            key = bin_client.stream_get_listen_key()
-        elif self.schema == OrderSchema.margin2:
-            key = bin_client.margin_stream_get_listen_key()
-        elif self.schema == OrderSchema.futures:
-            key = bin_client.futures_stream_get_listen_key()
-        else:
-            raise ConnectorError(f"Invalid schema {self.schema}.")
-        if not key:
-            raise ConnectorError(f"Binance api error. Details: Invalid listen key")
-        return key
+    async def _generate_listen_key(self):
+        async with AsyncClient(
+                api_key=self.auth.get('api_key'), api_secret=self.auth.get('api_secret'), test=self.test
+        ) as bin_client:
+            try:
+                if self.schema == OrderSchema.exchange:
+                    key = await bin_client.stream_get_listen_key()
+                elif self.schema == OrderSchema.margin2:
+                    key = await bin_client.margin_stream_get_listen_key()
+                elif self.schema == OrderSchema.futures:
+                    key = await bin_client.futures_stream_get_listen_key()
+                else:
+                    raise ConnectorError(f"Invalid schema {self.schema}.")
+            except Exception as e:
+                raise ConnectorError(e)
+            if not key:
+                raise ConnectorError(f"Binance api error. Details: Invalid listen key")
+            return key
 
     async def _connect(self, **kwargs):
         kwargs['ws_options'] = {
@@ -113,7 +118,7 @@ class BinanceWssApi(StockWssApi):
             _message['data'].extend(message)
             return _message
         if isinstance(message, dict):
-            _message['table'] = message.get('e') if 'e' in message else self.__book_ticker_table(message)
+            _message['table'] = message.get('e')
             _message['data'].append(message)
             return _message
         return None
@@ -185,12 +190,6 @@ class BinanceWssApi(StockWssApi):
             return 'delete'
         return 'update'
 
-    @staticmethod
-    def __book_ticker_table(data) -> Optional[str]:
-        if {'u', 'E', 'T', 's', 'b', 'B', 'a', 'A'} >= data.keys():
-            return 'bookTicker'
-        return None
-
 
 class BinanceFuturesWssApi(BinanceWssApi):
     BASE_URL = 'wss://fstream.binance.com/ws'
@@ -201,6 +200,11 @@ class BinanceFuturesWssApi(BinanceWssApi):
         'trade': subscr_class.BinanceTradeSubscriber(),
         'quote_bin': subscr_class.BinanceQuoteBinSubscriber(),
         'symbol': subscr_class.BinanceFuturesSymbolSubscriber(),
+    }
+    auth_subscribers = {
+        'wallet': subscr_class.BinanceWalletSubscriber(),
+        'order': subscr_class.BinanceOrderSubscriber(),
+        'position': subscr_class.BinanceFuturesPositionSubscriber(),
     }
 
     router_class = BinanceFuturesWssRouter
@@ -217,8 +221,8 @@ class BinanceFuturesWssApi(BinanceWssApi):
                  schema='futures',
                  state_storage=None,
                  register_state=True):
-        super().__init__(name, account_name, url, auth, logger, options,
-                         throttle_rate, throttle_storage, schema, state_storage, register_state)
+        super().__init__(name, account_name, url, auth, logger, options, throttle_rate,
+                         throttle_storage, schema, state_storage, register_state)
         self._url = self._generate_url()
 
     def _is_test(self, url):
@@ -233,7 +237,6 @@ class BinanceFuturesWssApi(BinanceWssApi):
         _map = {
             'depthUpdate': self.split_order_book,
             'ORDER_TRADE_UPDATE': self.split_order,
-            'ACCOUNT_UPDATE': self.split_wallet,
         }
         return _map.get(key)
 
@@ -242,22 +245,6 @@ class BinanceFuturesWssApi(BinanceWssApi):
         if not method:
             return super(BinanceWssApi, self)._split_message(message)
         return super(BinanceWssApi, self)._split_message(method(message=message))
-
-    def split_wallet(self, message):
-        subscr_name = self.router_class.table_route_map.get('ACCOUNT_UPDATE')
-        if subscr_name not in self._subscriptions:
-            return None
-        if "*" not in self._subscriptions[subscr_name]:
-            _balances = []
-            _new_data = []
-            for item in message.pop('data', []):
-                for b in item['a'].pop('B', []):
-                    if b['a'].lower() in self._subscriptions[subscr_name]:
-                        _balances.append(b)
-                item['a']['B'] = _balances
-                _new_data.append(item)
-            message['data'] = _new_data
-        return message
 
     def split_order(self, message):
         message.pop('action', None)

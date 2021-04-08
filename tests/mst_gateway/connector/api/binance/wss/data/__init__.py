@@ -1,5 +1,6 @@
 from .order import *
 from .order_book import *
+from .position import *
 from .quote_bin import *
 from .storage import *
 from .symbol import *

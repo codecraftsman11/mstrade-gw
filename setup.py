@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
 from mst_gateway import version
 
@@ -23,7 +22,8 @@ setup(
     install_requires=[
         'bitmex',
         'python-binance',
-        'websockets'
+        'websockets',
+        'aiohttp'
     ],
     extras_require={
         'mysql': ['mysql-connector-python'],

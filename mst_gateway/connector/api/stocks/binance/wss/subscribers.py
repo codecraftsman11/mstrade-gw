@@ -3,6 +3,10 @@ import asyncio
 from asyncio import CancelledError
 from typing import TYPE_CHECKING, Optional
 from websockets.exceptions import ConnectionClosedError
+
+from mst_gateway.exceptions import QueryError
+from .. import utils
+from ..lib import AsyncClient
 from ....wss.subscriber import Subscriber
 from .utils import cmd_subscribe, cmd_unsubscribe
 
@@ -28,6 +32,12 @@ class BinanceSubscriber(Subscriber):
                 asyncio.create_task(
                     self.send_command(cmd_subscribe, api, subscription, symbols)
                 )
+            elif symbol not in ('*', None) and not self.detail_subscribe_available:
+                try:
+                    await api.handler.send(cmd_subscribe(subscription))
+                except (CancelledError, ConnectionClosedError) as e:
+                    api.logger.warning(f"{self.__class__.__name__} - {e}")
+                    return False
             else:
                 if not api.handler or api.handler.closed:
                     return False
@@ -49,6 +59,13 @@ class BinanceSubscriber(Subscriber):
                 asyncio.create_task(
                     self.send_command(cmd_unsubscribe, api, subscription, list(self._subscribed_symbols))
                 )
+            elif symbol not in ('*', None) and not self.detail_subscribe_available:
+                if not api.handler or api.handler.closed:
+                    return True
+                try:
+                    await api.handler.send(cmd_unsubscribe(subscription))
+                except (CancelledError, ConnectionClosedError) as e:
+                    api.logger.warning(f"{self.__class__.__name__} - {e}")
             else:
                 if not api.handler or api.handler.closed:
                     return True
@@ -88,36 +105,63 @@ class BinanceSubscriber(Subscriber):
 
 
 class BinanceOrderBookSubscriber(BinanceSubscriber):
+    subscription = "order_book"
     subscriptions = ("depth",)
     general_subscribe_available = False
     is_close_connection = False
 
 
 class BinanceTradeSubscriber(BinanceSubscriber):
+    subscription = "trade"
     subscriptions = ("trade",)
     general_subscribe_available = False
     is_close_connection = False
 
 
 class BinanceQuoteBinSubscriber(BinanceSubscriber):
+    subscription = "quote_bin"
     subscriptions = ("kline_1m",)
     general_subscribe_available = False
     is_close_connection = False
 
 
 class BinanceSymbolSubscriber(BinanceSubscriber):
+    subscription = "symbol"
     subscriptions = ("!ticker@arr",)
     is_close_connection = False
 
 
 class BinanceFuturesSymbolSubscriber(BinanceSubscriber):
+    subscription = "symbol"
     subscriptions = ("!ticker@arr", "!bookTicker")
     is_close_connection = False
 
 
 class BinanceWalletSubscriber(BinanceSubscriber):
+    subscription = "wallet"
     subscriptions = ()
 
 
 class BinanceOrderSubscriber(BinanceSubscriber):
+    subscription = "order"
     subscriptions = ()
+
+
+class BinanceFuturesPositionSubscriber(BinanceSubscriber):
+    subscription = "position"
+    subscriptions = ("!markPrice@arr",)
+    detail_subscribe_available = False
+
+    async def init_partial_state(self, api: BinanceWssApi) -> dict:
+        async with AsyncClient(
+                api_key=api.auth['api_key'], api_secret=api.auth['api_secret'], test=api.test
+        ) as client:
+            try:
+                position_state = await client.futures_account_v2()
+                leverage_brackets = await client.futures_leverage_bracket()
+                return {
+                    'position_state': utils.load_positions_state(position_state),
+                    'leverage_brackets': utils.load_futures_leverage_brackets_as_dict(leverage_brackets)
+                }
+            except Exception as e:
+                raise QueryError(f"Init partial state error: {e}")
