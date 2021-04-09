@@ -1,4 +1,5 @@
 from __future__ import annotations
+from copy import deepcopy
 from typing import Optional
 from mst_gateway.connector.api.types import OrderSchema
 from .base import BinanceSerializer
@@ -11,22 +12,32 @@ class BinanceWalletSerializer(BinanceSerializer):
     def is_item_valid(self, message: dict, item) -> bool:
         return message['table'] == 'outboundAccountPosition'
 
-    async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
+    def filter_balances(self, item) -> dict:
+        filtered = deepcopy(item)
+        _balances = []
+        for b in item['a'].get('B', []):
+            if b['a'].lower() in self._wss_api.subscriptions[self.subscription]:
+                _balances.append(b)
+        filtered['a']['B'] = _balances
+        return filtered
+
+    def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
             return None
         state_data = None
         if self._wss_api.register_state:
-            if (state_data := await self._wss_api.storage.get(
+            if (state_data := self._wss_api.storage.get(
                     f'{self.subscription}.{self._wss_api.account_id}', schema=self._wss_api.schema)) is None:
                 return None
         if "*" in self._wss_api.subscriptions.get(self.subscription, {}):
             currencies = {}
             if self._wss_api.register_state:
-                if (currencies := await self._wss_api.storage.get(
+                if (currencies := self._wss_api.storage.get(
                         'currency', self._wss_api.name, self._wss_api.schema)) is None:
                     return None
             return self._wallet_list(item, state_data, currencies)
         else:
+            item = self.filter_balances(item)
             return self._wallet_detail(item, state_data)
 
     def _wallet_list(self, item, state_data: dict, currencies: dict):
@@ -45,8 +56,8 @@ class BinanceWalletSerializer(BinanceSerializer):
         elif self._wss_api.schema == OrderSchema.margin2:
             return dict(balances=utils.ws_margin_balance_data(item.get('B'), _state_balances))
 
-    async def _append_item(self, data: list, message: dict, item: dict):
-        valid_item = await self._load_data(message, item)
+    def _append_item(self, data: list, message: dict, item: dict):
+        valid_item = self._load_data(message, item)
         if not valid_item:
             return None
         self._update_data(data, valid_item)
@@ -55,7 +66,7 @@ class BinanceWalletSerializer(BinanceSerializer):
 class BinanceFuturesWalletSerializer(BinanceWalletSerializer):
 
     def is_item_valid(self, message: dict, item) -> bool:
-        return message['table'] == 'ACCOUNT_UPDATE'
+        return message['table'] == 'ACCOUNT_UPDATE' and self.subscription in self._wss_api.subscriptions
 
     def _wallet_list(self, item, state_data: dict, currencies: dict):
         assets = ('btc', 'usd')

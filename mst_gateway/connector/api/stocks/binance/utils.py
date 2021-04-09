@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Union, Optional
 from mst_gateway.connector import api
-from mst_gateway.calculator.binance import BinanceFinFactory
+from mst_gateway.calculator import BinanceFinFactory
 from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
 from mst_gateway.utils import delta
 from .....exceptions import ConnectorError
@@ -103,7 +103,10 @@ def load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict) -> li
             tick = get_tick_from_symbol_filters(d, 'PRICE_FILTER', 'tickSize')
             volume_tick = get_tick_from_symbol_filters(d, 'LOT_SIZE', 'stepSize')
             _symbol = d.get('symbol') if expiration is None else d.get('symbol', '')[:len(f"_{expiration}")]
-            max_leverage = to_float(leverage_data.get(_symbol.lower(), {}).get('initialLeverage')) or 100
+            max_leverage = 100
+            leverage_brackets = leverage_data.get(_symbol.lower(), [])
+            if leverage_brackets and leverage_brackets[0].get('initialLeverage'):
+                max_leverage = to_float(leverage_brackets[0]['initialLeverage'])
 
             symbol_list.append(
                 {
@@ -120,7 +123,8 @@ def load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict) -> li
                     'symbol_schema': OrderSchema.futures,
                     'tick': tick,
                     'volume_tick': volume_tick,
-                    'max_leverage': max_leverage
+                    'max_leverage': max_leverage,
+                    'leverage_brackets': leverage_brackets,
                 }
             )
     return symbol_list
@@ -735,8 +739,8 @@ def load_currencies_as_list(currencies: list):
     return [{cur['symbol'].lower(): to_float(cur['price'])} for cur in currencies]
 
 
-def load_futures_leverage_bracket_as_dict(data: list) -> dict:
-    return {d['symbol'].lower(): d['brackets'][0] for d in data if d.get('brackets')}
+def load_futures_leverage_brackets_as_dict(data: list) -> dict:
+    return {d['symbol'].lower(): d['brackets'] for d in data if d.get('brackets')}
 
 
 def load_total_wallet_summary(total: dict, summary: dict, assets: Union[list, tuple], fields: Union[list, tuple]):
@@ -1200,3 +1204,72 @@ def store_leverage(leverage_type: str) -> str:
     if leverage_type == LeverageType.cross:
         return var.BINANCE_LEVERAGE_TYPE_CROSS
     return var.BINANCE_LEVERAGE_TYPE_ISOLATED
+
+
+def load_ws_futures_position_side(position_amount: float) -> Optional[int]:
+    if position_amount and position_amount < 0:
+        return api.SELL
+    if position_amount and position_amount > 0:
+        return api.BUY
+    return None
+
+
+def load_ws_futures_position_leverage_type(margin_type: Optional[str]) -> Optional[str]:
+    if margin_type and margin_type.lower() == LeverageType.cross:
+        return LeverageType.cross
+    if margin_type and margin_type.lower() == LeverageType.isolated:
+        return LeverageType.isolated
+    return None
+
+
+def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, state_data: Optional[dict]) -> dict:
+    data = {
+        'time': to_iso_datetime(raw_data.get('E')),
+        'timestamp': raw_data.get('E'),
+        'symbol': position_state_data['symbol'].lower(),
+        'side': position_state_data['side'],
+        'volume': position_state_data['volume'],
+        'entry_price': position_state_data['entry_price'],
+        'mark_price': position_state_data['mark_price'],
+        'unrealised_pnl': position_state_data['unrealised_pnl'],
+        'leverage_type': position_state_data['leverage_type'],
+        'leverage': position_state_data['leverage'],
+        'liquidation_price': position_state_data['liquidation_price'],
+        'action': position_state_data['action']
+    }
+    if isinstance(state_data, dict):
+        data.update({
+            'system_symbol': state_data.get('system_symbol'),
+        })
+    return data
+
+
+def load_position_leverage_type(position_data: dict) -> str:
+    if position_data.get('isolated'):
+        return LeverageType.isolated
+    return LeverageType.cross
+
+
+def load_positions_state(account_info: dict) -> dict:
+    positions_state = {}
+    cross_wallet_balance = to_float(account_info.get('totalCrossWalletBalance'))
+    for position in account_info.get('positions', []):
+        symbol = position['symbol'].lower()
+        volume = to_float(position['positionAmt'])
+        side = load_ws_futures_position_side(volume)
+        entry_price = to_float(position['entryPrice'])
+        _unrealised_pnl = to_float(position['unrealizedProfit'])
+        mark_price = BinanceFinFactory.calc_mark_price(volume, entry_price, _unrealised_pnl)
+        positions_state[symbol] = {
+            'symbol': symbol,
+            'volume': volume,
+            'side': side,
+            'entry_price': entry_price,
+            'mark_price': mark_price,
+            'leverage_type': load_position_leverage_type(position),
+            'leverage': to_float(position['leverage']),
+            'isolated_wallet_balance': to_float(position.get('isolatedWallet')),
+            'cross_wallet_balance': cross_wallet_balance,
+            'action': 'update'
+        }
+    return positions_state
