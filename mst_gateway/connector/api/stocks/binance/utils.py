@@ -1278,7 +1278,7 @@ def load_positions_state(account_info: dict) -> dict:
 def load_exchange_position(raw_data: dict, schema: str, mark_price: float) -> dict:
     symbol = raw_data.get('symbol')
     volume = to_float(raw_data.get('volume'))
-    entry_price = to_float(raw_data.get('price'))
+    entry_price = to_float(raw_data.get('entry_price'))
     side = raw_data.get('side')
     mark_price = to_float(mark_price)
     return {
@@ -1288,9 +1288,9 @@ def load_exchange_position(raw_data: dict, schema: str, mark_price: float) -> di
         'volume': volume,
         'entry_price': entry_price,
         'mark_price': mark_price,
-        'unrealised_pnl': to_float(BinanceFinFactory.calc_unrealised_pnl(
+        'unrealised_pnl': BinanceFinFactory.calc_unrealised_pnl_by_side(
             volume=volume, entry_price=entry_price, mark_price=mark_price, side=side
-        )),
+        ),
         'leverage_type': raw_data.get('leverage_type'),
         'leverage': to_float(raw_data.get('leverage')),
         'liquidation_price': to_float(raw_data.get('liquidation_price')),
