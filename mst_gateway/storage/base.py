@@ -145,12 +145,7 @@ class BaseAsyncStorage(BaseStorage):
         _pattern = self._key(pattern)
         if self.is_dict:
             return self._get_dict(_pattern)
-        keys = await self._storage.keys_async(_pattern)
-        result = {}
-        for key in keys:
-            value = await self.get(key)
-            if value:
-                result[key] = value
+        result = await self._storage.get_pattern(_pattern)
         return result
 
     async def get_keys(self, pattern) -> list:
