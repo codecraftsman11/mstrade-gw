@@ -40,9 +40,10 @@ class Connector(metaclass=ABCMeta):
         return state
 
     def __enter__(self):
+        self.open()
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, exc_tb):
         self.close()
 
     def __del__(self):

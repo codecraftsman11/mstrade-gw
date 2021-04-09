@@ -26,16 +26,11 @@ class BitmexSymbolSerializer(BitmexSerializer):
                             state[0]['volume24'] = item['volume24h']
                         if item.get('prevPrice24h'):
                             state[0]['price24'] = to_float(item['prevPrice24h'])
+                        if item.get('askPrice'):
+                            state[0]['ask_price'] = to_float(item['askPrice'])
+                        if item.get('bidPrice'):
+                            state[0]['bid_price'] = to_float(item['bidPrice'])
                         self._update_state(stock2symbol(item['symbol']), state[0])
-        if message.get("table") == "quote":
-            for item in message.get('data', []):
-                if item.get('symbol') \
-                        and item.get('askPrice') is not None \
-                        and item.get('bidPrice') is not None:
-                    self._quotes[stock2symbol(item['symbol'])] = {
-                        'askPrice': item['askPrice'],
-                        'bidPrice': item['bidPrice']
-                    }
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
         if message.get('table') == 'quote':
@@ -72,5 +67,4 @@ class BitmexSymbolSerializer(BitmexSerializer):
                 _mapped_key = self._key_map(k)
                 if _mapped_key and item.get(_mapped_key) is None:
                     item[_mapped_key] = state[0][k]
-        item.update(**self._quotes.get(symbol, {}))
         return load_symbol_data(item, state_data, is_iso_datetime=True)

@@ -118,6 +118,7 @@ SPOT_SYMBOL_DETAIL_GET_DATA_RESULTS = [
                     "timestamp": 1606124519688,
                     "volume24": 3.346,
                     "max_leverage": None,
+                    "volume_tick": 0.01,
                 }
             ],
             "schema": cfg.BINANCE_SPOT_SCHEMA,
@@ -321,6 +322,7 @@ SPOT_SYMBOL_GET_DATA_RESULTS = [
                     "timestamp": 1606124498337,
                     "volume24": 8786.81,
                     "max_leverage": None,
+                    "volume_tick": 0.01,
                 },
                 {
                     "ask_price": 0.0,
@@ -342,6 +344,7 @@ SPOT_SYMBOL_GET_DATA_RESULTS = [
                     "timestamp": 1606124498763,
                     "volume24": 3.346,
                     "max_leverage": None,
+                    "volume_tick": 0.01,
                 },
             ],
             "schema": cfg.BINANCE_SPOT_SCHEMA,
@@ -454,7 +457,8 @@ FUTURES_SYMBOL_GET_DATA_RESULTS = [
                     "time": "2020-11-30 14:16:36.000000Z",
                     "timestamp": 1606745796712,
                     "volume24": 88743.677,
-                    "max_leverage": 125.0
+                    "max_leverage": 50,
+                    'volume_tick': 0.01,
                 }
             ],
             "schema": cfg.BINANCE_FUTURES_SCHEMA,

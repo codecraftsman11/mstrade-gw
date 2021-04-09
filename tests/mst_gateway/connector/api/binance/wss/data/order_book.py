@@ -218,7 +218,7 @@ FUTURES_ORDER_BOOK_GET_DATA_RESULTS = [
             "action": "delete",
             "data": [
                 {
-                    "id": 388436657702756,
+                    "id": 97722507000000,
                     "price": 22774.93,
                     "schema": cfg.BINANCE_FUTURES_SCHEMA,
                     "side": 1,
@@ -227,7 +227,7 @@ FUTURES_ORDER_BOOK_GET_DATA_RESULTS = [
                     "volume": 0.0,
                 },
                 {
-                    "id": 388436611702756,
+                    "id": 97722461000000,
                     "price": 22775.39,
                     "schema": cfg.BINANCE_FUTURES_SCHEMA,
                     "side": 1,
@@ -236,7 +236,7 @@ FUTURES_ORDER_BOOK_GET_DATA_RESULTS = [
                     "volume": 0.0,
                 },
                 {
-                    "id": 388436473702756,
+                    "id": 97722323000000,
                     "price": 22776.77,
                     "schema": cfg.BINANCE_FUTURES_SCHEMA,
                     "side": 1,
@@ -255,7 +255,7 @@ FUTURES_ORDER_BOOK_GET_DATA_RESULTS = [
             "action": "update",
             "data": [
                 {
-                    "id": 389886337702756,
+                    "id": 9172187000000,
                     "price": 8278.13,
                     "schema": "futures",
                     "side": 0,

@@ -35,34 +35,41 @@ class BitmexSubscriber(Subscriber):
 
 
 class BitmexSymbolSubscriber(BitmexSubscriber):
-    subscriptions = ("instrument", "quote")
+    subscription = "symbol"
+    subscriptions = ("instrument",)
     is_close_connection = False
 
 
 class BitmexQuoteBinSubscriber(BitmexSubscriber):
-    subscriptions = ("trade", "tradeBin1m")
+    subscription = "quote_bin"
+    subscriptions = ("tradeBin1m", "trade")
     is_close_connection = False
 
 
 class BitmexOrderBookSubscriber(BitmexSubscriber):
+    subscription = "order_book"
     subscriptions = ("orderBookL2_25",)
     is_close_connection = False
 
 
 class BitmexTradeSubscriber(BitmexSubscriber):
+    subscription = "trade"
     subscriptions = ("trade",)
     is_close_connection = False
 
 
 class BitmexOrderSubscriber(BitmexSubscriber):
+    subscription = "order"
     subscriptions = ("execution",)
 
 
 class BitmexPositionSubscriber(BitmexSubscriber):
+    subscription = "position"
     subscriptions = ("position",)
 
 
 class BitmexWalletSubscriber(BitmexSubscriber):
+    subscription = "wallet"
     subscriptions = ("margin",)
 
     async def _subscribe(self, api: BitmexWssApi, symbol=None):
