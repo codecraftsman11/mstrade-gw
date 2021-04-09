@@ -198,31 +198,42 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     return data
 
 
-def load_ws_position_side(current_qty: int) -> Optional[int]:
+def load_ws_position_side(current_qty: float) -> Optional[int]:
     if current_qty:
         return api.SELL if current_qty < 0 else api.BUY
     return None
 
 
+def load_ws_position_action(old_qty: float, current_qty: float) -> str:
+    if not old_qty and current_qty:
+        return 'create'
+    if old_qty and not current_qty:
+        return 'delete'
+    return 'update'
+
+
 def load_position_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
-    side = load_ws_position_side(raw_data.get('currentQty'))
+    old_volume = to_float(raw_data.get('oldQty'))
+    volume = to_float(raw_data.get('currentQty'))
+    side = load_ws_position_side(volume) or raw_data.get('side')
+    action = load_ws_position_action(old_volume, volume)
     leverage_type, leverage = load_leverage(raw_data)
     data = {
         'time': to_iso_datetime(raw_data.get('timestamp')),
         'timestamp': time2timestamp(raw_data.get('timestamp')),
         'symbol': raw_data.get('symbol'),
         'mark_price': to_float(raw_data.get('markPrice')),
-        'volume': to_float(raw_data.get('currentQty')),
+        'volume': volume,
         'liquidation_price': to_float(raw_data.get('liquidationPrice')),
         'entry_price': to_float(raw_data.get('avgEntryPrice')),
         'side': side,
         'unrealised_pnl': to_xbt(raw_data.get('unrealisedPnl')),
         'leverage_type': leverage_type,
         'leverage': leverage,
+        'action': action,
     }
     if isinstance(state_data, dict):
         data.update({
-            'schema': state_data.get('schema'),
             'system_symbol': state_data.get('system_symbol')
         })
     return data

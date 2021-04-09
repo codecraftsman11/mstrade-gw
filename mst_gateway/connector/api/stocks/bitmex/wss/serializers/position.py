@@ -7,6 +7,10 @@ from mst_gateway.connector.api.types.order import LeverageType
 class BitmexPositionSerializer(BitmexSerializer):
     subscription = "position"
 
+    @classmethod
+    def _get_data_action(cls, message) -> str:
+        return 'update'
+
     def is_item_valid(self, message: dict, item: dict) -> bool:
         return True
 
@@ -19,6 +23,7 @@ class BitmexPositionSerializer(BitmexSerializer):
                 return None
         state = self._get_state(item.get('symbol'))
         if state:
+            item['oldQty'] = state[0]['volume']
             if item.get('avgEntryPrice') is None:
                 item['avgEntryPrice'] = state[0]['entry_price']
             if item.get('liquidationPrice') is None:
@@ -31,4 +36,6 @@ class BitmexPositionSerializer(BitmexSerializer):
                 item['crossMargin'] = state[0]['leverage_type'] == LeverageType.cross
             if item.get('markPrice') is None:
                 item['markPrice'] = state[0]['mark_price']
+            if not item.get('currentQty'):
+                item['side'] = state[0]['side']
         return utils.load_position_ws_data(item, state_data)
