@@ -209,14 +209,16 @@ def load_ws_position_action(old_qty: float, current_qty: float) -> str:
         return 'create'
     if old_qty and not current_qty:
         return 'delete'
+    if old_qty and current_qty and (old_qty > 0 and current_qty < 0 or old_qty < 0 and current_qty > 0):
+        return 'reverse'
     return 'update'
 
 
 def load_position_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     old_volume = to_float(raw_data.get('oldQty'))
     volume = to_float(raw_data.get('currentQty'))
-    side = load_ws_position_side(volume) or raw_data.get('side')
     action = load_ws_position_action(old_volume, volume)
+    side = load_ws_position_side(volume)
     leverage_type, leverage = load_leverage(raw_data)
     data = {
         'time': to_iso_datetime(raw_data.get('timestamp')),
@@ -226,7 +228,7 @@ def load_position_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'volume': volume,
         'liquidation_price': to_float(raw_data.get('liquidationPrice')),
         'entry_price': to_float(raw_data.get('avgEntryPrice')),
-        'side': side,
+        'side': side if side is not None else raw_data.get('side'),
         'unrealised_pnl': to_xbt(raw_data.get('unrealisedPnl')),
         'leverage_type': leverage_type,
         'leverage': leverage,
