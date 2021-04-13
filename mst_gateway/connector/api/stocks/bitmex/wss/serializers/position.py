@@ -7,10 +7,6 @@ from mst_gateway.connector.api.types.order import LeverageType
 class BitmexPositionSerializer(BitmexSerializer):
     subscription = "position"
 
-    @classmethod
-    def _get_data_action(cls, message) -> str:
-        return 'update'
-
     def is_item_valid(self, message: dict, item: dict) -> bool:
         return True
 

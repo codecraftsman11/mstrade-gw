@@ -198,18 +198,24 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     return data
 
 
-def load_ws_position_side(current_qty: float) -> Optional[int]:
-    if current_qty:
-        return api.SELL if current_qty < 0 else api.BUY
+def load_ws_position_side(current_qty: Optional[float]) -> Optional[int]:
+    if isinstance(current_qty, (int, float)):
+        if current_qty > 0:
+            return api.SELL
+        else:
+            return api.SELL
     return None
 
 
-def load_ws_position_action(old_qty: float, current_qty: float) -> str:
-    if not old_qty and current_qty:
+def load_ws_position_action(position_state_volume: float, volume: float) -> str:
+    if not position_state_volume and volume:
         return 'create'
-    if old_qty and not current_qty:
+    if position_state_volume and not volume:
         return 'delete'
-    if old_qty and current_qty and (old_qty > 0 and current_qty < 0 or old_qty < 0 and current_qty > 0):
+    if position_state_volume and volume and (
+            not (position_state_volume > 0 and volume > 0) or
+            not (position_state_volume < 0 and volume < 0)
+    ):
         return 'reverse'
     return 'update'
 
@@ -217,7 +223,6 @@ def load_ws_position_action(old_qty: float, current_qty: float) -> str:
 def load_position_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     old_volume = to_float(raw_data.get('oldQty'))
     volume = to_float(raw_data.get('currentQty'))
-    action = load_ws_position_action(old_volume, volume)
     side = load_ws_position_side(volume)
     leverage_type, leverage = load_leverage(raw_data)
     data = {
@@ -232,7 +237,7 @@ def load_position_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'unrealised_pnl': to_xbt(raw_data.get('unrealisedPnl')),
         'leverage_type': leverage_type,
         'leverage': leverage,
-        'action': action,
+        'action': load_ws_position_action(old_volume, volume),
     }
     if isinstance(state_data, dict):
         data.update({
