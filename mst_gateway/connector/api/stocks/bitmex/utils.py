@@ -198,9 +198,9 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     return data
 
 
-def load_ws_position_side(current_qty: Optional[float]) -> Optional[int]:
-    if isinstance(current_qty, (int, float)):
-        if current_qty > 0:
+def load_ws_position_side(volume: Optional[float]) -> Optional[int]:
+    if isinstance(volume, (int, float)):
+        if volume > 0:
             return api.BUY
         else:
             return api.SELL
