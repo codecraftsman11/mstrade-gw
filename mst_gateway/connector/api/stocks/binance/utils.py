@@ -93,6 +93,8 @@ def load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict) -> li
             system_quote_asset = to_system_asset(d.get('quoteAsset'))
             expiration = None
             system_symbol = f"{system_base_asset}{system_quote_asset}"
+            if not validate_symbol_pair_and_assets(d):
+                continue
             if d.get('contractType', '').upper() != 'PERPETUAL':
                 try:
                     expiration = d['symbol'].split('_')[1]
@@ -128,6 +130,15 @@ def load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict) -> li
                 }
             )
     return symbol_list
+
+
+def validate_symbol_pair_and_assets(raw_data):
+    pair = raw_data.get('pair', '').lower()
+    base_asset = raw_data.get('baseAsset', '').lower()
+    quote_asset = raw_data.get('quoteAsset', '').lower()
+    if pair != f'{base_asset}{quote_asset}':
+        return False
+    return True
 
 
 def get_tick_from_symbol_filters(symbol_data, filter_name, parameter_name):
