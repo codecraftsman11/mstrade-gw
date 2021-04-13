@@ -207,21 +207,21 @@ def load_ws_position_side(current_qty: Optional[float]) -> Optional[int]:
     return None
 
 
-def load_ws_position_action(position_state_volume: float, volume: float) -> str:
-    if not position_state_volume and volume:
+def load_ws_position_action(state_volume: float, volume: float) -> str:
+    if not state_volume and volume:
         return 'create'
-    elif position_state_volume and not volume:
+    elif state_volume and not volume:
         return 'delete'
-    elif position_state_volume and volume and (
-            (position_state_volume > 0 > volume) or
-            (position_state_volume < 0 < volume)
+    elif state_volume and volume and (
+            (state_volume > 0 > volume) or
+            (state_volume < 0 < volume)
     ):
         return 'reverse'
     return 'update'
 
 
 def load_position_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
-    old_volume = to_float(raw_data.get('oldQty'))
+    state_volume = to_float(raw_data.get('state_volume'))
     volume = to_float(raw_data.get('currentQty'))
     side = load_ws_position_side(volume)
     leverage_type, leverage = load_leverage(raw_data)
@@ -237,7 +237,7 @@ def load_position_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'unrealised_pnl': to_xbt(raw_data.get('unrealisedPnl')),
         'leverage_type': leverage_type,
         'leverage': leverage,
-        'action': load_ws_position_action(old_volume, volume),
+        'action': load_ws_position_action(state_volume, volume),
     }
     if isinstance(state_data, dict):
         data.update({

@@ -19,7 +19,7 @@ class BitmexPositionSerializer(BitmexSerializer):
                 return None
         state = self._get_state(item.get('symbol'))
         if state:
-            item['oldQty'] = state[0]['volume']
+            item['state_volume'] = state[0]['volume']
             if item.get('avgEntryPrice') is None:
                 item['avgEntryPrice'] = state[0]['entry_price']
             if item.get('liquidationPrice') is None:
@@ -35,5 +35,5 @@ class BitmexPositionSerializer(BitmexSerializer):
             if not item.get('currentQty'):
                 item['side'] = state[0]['side']
         else:
-            item['oldQty'] = item.get('currentQty')
+            item['state_volume'] = item.get('currentQty')
         return utils.load_position_ws_data(item, state_data)
