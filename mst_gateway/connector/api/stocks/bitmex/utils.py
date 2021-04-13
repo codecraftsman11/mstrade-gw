@@ -201,7 +201,7 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
 def load_ws_position_side(current_qty: Optional[float]) -> Optional[int]:
     if isinstance(current_qty, (int, float)):
         if current_qty > 0:
-            return api.SELL
+            return api.BUY
         else:
             return api.SELL
     return None
@@ -210,11 +210,11 @@ def load_ws_position_side(current_qty: Optional[float]) -> Optional[int]:
 def load_ws_position_action(position_state_volume: float, volume: float) -> str:
     if not position_state_volume and volume:
         return 'create'
-    if position_state_volume and not volume:
+    elif position_state_volume and not volume:
         return 'delete'
-    if position_state_volume and volume and (
-            not (position_state_volume > 0 and volume > 0) or
-            not (position_state_volume < 0 and volume < 0)
+    elif position_state_volume and volume and (
+            (position_state_volume > 0 > volume) or
+            (position_state_volume < 0 < volume)
     ):
         return 'reverse'
     return 'update'

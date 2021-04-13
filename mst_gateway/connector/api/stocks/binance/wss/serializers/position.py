@@ -79,8 +79,8 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
             elif bool(position_state_volume) and not bool(volume):
                 action = 'delete'
             elif position_state_volume and volume and (
-                    not (position_state_volume > 0 and volume > 0) or
-                    not (position_state_volume < 0 and volume < 0)
+                    (position_state_volume > 0 > volume) or
+                    (position_state_volume < 0 < volume)
             ):
                 action = 'reverse'
         except (KeyError, IndexError, AttributeError):

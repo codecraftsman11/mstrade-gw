@@ -34,4 +34,6 @@ class BitmexPositionSerializer(BitmexSerializer):
                 item['markPrice'] = state[0]['mark_price']
             if not item.get('currentQty'):
                 item['side'] = state[0]['side']
+        else:
+            item['oldQty'] = item.get('currentQty')
         return utils.load_position_ws_data(item, state_data)
