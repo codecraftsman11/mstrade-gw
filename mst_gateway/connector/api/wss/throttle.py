@@ -12,7 +12,9 @@ class ThrottleWss(BaseStorage):
         self._set(self._key(key), history)
 
     def get(self, key) -> list:
-        return self._get(self._key(key)) or []
+        if isinstance(_sate := self._get(self._key(key)), list):
+            return _sate
+        return []
 
     def remove(self, key):
         try:
