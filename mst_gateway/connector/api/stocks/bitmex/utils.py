@@ -202,7 +202,7 @@ def load_ws_position_side(volume: Optional[float]) -> Optional[int]:
     if isinstance(volume, (int, float)):
         if volume > 0:
             return api.BUY
-        else:
+        elif volume < 0:
             return api.SELL
     return None
 
