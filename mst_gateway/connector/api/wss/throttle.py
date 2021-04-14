@@ -9,16 +9,16 @@ class ThrottleWss(BaseStorage):
     def set(self, key, limit: int):
         history = self.get(key)
         history.insert(0, int(limit))
-        self._set(self._key(key), history)
+        self._set(self.generate_hash_key(key), history)
 
     def get(self, key) -> list:
-        if isinstance(_sate := self._get(self._key(key)), list):
+        if isinstance(_sate := self._get(self.generate_hash_key(key)), list):
             return _sate
         return []
 
     def remove(self, key):
         try:
-            self._remove(self._key(key))
+            self._remove(self.generate_hash_key(key))
         except KeyError:
             pass
 
