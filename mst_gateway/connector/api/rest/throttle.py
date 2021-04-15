@@ -5,13 +5,13 @@ class ThrottleRest(BaseStorage):
     timeout = 60
 
     def set(self, key, limit: int, reset: int, scope: str):
-        self._set(self._key(key), {scope: [limit, reset]})
+        self._set(self.generate_hash_key(key), {scope: [limit, reset]})
 
     def get(self, key) -> dict:
-        return self._get(self._key(key)) or {'rest': [0, None]}
+        return self._get(self.generate_hash_key(key)) or {'rest': [0, None]}
 
     def remove(self, key):
         try:
-            self._remove(self._key(key))
+            self._remove(self.generate_hash_key(key))
         except KeyError:
             pass
