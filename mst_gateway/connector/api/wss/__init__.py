@@ -93,6 +93,10 @@ class StockWssApi(Connector):
         for subscription in [*self.subscribers.keys(), *self.auth_subscribers.keys()]:
             self.partial_state_data.setdefault(subscription, {})
 
+    def __del_partial_state_data(self):
+        for subscription in [*self.subscribers.keys(), *self.auth_subscribers.keys()]:
+            self.partial_state_data.setdefault(subscription, {}).clear()
+
     def get_data(self, message: dict) -> Dict[str, Dict]:
         return self._router.get_data(message)
 
@@ -270,6 +274,7 @@ class StockWssApi(Connector):
 
     async def close(self):
         self._subscriptions = {}
+        self.__del_partial_state_data()
         self.cancel_task()
         if not self._handler:
             return
