@@ -53,7 +53,7 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
                         self.update_positions_state(
                             symbol,
                             volume=volume,
-                            side=utils.load_ws_futures_position_side(volume),
+                            side=utils.load_futures_position_side(volume),
                             entry_price=entry_price,
                             mark_price=BinanceFinFactory.calc_mark_price(volume, entry_price, unrealised_pnl),
                             unrealised_pnl=unrealised_pnl,

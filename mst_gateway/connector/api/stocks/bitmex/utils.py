@@ -627,9 +627,7 @@ def store_leverage(leverage_type: str, leverage: float) -> float:
     return leverage or 0
 
 
-def load_position(raw_data: dict, schema) -> dict:
-    if to_float(raw_data.get('currentQty')) == 0:
-        return {}
+def load_position(raw_data: dict, schema: str) -> dict:
     return {
         'schema': schema,
         'symbol': raw_data.get('symbol'),
@@ -644,5 +642,5 @@ def load_position(raw_data: dict, schema) -> dict:
         }
 
 
-def load_positions_list(raw_data: list, schema) -> list:
+def load_positions_list(raw_data: list, schema: str) -> list:
     return [load_position(data, schema) for data in raw_data if to_float(data.get('currentQty')) != 0]
