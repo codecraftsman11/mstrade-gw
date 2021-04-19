@@ -73,14 +73,14 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
     def get_position_action(self, symbol: str, volume: Optional[float]):
         action = 'update'
         try:
-            position_state_volume = self._position_state[symbol.lower()]['volume']
-            if not bool(position_state_volume) and bool(volume):
+            state_volume = self._position_state[symbol.lower()]['volume']
+            if not bool(state_volume) and bool(volume):
                 action = 'create'
-            elif bool(position_state_volume) and not bool(volume):
+            elif bool(state_volume) and not bool(volume):
                 action = 'delete'
-            elif position_state_volume and volume and (
-                    not (position_state_volume > 0 and volume > 0) or
-                    not (position_state_volume < 0 and volume < 0)
+            elif state_volume and volume and (
+                    (state_volume > 0 > volume) or
+                    (state_volume < 0 < volume)
             ):
                 action = 'reverse'
         except (KeyError, IndexError, AttributeError):

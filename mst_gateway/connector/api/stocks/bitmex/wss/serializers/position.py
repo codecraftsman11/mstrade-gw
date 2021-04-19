@@ -19,6 +19,7 @@ class BitmexPositionSerializer(BitmexSerializer):
                 return None
         state = self._get_state(item.get('symbol'))
         if state:
+            item['state_volume'] = state[0]['volume']
             if item.get('avgEntryPrice') is None:
                 item['avgEntryPrice'] = state[0]['entry_price']
             if item.get('liquidationPrice') is None:
@@ -31,4 +32,8 @@ class BitmexPositionSerializer(BitmexSerializer):
                 item['crossMargin'] = state[0]['leverage_type'] == LeverageType.cross
             if item.get('markPrice') is None:
                 item['markPrice'] = state[0]['mark_price']
+            if not item.get('currentQty'):
+                item['side'] = state[0]['side']
+        else:
+            item['state_volume'] = item.get('currentQty')
         return utils.load_position_ws_data(item, state_data)

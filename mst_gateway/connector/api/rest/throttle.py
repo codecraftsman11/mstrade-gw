@@ -1,11 +1,17 @@
-from mst_gateway.storage import BaseSyncStorage
+from mst_gateway.storage import BaseStorage
 
 
-class ThrottleRest(BaseSyncStorage):
-    _timeout = 60
+class ThrottleRest(BaseStorage):
+    timeout = 60
 
     def set(self, key, limit: int, reset: int, scope: str):
-        super().set(key=key, value={scope: [limit, reset]})
+        self._set(self.generate_hash_key(key), {scope: [limit, reset]})
 
     def get(self, key) -> dict:
-        return super().get(key=key) or {'rest': [0, None]}
+        return self._get(self.generate_hash_key(key)) or {'rest': [0, None]}
+
+    def remove(self, key):
+        try:
+            self._remove(self.generate_hash_key(key))
+        except KeyError:
+            pass

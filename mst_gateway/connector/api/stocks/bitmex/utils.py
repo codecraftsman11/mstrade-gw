@@ -198,31 +198,49 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     return data
 
 
-def load_ws_position_side(current_qty: int) -> Optional[int]:
-    if current_qty:
-        return api.SELL if current_qty < 0 else api.BUY
+def load_ws_position_side(volume: Optional[float]) -> Optional[int]:
+    if isinstance(volume, (int, float)):
+        if volume > 0:
+            return api.BUY
+        elif volume < 0:
+            return api.SELL
     return None
 
 
+def load_ws_position_action(state_volume: float, volume: float) -> str:
+    if not state_volume and volume:
+        return 'create'
+    elif state_volume and not volume:
+        return 'delete'
+    elif state_volume and volume and (
+            (state_volume > 0 > volume) or
+            (state_volume < 0 < volume)
+    ):
+        return 'reverse'
+    return 'update'
+
+
 def load_position_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
-    side = load_ws_position_side(raw_data.get('currentQty'))
+    state_volume = to_float(raw_data.get('state_volume'))
+    volume = to_float(raw_data.get('currentQty'))
+    side = load_ws_position_side(volume)
     leverage_type, leverage = load_leverage(raw_data)
     data = {
         'time': to_iso_datetime(raw_data.get('timestamp')),
         'timestamp': time2timestamp(raw_data.get('timestamp')),
         'symbol': raw_data.get('symbol'),
         'mark_price': to_float(raw_data.get('markPrice')),
-        'volume': to_float(raw_data.get('currentQty')),
+        'volume': volume,
         'liquidation_price': to_float(raw_data.get('liquidationPrice')),
         'entry_price': to_float(raw_data.get('avgEntryPrice')),
-        'side': side,
+        'side': side if side is not None else raw_data.get('side'),
         'unrealised_pnl': to_xbt(raw_data.get('unrealisedPnl')),
         'leverage_type': leverage_type,
         'leverage': leverage,
+        'action': load_ws_position_action(state_volume, volume),
     }
     if isinstance(state_data, dict):
         data.update({
-            'schema': state_data.get('schema'),
             'system_symbol': state_data.get('system_symbol')
         })
     return data

@@ -23,7 +23,7 @@ class BaseStorage:
         return isinstance(self._storage, dict)
 
     @staticmethod
-    def _key(key: (str, list, tuple, dict)) -> str:
+    def generate_hash_key(key: (str, list, tuple, dict)) -> str:
         if isinstance(key, (list, tuple)):
             return sha1('|'.join(key).encode().lower()).hexdigest()
         if isinstance(key, dict):
