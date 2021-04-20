@@ -1220,7 +1220,7 @@ def store_leverage(leverage_type: str) -> str:
     return var.BINANCE_LEVERAGE_TYPE_ISOLATED
 
 
-def load_futures_position_side(position_amount: float) -> Optional[int]:
+def load_position_side_by_volume(position_amount: float) -> Optional[int]:
     if position_amount and position_amount < 0:
         return api.SELL
     if position_amount and position_amount > 0:
@@ -1270,7 +1270,7 @@ def load_positions_state(account_info: dict) -> dict:
     for position in account_info.get('positions', []):
         symbol = position['symbol'].lower()
         volume = to_float(position['positionAmt'])
-        side = load_futures_position_side(volume)
+        side = load_position_side_by_volume(volume)
         entry_price = to_float(position['entryPrice'])
         _unrealised_pnl = to_float(position['unrealizedProfit'])
         mark_price = BinanceFinFactory.calc_mark_price(volume, entry_price, _unrealised_pnl)
@@ -1326,7 +1326,7 @@ def load_futures_position(raw_data: dict, schema: str) -> dict:
         'timestamp':  time2timestamp(now),
         'schema': schema,
         'symbol': raw_data.get('symbol'),
-        'side': load_futures_position_side(to_float(raw_data.get('positionAmt'))),
+        'side': load_position_side_by_volume(to_float(raw_data.get('positionAmt'))),
         'volume': to_float(raw_data.get('positionAmt')),
         'entry_price': to_float(raw_data.get('entryPrice')),
         'mark_price': to_float(raw_data.get('markPrice')),

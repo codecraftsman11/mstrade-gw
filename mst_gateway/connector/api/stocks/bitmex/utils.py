@@ -198,7 +198,7 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     return data
 
 
-def load_ws_position_side(volume: Optional[float]) -> Optional[int]:
+def load_position_side_by_volume(volume: Optional[float]) -> Optional[int]:
     if isinstance(volume, (int, float)):
         if volume > 0:
             return api.BUY
@@ -223,7 +223,7 @@ def load_ws_position_action(state_volume: float, volume: float) -> str:
 def load_position_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     state_volume = to_float(raw_data.get('state_volume'))
     volume = to_float(raw_data.get('currentQty'))
-    side = load_ws_position_side(volume)
+    side = load_position_side_by_volume(volume)
     leverage_type, leverage = load_leverage(raw_data)
     data = {
         'time': to_iso_datetime(raw_data.get('timestamp')),
@@ -631,7 +631,7 @@ def load_position(raw_data: dict, schema: str) -> dict:
     return {
         'schema': schema,
         'symbol': raw_data.get('symbol'),
-        'side': BUY if (to_float(raw_data.get('currentQty')) > 0) else SELL,
+        'side': load_position_side_by_volume(to_float(raw_data.get('currentQty'))),
         'volume': to_float(raw_data.get('currentQty')),
         'entry_price': to_float(raw_data.get('avgEntryPrice')),
         'mark_price': to_float(raw_data.get('markPrice')),
