@@ -27,7 +27,6 @@ class Subscriber:
         return await self._subscribe(api, symbol)
 
     async def unsubscribe(self, api: StockWssApi, symbol=None):
-        api.partial_state_data.pop(self.subscription, None)
         return await self._unsubscribe(api, symbol)
 
     @abstractmethod

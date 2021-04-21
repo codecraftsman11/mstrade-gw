@@ -573,6 +573,38 @@ class BinanceRestApi(StockRestApi):
             return leverage_type, leverage
         raise ConnectorError(f"Invalid schema {schema}.")
 
+    def get_position(self, schema: str, symbol: str, **kwargs) -> dict:
+        if schema == OrderSchema.futures:
+            response = self._binance_api(self._handler.futures_position_information, symbol=symbol.upper())
+            try:
+                response = response[0]
+            except IndexError:
+                return {}
+            return utils.load_futures_position(response, schema)
+        account_id = kwargs.get('account_id')
+        position_state_key = f"position.{account_id}.{self.name}.{schema}.{symbol}".lower()
+        position = self.storage.get(position_state_key)
+        symbol_data = self._binance_api(self._handler.get_ticker, symbol=symbol.upper())
+        if schema == OrderSchema.exchange:
+            return utils.load_exchange_position(position, schema, symbol_data.get('lastPrice'))
+        if schema == OrderSchema.margin2:
+            return utils.load_margin2_position(position, schema, symbol_data.get('lastPrice'))
+        raise ConnectorError(f"Invalid schema {schema}.")
+
+    def list_positions(self, schema: str, **kwargs) -> list:
+        if schema == OrderSchema.futures:
+            response = self._binance_api(self._handler.futures_position_information)
+            return utils.load_futures_position_list(response, schema)
+        account_id = kwargs.get('account_id')
+        position_state_key = f"position.{account_id}.{self.name}.{schema}.*".lower()
+        positions = self.storage.get_pattern(position_state_key)
+        symbol_list = self._binance_api(self._handler.get_ticker)
+        if schema == OrderSchema.exchange:
+            return utils.load_exchange_position_list(positions, schema, symbol_list)
+        if schema == OrderSchema.margin2:
+            return utils.load_margin2_position_list(positions, schema, symbol_list)
+        raise ConnectorError(f"Invalid schema {schema}.")
+
     def _binance_api(self, method: callable, **kwargs):
         try:
             resp = method(**kwargs)

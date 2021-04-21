@@ -4,6 +4,7 @@ from mst_gateway.connector import api
 from mst_gateway.calculator import BinanceFinFactory
 from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
 from mst_gateway.utils import delta
+from ...utils import time2timestamp
 from .....exceptions import ConnectorError
 from . import var
 from .converter import BinanceOrderTypeConverter
@@ -319,14 +320,16 @@ def load_quote_bin_data(raw_data: list, state_data: Optional[dict]) -> dict:
 
 
 def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+    _time = to_date(raw_data.get('time'))
     data = {
+        'time': _time,
+        'timestamp': time2timestamp(_time),
         'exchange_order_id': raw_data.get('orderId'),
         'symbol': raw_data.get('symbol'),
         'volume': raw_data.get('origQty'),
         'stop': raw_data.get('stopPrice'),
         'side': raw_data.get('side'),
         'price': to_float(raw_data.get('price')),
-        'created': to_date(raw_data.get('time')),
         'active': raw_data.get('status') != "NEW",
         'type': raw_data.get('type'),
         'execution': raw_data.get('type'),
@@ -1217,7 +1220,7 @@ def store_leverage(leverage_type: str) -> str:
     return var.BINANCE_LEVERAGE_TYPE_ISOLATED
 
 
-def load_ws_futures_position_side(position_amount: float) -> Optional[int]:
+def load_position_side_by_volume(position_amount: float) -> Optional[int]:
     if position_amount and position_amount < 0:
         return api.SELL
     if position_amount and position_amount > 0:
@@ -1267,7 +1270,7 @@ def load_positions_state(account_info: dict) -> dict:
     for position in account_info.get('positions', []):
         symbol = position['symbol'].lower()
         volume = to_float(position['positionAmt'])
-        side = load_ws_futures_position_side(volume)
+        side = load_position_side_by_volume(volume)
         entry_price = to_float(position['entryPrice'])
         _unrealised_pnl = to_float(position['unrealizedProfit'])
         mark_price = BinanceFinFactory.calc_mark_price(volume, entry_price, _unrealised_pnl)
@@ -1284,3 +1287,67 @@ def load_positions_state(account_info: dict) -> dict:
             'action': 'update'
         }
     return positions_state
+
+
+def load_exchange_position(raw_data: dict, schema: str, mark_price: float) -> dict:
+    symbol = raw_data.get('symbol')
+    volume = to_float(raw_data.get('volume'))
+    entry_price = to_float(raw_data.get('entry_price'))
+    side = raw_data.get('side')
+    mark_price = to_float(mark_price)
+    now = datetime.now()
+    data = {
+        'time': now,
+        'timestamp':  time2timestamp(now),
+        'schema': schema,
+        'symbol': symbol,
+        'side': side,
+        'volume': volume,
+        'entry_price': entry_price,
+        'mark_price': mark_price,
+        'unrealised_pnl': BinanceFinFactory.calc_unrealised_pnl_by_side(
+            volume=volume, entry_price=entry_price, mark_price=mark_price, side=side
+        ),
+        'leverage_type': raw_data.get('leverage_type'),
+        'leverage': to_float(raw_data.get('leverage')),
+        'liquidation_price': to_float(raw_data.get('liquidation_price')),
+        }
+    return data
+
+
+def load_margin2_position(raw_data: dict, schema: str, mark_price: float) -> dict:
+    return load_exchange_position(raw_data, schema, mark_price)
+
+
+def load_futures_position(raw_data: dict, schema: str) -> dict:
+    now = datetime.now()
+    data = {
+        'time': now,
+        'timestamp':  time2timestamp(now),
+        'schema': schema,
+        'symbol': raw_data.get('symbol'),
+        'side': load_position_side_by_volume(to_float(raw_data.get('positionAmt'))),
+        'volume': to_float(raw_data.get('positionAmt')),
+        'entry_price': to_float(raw_data.get('entryPrice')),
+        'mark_price': to_float(raw_data.get('markPrice')),
+        'unrealised_pnl': to_float(raw_data.get('unRealizedProfit')),
+        'leverage_type': raw_data.get('marginType'),
+        'leverage': to_float(raw_data.get('leverage')),
+        'liquidation_price': to_float(raw_data.get('liquidationPrice')),
+        }
+    return data
+
+
+def load_exchange_position_list(raw_data: dict, schema: str, symbol_list: list) -> list:
+    symbols_mark_price = {
+        symbol.get('symbol', '').lower(): to_float(symbol.get('lastPrice')) for symbol in symbol_list
+    }
+    return [load_exchange_position(v, schema, symbols_mark_price.get(v.get('symbol'))) for k, v in raw_data.items()]
+
+
+def load_margin2_position_list(raw_data: dict, schema: str, symbol_list: list) -> list:
+    return load_exchange_position_list(raw_data, schema, symbol_list)
+
+
+def load_futures_position_list(raw_data: list, schema: str) -> list:
+    return [load_futures_position(data, schema) for data in raw_data if to_float(data.get('positionAmt')) != 0]
