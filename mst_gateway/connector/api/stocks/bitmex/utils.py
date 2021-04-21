@@ -5,7 +5,7 @@ from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
 from mst_gateway.connector.api.utils import time2timestamp
 from mst_gateway.exceptions import ConnectorError
-from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
+from mst_gateway.connector.api.types.order import LeverageType, OrderSchema, BUY, SELL
 from mst_gateway.utils import delta
 from . import var
 from .var import BITMEX_ORDER_STATUS_MAP
@@ -198,7 +198,7 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     return data
 
 
-def load_ws_position_side(volume: Optional[float]) -> Optional[int]:
+def load_position_side_by_volume(volume: Optional[float]) -> Optional[int]:
     if isinstance(volume, (int, float)):
         if volume > 0:
             return api.BUY
@@ -223,7 +223,7 @@ def load_ws_position_action(state_volume: float, volume: float) -> str:
 def load_position_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     state_volume = to_float(raw_data.get('state_volume'))
     volume = to_float(raw_data.get('currentQty'))
-    side = load_ws_position_side(volume)
+    side = load_position_side_by_volume(volume)
     leverage_type, leverage = load_leverage(raw_data)
     data = {
         'time': to_iso_datetime(raw_data.get('timestamp')),
@@ -625,3 +625,22 @@ def store_leverage(leverage_type: str, leverage: float) -> float:
     if leverage_type == LeverageType.cross:
         return var.BITMEX_CROSS_LEVERAGE_TYPE_PARAM
     return leverage or 0
+
+
+def load_position(raw_data: dict, schema: str) -> dict:
+    return {
+        'schema': schema,
+        'symbol': raw_data.get('symbol'),
+        'side': load_position_side_by_volume(to_float(raw_data.get('currentQty'))),
+        'volume': to_float(raw_data.get('currentQty')),
+        'entry_price': to_float(raw_data.get('avgEntryPrice')),
+        'mark_price': to_float(raw_data.get('markPrice')),
+        'unrealised_pnl': to_xbt(raw_data.get('unrealisedPnl')),
+        'leverage_type': load_leverage(raw_data)[0],
+        'leverage': to_float(raw_data.get('leverage')),
+        'liquidation_price': to_float(raw_data.get('liquidationPrice')),
+        }
+
+
+def load_positions_list(raw_data: list, schema: str) -> list:
+    return [load_position(data, schema) for data in raw_data if to_float(data.get('currentQty')) != 0]
