@@ -6,7 +6,8 @@ class StateStorage(BaseSyncStorage):
         super().set(key=key, value=value)
 
     def get(self, key, exchange: str = None, schema: str = None) -> dict:
-        return super().get(key=key, exchange=exchange, schema=schema)
+        result = super().get(key=key, exchange=exchange, schema=schema)
+        return result
 
 
 class AsyncStateStorage(BaseAsyncStorage):
@@ -14,4 +15,5 @@ class AsyncStateStorage(BaseAsyncStorage):
         await super().set(key=key, value=value)
 
     async def get(self, key, exchange: str = None, schema: str = None) -> dict:
-        return await super(AsyncStateStorage, self).get(key=key, exchange=exchange, schema=schema)
+        result = await super().get(key=key, exchange=exchange, schema=schema)
+        return result
