@@ -331,14 +331,11 @@ class StockWssApi(Connector):
 
     async def __load_state_data(self):
         self.__state_data = await self.storage.get('symbol', self.name, self.schema)
-        redis = await self.storage.storage.client.get_client()
-        channels = await redis.subscribe('symbol')
-        if channels:
-            channel = channels[0]
-            while (await channel.wait_message()):
-                symbols = await channel.get_json()
-                if symbols:
-                    self.__state_data = symbols.get(self.name, {}).get(self.schema, {})
+        redis = await self.storage.get_client()
+        symbol_channel = (await redis.subscribe('symbol'))[0]
+        while await symbol_channel.wait_message():
+            if symbols := await symbol_channel.get_json():
+                self.__state_data = symbols.get(self.name, {}).get(self.schema, {})
 
     @property
     def state_symbol_list(self) -> list:

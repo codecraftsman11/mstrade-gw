@@ -91,12 +91,11 @@ class BinanceSubscriber(Subscriber):
         watcher for new symbol when `general_subscribe_available` is False
         """
         while api.handler and not api.handler.closed:
-            redis = await api.storage.client.get_client()
-            channels = await redis.subscribe('symbol')
-            if channels:
-                channel = channels[0]
-                while (await channel.wait_message()):
-                    new_registered_symbols = set(api.state_symbol_list)
+            redis = await api.storage.get_client()
+            symbol_channel = (await redis.subscribe('symbol'))[0]
+            while await symbol_channel.wait_message():
+                if symbols := await symbol_channel.get_json():
+                    new_registered_symbols = set(symbols.get(api.name, {}).get(api.schema, {}))
                     unsubscribe_symbols = self._subscribed_symbols.difference(new_registered_symbols)
                     subscribe_symbols = new_registered_symbols.difference(self._subscribed_symbols)
                     for symbol in unsubscribe_symbols:
