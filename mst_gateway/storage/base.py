@@ -95,13 +95,15 @@ class BaseSyncStorage(BaseStorage):
         _pattern = self.generate_hash_key(pattern)
         if self.is_dict:
             return self._get_dict(_pattern)
-        return self._storage.get_pattern(_pattern) or {}
+        return self._storage.get_pattern(_pattern)
 
     def get_keys(self, pattern) -> list:
         _pattern = self.generate_hash_key(pattern)
         if self.is_dict:
-            return [_pattern] if self._get_dict(_pattern) else []
-        return self._storage.get_keys(_pattern) or []
+            if _pattern in self._storage:
+                return [_pattern]
+            return []
+        return self._storage.get_keys(_pattern)
 
     def remove_pattern(self, pattern) -> None:
         _pattern = self.generate_hash_key(pattern)
@@ -157,15 +159,15 @@ class BaseAsyncStorage(BaseStorage):
         _pattern = self.generate_hash_key(pattern)
         if self.is_dict:
             return self._get_dict(_pattern)
-        result = await self._storage.get_pattern(_pattern)
-        return result
+        return await self._storage.get_pattern(_pattern)
 
     async def get_keys(self, pattern) -> list:
         _pattern = self.generate_hash_key(pattern)
         if self.is_dict:
-            return [_pattern] if self._get_dict(_pattern) else []
-        keys = await self._storage.keys_async(_pattern)
-        return keys or []
+            if self._get_dict(_pattern):
+                return [_pattern]
+            return []
+        return await self._storage.keys_async(_pattern)
 
     async def remove(self, key) -> None:
         _key = self.generate_hash_key(key)
