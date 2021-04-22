@@ -50,6 +50,11 @@ class BaseStorage:
 
 class BaseSyncStorage(BaseStorage):
 
+    def get_client(self, write=False):
+        if self.is_dict:
+            return None
+        return self._storage.get_client(key=None, write=write)
+
     def set(self, *args, **kwargs) -> None:
         key = kwargs.get("key")
         value = kwargs.get("value")
@@ -106,6 +111,11 @@ class BaseSyncStorage(BaseStorage):
 
 
 class BaseAsyncStorage(BaseStorage):
+
+    async def get_client(self, write=False):
+        if self.is_dict:
+            return None
+        return await self._storage.client.get_client(write=write)
 
     async def set(self, *args, **kwargs) -> None:
         key = kwargs.get("key")
