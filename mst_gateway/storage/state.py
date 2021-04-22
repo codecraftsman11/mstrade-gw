@@ -2,7 +2,7 @@ from .base import BaseAsyncStorage, BaseSyncStorage
 
 
 class StateStorage(BaseSyncStorage):
-    def set(self, key, value) -> None:
+    def set(self, key, value, timeout=None) -> None:
         super().set(key=key, value=value)
 
     def get(self, key, exchange: str = None, schema: str = None) -> dict:
@@ -11,7 +11,7 @@ class StateStorage(BaseSyncStorage):
 
 
 class AsyncStateStorage(BaseAsyncStorage):
-    async def set(self, key, value) -> None:
+    async def set(self, key, value, timeout=None) -> None:
         await super().set(key=key, value=value)
 
     async def get(self, key, exchange: str = None, schema: str = None) -> dict:

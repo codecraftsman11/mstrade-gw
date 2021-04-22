@@ -53,6 +53,7 @@ class BaseSyncStorage(BaseStorage):
     def set(self, *args, **kwargs) -> None:
         key = kwargs.get("key")
         value = kwargs.get("value")
+        timeout = kwargs.get("timeout")
         if key and value:
             _key = self.generate_hash_key(key)
             if self.is_dict:
@@ -66,7 +67,7 @@ class BaseSyncStorage(BaseStorage):
             if self.is_dict:
                 self._set_dict(_key, _tmp)
             else:
-                self._storage.set(_key, _tmp, timeout=self._timeout)
+                self._storage.set(_key, _tmp, timeout=timeout or self._timeout)
 
     def get(self, *args, **kwargs) -> dict:
         result = {}
@@ -109,6 +110,7 @@ class BaseAsyncStorage(BaseStorage):
     async def set(self, *args, **kwargs) -> None:
         key = kwargs.get("key")
         value = kwargs.get("value")
+        timeout = kwargs.get("timeout")
         if key and value:
             _key = self.generate_hash_key(key)
             if self.is_dict:
@@ -122,7 +124,7 @@ class BaseAsyncStorage(BaseStorage):
             if self.is_dict:
                 self._set_dict(_key, _tmp)
             else:
-                await self._storage.set_async(_key, _tmp, timeout=self._timeout)
+                await self._storage.set_async(_key, _tmp, timeout=timeout or self._timeout)
 
     async def get(self, *args, **kwargs):
         result = {}
