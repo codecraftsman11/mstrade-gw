@@ -164,7 +164,7 @@ class BaseAsyncStorage(BaseStorage):
     async def get_keys(self, pattern) -> list:
         _pattern = self.generate_hash_key(pattern)
         if self.is_dict:
-            if self._get_dict(_pattern):
+            if _pattern in self._storage:
                 return [_pattern]
             return []
         return await self._storage.keys_async(_pattern)
