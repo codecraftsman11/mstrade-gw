@@ -432,13 +432,15 @@ class BitmexRestApi(StockRestApi):
         if schema != OrderSchema.margin1:
             raise ConnectorError(f"Invalid schema {schema}.")
         response, _ = self._bitmex_api(
-            self._handler.Position.Position_get, **{'filter': j_dumps({'symbol': symbol})}
+            self._handler.Position.Position_get, **{'filter': j_dumps({'symbol': symbol.upper()})}
         )
         try:
             response = response[0]
+            if utils.to_float(response.get('currentQty')):
+                return utils.load_position(response, schema)
         except IndexError:
-            return {}
-        return utils.load_position(response, schema)
+            pass
+        return {}
 
     def list_positions(self, schema: str, **kwargs) -> list:
         if schema != OrderSchema.margin1:
