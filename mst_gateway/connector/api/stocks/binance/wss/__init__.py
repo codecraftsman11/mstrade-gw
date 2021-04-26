@@ -26,6 +26,7 @@ class BinanceWssApi(StockWssApi):
     auth_subscribers = {
         'wallet': subscr_class.BinanceWalletSubscriber(),
         'order': subscr_class.BinanceOrderSubscriber(),
+        'position': subscr_class.BinancePositionSubscriber(),
     }
     register_state_groups = [
         'wallet'

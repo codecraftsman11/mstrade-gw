@@ -5,4 +5,4 @@ from .quote import BinanceQuoteBinSerializer
 from .symbol import BinanceSymbolSerializer, BinanceFuturesSymbolSerializer
 from .trade import BinanceTradeSerializer
 from .wallet import BinanceWalletSerializer, BinanceFuturesWalletSerializer
-from .position import BinanceFuturesPositionSerializer
+from .position import BinancePositionSerializer, BinanceFuturesPositionSerializer

@@ -1264,7 +1264,18 @@ def load_position_leverage_type(position_data: dict) -> str:
     return LeverageType.cross
 
 
-def load_positions_state(account_info: dict) -> dict:
+def load_positions_state(account_id: str, account_name: str, schema: str, state_data: dict) -> dict:
+    positions_state = {}
+    for position_state_key, position_state in state_data.items():
+        try:
+            symbol = position_state_key.split(f'position.{account_id}.{account_name}.{schema}.')[1]
+        except IndexError:
+            continue
+        positions_state[symbol.lower()] = position_state
+    return positions_state
+
+
+def load_futures_positions_state(account_info: dict) -> dict:
     positions_state = {}
     cross_wallet_balance = to_float(account_info.get('totalCrossWalletBalance'))
     for position in account_info.get('positions', []):
@@ -1351,3 +1362,41 @@ def load_margin2_position_list(raw_data: dict, schema: str, symbol_list: list) -
 
 def load_futures_position_list(raw_data: list, schema: str) -> list:
     return [load_futures_position(data, schema) for data in raw_data if to_float(data.get('positionAmt')) != 0]
+
+
+def load_exchange_position_ws_data(raw_data: dict, position_state: dict, state_data: Optional[dict]) -> dict:
+    side = position_state['side']
+    volume = to_float(position_state['volume'])
+    mark_price = to_float(raw_data.get('c'))
+    entry_price = to_float(position_state['entry_price'])
+    unrealised_pnl = BinanceFinFactory.calc_unrealised_pnl_by_side(
+        side=side, volume=volume, mark_price=mark_price, entry_price=entry_price
+    )
+    data = {
+        'time': to_iso_datetime(raw_data.get('E')),
+        'timestamp': raw_data.get('E'),
+        'symbol': raw_data['s'].lower(),
+        'side': side,
+        'volume': volume,
+        'entry_price': entry_price,
+        'mark_price': mark_price,
+        'unrealised_pnl': unrealised_pnl,
+        'leverage_type': position_state['leverage_type'],
+        'leverage': to_float(position_state['leverage']),
+        'liquidation_price': None,
+        'action': 'update'
+    }
+    if isinstance(state_data, dict):
+        data.update({
+            'system_symbol': state_data.get('system_symbol'),
+        })
+    return data
+
+
+def load_margin2_position_ws_data(raw_data: dict, position_state: dict, state_data: Optional[dict]) -> dict:
+    data = load_exchange_position_ws_data(raw_data, position_state, state_data)
+    if not data['leverage_type']:
+        data['leverage_type'] = LeverageType.cross
+    if not data['leverage']:
+        data['leverage'] = 3
+    return data

@@ -19,7 +19,7 @@ class BinanceWssRouter(Router):
         'trade': 'trade',
         'depthUpdate': 'order_book',
         'kline': 'quote_bin',
-        '24hrTicker': 'symbol',
+        '24hrTicker': ['symbol', 'position'],
         'outboundAccountPosition': 'wallet',
         'executionReport': 'order'
     }
@@ -31,10 +31,11 @@ class BinanceWssRouter(Router):
         'symbol': serializers.BinanceSymbolSerializer,
         'wallet': serializers.BinanceWalletSerializer,
         'order': serializers.BinanceOrderSerializer,
+        'position': serializers.BinancePositionSerializer,
     }
 
     def __init__(self, wss_api: BinanceWssApi):
-        self._serializers = {}
+        self.serializers = {}
         super().__init__(wss_api)
 
     def _get_serializers(self, message: dict) -> Dict[str, Serializer]:
@@ -53,9 +54,9 @@ class BinanceWssRouter(Router):
         return _serializers
 
     def _subscr_serializer(self, subscr_name) -> BinanceSerializer:
-        if subscr_name not in self._serializers:
-            self._serializers[subscr_name] = self.serializer_classes[subscr_name](self._wss_api)
-        return self._serializers[subscr_name]
+        if subscr_name not in self.serializers:
+            self.serializers[subscr_name] = self.serializer_classes[subscr_name](self._wss_api)
+        return self.serializers[subscr_name]
 
     def _lookup_serializer(self, subscr_name, data: dict) -> Optional[BinanceSerializer]:
         serializer = self._subscr_serializer(subscr_name)
