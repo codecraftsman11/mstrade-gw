@@ -18,7 +18,7 @@ class BitmexSerializer(Serializer):
         data.append(item)
 
     @abstractmethod
-    def _load_data(self, message: dict, item: dict) -> Optional[dict]:
+    async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
             return None
         return item
@@ -27,14 +27,14 @@ class BitmexSerializer(Serializer):
     def is_item_valid(self, message: dict, item: dict) -> bool:
         return False
 
-    def _get_data(self, message: dict) -> Tuple[str, list]:
+    async def _get_data(self, message: dict) -> Tuple[str, list]:
         data = []
         for item in message['data']:
-            self._append_item(data, message, item)
+            await self._append_item(data, message, item)
         return self._get_data_action(message), data
 
-    def _append_item(self, data: list, message: dict, item: dict):
-        valid_item = self._load_data(message, item)
+    async def _append_item(self, data: list, message: dict, item: dict):
+        valid_item = await self._load_data(message, item)
         if not valid_item:
             return None
         self._update_state(stock2symbol(valid_item.get('symbol')), valid_item)

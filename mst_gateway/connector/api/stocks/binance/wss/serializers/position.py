@@ -114,7 +114,7 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
         symbol_position_state = positions_state.pop(symbol.lower(), {})
         return symbol_position_state, positions_state
 
-    def _load_data(self, message: dict, item: dict) -> Optional[dict]:
+    async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
             return None
         symbol = self._item_symbol.lower()

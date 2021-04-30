@@ -4,7 +4,7 @@ from logging import Logger
 from typing import Dict, Optional, Union
 import websockets
 from copy import deepcopy
-from mst_gateway.storage import StateStorage
+from mst_gateway.storage import AsyncStateStorage
 from .router import Router
 from .subscriber import Subscriber
 from .throttle import ThrottleWss
@@ -25,10 +25,9 @@ class StockWssApi(Connector):
     name = "Base"
     BASE_URL = None
     throttle = ThrottleWss()
-    storage = StateStorage()
+    storage = AsyncStateStorage()
     partial_state_data = {}
     __state_data = {}
-    __state_refresh_period = 15 * 60
 
     def __init__(self,
                  name: str = None,
@@ -57,7 +56,7 @@ class StockWssApi(Connector):
             self.throttle = ThrottleWss(throttle_storage)
         self.schema = schema
         if state_storage is not None:
-            self.storage = StateStorage(state_storage)
+            self.storage = AsyncStateStorage(state_storage)
         self.register_state = register_state
         super().__init__(auth, logger)
         self.__init_partial_state_data()
@@ -69,10 +68,6 @@ class StockWssApi(Connector):
     @property
     def subscriptions(self):
         return self._subscriptions
-
-    @property
-    def state_refresh_period(self):
-        return self.__state_refresh_period
 
     @property
     def state_data(self):
@@ -97,8 +92,9 @@ class StockWssApi(Connector):
         for subscription in [*self.subscribers.keys(), *self.auth_subscribers.keys()]:
             self.partial_state_data.setdefault(subscription, {}).clear()
 
-    def get_data(self, message: dict) -> Dict[str, Dict]:
-        return self._router.get_data(message)
+    async def get_data(self, message: dict) -> Dict[str, Dict]:
+        data = await self._router.get_data(message)
+        return data
 
     @property
     def router(self):
@@ -201,10 +197,11 @@ class StockWssApi(Connector):
         return False, symbol
 
     async def open(self, **kwargs):
-        if not self.throttle.validate(
+        throttle_valid = await self.throttle.validate(
             key=dict(name=self.name, url=self._url),
             rate=self._throttle_rate
-        ):
+        )
+        if not throttle_valid:
             raise ConnectionError
         restore = kwargs.get('restore', False)
         if not restore:
@@ -292,7 +289,7 @@ class StockWssApi(Connector):
         messages = self._split_message(message)
         for message in messages:
             try:
-                data = self.get_data(message)
+                data = await self.get_data(message)
             except Exception as exc:
                 self._error = errors.ERROR_INVALID_DATA
                 self._logger.error("Error validating incoming message %s; Details: %s", message, exc)
@@ -333,9 +330,12 @@ class StockWssApi(Connector):
         return self.__state_data.get(symbol.lower())
 
     async def __load_state_data(self):
-        while True:
-            self.__state_data = self.storage.get('symbol', self.name, self.schema)
-            await asyncio.sleep(self.__state_refresh_period)
+        self.__state_data = await self.storage.get('symbol', self.name, self.schema)
+        redis = await self.storage.get_client()
+        symbol_channel = (await redis.subscribe('symbol'))[0]
+        while await symbol_channel.wait_message():
+            if symbols := await symbol_channel.get_json():
+                self.__state_data = symbols.get(self.name, {}).get(self.schema, {})
 
     @property
     def state_symbol_list(self) -> list:

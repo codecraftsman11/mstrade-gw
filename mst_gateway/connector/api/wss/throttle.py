@@ -1,36 +1,27 @@
 from datetime import datetime
-from mst_gateway.storage import BaseStorage
+from mst_gateway.storage import BaseAsyncStorage
 
 
-class ThrottleWss(BaseStorage):
-    duration = 60
-    timeout = None
+class ThrottleWss(BaseAsyncStorage):
+    _duration = 60
+    _timeout = None
 
-    def set(self, key, limit: int):
-        history = self.get(key)
-        history.insert(0, int(limit))
-        self._set(self.generate_hash_key(key), history)
+    async def set(self, key, limit: int) -> None:
+        await super().set(key=key, value=limit)
 
-    def get(self, key) -> list:
-        if isinstance(_state := self._get(self.generate_hash_key(key)), list):
+    async def get(self, key) -> list:
+        if isinstance(_state := await super().get(key), list):
             return _state
         return []
 
-    def remove(self, key):
-        try:
-            self._remove(self.generate_hash_key(key))
-        except KeyError:
-            pass
-
-    def validate(self, key, rate):
+    async def validate(self, key, rate) -> bool:
         now = int(datetime.utcnow().timestamp())
         if not rate:
             return True
-        history = self.get(key)
-        while history and history[-1] <= now - self.duration:
+        history = await self.get(key)
+        while history and history[-1] <= now - self._duration:
             history.pop()
         if len(history) >= rate:
             return False
-
-        self.set(key, now)
+        await self.set(key, now)
         return True

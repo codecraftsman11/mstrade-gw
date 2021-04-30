@@ -18,7 +18,7 @@ class BitmexTradeSerializer(BitmexSerializer):
     def is_item_valid(self, message: dict, item: dict) -> bool:
         return message['table'] == "trade" and self._initialized
 
-    def _load_data(self, message: dict, item: dict) -> Optional[dict]:
+    async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
             return None
         state_data = None
