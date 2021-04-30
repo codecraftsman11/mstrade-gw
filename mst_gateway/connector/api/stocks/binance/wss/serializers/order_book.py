@@ -19,7 +19,7 @@ class BinanceOrderBookSerializer(BinanceSerializer):
     def is_item_valid(self, message: dict, item: dict) -> bool:
         return 's' in item
 
-    def _load_data(self, message: dict, item: dict) -> Optional[dict]:
+    async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
             return None
         state_data = None

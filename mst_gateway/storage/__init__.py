@@ -1,2 +1,2 @@
-from .base import BaseStorage
-from .state import StateStorage
+from .base import BaseAsyncStorage, BaseSyncStorage
+from .state import AsyncStateStorage, StateStorage

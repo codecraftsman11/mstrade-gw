@@ -11,7 +11,7 @@ class BinanceSymbolSerializer(BinanceSerializer):
     def is_item_valid(self, message: dict, item: dict) -> bool:
         return message.get('table') == '24hrTicker' and bool(item)
 
-    def _load_data(self, message: dict, item: dict) -> Optional[dict]:
+    async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
             return None
         state_data = None
@@ -34,7 +34,7 @@ class BinanceFuturesSymbolSerializer(BinanceSymbolSerializer):
             if {'s', 'a', 'b'} <= item.keys():
                 self._book_ticker[item['s'].lower()] = {'a': item['a'], 'b': item['b']}
 
-    def _load_data(self, message: dict, item: dict) -> Optional[dict]:
+    async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
             return None
         _symbol = item.get('s', '').lower()

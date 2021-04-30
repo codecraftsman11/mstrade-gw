@@ -53,7 +53,7 @@ class BitmexSymbolSerializer(BitmexSerializer):
         }
         return _map.get(key)
 
-    def _load_data(self, message: dict, item: dict) -> Optional[dict]:
+    async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
             return None
         symbol = stock2symbol(item['symbol'])
