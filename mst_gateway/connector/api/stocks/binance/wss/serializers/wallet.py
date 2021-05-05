@@ -1,16 +1,24 @@
 from __future__ import annotations
 from copy import deepcopy
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from mst_gateway.connector.api.types import OrderSchema
 from .base import BinanceSerializer
 from ... import utils
+
+if TYPE_CHECKING:
+    from ... import BinanceWssApi
 
 
 class BinanceWalletSerializer(BinanceSerializer):
     subscription = "wallet"
 
+    def __init__(self, wss_api: BinanceWssApi):
+        super().__init__(wss_api)
+        self._initialized = bool(self.subscription in self._wss_api.subscriptions)
+        self.currency_state = wss_api.partial_state_data[self.subscription].get('currency_state', {})
+
     def is_item_valid(self, message: dict, item) -> bool:
-        return message['table'] == 'outboundAccountPosition'
+        return self._initialized and message['table'] == 'outboundAccountPosition'
 
     def filter_balances(self, item) -> dict:
         filtered = deepcopy(item)
@@ -30,12 +38,9 @@ class BinanceWalletSerializer(BinanceSerializer):
                     f'{self.subscription}.{self._wss_api.account_id}', schema=self._wss_api.schema)) is None:
                 return None
         if "*" in self._wss_api.subscriptions.get(self.subscription, {}):
-            currencies = {}
-            if self._wss_api.register_state:
-                if (currencies := await self._wss_api.storage.get(
-                        'currency', self._wss_api.name, self._wss_api.schema)) is None:
-                    return None
-            return self._wallet_list(item, state_data, currencies)
+            if not self.currency_state:
+                return None
+            return self._wallet_list(item, state_data, self.currency_state)
         else:
             item = self.filter_balances(item)
             return self._wallet_detail(item, state_data)
@@ -66,7 +71,7 @@ class BinanceWalletSerializer(BinanceSerializer):
 class BinanceFuturesWalletSerializer(BinanceWalletSerializer):
 
     def is_item_valid(self, message: dict, item) -> bool:
-        return message['table'] == 'ACCOUNT_UPDATE' and self.subscription in self._wss_api.subscriptions
+        return self._initialized and message['table'] == 'ACCOUNT_UPDATE'
 
     def _wallet_list(self, item, state_data: dict, currencies: dict):
         assets = ('btc', 'usd')

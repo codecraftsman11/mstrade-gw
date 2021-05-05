@@ -1,14 +1,22 @@
 from __future__ import annotations
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from .base import BitmexSerializer
 from ...utils import load_wallet_data
+
+if TYPE_CHECKING:
+    from ... import BitmexWssApi
 
 
 class BitmexWalletSerializer(BitmexSerializer):
     subscription = "wallet"
 
+    def __init__(self, wss_api: BitmexWssApi):
+        super().__init__(wss_api)
+        self._initialized = bool(self.subscription in self._wss_api.subscriptions)
+        self.currency_state = wss_api.partial_state_data[self.subscription].get('currency_state', {})
+
     def is_item_valid(self, message: dict, item: dict) -> bool:
-        return message.get('table') == "margin"
+        return self._initialized and message.get('table') == "margin"
 
     async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
@@ -18,15 +26,12 @@ class BitmexWalletSerializer(BitmexSerializer):
         for balance in balances:
             if balance.get('currency', '').lower() == item.get('currency', '').lower():
                 self._check_balances_data(balance, item)
+        if not self.currency_state:
+            return None
         try:
-            currencies = {}
-            if self._wss_api.register_state:
-                if (currencies := await self._wss_api.storage.get(
-                        'currency', self._wss_api.name, self._wss_api.schema)) is None:
-                    return None
             assets = ('btc', 'usd')
             fields = ('balance', 'unrealised_pnl', 'margin_balance')
-            return load_wallet_data(item, currencies, assets, fields)
+            return load_wallet_data(item, self.currency_state, assets, fields)
         except ConnectionError:
             return None
 
