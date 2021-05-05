@@ -1,17 +1,9 @@
 from __future__ import annotations
-from typing import (
-    Optional,
-    Dict,
-    TYPE_CHECKING
-)
+from typing import Dict, Optional
 from ....wss.router import Router
 from ....wss.serializer import Serializer
 from . import serializers
 from .serializers.base import BinanceSerializer
-
-
-if TYPE_CHECKING:
-    from . import BinanceWssApi
 
 
 class BinanceWssRouter(Router):
@@ -33,10 +25,6 @@ class BinanceWssRouter(Router):
         'order': serializers.BinanceOrderSerializer,
         'position': serializers.BinancePositionSerializer,
     }
-
-    def __init__(self, wss_api: BinanceWssApi):
-        self.serializers = {}
-        super().__init__(wss_api)
 
     def _get_serializers(self, message: dict) -> Dict[str, Serializer]:
         self._routed_data = {}
