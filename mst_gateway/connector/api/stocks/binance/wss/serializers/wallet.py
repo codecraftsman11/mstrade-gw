@@ -15,7 +15,7 @@ class BinanceWalletSerializer(BinanceSerializer):
     def __init__(self, wss_api: BinanceWssApi):
         super().__init__(wss_api)
         self._initialized = bool(self.subscription in self._wss_api.subscriptions)
-        self.currency_state = wss_api.partial_state_data[self.subscription].get('currency_state', {})
+        self.currency_state = wss_api.partial_state_data.get(self.subscription, {}).get('currency_state', {})
 
     def is_item_valid(self, message: dict, item) -> bool:
         return self._initialized and message['table'] == 'outboundAccountPosition'
