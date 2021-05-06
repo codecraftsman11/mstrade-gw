@@ -26,14 +26,9 @@ class BitmexWalletSerializer(BitmexSerializer):
         for balance in balances:
             if balance.get('currency', '').lower() == item.get('currency', '').lower():
                 self._check_balances_data(balance, item)
-        if not self.currency_state:
-            return None
-        try:
-            assets = ('btc', 'usd')
-            fields = ('balance', 'unrealised_pnl', 'margin_balance')
-            return load_wallet_data(item, self.currency_state, assets, fields)
-        except ConnectionError:
-            return None
+        assets = ('btc', 'usd')
+        fields = ('balance', 'unrealised_pnl', 'margin_balance')
+        return load_wallet_data(item, self.currency_state, assets, fields)
 
     def _key_map(self, key: str):
         _map = {
