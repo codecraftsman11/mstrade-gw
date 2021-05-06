@@ -42,11 +42,13 @@ class BinanceWssRouter(Router):
         return _serializers
 
     def _subscr_serializer(self, subscr_name) -> BinanceSerializer:
-        if subscr_name not in self.serializers:
-            self.serializers[subscr_name] = self.serializer_classes[subscr_name](self._wss_api)
-        return self.serializers[subscr_name]
+        if subscr_name not in self._serializers:
+            self._serializers[subscr_name] = self.serializer_classes[subscr_name](self._wss_api)
+        return self._serializers[subscr_name]
 
     def _lookup_serializer(self, subscr_name, data: dict) -> Optional[BinanceSerializer]:
+        if subscr_name not in self._wss_api.subscriptions:
+            return None
         serializer = self._subscr_serializer(subscr_name)
         serializer.prefetch(data)
         self._routed_data[subscr_name] = {

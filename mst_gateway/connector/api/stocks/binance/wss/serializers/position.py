@@ -17,7 +17,8 @@ class BinancePositionSerializer(BinanceSerializer):
 
     def __init__(self, wss_api: BinanceWssApi):
         super().__init__(wss_api)
-        self.position_state = wss_api.partial_state_data.get(self.subscription, {}).get('position_state', {})
+        self.position_state = wss_api.partial_state_data.get(
+            self.subscription, {}).get('position_state', {})
         self._initialized = bool(self.subscription in self._wss_api.subscriptions)
         self._item_symbol = None
 
@@ -47,7 +48,8 @@ class BinanceFuturesPositionSerializer(BinancePositionSerializer):
 
     def __init__(self, wss_api: BinanceWssApi):
         super().__init__(wss_api)
-        self._leverage_brackets_state = wss_api.partial_state_data.get(self.subscription, {}).get('leverage_brackets', {})
+        self._leverage_brackets_state = wss_api.partial_state_data.get(
+            self.subscription, {}).get('leverage_brackets', {})
 
     def prefetch(self, message: dict) -> None:
         if not self._initialized:

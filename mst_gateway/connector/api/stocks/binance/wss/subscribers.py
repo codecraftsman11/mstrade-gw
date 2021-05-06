@@ -151,36 +151,36 @@ class BinanceOrderSubscriber(BinanceSubscriber):
 class BinancePositionSubscriber(BinanceSubscriber):
     subscription = "position"
     subscriptions = ("!ticker@arr",)
+    detail_subscribe_available = False
 
     async def subscribe_positions_state(self, api: BinanceWssApi):
         redis = await api.storage.get_client()
-        state_channel = (await redis.psubscribe(f'{self.subscription}.{api.account_id}.{api.name}.{api.schema}.*'.lower()))[0]
+        state_channel = (await redis.psubscribe(
+            f'{self.subscription}.{api.account_id}.{api.name}.{api.schema}.*'.lower()))[0]
+        api.partial_state_data[self.subscription].setdefault('position_state', {})
         while await state_channel.wait_message():
-            if state_data := await state_channel.get_json():
-                try:
-                    symbol = state_data[0].decode().split(f'{self.subscription}.{api.account_id}.{api.name}.{api.schema}.'.lower())[1]
-                    if position_state := state_data[1]:
-                        api.partial_state_data[self.subscription].setdefault('position_state', {})
-                        api.partial_state_data[self.subscription]['position_state'][symbol.lower()] = position_state
-                        if position_serializer := api.router.serializers.get(self.subscription):
-                            position_serializer.position_state[symbol.lower()] = position_state
-                    else:
-                        api.partial_state_data[self.subscription].get('position_state', {}).pop(symbol.lower(), None)
-                        if position_serializer := api.router.serializers.get(self.subscription):
-                            position_serializer.position_state.pop(symbol.lower())
-                except IndexError:
-                    continue
+            try:
+                state_key, state_data = await state_channel.get_json()
+            except ValueError:
+                continue
+            if (action := state_data.get('action')) and (symbol := state_data.get('symbol')):
+                _state = api.partial_state_data[self.subscription]['position_state']
+                if action == 'delete':
+                    _state.pop(symbol.lower(), None)
+                else:
+                    _state[symbol.lower()] = state_data
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
         asyncio.create_task(self.subscribe_positions_state(api))
-        state_data = await api.storage.get_pattern(f'{self.subscription}.{api.account_id}.{api.name}.{api.schema}.*'.lower())
-        positions_state = utils.load_positions_state(api.account_id, api.name, api.schema, state_data)
+        state_data = await api.storage.get_pattern(
+            f'{self.subscription}.{api.account_id}.{api.name}.{api.schema}.*'.lower()
+        )
+        positions_state = utils.load_positions_state(state_data)
         return {'position_state': positions_state}
 
 
 class BinanceFuturesPositionSubscriber(BinancePositionSubscriber):
     subscriptions = ("!markPrice@arr",)
-    detail_subscribe_available = False
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
         async with AsyncClient(

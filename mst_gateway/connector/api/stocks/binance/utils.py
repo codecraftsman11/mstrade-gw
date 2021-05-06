@@ -1264,15 +1264,8 @@ def load_position_leverage_type(position_data: dict) -> str:
     return LeverageType.cross
 
 
-def load_positions_state(account_id: str, account_name: str, schema: str, state_data: dict) -> dict:
-    positions_state = {}
-    for position_state_key, position_state in state_data.items():
-        try:
-            symbol = position_state_key.split(f'position.{account_id}.{account_name}.{schema}.')[1]
-        except IndexError:
-            continue
-        positions_state[symbol.lower()] = position_state
-    return positions_state
+def load_positions_state(state_data: dict) -> dict:
+    return {data['symbol'].lower(): data for data in state_data.values() if 'symbol' in data}
 
 
 def load_futures_positions_state(account_info: dict) -> dict:
