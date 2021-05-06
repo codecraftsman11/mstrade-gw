@@ -150,8 +150,7 @@ class BinanceWalletSubscriber(BinanceSubscriber):
         while await state_channel.wait_message():
             if state_data := await state_channel.get_json():
                 currency_state = state_data.get(api.name.lower(), {}).get(api.schema, {})
-                api.partial_state_data[self.subscription].setdefault('currency_state', {})
-                api.partial_state_data[self.subscription]['currency_state'] = currency_state
+                api.partial_state_data[self.subscription].update({'currency_state': currency_state})
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
         asyncio.create_task(self.subscribe_currency_state(api))
