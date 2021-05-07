@@ -171,7 +171,7 @@ class BinancePositionSubscriber(BinanceSubscriber):
                     _state[symbol.lower()] = state_data
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
-        asyncio.create_task(self.subscribe_positions_state(api))
+        api.tasks.append(asyncio.create_task(self.subscribe_positions_state(api)))
         state_data = await api.storage.get_pattern(
             f'{self.subscription}.{api.account_id}.{api.name}.{api.schema}.*'.lower()
         )
