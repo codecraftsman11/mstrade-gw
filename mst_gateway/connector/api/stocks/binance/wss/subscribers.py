@@ -153,8 +153,10 @@ class BinanceWalletSubscriber(BinanceSubscriber):
                 api.partial_state_data[self.subscription].update({'currency_state': currency_state})
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
-        asyncio.create_task(self.subscribe_currency_state(api))
-        currency_state = await api.storage.get('currency', exchange=api.name, schema=api.schema)
+        currency_state = {}
+        if api.register_state:
+            api.tasks.append(asyncio.create_task(self.subscribe_currency_state(api)))
+            currency_state = await api.storage.get('currency', exchange=api.name, schema=api.schema)
         return {'currency_state': currency_state}
 
 
