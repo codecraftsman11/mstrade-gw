@@ -1,17 +1,20 @@
 from __future__ import annotations
 from copy import deepcopy
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from mst_gateway.connector.api.types import OrderSchema
 from .base import BinanceSerializer
 from ... import utils
+
+if TYPE_CHECKING:
+    from ... import BinanceWssApi
 
 
 class BinanceWalletSerializer(BinanceSerializer):
     subscription = "wallet"
 
-    @property
-    def currency_state(self) -> dict:
-        return self._wss_api.partial_state_data.get(self.subscription, {}).get('currency_state', {})
+    def __init__(self, wss_api: BinanceWssApi):
+        super().__init__(wss_api)
+        self._currency_state = wss_api.partial_state_data.get(self.subscription, {}).get('currency_state', {})
 
     def is_item_valid(self, message: dict, item) -> bool:
         return message['table'] == 'outboundAccountPosition'
@@ -34,7 +37,7 @@ class BinanceWalletSerializer(BinanceSerializer):
                     f'{self.subscription}.{self._wss_api.account_id}', schema=self._wss_api.schema)) is None:
                 return None
         if "*" in self._wss_api.subscriptions.get(self.subscription, {}):
-            return self._wallet_list(item, state_data, self.currency_state)
+            return self._wallet_list(item, state_data, self._currency_state)
         else:
             item = self.filter_balances(item)
             return self._wallet_detail(item, state_data)
