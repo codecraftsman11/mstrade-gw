@@ -1,11 +1,22 @@
 from __future__ import annotations
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from .base import BitmexSerializer
 from ...utils import load_wallet_data
+
+if TYPE_CHECKING:
+    from ... import BitmexWssApi
 
 
 class BitmexWalletSerializer(BitmexSerializer):
     subscription = "wallet"
+
+    def __init__(self, wss_api: BitmexWssApi):
+        super().__init__(wss_api)
+        self._state_data = wss_api.partial_state_data[self.subscription]
+
+    @property
+    def currency_state(self):
+        return self._state_data.get('currency_state', {})
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
         return message.get('table') == "margin"
@@ -18,17 +29,11 @@ class BitmexWalletSerializer(BitmexSerializer):
         for balance in balances:
             if balance.get('currency', '').lower() == item.get('currency', '').lower():
                 self._check_balances_data(balance, item)
-        try:
-            currencies = {}
-            if self._wss_api.register_state:
-                if (currencies := await self._wss_api.storage.get(
-                        'currency', self._wss_api.name, self._wss_api.schema)) is None:
-                    return None
-            assets = ('btc', 'usd')
-            fields = ('balance', 'unrealised_pnl', 'margin_balance')
-            return load_wallet_data(item, currencies, assets, fields)
-        except ConnectionError:
+        if self._wss_api.register_state and not self.currency_state:
             return None
+        assets = ('btc', 'usd')
+        fields = ('balance', 'unrealised_pnl', 'margin_balance')
+        return load_wallet_data(item, self.currency_state, assets, fields)
 
     def _key_map(self, key: str):
         _map = {

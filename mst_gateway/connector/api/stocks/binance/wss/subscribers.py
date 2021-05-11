@@ -142,6 +142,21 @@ class BinanceWalletSubscriber(BinanceSubscriber):
     subscription = "wallet"
     subscriptions = ()
 
+    async def subscribe_currency_state(self, api: BinanceWssApi):
+        redis = await api.storage.get_client()
+        state_channel = (await redis.subscribe('currency'))[0]
+        while await state_channel.wait_message():
+            state_data = await state_channel.get_json()
+            currency_state = state_data.get(api.name.lower(), {}).get(api.schema, {})
+            api.partial_state_data[self.subscription].update({'currency_state': currency_state})
+
+    async def init_partial_state(self, api: BinanceWssApi) -> dict:
+        currency_state = {}
+        if api.register_state:
+            api.tasks.append(asyncio.create_task(self.subscribe_currency_state(api)))
+            currency_state = await api.storage.get('currency', exchange=api.name, schema=api.schema)
+        return {'currency_state': currency_state}
+
 
 class BinanceOrderSubscriber(BinanceSubscriber):
     subscription = "order"
