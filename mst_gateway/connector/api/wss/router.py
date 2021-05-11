@@ -21,6 +21,7 @@ class Router:
     def __init__(self, wss_api: StockWssApi):
         self._wss_api = wss_api
         self._routed_data = None
+        self._serializers = {}
 
     async def get_data(self, message: dict) -> dict:
         data = {}

@@ -2,7 +2,7 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Optional, Tuple, TYPE_CHECKING
 from mst_gateway.calculator.binance import BinanceFinFactory
-from mst_gateway.connector.api.types import LeverageType
+from mst_gateway.connector.api.types import LeverageType, OrderSchema
 from mst_gateway.connector.api.stocks.binance import utils
 from mst_gateway.connector.api.stocks.binance.var import BinancePositionSideMode
 from mst_gateway.connector.api.stocks.binance.wss.serializers.base import BinanceSerializer
@@ -12,15 +12,44 @@ if TYPE_CHECKING:
     from ... import BinanceWssApi
 
 
-class BinanceFuturesPositionSerializer(BinanceSerializer):
-    subscription = "position"
+class BinancePositionSerializer(BinanceSerializer):
+    subscription = 'position'
 
     def __init__(self, wss_api: BinanceWssApi):
         super().__init__(wss_api)
+        self.position_state = wss_api.partial_state_data.get(
+            self.subscription, {}).get('position_state', {})
         self._initialized = bool(self.subscription in self._wss_api.subscriptions)
-        self._position_state = wss_api.partial_state_data[self.subscription].get('position_state', {})
-        self._leverage_brackets_state = wss_api.partial_state_data[self.subscription].get('leverage_brackets', {})
         self._item_symbol = None
+
+    def is_item_valid(self, message: dict, item: dict) -> bool:
+        if self._initialized:
+            self._item_symbol = item.get('s', '').lower()
+            if self._item_symbol:
+                return bool(self.position_state.get(self._item_symbol))
+        return False
+
+    async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
+        if not self.is_item_valid(message, item):
+            return None
+        state_data = None
+        if self._wss_api.register_state:
+            if (state_data := self._wss_api.get_state_data(self._item_symbol)) is None:
+                return None
+        position_state = self.position_state[self._item_symbol]
+        if self._wss_api.schema == OrderSchema.exchange:
+            return utils.load_exchange_position_ws_data(item, position_state, state_data)
+        if self._wss_api.schema == OrderSchema.margin2:
+            return utils.load_margin2_position_ws_data(item, position_state, state_data)
+        return None
+
+
+class BinanceFuturesPositionSerializer(BinancePositionSerializer):
+
+    def __init__(self, wss_api: BinanceWssApi):
+        super().__init__(wss_api)
+        self._leverage_brackets_state = wss_api.partial_state_data.get(
+            self.subscription, {}).get('leverage_brackets', {})
 
     def prefetch(self, message: dict) -> None:
         if not self._initialized:
@@ -73,7 +102,7 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
     def get_position_action(self, symbol: str, volume: Optional[float]):
         action = 'update'
         try:
-            state_volume = self._position_state[symbol.lower()]['volume']
+            state_volume = self.position_state[symbol.lower()]['volume']
             if not bool(state_volume) and bool(volume):
                 action = 'create'
             elif bool(state_volume) and not bool(volume):
@@ -110,7 +139,7 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
         return symbol
 
     def split_positions_state(self, symbol: str) -> Tuple[dict, dict]:
-        positions_state = deepcopy(self._position_state)
+        positions_state = deepcopy(self.position_state)
         symbol_position_state = positions_state.pop(symbol.lower(), {})
         return symbol_position_state, positions_state
 
@@ -216,7 +245,7 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
 
     def is_position_exists(self, symbol: str) -> bool:
         try:
-            position = self._position_state[symbol.lower()]
+            position = self.position_state[symbol.lower()]
             return bool(position['volume']) or position['action'] != 'update'
         except (KeyError, AttributeError):
             return False
@@ -239,9 +268,9 @@ class BinanceFuturesPositionSerializer(BinanceSerializer):
 
     def update_positions_state(self, symbol: str, **fields) -> None:
         symbol = symbol.lower()
-        if symbol not in self._position_state:
-            self._position_state[symbol] = self.prepare_position_state(symbol, fields)
+        if symbol not in self.position_state:
+            self.position_state[symbol] = self.prepare_position_state(symbol, fields)
             return None
         if fields.get('side') is None:
             fields.pop('side', None)
-        self._position_state[symbol].update(fields)
+        self.position_state[symbol].update(fields)

@@ -4,8 +4,27 @@ from mst_gateway.storage import BaseSyncStorage
 class ThrottleRest(BaseSyncStorage):
     _timeout = 60
 
-    def set(self, key, limit: int, reset: int, scope: str):
-        super().set(key=key, value={scope: [limit, reset]})
+    def set(self, key, limit: int, reset: int, scope: str, **kwargs) -> None:
+        timeout = kwargs.get("timeout", self._timeout)
+        key = self.generate_hash_key(key)
+        _value = {scope: [limit, reset]}
+        if self.is_dict:
+            self._set_dict(key, _value)
+        else:
+            _tmp = self._storage.get(key)
+            if isinstance(_tmp, dict):
+                _tmp.update(_value)
+                self._storage.set(key, _tmp, timeout=timeout)
+            else:
+                self._storage.set(key, _value, timeout=timeout)
 
     def get(self, key) -> dict:
-        return super().get(key=key) or {'rest': [0, None]}
+        key = self.generate_hash_key(key)
+        if self.is_dict:
+            result = self._get_dict(key)
+        else:
+            result = self._storage.get(key)
+        if isinstance(result, dict):
+            return result
+        return {'rest': [0, None]}
+

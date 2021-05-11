@@ -94,17 +94,17 @@ class BinanceSubscriber(Subscriber):
         symbol_channel = (await redis.subscribe('symbol'))[0]
         while api.handler and not api.handler.closed:
             while await symbol_channel.wait_message():
-                if symbols := await symbol_channel.get_json():
-                    new_registered_symbols = set(symbols.get(api.name, {}).get(api.schema, {}))
-                    unsubscribe_symbols = self._subscribed_symbols.difference(new_registered_symbols)
-                    subscribe_symbols = new_registered_symbols.difference(self._subscribed_symbols)
-                    for symbol in unsubscribe_symbols:
-                        await asyncio.sleep(1)
-                        await self._unsubscribe(api, symbol)
-                    for symbol in subscribe_symbols:
-                        await asyncio.sleep(1)
-                        await self._subscribe(api, symbol)
-                    self._subscribed_symbols = new_registered_symbols
+                symbols = await symbol_channel.get_json()
+                new_registered_symbols = set(symbols.get(api.name.lower(), {}).get(api.schema, {}))
+                unsubscribe_symbols = self._subscribed_symbols.difference(new_registered_symbols)
+                subscribe_symbols = new_registered_symbols.difference(self._subscribed_symbols)
+                for symbol in unsubscribe_symbols:
+                    await asyncio.sleep(1)
+                    await self._unsubscribe(api, symbol)
+                for symbol in subscribe_symbols:
+                    await asyncio.sleep(1)
+                    await self._subscribe(api, symbol)
+                self._subscribed_symbols = new_registered_symbols
 
 
 class BinanceOrderBookSubscriber(BinanceSubscriber):
@@ -134,10 +134,8 @@ class BinanceSymbolSubscriber(BinanceSubscriber):
     is_close_connection = False
 
 
-class BinanceFuturesSymbolSubscriber(BinanceSubscriber):
-    subscription = "symbol"
+class BinanceFuturesSymbolSubscriber(BinanceSymbolSubscriber):
     subscriptions = ("!ticker@arr", "!bookTicker")
-    is_close_connection = False
 
 
 class BinanceWalletSubscriber(BinanceSubscriber):
@@ -150,10 +148,39 @@ class BinanceOrderSubscriber(BinanceSubscriber):
     subscriptions = ()
 
 
-class BinanceFuturesPositionSubscriber(BinanceSubscriber):
+class BinancePositionSubscriber(BinanceSubscriber):
     subscription = "position"
-    subscriptions = ("!markPrice@arr",)
+    subscriptions = ("!ticker@arr",)
     detail_subscribe_available = False
+
+    async def subscribe_positions_state(self, api: BinanceWssApi):
+        redis = await api.storage.get_client()
+        state_channel = (await redis.psubscribe(
+            f'{self.subscription}.{api.account_id}.{api.name}.{api.schema}.*'.lower()))[0]
+        api.partial_state_data[self.subscription].setdefault('position_state', {})
+        while await state_channel.wait_message():
+            try:
+                state_key, state_data = await state_channel.get_json()
+            except ValueError:
+                continue
+            if (action := state_data.get('action')) and (symbol := state_data.get('symbol')):
+                _state = api.partial_state_data[self.subscription]['position_state']
+                if action == 'delete':
+                    _state.pop(symbol.lower(), None)
+                else:
+                    _state[symbol.lower()] = state_data
+
+    async def init_partial_state(self, api: BinanceWssApi) -> dict:
+        api.tasks.append(asyncio.create_task(self.subscribe_positions_state(api)))
+        state_data = await api.storage.get_pattern(
+            f'{self.subscription}.{api.account_id}.{api.name}.{api.schema}.*'.lower()
+        )
+        positions_state = utils.load_positions_state(state_data)
+        return {'position_state': positions_state}
+
+
+class BinanceFuturesPositionSubscriber(BinancePositionSubscriber):
+    subscriptions = ("!markPrice@arr",)
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
         async with AsyncClient(
@@ -163,7 +190,7 @@ class BinanceFuturesPositionSubscriber(BinanceSubscriber):
                 position_state = await client.futures_account_v2()
                 leverage_brackets = await client.futures_leverage_bracket()
                 return {
-                    'position_state': utils.load_positions_state(position_state),
+                    'position_state': utils.load_futures_positions_state(position_state),
                     'leverage_brackets': utils.load_futures_leverage_brackets_as_dict(leverage_brackets)
                 }
             except Exception as e:

@@ -1,17 +1,9 @@
 from __future__ import annotations
-from typing import (
-    Optional,
-    Dict,
-    TYPE_CHECKING
-)
+from typing import Dict, Optional
 from ....wss.router import Router
 from ....wss.serializer import Serializer
 from . import serializers
 from .serializers.base import BinanceSerializer
-
-
-if TYPE_CHECKING:
-    from . import BinanceWssApi
 
 
 class BinanceWssRouter(Router):
@@ -19,7 +11,7 @@ class BinanceWssRouter(Router):
         'trade': 'trade',
         'depthUpdate': 'order_book',
         'kline': 'quote_bin',
-        '24hrTicker': 'symbol',
+        '24hrTicker': ['symbol', 'position'],
         'outboundAccountPosition': 'wallet',
         'executionReport': 'order'
     }
@@ -31,11 +23,8 @@ class BinanceWssRouter(Router):
         'symbol': serializers.BinanceSymbolSerializer,
         'wallet': serializers.BinanceWalletSerializer,
         'order': serializers.BinanceOrderSerializer,
+        'position': serializers.BinancePositionSerializer,
     }
-
-    def __init__(self, wss_api: BinanceWssApi):
-        self._serializers = {}
-        super().__init__(wss_api)
 
     def _get_serializers(self, message: dict) -> Dict[str, Serializer]:
         self._routed_data = {}
@@ -58,6 +47,8 @@ class BinanceWssRouter(Router):
         return self._serializers[subscr_name]
 
     def _lookup_serializer(self, subscr_name, data: dict) -> Optional[BinanceSerializer]:
+        if subscr_name not in self._wss_api.subscriptions:
+            return None
         serializer = self._subscr_serializer(subscr_name)
         serializer.prefetch(data)
         self._routed_data[subscr_name] = {

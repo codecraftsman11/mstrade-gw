@@ -37,7 +37,6 @@ class BitmexWssRouter(Router):
     }
 
     def __init__(self, wss_api: BitmexWssApi):
-        self._serializers = {}
         self._use_trade_bin = bool(wss_api.options.get('use_trade_bin', True))
         if self._use_trade_bin:
             # use periodical quote_bin change events
@@ -76,6 +75,8 @@ class BitmexWssRouter(Router):
         return self._serializers[subscr_name]
 
     def _lookup_serializer(self, subscr_name, data: dict) -> Optional[Serializer]:
+        if subscr_name not in self._wss_api.subscriptions:
+            return None
         table = data['table']
         if table == 'tradeBin1m':
             if not self._use_trade_bin and data['action'] != 'partial':
