@@ -12,7 +12,11 @@ class BitmexWalletSerializer(BitmexSerializer):
 
     def __init__(self, wss_api: BitmexWssApi):
         super().__init__(wss_api)
-        self._currency_state = wss_api.partial_state_data.get(self.subscription, {}).get('currency_state', {})
+        self._state_data = wss_api.partial_state_data[self.subscription]
+
+    @property
+    def currency_state(self):
+        return self._state_data.get('currency_state', {})
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
         return message.get('table') == "margin"
@@ -25,9 +29,11 @@ class BitmexWalletSerializer(BitmexSerializer):
         for balance in balances:
             if balance.get('currency', '').lower() == item.get('currency', '').lower():
                 self._check_balances_data(balance, item)
+        if self._wss_api.register_state and not self.currency_state:
+            return None
         assets = ('btc', 'usd')
         fields = ('balance', 'unrealised_pnl', 'margin_balance')
-        return load_wallet_data(item, self._currency_state, assets, fields)
+        return load_wallet_data(item, self.currency_state, assets, fields)
 
     def _key_map(self, key: str):
         _map = {
