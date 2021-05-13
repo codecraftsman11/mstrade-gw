@@ -450,6 +450,11 @@ class BitmexRestApi(StockRestApi):
         )
         return utils.load_positions_list(response, schema)
 
+    def get_liquidation(self, symbol: str, schema: str, leverage_type: str, side: int, volume: float, price: float) -> dict:
+        if schema != OrderSchema.margin1:
+            raise ConnectorError(f'Invalid schema {schema}.')
+        return {'liquidation_price': None}
+
     def _bitmex_api(self, method: callable, **kwargs):
         headers = {}
         if self._keepalive:

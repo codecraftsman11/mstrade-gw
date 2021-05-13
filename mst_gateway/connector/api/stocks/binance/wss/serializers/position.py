@@ -138,8 +138,9 @@ class BinanceFuturesPositionSerializer(BinancePositionSerializer):
             return None
         return symbol
 
-    def split_positions_state(self, symbol: str) -> Tuple[dict, dict]:
-        positions_state = deepcopy(self.position_state)
+    @staticmethod
+    def split_positions_state(position_state: dict, symbol: str) -> Tuple[dict, dict]:
+        positions_state = deepcopy(position_state)
         symbol_position_state = positions_state.pop(symbol.lower(), {})
         return symbol_position_state, positions_state
 
@@ -152,7 +153,7 @@ class BinanceFuturesPositionSerializer(BinancePositionSerializer):
             if (state_data := self._wss_api.get_state_data(symbol)) is None:
                 return None
 
-        symbol_position_state, positions_state = self.split_positions_state(symbol)
+        symbol_position_state, positions_state = self.split_positions_state(self.position_state, symbol)
         other_positions_maint_margin, other_positions_unrealised_pnl = self.calc_other_positions_sum(
             symbol_position_state['leverage_type'], self._leverage_brackets_state, positions_state)
 

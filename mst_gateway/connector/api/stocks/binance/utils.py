@@ -757,6 +757,10 @@ def load_futures_leverage_brackets_as_dict(data: list) -> dict:
     return {d['symbol'].lower(): d['brackets'] for d in data if d.get('brackets')}
 
 
+def load_futures_mark_prices_as_dict(data: list) -> dict:
+    return {d['symbol'].lower(): to_float(d['markPrice']) for d in data}
+
+
 def load_total_wallet_summary(total: dict, summary: dict, assets: Union[list, tuple], fields: Union[list, tuple]):
     for schema in summary.keys():
         for field in fields:
@@ -1290,6 +1294,13 @@ def load_futures_positions_state(account_info: dict) -> dict:
             'cross_wallet_balance': cross_wallet_balance,
             'action': 'update'
         }
+    return positions_state
+
+
+def update_positions_state(positions_state: dict, mark_prices: dict) -> dict:
+    for position_state in positions_state.values():
+        if mark_price := mark_prices.get(position_state['symbol'].lower()):
+            position_state['mark_price'] = mark_price
     return positions_state
 
 
