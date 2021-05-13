@@ -40,7 +40,7 @@ class BitmexSymbolSerializer(BitmexSerializer):
             self._symbols.add(symbol)
         elif message['action'] == 'partial' and symbol in self._symbols:
             self._symbols.discard(symbol)
-        return symbol in self._symbols and 'lastPrice' in item
+        return symbol in self._symbols
 
     def _key_map(self, key: str):
         _map = {
