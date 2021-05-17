@@ -13,7 +13,6 @@ class BitmexSymbolSerializer(BitmexSerializer):
 
     def __init__(self, wss_api: BitmexWssApi):
         self._symbols: Set = set()
-        self._quotes = dict()
         super().__init__(wss_api)
 
     def prefetch(self, message: dict) -> None:
@@ -22,6 +21,8 @@ class BitmexSymbolSerializer(BitmexSerializer):
                 if item.get('symbol'):
                     state = self._get_state(stock2symbol(item['symbol']))
                     if state:
+                        if item.get('lastPrice'):
+                            state[0]['price'] = item['lastPrice']
                         if item.get('volume24h'):
                             state[0]['volume24'] = item['volume24h']
                         if item.get('prevPrice24h'):
@@ -40,10 +41,15 @@ class BitmexSymbolSerializer(BitmexSerializer):
             self._symbols.add(symbol)
         elif message['action'] == 'partial' and symbol in self._symbols:
             self._symbols.discard(symbol)
-        return symbol in self._symbols and 'lastPrice' in item
+        return symbol in self._symbols and (
+                'lastPrice' in item or
+                'askPrice' in item or
+                'bidPrice' in item
+        )
 
     def _key_map(self, key: str):
         _map = {
+            'price': 'lastPrice',
             'price24': 'prevPrice24h',
             'tick': 'tickSize',
             'volume_tick': 'lotSize',
