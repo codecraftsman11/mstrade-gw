@@ -45,7 +45,7 @@ class BitmexRestApi(StockRestApi):
                  throttle_storage=None, throttle_hash_name: str = '*', state_storage=None, cache_ttl: int = None):
         super().__init__(name, url, auth, logger, throttle_storage, state_storage, cache_ttl)
         self._throttle_hash_name = throttle_hash_name
-        self._c['wallet_detail'] = {}
+        self._cache['wallet_detail'] = {}
 
     def _connect(self, **kwargs):
         self._keepalive = bool(kwargs.get('keepalive', False))
