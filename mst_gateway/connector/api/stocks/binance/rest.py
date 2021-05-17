@@ -1,7 +1,7 @@
 from uuid import uuid4
 from logging import Logger
 from datetime import datetime, timedelta
-from typing import Union
+from typing import Optional, Union
 from bravado.exception import HTTPError
 from binance.exceptions import BinanceAPIException, BinanceRequestException
 from mst_gateway.calculator import BinanceFinFactory
@@ -635,33 +635,33 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(f"Binance api error. Details: {msg}")
         return resp
 
+    def get_positions_state(self, schema):
+        positions_state = {}
+        if schema == OrderSchema.futures:
+            account_info = self._binance_api(self._handler.futures_account_v2)
+            positions_state = utils.load_futures_positions_state(account_info)
+        return positions_state
+
     def get_liquidation(
         self,
         symbol: str,
         schema: str,
         leverage_type: str,
-        leverage: float,
+        wallet_balance: float,
         side: int,
         volume: float,
         price: float,
-        mark_price: float,
-        leverage_brackets: dict,
-        funding_rate: float,
-        taker_fee: float,
-        wallet_asset: str,
+        leverage: Optional[float],
+        mark_price: Optional[float],
+        **kwargs,
     ) -> dict:
         if schema not in (OrderSchema.exchange, OrderSchema.futures, OrderSchema.margin2):
             raise ConnectorError(f'Invalid schema {schema}.')
+        positions_state = kwargs.get('positions_state', {})
+        leverage_brackets = kwargs.get('leverage_brackets', {})
         liquidation_price = None
         if schema == OrderSchema.futures:
-            account_info = self._binance_api(self._handler.futures_account_v2)
-            positions_state = utils.load_futures_positions_state(account_info)
-            symbol_position_state, positions_state = BinanceFuturesPositionSerializer.split_positions_state(positions_state, symbol)
-            position_margin = BinanceFuturesPositionSerializer.position_margin(
-                leverage_type,
-                symbol_position_state.get('isolated_wallet_balance'),
-                symbol_position_state.get('cross_wallet_balance'),
-            )
+            _, positions_state = BinanceFuturesPositionSerializer.split_positions_state(positions_state, symbol)
             other_positions_maint_margin, other_positions_unrealised_pnl = BinanceFuturesPositionSerializer.calc_other_positions_sum(
                 leverage_type, leverage_brackets, positions_state
             )
@@ -671,7 +671,7 @@ class BinanceRestApi(StockRestApi):
                 volume=volume,
                 side=side,
                 leverage_type=leverage_type,
-                position_margin=position_margin,
+                position_margin=wallet_balance,
                 leverage_brackets=leverage_brackets.get(symbol.lower(), {}),
                 other_positions_maint_margin=other_positions_maint_margin,
                 other_positions_unrealised_pnl=other_positions_unrealised_pnl,

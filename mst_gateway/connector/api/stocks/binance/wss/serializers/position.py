@@ -204,8 +204,6 @@ class BinanceFuturesPositionSerializer(BinancePositionSerializer):
                 liquidation_price = BinanceFinFactory.calc_liquidation_cross_price(
                     entry_price, other_positions_maint_margin, side, **params
                 )
-        if liquidation_price and liquidation_price < 0:
-            liquidation_price = None
         return liquidation_price
 
     @staticmethod
