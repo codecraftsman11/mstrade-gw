@@ -42,9 +42,10 @@ class BitmexRestApi(StockRestApi):
     fin_factory = BitmexFinFactory()
 
     def __init__(self, name: str = None, url: str = None, auth: dict = None, logger: Logger = None,
-                 throttle_storage=None, throttle_hash_name: str = '*', state_storage=None):
-        super().__init__(name, url, auth, logger, throttle_storage, state_storage)
+                 throttle_storage=None, throttle_hash_name: str = '*', state_storage=None, cache_ttl: int = None):
+        super().__init__(name, url, auth, logger, throttle_storage, state_storage, cache_ttl)
         self._throttle_hash_name = throttle_hash_name
+        self._c['wallet_detail'] = {}
 
     def _connect(self, **kwargs):
         self._keepalive = bool(kwargs.get('keepalive', False))
@@ -450,6 +451,19 @@ class BitmexRestApi(StockRestApi):
         )
         return utils.load_positions_list(response, schema)
 
+    def cached_wallet_detail(self, schema: str, asset: str):
+        if (
+            not self._cache['wallet_detail'].get(schema, {}).get(asset.lower())
+            or (
+                self._cache['wallet_detail'].get(schema, {}).get(asset.lower(), {}).get('timeout') and
+                self._cache['wallet_detail'][schema][asset.lower()]['timeout'] <= datetime.now()
+            )
+        ):
+            self._cache['wallet_detail'].setdefault(schema, {}).setdefault(asset.lower(), {})
+            self._cache['wallet_detail'][schema][asset.lower()]['data'] = self.get_wallet_detail(schema, asset)
+            self._cache['wallet_detail'][schema][asset.lower()]['timeout'] = datetime.now() + timedelta(seconds=self._cache_ttl)
+        return self._cache['wallet_detail'][schema][asset.lower()]['data']
+
     def get_liquidation(
         self,
         symbol: str,
@@ -467,7 +481,7 @@ class BitmexRestApi(StockRestApi):
     ) -> dict:
         if schema != OrderSchema.margin1:
             raise ConnectorError(f'Invalid schema {schema}.')
-        wallet_detail = self.get_wallet_detail(schema, wallet_asset)
+        wallet_detail = self.cached_wallet_detail(schema, wallet_asset)
         margin_balance = wallet_detail.get('margin_balance')
         maint_margin = wallet_detail.get('maint_margin')
         params = {

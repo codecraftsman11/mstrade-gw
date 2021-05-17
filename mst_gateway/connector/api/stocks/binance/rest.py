@@ -20,10 +20,11 @@ class BinanceRestApi(StockRestApi):
     fin_factory = BinanceFinFactory()
 
     def __init__(self, name: str = None, url: str = None, auth: dict = None, logger: Logger = None,
-                 throttle_storage=None, throttle_hash_name: str = '*', state_storage=None):
-        super().__init__(name, url, auth, logger, throttle_storage, state_storage)
+                 throttle_storage=None, throttle_hash_name: str = '*', state_storage=None, cache_ttl: int = None):
+        super().__init__(name, url, auth, logger, throttle_storage, state_storage, cache_ttl)
         self._throttle_hash_name = throttle_hash_name
         self.test = self._is_test(self._url)
+        self._cache['account_info'] = {}
 
     def _connect(self, **kwargs):
         return Client(api_key=self._auth['api_key'],
@@ -635,6 +636,21 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(f"Binance api error. Details: {msg}")
         return resp
 
+    def cached_account_info(self):
+        if (
+            not self._cache['account_info']
+            or (
+                self._cache['account_info'].get('timeout') and
+                self._cache['account_info']['timeout'] <= datetime.now()
+            )
+        ):
+            account_info = self._binance_api(self._handler.futures_account_v2)
+            self._cache['account_info'].update({
+                'data': account_info,
+                'timeout': datetime.now() + timedelta(seconds=self._cache_ttl)
+            })
+        return self._cache['account_info']['data']
+
     def get_liquidation(
         self,
         symbol: str,
@@ -654,7 +670,7 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(f'Invalid schema {schema}.')
         liquidation_price = None
         if schema == OrderSchema.futures:
-            account_info = self._binance_api(self._handler.futures_account_v2)
+            account_info = self.cached_account_info()
             positions_state = utils.load_futures_positions_state(account_info)
             symbol_position_state, positions_state = BinanceFuturesPositionSerializer.split_positions_state(positions_state, symbol)
             position_margin = BinanceFuturesPositionSerializer.position_margin(
