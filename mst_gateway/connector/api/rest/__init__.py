@@ -21,7 +21,7 @@ class StockRestApi(Connector):
     name = 'Base'
 
     def __init__(self, name: str = None, url: str = None, auth: dict = None, logger: Logger = None,
-                 throttle_storage=None, state_storage=None, cache_ttl: int = None):
+                 throttle_storage=None, state_storage=None):
         if name is not None:
             self.name = name.lower()
         self._keepalive: bool = False
@@ -32,8 +32,6 @@ class StockRestApi(Connector):
             self.throttle = ThrottleRest(storage=throttle_storage)
         if state_storage is not None:
             self.storage = StateStorage(storage=state_storage)
-        self._cache = {}
-        self._cache_ttl = cache_ttl or 60
         super().__init__(auth, logger)
 
     @abstractmethod
