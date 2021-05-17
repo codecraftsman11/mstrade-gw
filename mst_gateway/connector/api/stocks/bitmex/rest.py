@@ -476,7 +476,9 @@ class BitmexRestApi(StockRestApi):
             'funding_rate': kwargs.get('funding_rate'),
         }
         if leverage_type == LeverageType.isolated:
-            params['leverage'] = leverage
+            params.update({
+                'leverage': leverage,
+            })
             liquidation_price = self.fin_factory.calc_liquidation_isolated_price(
                 entry_price=price, maint_margin=maint_margin, side=side, **params,
             )

@@ -21,15 +21,12 @@ class BinanceFinFactory(FinFactory):
         unrealised_pnl = kwargs.get('unrealised_pnl')
         leverage_brackets = kwargs.get('leverage_brackets')
         if (
-            volume
-            and mark_price is not None
-            and position_margin is not None
-            and unrealised_pnl is not None
-            and leverage_brackets
+            volume and leverage_brackets and
+            None not in (entry_price, maint_margin, side, mark_price, position_margin, unrealised_pnl)
         ):
             notional_value = volume * mark_price
             maint_margin_rate, maint_amount = cls.filter_leverage_brackets(leverage_brackets, notional_value)
-            if maint_margin_rate is not None and maint_amount is not None:
+            if None not in (maint_margin_rate, maint_amount):
                 direction = cls.direction_by_side(side)
                 liquidation_price = (
                     position_margin - maint_margin + unrealised_pnl + maint_amount -
