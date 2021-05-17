@@ -6,12 +6,13 @@ from mst_gateway.calculator import FinFactory
 class BitmexFinFactory(FinFactory):
 
     @classmethod
-    def calc_liquidation_isolated_price(cls, entry_price: float, maint_margin: float, direction: int, **kwargs):
+    def calc_liquidation_isolated_price(cls, entry_price: float, maint_margin: float, side: int, **kwargs):
         leverage = kwargs.get('leverage')
         taker_fee = kwargs.get('taker_fee')
         funding_rate = kwargs.get('funding_rate')
         result = None
         if leverage is not None and taker_fee is not None and funding_rate is not None:
+            direction = cls.direction_by_side(side)
             result = round(
                 entry_price / (
                         1 +
@@ -21,13 +22,14 @@ class BitmexFinFactory(FinFactory):
         return result
 
     @classmethod
-    def calc_liquidation_cross_price(cls, entry_price: float, maint_margin: float, direction: int, **kwargs):
-        quantity = kwargs.get('quantity')
+    def calc_liquidation_cross_price(cls, entry_price: float, maint_margin: float, side: int, **kwargs):
+        quantity = abs(kwargs.get('quantity'))
         margin_balance = kwargs.get('margin_balance')
         taker_fee = kwargs.get('taker_fee')
         funding_rate = kwargs.get('funding_rate')
         result = None
-        if quantity is not None and margin_balance is not None and taker_fee is not None and funding_rate is not None:
+        if quantity and margin_balance is not None and taker_fee is not None and funding_rate is not None:
+            direction = cls.direction_by_side(side)
             result = round(
                 (direction * quantity * entry_price) / (
                     (-margin_balance * entry_price) +

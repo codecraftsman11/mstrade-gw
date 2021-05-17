@@ -1,7 +1,7 @@
 from uuid import uuid4
 from logging import Logger
 from datetime import datetime, timedelta
-from typing import Optional, Union
+from typing import Union
 from bravado.exception import HTTPError
 from binance.exceptions import BinanceAPIException, BinanceRequestException
 from mst_gateway.calculator import BinanceFinFactory
@@ -635,18 +635,27 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(f"Binance api error. Details: {msg}")
         return resp
 
-    def get_liquidation(self, symbol: str, schema: str, leverage_type: str, side: int, volume: float, price: float) -> dict:
+    def get_liquidation(
+        self,
+        symbol: str,
+        schema: str,
+        leverage_type: str,
+        leverage: float,
+        side: int,
+        volume: float,
+        price: float,
+        mark_price: float,
+        leverage_brackets: dict,
+        funding_rate: float,
+        taker_fee: float,
+        wallet_asset: str,
+    ) -> dict:
         if schema not in (OrderSchema.exchange, OrderSchema.futures, OrderSchema.margin2):
             raise ConnectorError(f'Invalid schema {schema}.')
         liquidation_price = None
         if schema == OrderSchema.futures:
             account_info = self._binance_api(self._handler.futures_account_v2)
             positions_state = utils.load_futures_positions_state(account_info)
-            leverage_brackets_data = self._binance_api(self._handler.futures_leverage_bracket)
-            leverage_brackets = utils.load_futures_leverage_brackets_as_dict(leverage_brackets_data)
-            mark_price_data = self._binance_api(self._handler.futures_mark_price)
-            mark_prices = utils.load_futures_mark_prices_as_dict(mark_price_data)
-            utils.update_positions_state(positions_state, mark_prices)
             symbol_position_state, positions_state = BinanceFuturesPositionSerializer.split_positions_state(positions_state, symbol)
             position_margin = BinanceFuturesPositionSerializer.position_margin(
                 leverage_type,
@@ -658,7 +667,7 @@ class BinanceRestApi(StockRestApi):
             )
             liquidation_price = BinanceFuturesPositionSerializer.calc_liquidation_price(
                 entry_price=price,
-                mark_price=symbol_position_state.get('mark_price'),
+                mark_price=mark_price,
                 volume=volume,
                 side=side,
                 leverage_type=leverage_type,

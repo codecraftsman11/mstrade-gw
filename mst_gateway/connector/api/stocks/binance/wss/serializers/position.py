@@ -196,14 +196,13 @@ class BinanceFuturesPositionSerializer(BinancePositionSerializer):
                 'unrealised_pnl': other_positions_unrealised_pnl,
                 'leverage_brackets': leverage_brackets,
             }
-            direction = BinanceFinFactory.direction_by_side(side)
             if leverage_type == LeverageType.isolated:
                 liquidation_price = BinanceFinFactory.calc_liquidation_isolated_price(
-                    entry_price, other_positions_maint_margin, direction, **params
+                    entry_price, other_positions_maint_margin, side, **params
                 )
             if leverage_type == LeverageType.cross:
                 liquidation_price = BinanceFinFactory.calc_liquidation_cross_price(
-                    entry_price, other_positions_maint_margin, direction, **params
+                    entry_price, other_positions_maint_margin, side, **params
                 )
         if liquidation_price and liquidation_price < 0:
             liquidation_price = None
