@@ -1,6 +1,5 @@
 import json
 from datetime import datetime, timedelta
-from logging import Logger
 from typing import Optional, Union
 from bravado.exception import HTTPError
 from .lib import (
@@ -24,38 +23,31 @@ class BitmexFactory:
     TBITMEX_SWAGGER = None  # type: SwaggerClient
 
     @classmethod
-    def make_client(cls, url):
-        if url == cls.BASE_URL:
-            if not cls.BITMEX_SWAGGER:
-                cls.BITMEX_SWAGGER = bitmex_connector(test=False)
-            return cls.BITMEX_SWAGGER
-        else:
+    def make_client(cls, test):
+        if test:
             if not cls.TBITMEX_SWAGGER:
-                cls.TBITMEX_SWAGGER = bitmex_connector(test=True)
+                cls.TBITMEX_SWAGGER = bitmex_connector(test=test)
             return cls.TBITMEX_SWAGGER
+        else:
+            if not cls.BITMEX_SWAGGER:
+                cls.BITMEX_SWAGGER = bitmex_connector(test=test)
+            return cls.BITMEX_SWAGGER
 
 
 class BitmexRestApi(StockRestApi):
-    BASE_URL = BitmexFactory.BASE_URL
-    TEST_URL = BitmexFactory.TEST_URL
     name = 'bitmex'
     fin_factory = BitmexFinFactory()
-
-    def __init__(self, name: str = None, url: str = None, auth: dict = None, logger: Logger = None,
-                 throttle_storage=None, throttle_hash_name: str = '*', state_storage=None):
-        super().__init__(name, url, auth, logger, throttle_storage, state_storage)
-        self._throttle_hash_name = throttle_hash_name
 
     def _connect(self, **kwargs):
         self._keepalive = bool(kwargs.get('keepalive', False))
         self._compress = bool(kwargs.get('compress', False))
-        return BitmexFactory.make_client(self._url)
+        return BitmexFactory.make_client(test=self.test)
 
     @property
     def _authenticator(self):
         self._auth = self._auth if isinstance(self._auth, dict) else {}
         return APIKeyAuthenticator(
-            host=self._url,
+            host=BitmexFactory.TEST_URL if self.test else BitmexFactory.BASE_URL,
             api_key=self._auth.get('api_key'),
             api_secret=self._auth.get('api_secret')
         )
@@ -197,9 +189,11 @@ class BitmexRestApi(StockRestApi):
                 symbols.append(utils.load_symbol_data(d, symbol_state))
         return symbols
 
-    def get_exchange_symbol_info(self) -> list:
-        data, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive)
-        return utils.load_exchange_symbol_info(data)
+    def get_exchange_symbol_info(self, schema: str) -> list:
+        if schema == OrderSchema.margin1:
+            data, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive)
+            return utils.load_exchange_symbol_info(data)
+        raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
         quotes, _ = self._bitmex_api(self._handler.Trade.Trade_get,

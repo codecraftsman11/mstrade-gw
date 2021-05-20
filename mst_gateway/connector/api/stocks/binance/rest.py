@@ -1,5 +1,4 @@
 from uuid import uuid4
-from logging import Logger
 from datetime import datetime, timedelta
 from typing import Union
 from bravado.exception import HTTPError
@@ -14,23 +13,13 @@ from .....exceptions import ConnectorError, RecoverableError, NotFoundError
 
 
 class BinanceRestApi(StockRestApi):
-    BASE_URL = 'https://api.binance.com'
     name = 'binance'
     fin_factory = BinanceFinFactory()
 
-    def __init__(self, name: str = None, url: str = None, auth: dict = None, logger: Logger = None,
-                 throttle_storage=None, throttle_hash_name: str = '*', state_storage=None):
-        super().__init__(name, url, auth, logger, throttle_storage, state_storage)
-        self._throttle_hash_name = throttle_hash_name
-        self.test = self._is_test(self._url)
-
     def _connect(self, **kwargs):
-        return Client(api_key=self._auth['api_key'],
-                      api_secret=self._auth['api_secret'],
+        return Client(api_key=self._auth.get('api_key'),
+                      api_secret=self._auth.get('api_secret'),
                       test=self.test)
-
-    def _is_test(self, url):
-        return url != self.BASE_URL
 
     def ping(self) -> bool:
         try:
@@ -85,18 +74,18 @@ class BinanceRestApi(StockRestApi):
                 symbols.append(utils.load_symbol_data(d, symbol_state))
         return symbols
 
-    def get_exchange_symbol_info(self) -> list:
-        e_data = self._binance_api(self._handler.get_exchange_info)
-        data = utils.load_exchange_symbol_info(e_data.get('symbols', []))
-        f_data = self._binance_api(self._handler.futures_exchange_info)
-        try:
-            f_leverage_data = self._binance_api(self._handler.futures_leverage_bracket)
-        except ConnectorError:
-            f_leverage_data = []
-        data.extend(utils.load_futures_exchange_symbol_info(
-            f_data.get('symbols', []), utils.load_futures_leverage_brackets_as_dict(f_leverage_data)
-        ))
-        return data
+    def get_exchange_symbol_info(self, schema: str) -> list:
+        if schema in (OrderSchema.exchange, OrderSchema.margin2):
+            data = self._binance_api(self._handler.get_exchange_info)
+            return utils.load_exchange_symbol_info(data.get('symbols', []))
+        elif schema == OrderSchema.futures:
+            data = self._binance_api(self._handler.futures_exchange_info)
+            leverage_data = self._binance_api(self._handler.futures_leverage_bracket)
+            return utils.load_futures_exchange_symbol_info(
+                data.get('symbols', []), utils.load_futures_leverage_brackets_as_dict(leverage_data)
+            )
+        else:
+            raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
         data = self._binance_api(self._handler.get_historical_trades, symbol=symbol.upper(), limit=1)
