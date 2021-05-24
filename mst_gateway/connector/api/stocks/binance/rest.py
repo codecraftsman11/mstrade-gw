@@ -27,7 +27,7 @@ class BinanceRestApi(StockRestApi):
     def _connect(self, **kwargs):
         return Client(api_key=self._auth['api_key'],
                       api_secret=self._auth['api_secret'],
-                      test=self.test)
+                      testnet=self.test)
 
     def _is_test(self, url):
         return url != self.BASE_URL
@@ -518,7 +518,7 @@ class BinanceRestApi(StockRestApi):
     def get_alt_currency_commission(self, schema: str) -> dict:
         if schema in (OrderSchema.exchange, OrderSchema.margin2, OrderSchema.futures):
             try:
-                result = self._binance_api(self._handler.get_bnb_burn_state)
+                result = self._binance_api(self._handler.get_bnb_burn_spot_margin)
                 is_active = bool(result.get('spotBNBBurn'))
             except ConnectorError:
                 is_active = False

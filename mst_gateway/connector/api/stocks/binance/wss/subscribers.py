@@ -198,9 +198,9 @@ class BinanceFuturesPositionSubscriber(BinancePositionSubscriber):
     subscriptions = ("!markPrice@arr",)
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
-        async with AsyncClient(
-                api_key=api.auth['api_key'], api_secret=api.auth['api_secret'], test=api.test
-        ) as client:
+        if client := await AsyncClient.create(
+            api_key=api.auth.get('api_key'), api_secret=api.auth.get('api_secret'), testnet=api.test
+        ):
             try:
                 position_state = await client.futures_account_v2()
                 leverage_brackets = await client.futures_leverage_bracket()

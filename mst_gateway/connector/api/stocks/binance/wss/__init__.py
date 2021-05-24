@@ -72,9 +72,9 @@ class BinanceWssApi(StockWssApi):
         self._url = f"{self._url}/{key}"
 
     async def _generate_listen_key(self):
-        async with AsyncClient(
-                api_key=self.auth.get('api_key'), api_secret=self.auth.get('api_secret'), test=self.test
-        ) as bin_client:
+        if bin_client := await AsyncClient.create(
+            api_key=self.auth.get('api_key'), api_secret=self.auth.get('api_secret'), testnet=self.test
+        ):
             try:
                 if self.schema == OrderSchema.exchange:
                     key = await bin_client.stream_get_listen_key()
