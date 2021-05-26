@@ -72,21 +72,17 @@ class BinanceWssApi(StockWssApi):
         self._url = f"{self._url}/{key}"
 
     async def _generate_listen_key(self):
-        if bin_client := await AsyncClient.create(
-            api_key=self.auth.get('api_key'), api_secret=self.auth.get('api_secret'), testnet=self.test
-        ):
+        async with AsyncClient(
+                api_key=self.auth.get('api_key'), api_secret=self.auth.get('api_secret'), testnet=self.test
+        ) as bin_client:
             try:
                 if self.schema == OrderSchema.exchange:
                     key = await bin_client.stream_get_listen_key()
-                    await bin_client.close_connection()
                 elif self.schema == OrderSchema.margin2:
                     key = await bin_client.margin_stream_get_listen_key()
-                    await bin_client.close_connection()
                 elif self.schema == OrderSchema.futures:
                     key = await bin_client.futures_stream_get_listen_key()
-                    await bin_client.close_connection()
                 else:
-                    await bin_client.close_connection()
                     raise ConnectorError(f"Invalid schema {self.schema}.")
             except Exception as e:
                 raise ConnectorError(e)

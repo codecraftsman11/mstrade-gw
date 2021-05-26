@@ -445,3 +445,9 @@ class AsyncClient(BaseAsyncClient):
 
         """
         return await self._request_futures_api_v2('get', 'account', True, data=params)
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close_connection()
