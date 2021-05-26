@@ -1,3 +1,4 @@
+import time
 from binance.client import AsyncClient as BaseAsyncClient, Client as BaseClient
 from binance.exceptions import BinanceRequestException
 
@@ -447,6 +448,9 @@ class AsyncClient(BaseAsyncClient):
         return await self._request_futures_api_v2('get', 'account', True, data=params)
 
     async def __aenter__(self):
+        await self.ping()
+        res = await self.get_server_time()
+        self.timestamp_offset = res['serverTime'] - int(time.time() * 1000)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
