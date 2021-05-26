@@ -204,6 +204,7 @@ class BinanceFuturesPositionSubscriber(BinancePositionSubscriber):
             try:
                 position_state = await client.futures_account_v2()
                 leverage_brackets = await client.futures_leverage_bracket()
+                await client.close_connection()
                 return {
                     'position_state': utils.load_futures_positions_state(position_state),
                     'leverage_brackets': utils.load_futures_leverage_brackets_as_dict(leverage_brackets)

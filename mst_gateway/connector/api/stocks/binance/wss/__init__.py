@@ -78,11 +78,15 @@ class BinanceWssApi(StockWssApi):
             try:
                 if self.schema == OrderSchema.exchange:
                     key = await bin_client.stream_get_listen_key()
+                    await bin_client.close_connection()
                 elif self.schema == OrderSchema.margin2:
                     key = await bin_client.margin_stream_get_listen_key()
+                    await bin_client.close_connection()
                 elif self.schema == OrderSchema.futures:
                     key = await bin_client.futures_stream_get_listen_key()
+                    await bin_client.close_connection()
                 else:
+                    await bin_client.close_connection()
                     raise ConnectorError(f"Invalid schema {self.schema}.")
             except Exception as e:
                 raise ConnectorError(e)
