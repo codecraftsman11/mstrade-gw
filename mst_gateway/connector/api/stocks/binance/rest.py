@@ -661,7 +661,7 @@ class BinanceRestApi(StockRestApi):
         if schema == OrderSchema.futures:
             positions_state = kwargs.get('positions_state', {})
             _, positions_state = BinanceFuturesPositionSerializer.split_positions_state(positions_state, symbol)
-            leverage_brackets = kwargs.get('leverage_brackets', {})
+            leverage_brackets = kwargs.get('leverage_brackets', [])
             other_positions_maint_margin, other_positions_unrealised_pnl = BinanceFuturesPositionSerializer.calc_other_positions_sum(
                 leverage_type, leverage_brackets, positions_state
             )
@@ -672,7 +672,7 @@ class BinanceRestApi(StockRestApi):
                 side=side,
                 leverage_type=leverage_type,
                 position_margin=wallet_balance,
-                leverage_brackets=leverage_brackets.get(symbol.lower(), {}),
+                leverage_brackets=leverage_brackets,
                 other_positions_maint_margin=other_positions_maint_margin,
                 other_positions_unrealised_pnl=other_positions_unrealised_pnl,
             )
