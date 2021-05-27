@@ -1,9 +1,16 @@
 import re
 from typing import Union, Tuple, Optional
+from mst_gateway.connector import api
 from mst_gateway.calculator import FinFactory
 
 
 class BitmexFinFactory(FinFactory):
+
+    @classmethod
+    def direction_by_side(cls, side: int) -> int:
+        if side == api.BUY:
+            return -1
+        return 1
 
     @classmethod
     def calc_liquidation_isolated_price(cls, entry_price: float, maint_margin: float, side: int, **kwargs):
