@@ -470,7 +470,7 @@ class BitmexRestApi(StockRestApi):
     ) -> dict:
         if schema != OrderSchema.margin1:
             raise ConnectorError(f'Invalid schema {schema}.')
-        maint_margin = kwargs.get('wallet_detail',  {}).get('maint_margin')
+        maint_margin = kwargs.get('wallet_detail',  {}).get(schema, {}).get('maint_margin')
         params = {
             'taker_fee': kwargs.get('taker_fee'),
             'funding_rate': kwargs.get('funding_rate'),
