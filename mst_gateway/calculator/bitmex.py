@@ -26,7 +26,7 @@ class BitmexFinFactory(FinFactory):
     @classmethod
     def calc_liquidation_cross_price(cls, entry_price: float, maint_margin: float, side: int, **kwargs):
         liquidation_price = None
-        quantity = kwargs.get('quantity')
+        quantity = abs(kwargs.get('quantity'))
         margin_balance = kwargs.get('margin_balance')
         taker_fee = kwargs.get('taker_fee')
         funding_rate = kwargs.get('funding_rate')
