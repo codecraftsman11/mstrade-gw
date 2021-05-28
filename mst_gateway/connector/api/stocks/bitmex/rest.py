@@ -7,7 +7,7 @@ from .lib import (
     bitmex_connector, APIKeyAuthenticator, SwaggerClient
 )
 from mst_gateway.calculator import BitmexFinFactory
-from mst_gateway.connector.api.types import OrderSchema
+from mst_gateway.connector.api.types import LeverageType, OrderSchema
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
 from . import utils, var
 from .utils import binsize2timedelta
@@ -449,6 +449,48 @@ class BitmexRestApi(StockRestApi):
             self._handler.Position.Position_get
         )
         return utils.load_positions_list(response, schema)
+
+    def get_positions_state(self, schema: str) -> dict:
+        if schema != OrderSchema.margin1:
+            raise ConnectorError(f"Invalid schema {schema}.")
+        return {}
+
+    def get_liquidation(
+        self,
+        symbol: str,
+        schema: str,
+        leverage_type: str,
+        wallet_balance: float,
+        side: int,
+        volume: float,
+        price: float,
+        leverage: Optional[float],
+        mark_price: Optional[float],
+        **kwargs,
+    ) -> dict:
+        if schema != OrderSchema.margin1:
+            raise ConnectorError(f'Invalid schema {schema}.')
+        maint_margin = kwargs.get('wallet_detail',  {}).get(schema, {}).get('maint_margin')
+        params = {
+            'taker_fee': kwargs.get('taker_fee'),
+            'funding_rate': kwargs.get('funding_rate'),
+        }
+        if leverage_type == LeverageType.isolated:
+            params.update({
+                'leverage': leverage,
+            })
+            liquidation_price = self.fin_factory.calc_liquidation_isolated_price(
+                entry_price=price, maint_margin=maint_margin, side=side, **params,
+            )
+        else:
+            params.update({
+                'quantity': volume,
+                'margin_balance': wallet_balance,
+            })
+            liquidation_price = self.fin_factory.calc_liquidation_cross_price(
+                entry_price=price, maint_margin=maint_margin, side=side, **params,
+            )
+        return {'liquidation_price': liquidation_price}
 
     def _bitmex_api(self, method: callable, **kwargs):
         headers = {}

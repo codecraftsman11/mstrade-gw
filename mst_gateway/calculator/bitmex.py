@@ -1,40 +1,53 @@
 import re
 from typing import Union, Tuple, Optional
+from mst_gateway.connector import api
 from mst_gateway.calculator import FinFactory
 
 
 class BitmexFinFactory(FinFactory):
 
     @classmethod
-    def calc_liquidation_isolated_price(cls, entry_price: float, maint_margin: float, direction: int, **kwargs):
+    def direction_by_side(cls, side: int) -> int:
+        if side == api.BUY:
+            return -1
+        return 1
+
+    @classmethod
+    def calc_liquidation_isolated_price(cls, entry_price: float, maint_margin: float, side: int, **kwargs):
+        liquidation_price = None
         leverage = kwargs.get('leverage')
         taker_fee = kwargs.get('taker_fee')
         funding_rate = kwargs.get('funding_rate')
-        result = None
-        if leverage is not None and taker_fee is not None and funding_rate is not None:
-            result = round(
+        if None not in (entry_price, maint_margin, side, leverage, taker_fee, funding_rate):
+            direction = cls.direction_by_side(side)
+            liquidation_price = round(
                 entry_price / (
                         1 +
                         (-direction * ((100 / leverage / 100) + 2 * taker_fee / 100)) +
                         (direction * (maint_margin + taker_fee + funding_rate) / 100)
                 ), 8)
-        return result
+        if liquidation_price is not None and liquidation_price < 0:
+            liquidation_price = None
+        return liquidation_price
 
     @classmethod
-    def calc_liquidation_cross_price(cls, entry_price: float, maint_margin: float, direction: int, **kwargs):
-        quantity = kwargs.get('quantity')
+    def calc_liquidation_cross_price(cls, entry_price: float, maint_margin: float, side: int, **kwargs):
+        liquidation_price = None
+        quantity = abs(kwargs.get('quantity'))
         margin_balance = kwargs.get('margin_balance')
         taker_fee = kwargs.get('taker_fee')
         funding_rate = kwargs.get('funding_rate')
-        result = None
-        if quantity is not None and margin_balance is not None and taker_fee is not None and funding_rate is not None:
-            result = round(
+        if quantity and None not in (entry_price, maint_margin, side, margin_balance, taker_fee, funding_rate):
+            direction = cls.direction_by_side(side)
+            liquidation_price = round(
                 (direction * quantity * entry_price) / (
                     (-margin_balance * entry_price) +
                     ((maint_margin + taker_fee + funding_rate) / 100 * quantity) +
                     (direction * quantity)
                 ), 8)
-        return result
+        if liquidation_price is not None and liquidation_price < 0:
+            liquidation_price = None
+        return liquidation_price
 
     @classmethod
     def calc_leverage_level(cls, quantity: Union[int, float], entry_price: float, wallet_balance: float,

@@ -13,32 +13,32 @@ class BinanceFinFactory(FinFactory):
         return face_price
 
     @classmethod
-    def calc_liquidation_isolated_price(cls, entry_price: float, maint_margin: float, direction: int, **kwargs):
+    def calc_liquidation_isolated_price(cls, entry_price: float, maint_margin: float, side: int, **kwargs):
+        liquidation_price = None
         volume = abs(kwargs.get('volume'))
         mark_price = kwargs.get('mark_price')
         position_margin = kwargs.get('position_margin')
         unrealised_pnl = kwargs.get('unrealised_pnl')
         leverage_brackets = kwargs.get('leverage_brackets')
-        liquidation_price = None
         if (
-            volume
-            and mark_price is not None
-            and position_margin is not None
-            and unrealised_pnl is not None
-            and leverage_brackets
+            volume and leverage_brackets and
+            None not in (entry_price, maint_margin, side, mark_price, position_margin, unrealised_pnl)
         ):
             notional_value = volume * mark_price
             maint_margin_rate, maint_amount = cls.filter_leverage_brackets(leverage_brackets, notional_value)
-            if maint_margin_rate is not None and maint_amount is not None:
+            if None not in (maint_margin_rate, maint_amount):
+                direction = cls.direction_by_side(side)
                 liquidation_price = (
                     position_margin - maint_margin + unrealised_pnl + maint_amount -
                     direction * volume * entry_price
                 ) / (volume * maint_margin_rate - direction * volume)
+        if liquidation_price is not None and liquidation_price < 0:
+            liquidation_price = None
         return liquidation_price
 
     @classmethod
-    def calc_liquidation_cross_price(cls, entry_price: float, maint_margin: float, direction: int, **kwargs):
-        return cls.calc_liquidation_isolated_price(entry_price, maint_margin, direction, **kwargs)
+    def calc_liquidation_cross_price(cls, entry_price: float, maint_margin: float, side: int, **kwargs):
+        return cls.calc_liquidation_isolated_price(entry_price, maint_margin, side, **kwargs)
 
     @classmethod
     def calc_leverage_level(cls, quantity: Union[int, float], entry_price: float, wallet_balance: float,
