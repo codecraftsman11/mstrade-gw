@@ -220,10 +220,11 @@ def load_ws_position_action(state_volume: float, volume: float) -> str:
     return 'update'
 
 
-def load_position_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+def load_position_ws_data(raw_data: dict, state_data: Optional[dict], exchange_rates: dict) -> dict:
     state_volume = to_float(raw_data.get('state_volume'))
     volume = to_float(raw_data.get('currentQty'))
     side = load_position_side_by_volume(volume)
+    unrealised_pnl = to_xbt(raw_data.get('unrealisedPnl'))
     leverage_type, leverage = load_leverage(raw_data)
     data = {
         'time': to_iso_datetime(raw_data.get('timestamp')),
@@ -234,7 +235,7 @@ def load_position_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'liquidation_price': to_float(raw_data.get('liquidationPrice')),
         'entry_price': to_float(raw_data.get('avgEntryPrice')),
         'side': side if side is not None else raw_data.get('side'),
-        'unrealised_pnl': to_xbt(raw_data.get('unrealisedPnl')),
+        'unrealised_pnl': load_ws_position_unrealised_pnl(unrealised_pnl, exchange_rates),
         'leverage_type': leverage_type,
         'leverage': leverage,
         'action': load_ws_position_action(state_volume, volume),
@@ -244,6 +245,22 @@ def load_position_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
             'system_symbol': state_data.get('system_symbol')
         })
     return data
+
+
+def load_ws_position_unrealised_pnl(base: float, exchange_rates: dict) -> dict:
+    xbt_to_usd = exchange_rates.get('xbt')
+    return {
+        'base': base,
+        'btc': base,
+        'usd': to_usd(base, xbt_to_usd),
+    }
+
+
+def to_usd(xbt_value: float, xbt_to_usd: float) -> Optional[float]:
+    try:
+        return xbt_value * xbt_to_usd
+    except TypeError:
+        return None
 
 
 def load_user_data(raw_data: dict) -> dict:
