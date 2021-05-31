@@ -17,8 +17,8 @@ class BinancePositionSerializer(BinanceSerializer):
 
     def __init__(self, wss_api: BinanceWssApi):
         super().__init__(wss_api)
-        self.position_state = wss_api.partial_state_data.get(
-            self.subscription, {}).get('position_state', {})
+        self.position_state = wss_api.partial_state_data.get(self.subscription, {}).get('position_state', {})
+        self.exchange_rates = wss_api.partial_state_data.get(self.subscription, {}).get('exchange_rates', {})
         self._initialized = bool(self.subscription in self._wss_api.subscriptions)
         self._item_symbol = None
 
@@ -38,9 +38,9 @@ class BinancePositionSerializer(BinanceSerializer):
                 return None
         position_state = self.position_state[self._item_symbol]
         if self._wss_api.schema == OrderSchema.exchange:
-            return utils.load_exchange_position_ws_data(item, position_state, state_data)
+            return utils.load_exchange_position_ws_data(item, position_state, state_data, self.exchange_rates)
         if self._wss_api.schema == OrderSchema.margin2:
-            return utils.load_margin2_position_ws_data(item, position_state, state_data)
+            return utils.load_margin2_position_ws_data(item, position_state, state_data, self.exchange_rates)
         return None
 
 
@@ -181,7 +181,7 @@ class BinanceFuturesPositionSerializer(BinancePositionSerializer):
         symbol_position_state['unrealised_pnl'] = BinanceFinFactory.calc_unrealised_pnl_by_side(
             entry_price, mark_price, volume, side
         )
-        return utils.load_futures_position_ws_data(item, symbol_position_state, state_data)
+        return utils.load_futures_position_ws_data(item, symbol_position_state, state_data, self.exchange_rates)
 
     @staticmethod
     def calc_liquidation_price(entry_price, mark_price, volume, side, leverage_type, position_margin,

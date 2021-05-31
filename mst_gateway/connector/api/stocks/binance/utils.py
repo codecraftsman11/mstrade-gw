@@ -1236,7 +1236,8 @@ def load_ws_futures_position_leverage_type(margin_type: Optional[str]) -> Option
     return None
 
 
-def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, state_data: Optional[dict]) -> dict:
+def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, state_data: Optional[dict], exchange_rates: dict) -> dict:
+    unrealised_pnl = position_state_data['unrealised_pnl']
     data = {
         'time': to_iso_datetime(raw_data.get('E')),
         'timestamp': raw_data.get('E'),
@@ -1245,7 +1246,7 @@ def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, sta
         'volume': position_state_data['volume'],
         'entry_price': position_state_data['entry_price'],
         'mark_price': position_state_data['mark_price'],
-        'unrealised_pnl': position_state_data['unrealised_pnl'],
+        'unrealised_pnl': load_ws_futures_position_unrealised_pnl(unrealised_pnl, exchange_rates),
         'leverage_type': position_state_data['leverage_type'],
         'leverage': position_state_data['leverage'],
         'liquidation_price': position_state_data['liquidation_price'],
@@ -1256,6 +1257,22 @@ def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, sta
             'system_symbol': state_data.get('system_symbol'),
         })
     return data
+
+
+def load_ws_futures_position_unrealised_pnl(base: float, exchange_rates: dict) -> dict:
+    return {
+        'base': base,
+        'usd': base,
+        'btc': to_btc(base, exchange_rates),
+    }
+
+
+def to_btc(usd_value: float, exchange_rates: dict) -> Optional[float]:
+    btc_to_usd = exchange_rates.get('btc')
+    try:
+        return usd_value / btc_to_usd
+    except TypeError:
+        return None
 
 
 def load_position_leverage_type(position_data: dict) -> str:
@@ -1357,7 +1374,7 @@ def load_futures_position_list(raw_data: list, schema: str) -> list:
     return [load_futures_position(data, schema) for data in raw_data if to_float(data.get('positionAmt')) != 0]
 
 
-def load_exchange_position_ws_data(raw_data: dict, position_state: dict, state_data: Optional[dict]) -> dict:
+def load_exchange_position_ws_data(raw_data: dict, position_state: dict, state_data: Optional[dict], exchange_rates: dict) -> dict:
     side = position_state['side']
     volume = to_float(position_state['volume'])
     mark_price = to_float(raw_data.get('c'))
@@ -1373,7 +1390,7 @@ def load_exchange_position_ws_data(raw_data: dict, position_state: dict, state_d
         'volume': volume,
         'entry_price': entry_price,
         'mark_price': mark_price,
-        'unrealised_pnl': unrealised_pnl,
+        'unrealised_pnl': load_ws_position_unrealised_pnl(side, unrealised_pnl, state_data, exchange_rates),
         'leverage_type': position_state['leverage_type'],
         'leverage': to_float(position_state['leverage']),
         'liquidation_price': None,
@@ -1386,8 +1403,22 @@ def load_exchange_position_ws_data(raw_data: dict, position_state: dict, state_d
     return data
 
 
-def load_margin2_position_ws_data(raw_data: dict, position_state: dict, state_data: Optional[dict]) -> dict:
-    data = load_exchange_position_ws_data(raw_data, position_state, state_data)
+def load_ws_position_unrealised_pnl(side: int, base: float, state_data: Optional[dict], exchange_rates: dict) -> dict:
+    btc_value = None
+    usd_value = None
+    if isinstance(state_data, dict) and (pair := state_data.get('pair', [])):
+        base_asset = pair[side].lower()
+        usd_value = exchange_rates.get(base_asset)
+        btc_value = to_btc(usd_value, exchange_rates)
+    return {
+        'base': base,
+        'usd': usd_value,
+        'btc': btc_value,
+    }
+
+
+def load_margin2_position_ws_data(raw_data: dict, position_state: dict, state_data: Optional[dict], exchange_rates: dict) -> dict:
+    data = load_exchange_position_ws_data(raw_data, position_state, state_data, exchange_rates)
     if not data['leverage_type']:
         data['leverage_type'] = LeverageType.cross
     if not data['leverage']:
