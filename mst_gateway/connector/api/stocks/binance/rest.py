@@ -1,11 +1,12 @@
 from uuid import uuid4
 from datetime import datetime, timedelta
-from typing import Union
+from typing import Optional, Union
 from bravado.exception import HTTPError
 from binance.exceptions import BinanceAPIException, BinanceRequestException
 from mst_gateway.calculator import BinanceFinFactory
 from mst_gateway.connector.api.types import OrderSchema, OrderType
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
+from mst_gateway.connector.api.stocks.binance.wss.serializers.position import BinanceFuturesPositionSerializer
 from .lib import Client
 from . import utils, var
 from ...rest import StockRestApi
@@ -622,6 +623,49 @@ class BinanceRestApi(StockRestApi):
                 msg = resp['msg']
             raise ConnectorError(f"Binance api error. Details: {msg}")
         return resp
+
+    def get_positions_state(self, schema):
+        positions_state = {}
+        if schema == OrderSchema.futures:
+            account_info = self._binance_api(self._handler.futures_account_v2)
+            positions_state = utils.load_futures_positions_state(account_info)
+        return positions_state
+
+    def get_liquidation(
+        self,
+        symbol: str,
+        schema: str,
+        leverage_type: str,
+        wallet_balance: float,
+        side: int,
+        volume: float,
+        price: float,
+        leverage: Optional[float],
+        mark_price: Optional[float],
+        **kwargs,
+    ) -> dict:
+        if schema not in (OrderSchema.exchange, OrderSchema.futures, OrderSchema.margin2):
+            raise ConnectorError(f'Invalid schema {schema}.')
+        liquidation_price = None
+        if schema == OrderSchema.futures:
+            positions_state = kwargs.get('positions_state', {})
+            _, positions_state = BinanceFuturesPositionSerializer.split_positions_state(positions_state, symbol)
+            leverage_brackets = kwargs.get('leverage_brackets', [])
+            other_positions_maint_margin, other_positions_unrealised_pnl = BinanceFuturesPositionSerializer.calc_other_positions_sum(
+                leverage_type, leverage_brackets, positions_state
+            )
+            liquidation_price = BinanceFuturesPositionSerializer.calc_liquidation_price(
+                entry_price=price,
+                mark_price=mark_price,
+                volume=volume,
+                side=side,
+                leverage_type=leverage_type,
+                position_margin=wallet_balance,
+                leverage_brackets=leverage_brackets,
+                other_positions_maint_margin=other_positions_maint_margin,
+                other_positions_unrealised_pnl=other_positions_unrealised_pnl,
+            )
+        return {'liquidation_price': liquidation_price}
 
     def _api_kwargs(self, kwargs):
         api_kwargs = dict()

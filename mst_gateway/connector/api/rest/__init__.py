@@ -218,6 +218,26 @@ class StockRestApi(Connector):
     def list_positions(self, schema: str, **kwargs) -> list:
         raise NotImplementedError
 
+    @abstractmethod
+    def get_positions_state(self, schema: str) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_liquidation(
+        self,
+        symbol: str,
+        schema: str,
+        leverage_type: str,
+        wallet_balance: float,
+        side: int,
+        volume: float,
+        price: float,
+        leverage: Optional[float],
+        mark_price: Optional[float],
+        **kwargs,
+    ) -> dict:
+        raise NotImplementedError
+
     def __setstate__(self, state):
         self.__dict__ = state
         self.open()
