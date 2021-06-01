@@ -1390,7 +1390,7 @@ def load_exchange_position_ws_data(raw_data: dict, position_state: dict, state_d
         'volume': volume,
         'entry_price': entry_price,
         'mark_price': mark_price,
-        'unrealised_pnl': load_ws_position_unrealised_pnl(unrealised_pnl, state_data, exchange_rates),
+        'unrealised_pnl': load_ws_position_unrealised_pnl(unrealised_pnl, state_data, side, exchange_rates),
         'leverage_type': position_state['leverage_type'],
         'leverage': to_float(position_state['leverage']),
         'liquidation_price': None,
@@ -1403,11 +1403,18 @@ def load_exchange_position_ws_data(raw_data: dict, position_state: dict, state_d
     return data
 
 
-def load_ws_position_unrealised_pnl(base: float, state_data: Optional[dict], exchange_rates: dict) -> dict:
+def get_wallet_asset_by_side(pair: list, side: int) -> str:
+    if side:
+        return pair[0]
+    else:
+        return pair[1]
+
+
+def load_ws_position_unrealised_pnl(base: float, state_data: Optional[dict], side: int, exchange_rates: dict) -> dict:
     btc_value = None
     usd_value = None
     if isinstance(state_data, dict) and (pair := state_data.get('pair', [])):
-        wallet_asset = pair[1].lower()
+        wallet_asset = get_wallet_asset_by_side(pair, side)
         usd_value = to_usd(base, wallet_asset, exchange_rates)
         btc_value = to_btc(usd_value, exchange_rates)
     return {
@@ -1418,7 +1425,7 @@ def load_ws_position_unrealised_pnl(base: float, state_data: Optional[dict], exc
 
 
 def to_usd(base: float, asset: str, exchange_rates: dict) -> Optional[float]:
-    asset_to_usd = exchange_rates.get(asset) or 1
+    asset_to_usd = exchange_rates.get(asset.lower()) or 1
     try:
         return base * asset_to_usd
     except TypeError:
