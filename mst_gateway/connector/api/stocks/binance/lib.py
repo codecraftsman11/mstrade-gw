@@ -453,6 +453,8 @@ class AsyncClient(BaseAsyncClient):
         self.timestamp_offset = res['serverTime'] - int(time.time() * 1000)
 
     async def __aenter__(self):
+        res = await self.get_server_time()
+        self.timestamp_offset = res['serverTime'] - int(time.time() * 1000)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
