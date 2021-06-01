@@ -1404,10 +1404,7 @@ def load_exchange_position_ws_data(raw_data: dict, position_state: dict, state_d
 
 
 def get_wallet_asset_by_side(pair: list, side: int) -> str:
-    if side:
-        return pair[0]
-    else:
-        return pair[1]
+    return pair[1]
 
 
 def load_ws_position_unrealised_pnl(base: float, state_data: Optional[dict], side: int, exchange_rates: dict) -> dict:
