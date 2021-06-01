@@ -199,7 +199,7 @@ class BinanceFuturesPositionSubscriber(BinancePositionSubscriber):
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
         async with AsyncClient(
-                api_key=api.auth.get('api_secret'), api_secret=api.auth.get('api_secret'), testnet=api.test
+                api_key=api.auth.get('api_key'), api_secret=api.auth.get('api_secret'), testnet=api.test
         ) as client:
             try:
                 position_state = await client.futures_account_v2()
