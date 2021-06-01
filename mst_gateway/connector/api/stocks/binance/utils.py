@@ -1407,14 +1407,22 @@ def load_ws_position_unrealised_pnl(side: int, base: float, state_data: Optional
     btc_value = None
     usd_value = None
     if isinstance(state_data, dict) and (pair := state_data.get('pair', [])):
-        base_asset = pair[side].lower()
-        usd_value = exchange_rates.get(base_asset)
+        asset = pair[side].lower()
+        asset_to_usd = exchange_rates.get(asset) or 1
+        usd_value = to_usd(base, asset_to_usd)
         btc_value = to_btc(usd_value, exchange_rates)
     return {
         'base': base,
         'usd': usd_value,
         'btc': btc_value,
     }
+
+
+def to_usd(base: float, to_usd: float) -> Optional[float]:
+    try:
+        return base * to_usd
+    except TypeError:
+        return None
 
 
 def load_margin2_position_ws_data(raw_data: dict, position_state: dict, state_data: Optional[dict], exchange_rates: dict) -> dict:
