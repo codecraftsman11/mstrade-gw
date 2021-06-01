@@ -1390,7 +1390,7 @@ def load_exchange_position_ws_data(raw_data: dict, position_state: dict, state_d
         'volume': volume,
         'entry_price': entry_price,
         'mark_price': mark_price,
-        'unrealised_pnl': load_ws_position_unrealised_pnl(side, unrealised_pnl, state_data, exchange_rates),
+        'unrealised_pnl': load_ws_position_unrealised_pnl(unrealised_pnl, state_data, exchange_rates),
         'leverage_type': position_state['leverage_type'],
         'leverage': to_float(position_state['leverage']),
         'liquidation_price': None,
@@ -1403,7 +1403,7 @@ def load_exchange_position_ws_data(raw_data: dict, position_state: dict, state_d
     return data
 
 
-def load_ws_position_unrealised_pnl(side: int, base: float, state_data: Optional[dict], exchange_rates: dict) -> dict:
+def load_ws_position_unrealised_pnl(base: float, state_data: Optional[dict], exchange_rates: dict) -> dict:
     btc_value = None
     usd_value = None
     if isinstance(state_data, dict) and (pair := state_data.get('pair', [])):
