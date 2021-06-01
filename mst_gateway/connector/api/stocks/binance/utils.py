@@ -320,10 +320,10 @@ def load_quote_bin_data(raw_data: list, state_data: Optional[dict]) -> dict:
 
 
 def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
-    # _time = to_date(raw_data.get('time'))
+    _time = to_date(raw_data.get('time'))
     data = {
-        # 'time': _time,
-        # 'timestamp': time2timestamp(_time),
+        'time': _time,
+        'timestamp': time2timestamp(_time),
         'exchange_order_id': raw_data.get('orderId'),
         'symbol': raw_data.get('symbol'),
         'volume': raw_data.get('origQty'),
