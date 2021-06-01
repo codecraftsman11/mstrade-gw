@@ -1403,16 +1403,12 @@ def load_exchange_position_ws_data(raw_data: dict, position_state: dict, state_d
     return data
 
 
-def get_wallet_asset_by_side(pair: list, side: int) -> str:
-    return pair[1]
-
-
 def load_ws_position_unrealised_pnl(base: float, state_data: Optional[dict], side: int, exchange_rates: dict) -> dict:
     btc_value = None
     usd_value = None
     if isinstance(state_data, dict) and (pair := state_data.get('pair', [])):
-        wallet_asset = get_wallet_asset_by_side(pair, side)
-        usd_value = to_usd(base, wallet_asset, exchange_rates)
+        quote_asset = pair[1]
+        usd_value = to_usd(base, quote_asset, exchange_rates)
         btc_value = to_btc(usd_value, exchange_rates)
     return {
         'base': base,
