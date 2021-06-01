@@ -447,11 +447,6 @@ class AsyncClient(BaseAsyncClient):
         """
         return await self._request_futures_api_v2('get', 'account', True, data=params)
 
-    async def open_connection(self):
-        await self.ping()
-        res = await self.get_server_time()
-        self.timestamp_offset = res['serverTime'] - int(time.time() * 1000)
-
     async def __aenter__(self):
         res = await self.get_server_time()
         self.timestamp_offset = res['serverTime'] - int(time.time() * 1000)
