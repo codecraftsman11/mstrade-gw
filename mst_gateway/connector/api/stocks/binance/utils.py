@@ -1418,9 +1418,9 @@ def load_ws_position_unrealised_pnl(side: int, base: float, state_data: Optional
     }
 
 
-def to_usd(base: float, to_usd: float) -> Optional[float]:
+def to_usd(base: float, asset_to_usd: float) -> Optional[float]:
     try:
-        return base * to_usd
+        return base * asset_to_usd
     except TypeError:
         return None
 
