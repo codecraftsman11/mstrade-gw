@@ -320,10 +320,10 @@ def load_quote_bin_data(raw_data: list, state_data: Optional[dict]) -> dict:
 
 
 def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
-    _time = to_date(raw_data.get('time'))
+    # _time = to_date(raw_data.get('time'))
     data = {
-        'time': _time,
-        'timestamp': time2timestamp(_time),
+        # 'time': _time,
+        # 'timestamp': time2timestamp(_time),
         'exchange_order_id': raw_data.get('orderId'),
         'symbol': raw_data.get('symbol'),
         'volume': raw_data.get('origQty'),
@@ -1407,9 +1407,9 @@ def load_ws_position_unrealised_pnl(side: int, base: float, state_data: Optional
     btc_value = None
     usd_value = None
     if isinstance(state_data, dict) and (pair := state_data.get('pair', [])):
-        asset = pair[side].lower()
-        asset_to_usd = exchange_rates.get(asset) or 1
-        usd_value = to_usd(base, asset_to_usd)
+        wallet_asset = pair[1-side].lower()
+        wallet_asset_to_usd = exchange_rates.get(wallet_asset) or 1
+        usd_value = to_usd(base, wallet_asset_to_usd)
         btc_value = to_btc(usd_value, exchange_rates)
     return {
         'base': base,
