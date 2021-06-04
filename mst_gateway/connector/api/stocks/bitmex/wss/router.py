@@ -78,9 +78,6 @@ class BitmexWssRouter(Router):
         if subscr_name not in self._wss_api.subscriptions:
             return None
         table = data['table']
-        if table == 'tradeBin1m':
-            if not self._use_trade_bin and data['action'] != 'partial':
-                return None
         serializer = self._subscr_serializer(subscr_name)
         serializer.prefetch(data)
         self._routed_data[subscr_name] = {
