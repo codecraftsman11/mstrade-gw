@@ -43,7 +43,10 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
         if self._wss_api.register_state:
             if (state_data := self._wss_api.get_state_data(item.get('symbol'))) is None:
                 return None
-        if self._bin_closed(message, item, state_data):
+        _bin_closed = self._bin_closed(message, item, state_data)
+        if _bin_closed is None:
+            return None
+        elif _bin_closed:
             return copy(self._reset_quote_bin(message, item, state_data))
         return copy(self._update_quote_bin(item, state_data))
 
@@ -69,24 +72,27 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
                 return
         data.append(item)
 
-    def _bin_closed(self, message: dict, item: dict, state_data: dict) -> bool:
+    def _bin_closed(self, message: dict, item: dict, state_data: dict) -> Optional[bool]:
         # pylint:disable=no-self-use,unused-argument
         return message['table'] == 'tradeBin1m'
 
 
 class BitmexQuoteBinFromTradeSerializer(BitmexQuoteBinSerializer):
     @classmethod
-    def _minute_updated(cls, ts_old: str, ts_new: str) -> bool:
+    def _minute_updated(cls, ts_old: str, ts_new: str) -> Optional[bool]:
         try:
             ts_old = datetime.strptime(ts_old, api.DATETIME_OUT_FORMAT)
             ts_new = datetime.strptime(ts_new, api.DATETIME_OUT_FORMAT)
         except ValueError:
             return False
-        if (ts_new - ts_old).total_seconds() >= 60:
+        diff_in_sec = (ts_new - ts_old).total_seconds()
+        if diff_in_sec >= 60:
             return True
-        return ts_new.minute > ts_old.minute
+        elif diff_in_sec < 0:
+            return None
+        return True
 
-    def _bin_closed(self, message: dict, item: dict, state_data: dict) -> bool:
+    def _bin_closed(self, message: dict, item: dict, state_data: dict) -> Optional[bool]:
         if message['table'] == 'tradeBin1m':
             return True
         if message['table'] == 'trade':
