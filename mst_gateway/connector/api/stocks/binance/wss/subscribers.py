@@ -185,28 +185,44 @@ class BinancePositionSubscriber(BinanceSubscriber):
                 else:
                     _state[symbol.lower()] = state_data
 
+    async def subscribe_exchange_rates(self, api: BinanceWssApi):
+        redis = await api.storage.get_client()
+        state_channel = (await redis.subscribe('exchange_rates'))[0]
+        while await state_channel.wait_message():
+            state_data = await state_channel.get_json()
+            exchange_rates = state_data.get(api.name.lower(), {}).get(api.schema, {})
+            api.partial_state_data[self.subscription].update({'exchange_rates': exchange_rates})
+
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
         api.tasks.append(asyncio.create_task(self.subscribe_positions_state(api)))
-        state_data = await api.storage.get_pattern(
+        api.tasks.append(asyncio.create_task(self.subscribe_exchange_rates(api)))
+        positions_state_data = await api.storage.get_pattern(
             f'{self.subscription}.{api.account_id}.{api.name}.{api.schema}.*'.lower()
         )
-        positions_state = utils.load_positions_state(state_data)
-        return {'position_state': positions_state}
+        positions_state = utils.load_positions_state(positions_state_data)
+        exchange_rates = await api.storage.get('exchange_rates', exchange=api.name, schema=api.schema)
+        return {
+            'position_state': positions_state,
+            'exchange_rates': exchange_rates,
+        }
 
 
 class BinanceFuturesPositionSubscriber(BinancePositionSubscriber):
     subscriptions = ("!markPrice@arr",)
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
+        api.tasks.append(asyncio.create_task(self.subscribe_exchange_rates(api)))
         async with AsyncClient(
                 api_key=api.auth.get('api_key'), api_secret=api.auth.get('api_secret'), testnet=api.test
         ) as client:
             try:
+                exchange_rates = await api.storage.get('exchange_rates', exchange=api.name, schema=api.schema)
                 position_state = await client.futures_account_v2()
                 leverage_brackets = await client.futures_leverage_bracket()
                 return {
                     'position_state': utils.load_futures_positions_state(position_state),
-                    'leverage_brackets': utils.load_futures_leverage_brackets_as_dict(leverage_brackets)
+                    'leverage_brackets': utils.load_futures_leverage_brackets_as_dict(leverage_brackets),
+                    'exchange_rates': exchange_rates,
                 }
             except Exception as e:
                 raise QueryError(f"Init partial state error: {e}")
