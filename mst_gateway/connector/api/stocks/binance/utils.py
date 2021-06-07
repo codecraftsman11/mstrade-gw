@@ -208,16 +208,8 @@ def load_order_book_side(order_side: str) -> int:
 
 
 def generate_order_book_id(price: float) -> int:
-    if price > 1:
-        slice_length = len(str(int(price))) + 8
-        formatted_price = f'{price * 10 ** 8:.0f}'
-    else:
-        slice_length = 16
-        formatted_price = f'{price * 10 ** 16:.0f}'
-
-    formatted_price = int(formatted_price[:slice_length])
-    base_value = 10 ** (slice_length + 1)
-
+    formatted_price = int(price * 10 ** 8)
+    base_value = 10 ** 16
     return base_value - formatted_price
 
 

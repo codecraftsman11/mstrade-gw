@@ -213,7 +213,7 @@ class BinanceFuturesPositionSubscriber(BinancePositionSubscriber):
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
         api.tasks.append(asyncio.create_task(self.subscribe_exchange_rates(api)))
         async with AsyncClient(
-                api_key=api.auth['api_key'], api_secret=api.auth['api_secret'], test=api.test
+                api_key=api.auth.get('api_key'), api_secret=api.auth.get('api_secret'), testnet=api.test
         ) as client:
             try:
                 exchange_rates = await api.storage.get('exchange_rates', exchange=api.name, schema=api.schema)
