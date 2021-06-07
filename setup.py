@@ -22,7 +22,7 @@ setup(
     install_requires=[
         'bitmex==0.2.2',
         'websockets==8.1',
-        'python-binance==0.7.9',
+        'python-binance==1.0.10',
         'aiohttp==3.7.4.post0'
     ],
     extras_require={
