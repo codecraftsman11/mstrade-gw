@@ -1,11 +1,19 @@
-from typing import Optional
+from __future__ import annotations
+from typing import Optional, TYPE_CHECKING
 from .base import BitmexSerializer
 from ... import utils
 from mst_gateway.connector.api.types.order import LeverageType
 
+if TYPE_CHECKING:
+    from ... import BitmexWssApi
+
 
 class BitmexPositionSerializer(BitmexSerializer):
     subscription = "position"
+
+    def __init__(self, wss_api: BitmexWssApi):
+        super().__init__(wss_api)
+        self.exchange_rates = wss_api.partial_state_data.get(self.subscription, {}).get('exchange_rates', {})
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
         return True
@@ -36,4 +44,4 @@ class BitmexPositionSerializer(BitmexSerializer):
                 item['side'] = state[0]['side']
         else:
             item['state_volume'] = item.get('currentQty')
-        return utils.load_position_ws_data(item, state_data)
+        return utils.load_position_ws_data(item, state_data, self.exchange_rates)

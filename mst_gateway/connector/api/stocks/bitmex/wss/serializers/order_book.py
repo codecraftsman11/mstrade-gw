@@ -18,3 +18,6 @@ class BitmexOrderBookSerializer(BitmexSerializer):
             if (state_data := self._wss_api.get_state_data(item.get('symbol'))) is None:
                 return None
         return load_order_book_data(item, state_data)
+
+    def state(self, symbol: str = None) -> Optional[dict]:
+        return None
