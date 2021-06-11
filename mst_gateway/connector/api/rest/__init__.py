@@ -17,19 +17,19 @@ class StockRestApi(Connector):
     throttle = ThrottleRest()
     storage = StateStorage()
     fin_factory = FinFactory()
-    BASE_URL = None
     name = 'Base'
 
-    def __init__(self, name: str = None, url: str = None, auth: dict = None, logger: Logger = None,
-                 throttle_storage=None, state_storage=None):
+    def __init__(self, name: str = None, auth: dict = None, test: bool = True, logger: Logger = None,
+                 throttle_storage=None, throttle_hash_name: str = '*', state_storage=None):
         if name is not None:
             self.name = name.lower()
+        self.test = test
         self._keepalive: bool = False
         self._compress: bool = False
-        self._url: str = url if url is not None else self.__class__.BASE_URL
         self._error: tuple = ERROR_OK
         if throttle_storage is not None:
             self.throttle = ThrottleRest(storage=throttle_storage)
+        self._throttle_hash_name = throttle_hash_name
         if state_storage is not None:
             self.storage = StateStorage(storage=state_storage)
         super().__init__(auth, logger)
@@ -79,7 +79,7 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def get_exchange_symbol_info(self) -> list:
+    def get_exchange_symbol_info(self, schema: str) -> list:
         raise NotImplementedError
 
     @abstractmethod
