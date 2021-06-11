@@ -15,6 +15,7 @@ from .. import var
 
 class BinanceWssApi(StockWssApi):
     BASE_URL = 'wss://stream.binance.com:9443/ws'
+    TEST_URL = 'wss://testnet.binance.vision/ws'
     name = 'binance'
     subscribers = {
         'order_book': subscr_class.BinanceOrderBookSubscriber(),
@@ -39,6 +40,7 @@ class BinanceWssApi(StockWssApi):
                  name: str = None,
                  account_name: str = None,
                  url: str = None,
+                 test: bool = True,
                  auth: dict = None,
                  logger: Logger = None,
                  options: dict = None,
@@ -47,12 +49,8 @@ class BinanceWssApi(StockWssApi):
                  schema='exchange',
                  state_storage=None,
                  register_state=True):
-        self.test = self._is_test(url)
-        super().__init__(name, account_name, url, auth, logger, options, throttle_rate,
+        super().__init__(name, account_name, url, test, auth, logger, options, throttle_rate,
                          throttle_storage, schema, state_storage, register_state)
-
-    def _is_test(self, url):
-        return url != self.BASE_URL
 
     async def _refresh_key(self):
         while True:
@@ -214,6 +212,7 @@ class BinanceFuturesWssApi(BinanceWssApi):
                  name: str = None,
                  account_name: str = None,
                  url: str = None,
+                 test: bool = True,
                  auth: dict = None,
                  logger: Logger = None,
                  options: dict = None,
@@ -222,17 +221,8 @@ class BinanceFuturesWssApi(BinanceWssApi):
                  schema='futures',
                  state_storage=None,
                  register_state=True):
-        super().__init__(name, account_name, url, auth, logger, options, throttle_rate,
+        super().__init__(name, account_name, url, test, auth, logger, options, throttle_rate,
                          throttle_storage, schema, state_storage, register_state)
-        self._url = self._generate_url()
-
-    def _is_test(self, url):
-        return url != super().BASE_URL
-
-    def _generate_url(self):
-        if self.test:
-            return self.TEST_URL
-        return self.BASE_URL
 
     def __split_message_map(self, key: str) -> Optional[callable]:
         _map = {

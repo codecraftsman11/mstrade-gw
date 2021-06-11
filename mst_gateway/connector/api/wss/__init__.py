@@ -24,6 +24,7 @@ class StockWssApi(Connector):
     register_state_groups = []
     name = "Base"
     BASE_URL = None
+    TEST_URL = None
     throttle = ThrottleWss()
     storage = AsyncStateStorage()
     partial_state_data = {}
@@ -33,6 +34,7 @@ class StockWssApi(Connector):
                  name: str = None,
                  account_name: str = None,
                  url: str = None,
+                 test: bool = True,
                  auth: dict = None,
                  logger: Logger = None,
                  options: dict = None,
@@ -41,12 +43,13 @@ class StockWssApi(Connector):
                  schema='margin1',
                  state_storage=None,
                  register_state=True):
+        self.test = test
         self.tasks = list()
         if name is not None:
             self.name = name.lower()
         self.account_id, self.account_name = self._parse_account_name(account_name or self.name)
         self._options = options or {}
-        self._url = url or self.__class__.BASE_URL
+        self._url = self._load_url(url)
         self._error = errors.ERROR_OK
         self._subscriptions = {}
         self._router = self.__class__.router_class(self)
@@ -60,6 +63,11 @@ class StockWssApi(Connector):
         self.register_state = register_state
         super().__init__(auth, logger)
         self.__init_partial_state_data()
+
+    def _load_url(self, url):
+        if self.test:
+            return url or self.TEST_URL
+        return url or self.BASE_URL
 
     @property
     def options(self):
