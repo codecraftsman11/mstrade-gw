@@ -1263,6 +1263,7 @@ def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, sta
     if isinstance(state_data, dict):
         data.update({
             'system_symbol': state_data.get('system_symbol'),
+            'schema': state_data.get('schema')
         })
     return data
 
@@ -1407,6 +1408,7 @@ def load_exchange_position_ws_data(raw_data: dict, position_state: dict, state_d
     if isinstance(state_data, dict):
         data.update({
             'system_symbol': state_data.get('system_symbol'),
+            'schema': state_data.get('schema')
         })
     return data
 
