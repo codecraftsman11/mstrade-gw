@@ -5,7 +5,7 @@ from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
 from mst_gateway.connector.api.utils import time2timestamp
 from mst_gateway.exceptions import ConnectorError
-from mst_gateway.connector.api.types.order import LeverageType, OrderSchema, BUY, SELL
+from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
 from mst_gateway.utils import delta
 from . import var
 from .var import BITMEX_ORDER_STATUS_MAP
@@ -242,7 +242,8 @@ def load_position_ws_data(raw_data: dict, state_data: Optional[dict], exchange_r
     }
     if isinstance(state_data, dict):
         data.update({
-            'system_symbol': state_data.get('system_symbol')
+            'system_symbol': state_data.get('system_symbol'),
+            'schema': state_data.get('schema')
         })
     return data
 

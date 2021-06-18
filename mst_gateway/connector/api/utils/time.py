@@ -8,7 +8,7 @@ def time2timestamp(time: any, msec: bool = True) -> int:
     elif isinstance(time, str):
         timestamp = datetime.strptime(time, DATETIME_FORMAT).timestamp()
     else:
-        raise ValueError(f"Invalid time argument: {time}")
+        timestamp = datetime.now().timestamp()
     if msec:
         timestamp *= 1000
     return int(timestamp)

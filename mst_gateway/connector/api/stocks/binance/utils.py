@@ -311,8 +311,24 @@ def load_quote_bin_data(raw_data: list, state_data: Optional[dict]) -> dict:
     return data
 
 
-def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
-    _time = to_date(raw_data.get('time'))
+def load_spot_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+    return _load_order_data(raw_data, 'time', state_data)
+
+
+def load_spot_create_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+    return _load_order_data(raw_data, 'transactTime', state_data)
+
+
+def load_margin_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+    return _load_order_data(raw_data, 'transactTime', state_data)
+
+
+def load_futures_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+    return _load_order_data(raw_data, 'updateTime', state_data)
+
+
+def _load_order_data(raw_data: dict, time_field: Optional[str], state_data: Optional[dict]) -> dict:
+    _time = to_date(raw_data.get(time_field))
     data = {
         'time': _time,
         'timestamp': time2timestamp(_time),
@@ -1247,6 +1263,7 @@ def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, sta
     if isinstance(state_data, dict):
         data.update({
             'system_symbol': state_data.get('system_symbol'),
+            'schema': state_data.get('schema')
         })
     return data
 
@@ -1391,6 +1408,7 @@ def load_exchange_position_ws_data(raw_data: dict, position_state: dict, state_d
     if isinstance(state_data, dict):
         data.update({
             'system_symbol': state_data.get('system_symbol'),
+            'schema': state_data.get('schema')
         })
     return data
 
