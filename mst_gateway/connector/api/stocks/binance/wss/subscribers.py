@@ -221,7 +221,7 @@ class BinanceFuturesPositionSubscriber(BinancePositionSubscriber):
                 leverage_brackets = await client.futures_leverage_bracket()
                 return {
                     'position_state': utils.load_futures_positions_state(position_state),
-                    'leverage_brackets': utils.load_futures_leverage_brackets_as_dict(leverage_brackets),
+                    'leverage_brackets': utils.load_leverage_brackets_as_dict(leverage_brackets),
                     'exchange_rates': exchange_rates,
                 }
             except Exception as e:

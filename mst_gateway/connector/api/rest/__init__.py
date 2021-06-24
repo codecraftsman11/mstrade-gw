@@ -198,6 +198,10 @@ class StockRestApi(Connector):
         }
 
     @abstractmethod
+    def get_funding_rates(self, symbol: str, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
+        raise NotImplementedError
+
+    @abstractmethod
     def list_funding_rates(self, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
         raise NotImplementedError
 
