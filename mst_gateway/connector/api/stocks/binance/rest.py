@@ -284,10 +284,10 @@ class BinanceRestApi(StockRestApi):
         return [utils.load_trade_data(d, state_data) for d in data]
 
     def close_order(self, exchange_order_id: str, symbol: str, schema: str):
-        return self.cancel_order(exchange_order_id, symbol, schema)
+        raise NotImplementedError
 
     def close_all_orders(self, symbol: str, schema: str):
-        return self.cancel_all_orders(schema)
+        raise NotImplementedError
 
     def get_order_book(
         self,
