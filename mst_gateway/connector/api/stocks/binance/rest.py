@@ -312,17 +312,21 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(f"Invalid schema {schema}.")
 
     def list_trades(self, symbol: str, schema: str, **params) -> list:
-        state_data = self.storage.get(
-            'symbol', self.name, schema
-        ).get(symbol.lower(), dict())
-        if schema in (OrderSchema.exchange, OrderSchema.margin2):
-            data = self._binance_api(self._handler.get_recent_trades, symbol=symbol.upper(),
-                                     **self._api_kwargs(params))
-        elif schema == OrderSchema.futures:
-            data = self._binance_api(self._handler.futures_recent_trades, symbol=symbol.upper(),
-                                     **self._api_kwargs(params))
-        else:
+        schema_handlers = {
+            OrderSchema.exchange: self._handler.get_recent_trades,
+            OrderSchema.margin2: self._handler.get_recent_trades,
+            OrderSchema.futures: self._handler.futures_recent_trades,
+            OrderSchema.futures_coin: self._handler.futures_coin_recent_trades,
+        }
+        try:
+            data = self._binance_api(
+                schema_handlers[schema.lower()],
+                symbol=symbol.upper(),
+                **self._api_kwargs(params),
+            )
+        except KeyError:
             raise ConnectorError(f"Invalid schema {schema}.")
+        state_data = self.storage.get('symbol', self.name, schema).get(symbol.lower(), {})
         return [utils.load_trade_data(d, state_data) for d in data]
 
     def close_order(self, exchange_order_id: str, symbol: str, schema: str):

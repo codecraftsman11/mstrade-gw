@@ -165,17 +165,6 @@ def get_tick_from_symbol_filters(symbol_data, filter_name, parameter_name):
 
 
 def load_trade_data(raw_data: dict, state_data: Optional[dict]) -> dict:
-    """
-    {
-        "id": 28457,
-        "price": "4.00000100",
-        "qty": "12.00000000",
-        "quoteQty": "48.000012",
-        "time": 1499865549590,
-        "isBuyerMaker": true,
-        "isBestMatch": true
-      }
-    """
     data = {
         'time': to_date(raw_data.get('time')),
         'timestamp': raw_data.get('time'),
