@@ -63,9 +63,9 @@ class BinanceRestApi(StockRestApi):
         return utils.load_symbol_data(data, state_data)
 
     @staticmethod
-    def update_ticker_data(ticker_data: list, bid_ask_prices: dict) -> list:
+    def _update_ticker_data(ticker_data: list, bid_ask_prices: dict) -> list:
         for ticker in ticker_data:
-            bid_ask_price = bid_ask_prices.get.get(ticker['symbol'].lower(), {})
+            bid_ask_price = bid_ask_prices.get(ticker['symbol'].lower(), {})
             ticker.update({
                 'bidPrice': bid_ask_price.get('bidPrice'),
                 'askPrice': bid_ask_price.get('askPrice'),
@@ -77,12 +77,18 @@ class BinanceRestApi(StockRestApi):
         if schema.lower() in (OrderSchema.futures, OrderSchema.futures_coin):
             _param = None
             schema_handlers = {
-                OrderSchema.futures: (self._handler.futures_ticker, self._handler.futures_orderbook_ticker),
-                OrderSchema.futures_coin: (self._handler.futures_coin_ticker, self._handler.futures_coin_orderbook_ticker),
+                OrderSchema.futures: (
+                    self._handler.futures_ticker,
+                    self._handler.futures_orderbook_ticker
+                ),
+                OrderSchema.futures_coin: (
+                    self._handler.futures_coin_ticker,
+                    self._handler.futures_coin_orderbook_ticker
+                ),
             }
             data_ticker = self._binance_api(schema_handlers[schema.lower()][0])
             data_bid_ask_price = self._binance_api(schema_handlers[schema.lower()][1])
-            data = self.update_ticker_data(data_ticker, {bap['symbol'].lower(): bap for bap in data_bid_ask_price})
+            data = self._update_ticker_data(data_ticker, {bap['symbol'].lower(): bap for bap in data_bid_ask_price})
         elif schema.lower() in (OrderSchema.margin2, OrderSchema.exchange):
             _param = 'weightedAvgPrice'
             data = self._binance_api(self._handler.get_ticker)
