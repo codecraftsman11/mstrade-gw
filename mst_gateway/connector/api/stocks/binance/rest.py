@@ -39,7 +39,7 @@ class BinanceRestApi(StockRestApi):
         return utils.load_user_data(data)
 
     def get_symbol(self, symbol, schema) -> dict:
-        if schema.lower() == OrderSchema.futures:
+        if schema.lower() in OrderSchema.futures:
             data_ticker = self._binance_api(self._handler.futures_ticker, symbol=symbol.upper())
             data_bid_ask_price = self._binance_api(self._handler.futures_orderbook_ticker, symbol=symbol.upper())
             data = {
@@ -59,29 +59,38 @@ class BinanceRestApi(StockRestApi):
             data = self._binance_api(self._handler.get_ticker, symbol=symbol.upper())
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
-        state_data = self.storage.get(
-            'symbol', self.name, schema
-        ).get(utils.stock2symbol(symbol), dict())
+        state_data = self.storage.get('symbol', self.name, schema).get(utils.stock2symbol(symbol), {})
         return utils.load_symbol_data(data, state_data)
 
+    @staticmethod
+    def update_ticker_data(ticker_data: list, bid_ask_prices: dict) -> list:
+        for ticker in ticker_data:
+            bid_ask_price = bid_ask_prices.get.get(ticker['symbol'].lower(), {})
+            ticker.update({
+                'bidPrice': bid_ask_price.get('bidPrice'),
+                'askPrice': bid_ask_price.get('askPrice'),
+            })
+        return ticker_data
+
     def list_symbols(self, schema, **kwargs) -> list:
-        state_data = self.storage.get(
-            'symbol', self.name, schema
-        )
-        if schema.lower() == OrderSchema.futures:
+        symbols = []
+        if schema.lower() in (OrderSchema.futures, OrderSchema.futures_coin):
             _param = None
-            data = self._binance_api(self._handler.futures_ticker)
-        elif schema.lower() == OrderSchema.futures_coin:
-            _param = None
-            data = self._binance_api(self._handler.futures_coin_ticker)
+            schema_handlers = {
+                OrderSchema.futures: (self._handler.futures_ticker, self._handler.futures_orderbook_ticker),
+                OrderSchema.futures_coin: (self._handler.futures_coin_ticker, self._handler.futures_coin_orderbook_ticker),
+            }
+            data_ticker = self._binance_api(schema_handlers[schema.lower()][0])
+            data_bid_ask_price = self._binance_api(schema_handlers[schema.lower()][1])
+            data = self.update_ticker_data(data_ticker, {bap['symbol'].lower(): bap for bap in data_bid_ask_price})
         elif schema.lower() in (OrderSchema.margin2, OrderSchema.exchange):
             _param = 'weightedAvgPrice'
             data = self._binance_api(self._handler.get_ticker)
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
-        symbols = []
+        state_data = self.storage.get('symbol', self.name, schema)
         for d in data:
-            symbol_state = state_data.get(d.get('symbol').lower())
+            symbol_state = state_data.get(d.get('symbol', '').lower())
             if symbol_state and (not _param or (_param and utils.to_float(d[_param]))):
                 symbols.append(utils.load_symbol_data(d, symbol_state))
         return symbols
@@ -105,7 +114,9 @@ class BinanceRestApi(StockRestApi):
             }
             data = self._binance_api(schema_handlers[schema.lower()][0])
             leverage_data = self._binance_api(schema_handlers[schema.lower()][1])
-            return schema_handlers[schema.lower()][2](data.get('symbols', []), utils.load_leverage_brackets_as_dict(leverage_data))
+            return schema_handlers[schema.lower()][2](
+                data.get('symbols', []), utils.load_leverage_brackets_as_dict(leverage_data)
+            )
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
