@@ -39,17 +39,19 @@ class BinanceRestApi(StockRestApi):
         return utils.load_user_data(data)
 
     def get_symbol(self, symbol, schema) -> dict:
-        if schema.lower() in OrderSchema.futures:
-            data_ticker = self._binance_api(self._handler.futures_ticker, symbol=symbol.upper())
-            data_bid_ask_price = self._binance_api(self._handler.futures_orderbook_ticker, symbol=symbol.upper())
-            data = {
-                'bidPrice': data_bid_ask_price.get('bidPrice'),
-                'askPrice': data_bid_ask_price.get('askPrice'),
-                **data_ticker
+        if schema.lower() in (OrderSchema.futures, OrderSchema.futures_coin):
+            schema_handlers = {
+                OrderSchema.futures: (
+                    self._handler.futures_ticker,
+                    self._handler.futures_orderbook_ticker
+                ),
+                OrderSchema.futures_coin: (
+                    self._handler.futures_coin_ticker,
+                    self._handler.futures_coin_orderbook_ticker
+                ),
             }
-        elif schema.lower() == OrderSchema.futures_coin:
-            data_ticker = self._binance_api(self._handler.futures_coin_ticker, symbol=symbol.upper())
-            data_bid_ask_price = self._binance_api(self._handler.futures_coin_orderbook_ticker, symbol=symbol.upper())
+            data_ticker = self._binance_api(schema_handlers[schema][0], symbol=symbol.upper())
+            data_bid_ask_price = self._binance_api(schema_handlers[schema][1], symbol=symbol.upper())
             data = {
                 'bidPrice': data_bid_ask_price[0].get('bidPrice'),
                 'askPrice': data_bid_ask_price[0].get('askPrice'),
