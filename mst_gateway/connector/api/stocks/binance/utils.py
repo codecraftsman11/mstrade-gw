@@ -432,8 +432,8 @@ def get_interest_rate(asset_rates: list, vip_level: str, asset: str):
     return _h1_rate
 
 
-def load_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
-                             fields: Union[list, tuple], cross_collaterals: list) -> dict:
+def _load_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
+                              fields: Union[list, tuple], cross_collaterals: list) -> dict:
     balances = _futures_balance_data(raw_data.get('assets'))
     _update_futures_balances(balances, cross_collaterals)
     total_balance = dict()
@@ -441,13 +441,26 @@ def load_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union[lis
         total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
     return {
         'trade_enabled': raw_data.get('canTrade'),
+        'balances': balances,
+        **_load_total_wallet_summary_list(total_balance, fields)
+    }
+
+
+def load_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
+                             fields: Union[list, tuple], cross_collaterals: list) -> dict:
+    data = _load_futures_wallet_data(raw_data, currencies, assets, fields, cross_collaterals)
+    data.update({
         'total_initial_margin': to_float(raw_data.get('totalInitialMargin')),
         'total_maint_margin': to_float(raw_data.get('totalMaintMargin')),
         'total_open_order_initial_margin': to_float(raw_data.get('totalOpenOrderInitialMargin')),
         'total_position_initial_margin': to_float(raw_data.get('totalPositionInitialMargin')),
-        'balances': balances,
-        **_load_total_wallet_summary_list(total_balance, fields)
-    }
+    })
+    return data
+
+
+def load_futures_coin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
+                                  fields: Union[list, tuple], cross_collaterals: list) -> dict:
+    return _load_futures_wallet_data(raw_data, currencies, assets, fields, cross_collaterals)
 
 
 def _update_futures_balances(balances: list, cross_collaterals: list) -> list:

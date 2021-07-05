@@ -35,7 +35,7 @@ class Client(BaseClient):
             raise BinanceRequestException('API-key format invalid.')
         return super()._generate_signature(data)
 
-    def futures_transfer_spot_to_futures(self, **params):
+    def transfer_spot_to_futures(self, **params):
         """Execute transfer between spot account and futures account.
 
         https://binance-docs.github.io/apidocs/futures/en/#new-future-account-transfer
@@ -49,7 +49,7 @@ class Client(BaseClient):
 
         .. code:: python
 
-            transfer = client.futures_transfer_spot_to_futures(asset='BTC', amount='1.1')
+            transfer = client.transfer_spot_to_futures(asset='BTC', amount='1.1')
 
         :returns: API response
 
@@ -62,14 +62,24 @@ class Client(BaseClient):
         :raises: BinanceRequestException, BinanceAPIException
 
 
-        1: transfer from spot main account to future account
-        2: transfer from future account to spot main account
+        1: transfer from spot main account to futures account
+        2: transfer from futures account to spot main account
+        3: transfer from spot main account to futures coin account
+        4: transfer from futures coin account to spot main account
         """
         params['type'] = 1
         return self._request_margin_api('post', 'futures/transfer', True, data=params)
 
-    def futures_transfer_futures_to_spot(self, **params):
+    def transfer_futures_to_spot(self, **params):
         params['type'] = 2
+        return self._request_margin_api('post', 'futures/transfer', True, data=params)
+
+    def transfer_spot_to_futures_coin(self, **params):
+        params['type'] = 3
+        return self._request_margin_api('post', 'futures/transfer', True, data=params)
+
+    def transfer_futures_coin_to_spot(self, **params):
+        params['type'] = 4
         return self._request_margin_api('post', 'futures/transfer', True, data=params)
 
     def get_lending_project_position_list(self, **params):
