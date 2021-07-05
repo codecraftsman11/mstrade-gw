@@ -84,3 +84,14 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
         'order': serializers.BinanceOrderSerializer,
         'position': serializers.BinanceFuturesPositionSerializer,
     }
+
+
+class BinanceFuturesCoinWssRouter(BinanceWssRouter):
+    table_route_map = {
+        '24hrTicker': 'symbol',
+        'bookTicker': 'symbol',
+    }
+
+    serializer_classes = {
+        'symbol': serializers.BinanceFuturesSymbolSerializer,
+    }

@@ -4,7 +4,7 @@ from typing import Optional, Union
 from mst_gateway.exceptions import ConnectorError
 from websockets import client
 from . import subscribers as subscr_class
-from .router import BinanceWssRouter, BinanceFuturesWssRouter
+from .router import BinanceWssRouter, BinanceFuturesWssRouter, BinanceFuturesCoinWssRouter
 from .utils import is_auth_ok, make_cmd
 from ..lib import AsyncClient
 from ..utils import to_float
@@ -245,3 +245,15 @@ class BinanceFuturesWssApi(BinanceWssApi):
             action = self.define_action_by_order_status(item.get('X'))
             _messages.append(dict(**message, action=action, data=[item]))
         return _messages
+
+
+class BinanceFuturesCoinWssApi(BinanceFuturesWssApi):
+    BASE_URL = 'wss://dstream.binance.com/ws'
+    TEST_URL = 'wss://dstream.binancefuture.com/ws'
+
+    subscribers = {
+        'symbol': subscr_class.BinanceFuturesSymbolSubscriber(),
+    }
+    auth_subscribers = {}
+
+    router_class = BinanceFuturesCoinWssRouter
