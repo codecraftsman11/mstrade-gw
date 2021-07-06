@@ -10,7 +10,7 @@ from mst_gateway.connector.api.stocks.binance.wss.serializers.position import Bi
 from .lib import Client
 from . import utils, var
 from ...rest import StockRestApi
-from .....exceptions import ConnectorError, RecoverableError, NotFoundError
+from .....exceptions import GatewayError, ConnectorError, RecoverableError, NotFoundError
 
 
 class BinanceRestApi(StockRestApi):
@@ -22,10 +22,15 @@ class BinanceRestApi(StockRestApi):
                       api_secret=self._auth.get('api_secret'),
                       testnet=self.test)
 
-    def ping(self) -> bool:
+    def ping(self, schema: str) -> bool:
+        schema_handlers = {
+            OrderSchema.exchange: self._handler.ping,
+            OrderSchema.margin2: self._handler.ping,
+            OrderSchema.futures: self._handler.futures_ping,
+        }
         try:
-            self._binance_api(self._handler.ping)
-        except ConnectorError:
+            self._binance_api(schema_handlers[schema])
+        except (KeyError, GatewayError):
             return False
         return True
 
