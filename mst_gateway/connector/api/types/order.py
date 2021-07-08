@@ -22,6 +22,7 @@ class OrderSchema(ClassWithAttributes):
     margin2 = 'margin2'
     futures = 'futures'
     exchange = 'exchange'
+    futures_coin = 'futures_coin'
 
 
 class OrderSchemaTradeMode(ClassWithAttributes):
