@@ -52,7 +52,7 @@ class BitmexRestApi(StockRestApi):
             api_secret=self._auth.get('api_secret')
         )
 
-    def ping(self) -> bool:
+    def ping(self, schema: str) -> bool:
         try:
             self._bitmex_api(self._handler.Instrument.Instrument_get, symbol=utils.symbol2stock('xbtusd'))
         except ConnectorError:
