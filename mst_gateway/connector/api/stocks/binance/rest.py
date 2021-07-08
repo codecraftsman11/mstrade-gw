@@ -41,14 +41,8 @@ class BinanceRestApi(StockRestApi):
     def get_symbol(self, symbol, schema) -> dict:
         if schema.lower() in (OrderSchema.futures, OrderSchema.futures_coin):
             schema_handlers = {
-                OrderSchema.futures: (
-                    self._handler.futures_ticker,
-                    self._handler.futures_orderbook_ticker
-                ),
-                OrderSchema.futures_coin: (
-                    self._handler.futures_coin_ticker,
-                    self._handler.futures_coin_orderbook_ticker
-                ),
+                OrderSchema.futures: (self._handler.futures_ticker, self._handler.futures_orderbook_ticker),
+                OrderSchema.futures_coin: (self._handler.futures_coin_ticker, self._handler.futures_coin_orderbook_ticker),
             }
             data_ticker = self._binance_api(schema_handlers[schema][0], symbol=symbol.upper())
             data_bid_ask_price = self._binance_api(schema_handlers[schema][1], symbol=symbol.upper())
@@ -79,14 +73,8 @@ class BinanceRestApi(StockRestApi):
         if schema.lower() in (OrderSchema.futures, OrderSchema.futures_coin):
             _param = None
             schema_handlers = {
-                OrderSchema.futures: (
-                    self._handler.futures_ticker,
-                    self._handler.futures_orderbook_ticker
-                ),
-                OrderSchema.futures_coin: (
-                    self._handler.futures_coin_ticker,
-                    self._handler.futures_coin_orderbook_ticker
-                ),
+                OrderSchema.futures: (self._handler.futures_ticker, self._handler.futures_orderbook_ticker),
+                OrderSchema.futures_coin: (self._handler.futures_coin_ticker, self._handler.futures_coin_orderbook_ticker),
             }
             data_ticker = self._binance_api(schema_handlers[schema.lower()][0])
             data_bid_ask_price = self._binance_api(schema_handlers[schema.lower()][1])
