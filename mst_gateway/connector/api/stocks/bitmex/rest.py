@@ -52,7 +52,7 @@ class BitmexRestApi(StockRestApi):
             api_secret=self._auth.get('api_secret')
         )
 
-    def ping(self) -> bool:
+    def ping(self, schema: str) -> bool:
         try:
             self._bitmex_api(self._handler.Instrument.Instrument_get, symbol=utils.symbol2stock('xbtusd'))
         except ConnectorError:
@@ -385,6 +385,17 @@ class BitmexRestApi(StockRestApi):
 
     def get_vip_level(self, schema: str) -> str:
         return '0'
+
+    def get_funding_rates(self, symbol: str, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
+        if schema.lower() == OrderSchema.margin1:
+            funding_rates, _ = self._bitmex_api(
+                symbol=utils.symbol2stock(symbol),
+                method=self._handler.Funding.Funding_get,
+                startTime=datetime.now() - timedelta(hours=period_hour*period_multiplier, minutes=1),
+                count=500,
+            )
+            return utils.load_funding_rates(funding_rates)
+        raise ConnectorError(f"Invalid schema {schema}.")
 
     def list_funding_rates(self, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
         if schema == OrderSchema.margin1:

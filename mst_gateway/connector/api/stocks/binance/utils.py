@@ -86,10 +86,10 @@ def load_exchange_symbol_info(raw_data: list) -> list:
     return symbol_list
 
 
-def load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict) -> list:
+def _load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict, schema: str, status_field: str) -> list:
     symbol_list = []
     for d in raw_data:
-        if d.get('status') == 'TRADING':
+        if d.get(status_field) == 'TRADING':
             system_base_asset = to_system_asset(d.get('baseAsset'))
             system_quote_asset = to_system_asset(d.get('quoteAsset'))
             expiration = None
@@ -122,8 +122,8 @@ def load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict) -> li
                     'expiration': expiration,
                     'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
                     'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
-                    'schema': OrderSchema.futures,
-                    'symbol_schema': OrderSchema.futures,
+                    'schema': schema.lower(),
+                    'symbol_schema': schema.lower(),
                     'tick': tick,
                     'volume_tick': volume_tick,
                     'max_leverage': max_leverage,
@@ -131,6 +131,14 @@ def load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict) -> li
                 }
             )
     return symbol_list
+
+
+def load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict) -> list:
+    return _load_futures_exchange_symbol_info(raw_data, leverage_data, OrderSchema.futures, 'status')
+
+
+def load_futures_coin_exchange_symbol_info(raw_data: list, leverage_data: dict) -> list:
+    return _load_futures_exchange_symbol_info(raw_data, leverage_data, OrderSchema.futures_coin, 'contractStatus')
 
 
 def validate_symbol_pair_and_assets(raw_data):
@@ -774,7 +782,7 @@ def load_currencies_as_list(currencies: list):
     return [{cur['symbol'].lower(): to_float(cur['price'])} for cur in currencies]
 
 
-def load_futures_leverage_brackets_as_dict(data: list) -> dict:
+def load_leverage_brackets_as_dict(data: list) -> dict:
     return {d['symbol'].lower(): d['brackets'] for d in data if d.get('brackets')}
 
 

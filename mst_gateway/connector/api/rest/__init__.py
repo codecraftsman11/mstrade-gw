@@ -35,7 +35,7 @@ class StockRestApi(Connector):
         super().__init__(auth, logger)
 
     @abstractmethod
-    def ping(self) -> bool:
+    def ping(self, schema: str) -> bool:
         raise NotImplementedError
 
     @abstractmethod
@@ -98,6 +98,9 @@ class StockRestApi(Connector):
     @abstractmethod
     def cancel_order(self, exchange_order_id: str, symbol: str,
                      schema: str) -> dict:
+        """
+        Cancel active order (limit, etc...)
+        """
         raise NotImplementedError
 
     @abstractmethod
@@ -112,14 +115,23 @@ class StockRestApi(Connector):
 
     @abstractmethod
     def cancel_all_orders(self, schema: str) -> bool:
+        """
+        Cancel all active orders (limit, etc...)
+        """
         raise NotImplementedError
 
     @abstractmethod
     def close_order(self, exchange_order_id: str, symbol: str, schema: str) -> bool:
+        """
+        Close position
+        """
         raise NotImplementedError
 
     @abstractmethod
     def close_all_orders(self, symbol: str, schema: str) -> bool:
+        """
+        Close all positions
+        """
         raise NotImplementedError
 
     def list_order_book(
@@ -196,6 +208,10 @@ class StockRestApi(Connector):
             'is_active': False,
             'currency': None
         }
+
+    @abstractmethod
+    def get_funding_rates(self, symbol: str, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
+        raise NotImplementedError
 
     @abstractmethod
     def list_funding_rates(self, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
