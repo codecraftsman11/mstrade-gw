@@ -35,7 +35,7 @@ class StockRestApi(Connector):
         super().__init__(auth, logger)
 
     @abstractmethod
-    def ping(self) -> bool:
+    def ping(self, schema: str) -> bool:
         raise NotImplementedError
 
     @abstractmethod
