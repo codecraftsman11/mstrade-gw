@@ -27,9 +27,10 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.exchange: self._handler.ping,
             OrderSchema.margin2: self._handler.ping,
             OrderSchema.futures: self._handler.futures_ping,
+            OrderSchema.futures_coin: self._handler.futures_coin_ping,
         }
         try:
-            self._binance_api(schema_handlers[schema])
+            self._binance_api(schema_handlers[schema.lower()])
         except (KeyError, GatewayError):
             return False
         return True
