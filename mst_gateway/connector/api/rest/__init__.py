@@ -98,6 +98,9 @@ class StockRestApi(Connector):
     @abstractmethod
     def cancel_order(self, exchange_order_id: str, symbol: str,
                      schema: str) -> dict:
+        """
+        Cancel active order (limit, etc...)
+        """
         raise NotImplementedError
 
     @abstractmethod
@@ -112,14 +115,23 @@ class StockRestApi(Connector):
 
     @abstractmethod
     def cancel_all_orders(self, schema: str) -> bool:
+        """
+        Cancel all active orders (limit, etc...)
+        """
         raise NotImplementedError
 
     @abstractmethod
     def close_order(self, exchange_order_id: str, symbol: str, schema: str) -> bool:
+        """
+        Close position
+        """
         raise NotImplementedError
 
     @abstractmethod
     def close_all_orders(self, symbol: str, schema: str) -> bool:
+        """
+        Close all positions
+        """
         raise NotImplementedError
 
     def list_order_book(
