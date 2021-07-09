@@ -388,7 +388,7 @@ class BinanceRestApi(StockRestApi):
         }
         data = self._binance_api(schema_handlers[schema][0], **kwargs)
         cross_collaterals = {}
-        if schema.lower() == OrderSchema.futures:
+        if schema == OrderSchema.futures:
             try:
                 cross_collaterals = self._binance_api(self._handler.futures_loan_wallet, **kwargs)
             except ConnectorError:
