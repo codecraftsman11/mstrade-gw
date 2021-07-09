@@ -432,7 +432,7 @@ class BinanceRestApi(StockRestApi):
                 collateral_configs = []
             return {
                 OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
-                OrderSchema.futures: utils.load_futures_wallet_detail_data(
+                schema.lower(): utils.load_futures_wallet_detail_data(
                     _futures, asset, cross_collaterals.get('crossCollaterals', []), collateral_configs
                 )
             }
