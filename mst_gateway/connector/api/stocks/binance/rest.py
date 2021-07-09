@@ -466,7 +466,11 @@ class BinanceRestApi(StockRestApi):
             (OrderSchema.futures_coin, OrderSchema.exchange): self._handler.transfer_futures_coin_to_spot,
         }
         try:
-            data = self._binance_api(schemas_handlers[(from_wallet.lower(), to_wallet.lower())], asset=asset.upper(), amount=str(amount))
+            data = self._binance_api(
+                schemas_handlers[(from_wallet.lower(), to_wallet.lower())],
+                asset=asset.upper(),
+                amount=str(amount),
+            )
         except KeyError:
             raise ConnectorError(f"Invalid wallet pair {from_wallet} and {to_wallet}.")
         return utils.load_transaction_id(data)
@@ -737,7 +741,7 @@ class BinanceRestApi(StockRestApi):
             positions_state = kwargs.get('positions_state', {})
             _, positions_state = BinanceFuturesPositionSerializer.split_positions_state(positions_state, symbol)
             leverage_brackets = kwargs.get('leverage_brackets', [])
-            other_positions_maint_margin, other_positions_unrealised_pnl = BinanceFuturesPositionSerializer.calc_other_positions_sum(
+            maint_margin_sum, unrealised_pnl_sum = BinanceFuturesPositionSerializer.calc_other_positions_sum(
                 leverage_type, leverage_brackets, positions_state
             )
             liquidation_price = BinanceFuturesPositionSerializer.calc_liquidation_price(
@@ -748,8 +752,8 @@ class BinanceRestApi(StockRestApi):
                 leverage_type=leverage_type,
                 position_margin=wallet_balance,
                 leverage_brackets=leverage_brackets,
-                other_positions_maint_margin=other_positions_maint_margin,
-                other_positions_unrealised_pnl=other_positions_unrealised_pnl,
+                maint_margin_sum=maint_margin_sum,
+                unrealised_pnl_sum=unrealised_pnl_sum,
             )
         return {'liquidation_price': liquidation_price}
 
