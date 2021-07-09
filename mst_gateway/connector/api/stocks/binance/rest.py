@@ -540,13 +540,29 @@ class BinanceRestApi(StockRestApi):
     def get_wallet_summary(self, schemas: iter, **kwargs) -> dict:
         total_summary = {}
         schema_handlers = {
-            OrderSchema.exchange: (self._handler.get_all_tickers, self._handler.get_account),
-            OrderSchema.margin2: (self._handler.get_all_tickers, self._handler.get_margin_account),
-            OrderSchema.futures: (self._handler.futures_symbol_ticker, self._handler.futures_account_v2),
-            OrderSchema.futures_coin: (self._handler.futures_coin_symbol_ticker, self._handler.futures_coin_account),
+            OrderSchema.exchange: (
+                self._handler.get_all_tickers,
+                self._handler.get_account,
+                utils.load_spot_wallet_balances
+            ),
+            OrderSchema.margin2: (
+                self._handler.get_all_tickers,
+                self._handler.get_margin_account,
+                utils.load_margin_wallet_balances
+            ),
+            OrderSchema.futures: (
+                self._handler.futures_symbol_ticker,
+                self._handler.futures_account_v2,
+                utils.load_future_wallet_balances
+            ),
+            OrderSchema.futures_coin: (
+                self._handler.futures_coin_symbol_ticker,
+                self._handler.futures_coin_account,
+                utils.load_future_coin_wallet_balances
+            ),
         }
         if not schemas:
-            schemas = (OrderSchema.exchange, OrderSchema.margin2, OrderSchema.futures, OrderSchema.futures_coin)
+            schemas = list(schema_handlers.keys())
         assets = kwargs.get('assets', ('btc', 'usd'))
         fields = ('balance', 'unrealised_pnl', 'margin_balance')
         for schema in schemas:
@@ -554,7 +570,7 @@ class BinanceRestApi(StockRestApi):
             total_balance = {schema: {}}
             try:
                 currencies = utils.load_currencies_as_dict(self._binance_api(schema_handlers[schema][0]))
-                balances = utils.load_spot_wallet_balances(self._binance_api(schema_handlers[schema][1]))
+                balances = schema_handlers[schema][2](self._binance_api(schema_handlers[schema][1]))
             except (KeyError, ConnectorError):
                 continue
             for asset in assets:

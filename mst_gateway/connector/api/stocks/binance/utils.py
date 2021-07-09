@@ -484,6 +484,10 @@ def load_future_wallet_balances(raw_data: dict) -> list:
     return _futures_balance_data(raw_data.get('assets'))
 
 
+def load_future_coin_wallet_balances(raw_data: dict) -> list:
+    return _futures_balance_data(raw_data.get('assets'))
+
+
 def load_futures_wallet_detail_data(raw_data: dict, asset: str,
                                     cross_collaterals: list, collateral_configs: list) -> dict:
     for a in raw_data.get('assets'):
