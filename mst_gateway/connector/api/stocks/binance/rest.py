@@ -424,12 +424,14 @@ class BinanceRestApi(StockRestApi):
                 OrderSchema.futures_coin: self._handler.futures_coin_account,
             }
             _futures = self._binance_api(schema_handlers[schema.lower()], **kwargs)
-            try:
-                cross_collaterals = self._binance_api(self._handler.futures_loan_wallet, **kwargs)
-                collateral_configs = self._binance_api(self._handler.futures_loan_configs, loanCoin=asset, **kwargs)
-            except ConnectorError:
-                cross_collaterals = {}
-                collateral_configs = []
+            cross_collaterals = {}
+            collateral_configs = []
+            if schema.lower() == OrderSchema.futures:
+                try:
+                    cross_collaterals = self._binance_api(self._handler.futures_loan_wallet, **kwargs)
+                    collateral_configs = self._binance_api(self._handler.futures_loan_configs, loanCoin=asset, **kwargs)
+                except ConnectorError:
+                    pass
             return {
                 OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
                 schema.lower(): utils.load_futures_wallet_detail_data(
