@@ -92,6 +92,14 @@ class Client(BaseClient):
         """
         return self._request_margin_api('get', 'lending/project/position/list', signed=True, data=params)
 
+    def get_all_margin_symbols(self, **params):
+        """Get All Cross Margin Pairs
+
+            https://binance-docs.github.io/apidocs/spot/en/#get-all-cross-margin-pairs-market_data
+
+        """
+        return self._request_margin_api('get', 'margin/allPairs', signed=True, data=params)
+
     def get_public_interest_rate(self, **params):
         """
         :returns: API response

@@ -45,9 +45,11 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     return data
 
 
-def load_exchange_symbol_info(raw_data: list) -> list:
+def load_exchange_symbol_info(raw_data: list, schema: str, valid_symbols: list = None) -> list:
     symbol_list = []
     for d in raw_data:
+        if valid_symbols and d.get('symbol') not in valid_symbols:
+            continue
         if d.get('status') == 'TRADING':
             system_base_asset = to_system_asset(d.get('baseAsset'))
             system_quote_asset = to_system_asset(d.get('quoteAsset'))
@@ -56,9 +58,11 @@ def load_exchange_symbol_info(raw_data: list) -> list:
             tick = get_tick_from_symbol_filters(d, 'PRICE_FILTER', 'tickSize')
             volume_tick = get_tick_from_symbol_filters(d, 'LOT_SIZE', 'stepSize')
 
-            _symbol_obj = {
+            symbol_list.append({
                 'symbol': d.get('symbol'),
                 'system_symbol': system_symbol.lower(),
+                'schema': schema,
+                'symbol_schema': schema,
                 'base_asset': d.get('baseAsset'),
                 'quote_asset': d.get('quoteAsset'),
                 'system_base_asset': system_base_asset,
@@ -69,20 +73,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                 'tick': tick,
                 'volume_tick': volume_tick,
                 'max_leverage': None
-            }
-
-            if d.get('isSpotTradingAllowed'):
-                _symbol_obj.update({
-                    'schema': OrderSchema.exchange,
-                    'symbol_schema': OrderSchema.exchange
-                })
-                symbol_list.append(_symbol_obj.copy())
-            if d.get('isMarginTradingAllowed'):
-                _symbol_obj.update({
-                    'schema': OrderSchema.margin2,
-                    'symbol_schema': OrderSchema.margin2
-                })
-                symbol_list.append(_symbol_obj.copy())
+            })
     return symbol_list
 
 
