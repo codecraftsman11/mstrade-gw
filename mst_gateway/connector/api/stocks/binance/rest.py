@@ -37,7 +37,7 @@ class BinanceRestApi(StockRestApi):
 
     def get_user(self) -> dict:
         try:
-            data = self._binance_api(self._handler.get_deposit_address, asset='eth')
+            data = self._binance_api(self._handler.get_deposit_address, coin='eth')
         except ConnectorError as e:
             if not self.name.startswith('t'):
                 raise ConnectorError(e)
@@ -47,15 +47,25 @@ class BinanceRestApi(StockRestApi):
     def get_symbol(self, symbol, schema) -> dict:
         if schema.lower() in (OrderSchema.futures, OrderSchema.futures_coin):
             schema_handlers = {
-                OrderSchema.futures: (self._handler.futures_ticker, self._handler.futures_orderbook_ticker),
-                OrderSchema.futures_coin: (self._handler.futures_coin_ticker, self._handler.futures_coin_orderbook_ticker),
+                OrderSchema.futures: (
+                    self._handler.futures_ticker,
+                    self._handler.futures_orderbook_ticker
+                ),
+                OrderSchema.futures_coin: (
+                    self._handler.futures_coin_ticker,
+                    self._handler.futures_coin_orderbook_ticker
+                ),
             }
-            data_ticker = self._binance_api(schema_handlers[schema][0], symbol=symbol.upper())
-            data_bid_ask_price = self._binance_api(schema_handlers[schema][1], symbol=symbol.upper())
+            data_ticker = self._binance_api(schema_handlers[schema.lower()][0], symbol=symbol.upper())
+            if isinstance(data_ticker, list):
+                data_ticker = data_ticker[0]
+            data_bid_ask_price = self._binance_api(schema_handlers[schema.lower()][1], symbol=symbol.upper())
+            if isinstance(data_bid_ask_price, list):
+                data_bid_ask_price = data_bid_ask_price[0]
             data = {
-                'bidPrice': data_bid_ask_price[0].get('bidPrice'),
-                'askPrice': data_bid_ask_price[0].get('askPrice'),
-                **data_ticker[0]
+                'bidPrice': data_bid_ask_price.get('bidPrice'),
+                'askPrice': data_bid_ask_price.get('askPrice'),
+                **data_ticker
             }
         elif schema.lower() in (OrderSchema.margin2, OrderSchema.exchange):
             data = self._binance_api(self._handler.get_ticker, symbol=symbol.upper())
