@@ -154,8 +154,9 @@ class BinanceFuturesPositionSerializer(BinancePositionSerializer):
                 return None
 
         symbol_position_state, positions_state = self.split_positions_state(self.position_state, symbol)
-        other_positions_maint_margin, other_positions_unrealised_pnl = self.calc_other_positions_sum(
-            symbol_position_state['leverage_type'], self._leverage_brackets_state, positions_state)
+        maint_margin_sum, unrealised_pnl_sum = self.calc_other_positions_sum(
+            symbol_position_state['leverage_type'], self._leverage_brackets_state, positions_state
+        )
 
         entry_price = symbol_position_state['entry_price']
         mark_price = symbol_position_state['mark_price']
@@ -175,8 +176,8 @@ class BinanceFuturesPositionSerializer(BinancePositionSerializer):
             leverage_type=symbol_position_state['leverage_type'],
             position_margin=position_margin,
             leverage_brackets=self._leverage_brackets_state.get(symbol, {}),
-            other_positions_maint_margin=other_positions_maint_margin,
-            other_positions_unrealised_pnl=other_positions_unrealised_pnl
+            maint_margin_sum=maint_margin_sum,
+            unrealised_pnl_sum=unrealised_pnl_sum
         )
         symbol_position_state['unrealised_pnl'] = BinanceFinFactory.calc_unrealised_pnl_by_side(
             entry_price, mark_price, volume, side
@@ -185,24 +186,23 @@ class BinanceFuturesPositionSerializer(BinancePositionSerializer):
 
     @staticmethod
     def calc_liquidation_price(entry_price, mark_price, volume, side, leverage_type, position_margin,
-                               leverage_brackets, other_positions_maint_margin,
-                               other_positions_unrealised_pnl) -> Optional[float]:
+                               leverage_brackets, maint_margin_sum, unrealised_pnl_sum) -> Optional[float]:
         liquidation_price = None
         if None not in (side, mark_price, entry_price, position_margin):
             params = {
                 'volume': volume,
                 'mark_price': mark_price,
                 'position_margin': position_margin,
-                'unrealised_pnl': other_positions_unrealised_pnl,
+                'unrealised_pnl': unrealised_pnl_sum,
                 'leverage_brackets': leverage_brackets,
             }
             if leverage_type == LeverageType.isolated:
                 liquidation_price = BinanceFinFactory.calc_liquidation_isolated_price(
-                    entry_price, other_positions_maint_margin, side, **params
+                    entry_price, maint_margin_sum, side, **params
                 )
             if leverage_type == LeverageType.cross:
                 liquidation_price = BinanceFinFactory.calc_liquidation_cross_price(
-                    entry_price, other_positions_maint_margin, side, **params
+                    entry_price, maint_margin_sum, side, **params
                 )
         return liquidation_price
 
