@@ -133,41 +133,40 @@ class BinanceRestApi(StockRestApi):
 
     def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
         data = self._binance_api(self._handler.get_historical_trades, symbol=symbol.upper(), limit=1)
-        state_data = self.storage.get(
-            'symbol', self.name, kwargs.get('schema')
-        ).get(symbol.lower(), dict())
+        state_data = self.storage.get('symbol', self.name, kwargs.get('schema')).get(symbol.lower(), {})
         return utils.load_quote_data(data[0], state_data)
 
     def list_quotes(self, symbol: str, timeframe: str = None, **kwargs) -> list:
         data = self._binance_api(self._handler.get_historical_trades, symbol=symbol.upper())
-        state_data = self.storage.get(
-            'symbol', self.name, kwargs.get('schema')
-        ).get(symbol.lower(), dict())
+        state_data = self.storage.get('symbol', self.name, kwargs.get('schema')).get(symbol.lower(), {})
         return [utils.load_quote_data(d, state_data) for d in data]
 
-    def _list_quote_bins_page(self, symbol, schema, binsize='1m', count=100, **kwargs):
-        state_data = kwargs.pop('state_data', dict())
-        if schema == OrderSchema.futures:
+    def _list_quote_bins_page(self, symbol: str, schema: str, binsize: str = '1m', count: int = 100, **kwargs):
+        state_data = kwargs.pop('state_data', {})
+        schema_handlers = {
+            OrderSchema.exchange: self._handler.get_klines,
+            OrderSchema.margin2: self._handler.get_klines,
+            OrderSchema.futures: self._handler.futures_klines,
+            OrderSchema.futures_coin: self._handler.futures_coin_klines,
+        }
+        try:
             data = self._binance_api(
-                self._handler.futures_klines, symbol=symbol.upper(), interval=binsize, limit=count, **kwargs
+                schema_handlers[schema.lower()],
+                symbol=symbol.upper(),
+                interval=binsize,
+                limit=count,
+                **kwargs,
             )
-            return [utils.load_quote_bin_data(d, state_data) for d in data]
-        elif schema in (OrderSchema.margin2, OrderSchema.exchange):
-            data = self._binance_api(
-                self._handler.get_klines, symbol=symbol.upper(), interval=binsize, limit=count, **kwargs
-            )
-            return [utils.load_quote_bin_data(d, state_data) for d in data]
-        else:
+        except KeyError:
             raise ConnectorError(f"Invalid schema {schema}.")
+        return [utils.load_quote_bin_data(d, state_data) for d in data]
 
     def list_quote_bins(self, symbol, schema, binsize='1m', count=100, **kwargs) -> list:
         pages = int((count - 1) / var.BINANCE_MAX_QUOTE_BINS_COUNT + 1)
         rest = count % var.BINANCE_MAX_QUOTE_BINS_COUNT or var.BINANCE_MAX_QUOTE_BINS_COUNT
         quote_bins = []
         kwargs = self._api_kwargs(kwargs)
-        kwargs['state_data'] = self.storage.get(
-            'symbol', self.name, schema
-        ).get(symbol.lower(), dict())
+        kwargs['state_data'] = self.storage.get('symbol', self.name, schema).get(symbol.lower(), {})
         for i in range(pages):
             if i == pages - 1:
                 items_count = rest
