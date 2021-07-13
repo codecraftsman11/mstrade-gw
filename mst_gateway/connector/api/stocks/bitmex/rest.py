@@ -75,19 +75,6 @@ class BitmexRestApi(StockRestApi):
             api_kwargs['filter'] = json.dumps(api_kwargs['filter'])
         return api_kwargs
 
-    def list_quotes(self, symbol, timeframe=None, **kwargs) -> list:
-        _symbol = symbol.lower()
-        if timeframe is not None:
-            symbol = symbol + ":" + timeframe
-        quotes, _ = self._bitmex_api(self._handler.Trade.Trade_get,
-                                     symbol=utils.symbol2stock(symbol),
-                                     reverse=True,
-                                     **self._api_kwargs(kwargs))
-        state_data = self.storage.get(
-            'symbol', self.name, OrderSchema.margin1
-        ).get(_symbol, dict())
-        return [utils.load_quote_data(data, state_data) for data in quotes]
-
     def _list_quote_bins_page(self, symbol, schema, binsize='1m', count=100, offset=0,
                               **kwargs):
         state_data = kwargs.pop('state_data', dict())
@@ -194,16 +181,6 @@ class BitmexRestApi(StockRestApi):
             data, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive)
             return utils.load_exchange_symbol_info(data)
         raise ConnectorError(f"Invalid schema {schema}.")
-
-    def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
-        quotes, _ = self._bitmex_api(self._handler.Trade.Trade_get,
-                                     symbol=utils.symbol2stock(symbol),
-                                     reverse=True,
-                                     count=1)
-        state_data = self.storage.get(
-            'symbol', self.name, OrderSchema.margin1
-        ).get(symbol.lower(), dict())
-        return utils.load_quote_data(quotes[0], state_data)
 
     def create_order(self, symbol: str, schema: str, side: int, volume: float,
                      order_type: str = api.OrderType.market,

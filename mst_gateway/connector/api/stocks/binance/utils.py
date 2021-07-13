@@ -263,32 +263,6 @@ def load_order_book_data(raw_data: dict, symbol: str, side, split,
     return resp
 
 
-def load_quote_data(raw_data: dict, state_data: Optional[dict]) -> dict:
-    """
-        {'id': 170622457,
-        'isBestMatch': True,
-        'isBuyerMaker': True,
-        'price': '0.02107500',
-        'qty': '17.75100000',
-        'quoteQty': '0.37410232',
-        'time': 1585491048725}
-    """
-    data = {
-        'time': to_date(raw_data.get('time')),
-        'timestamp': raw_data.get('time'),
-        'price': to_float(raw_data.get('price')),
-        'volume': raw_data.get('qty'),
-        'side': load_order_side(raw_data.get('isBuyerMaker'))
-    }
-    if isinstance(state_data, dict):
-        data.update({
-            'symbol': state_data.get('symbol'),
-            'system_symbol': state_data.get('system_symbol'),
-            'schema': state_data.get('schema')
-        })
-    return data
-
-
 def load_quote_bin_data(raw_data: list, state_data: Optional[dict]) -> dict:
     data = {
         'time': to_date(raw_data[0]),

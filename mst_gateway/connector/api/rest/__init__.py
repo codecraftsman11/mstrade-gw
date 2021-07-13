@@ -39,14 +39,6 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def get_quote(self, symbol, timeframe=None, **kwargs) -> dict:
-        raise NotImplementedError
-
-    @abstractmethod
-    def list_quotes(self, symbol, timeframe=None, **kwargs) -> list:
-        raise NotImplementedError
-
-    @abstractmethod
     def list_quote_bins(self, symbol, schema: str, binsize='1m', count=100, **kwargs) -> list:
         raise NotImplementedError
 

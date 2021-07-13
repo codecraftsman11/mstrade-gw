@@ -131,16 +131,6 @@ class BinanceRestApi(StockRestApi):
             )
         raise ConnectorError(f"Invalid schema {schema}.")
 
-    def get_quote(self, symbol: str, timeframe: str = None, **kwargs) -> dict:
-        data = self._binance_api(self._handler.get_historical_trades, symbol=symbol.upper(), limit=1)
-        state_data = self.storage.get('symbol', self.name, kwargs.get('schema')).get(symbol.lower(), {})
-        return utils.load_quote_data(data[0], state_data)
-
-    def list_quotes(self, symbol: str, timeframe: str = None, **kwargs) -> list:
-        data = self._binance_api(self._handler.get_historical_trades, symbol=symbol.upper())
-        state_data = self.storage.get('symbol', self.name, kwargs.get('schema')).get(symbol.lower(), {})
-        return [utils.load_quote_data(d, state_data) for d in data]
-
     def _list_quote_bins_page(self, symbol: str, schema: str, binsize: str = '1m', count: int = 100, **kwargs):
         state_data = kwargs.pop('state_data', {})
         schema_handlers = {
