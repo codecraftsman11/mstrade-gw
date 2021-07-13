@@ -133,24 +133,6 @@ class TestBitmexRestApi:
                 break
         assert schema.data_valid(_symbol, schema.SYMBOL_FIELDS)
 
-    def test_bitmex_rest_list_quotes(self, _bitmex: BitmexRestApi,
-                                     _bitmex_unauth: BitmexRestApi):
-        assert schema.data_valid(_bitmex.list_quotes(symbol=cfg.BITMEX_SYMBOL).pop(),
-                                 schema.QUOTE_FIELDS)
-        assert schema.data_valid(_bitmex_unauth.list_quotes(symbol=cfg.BITMEX_SYMBOL).pop(),
-                                 schema.QUOTE_FIELDS)
-
-    def test_bitmex_rest_list_quotes_range(self, _bitmex: BitmexRestApi):
-        res_data = _bitmex.list_quotes(
-            symbol=cfg.BITMEX_SYMBOL,
-            date_from=TEST_FROM_DATE,
-            date_to=TEST_TO_DATE,
-            count=10
-        )
-        assert len(res_data) == 10
-        assert res_data[0]['time'] > TEST_FROM_DATE
-        assert res_data[-1]['time'] < TEST_TO_DATE
-
     def test_bitmex_rest_list_quote_bins(self, _bitmex: BitmexRestApi):
         quote_bins = self._list_quote_bins(_bitmex)
         assert quote_bins
