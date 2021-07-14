@@ -182,10 +182,10 @@ class BinanceRestApi(StockRestApi):
                      order_type: str = OrderType.market,
                      price: float = None, options: dict = None) -> dict:
         schema_handlers = {
-            OrderSchema.exchange: (self._handler.create_order, utils.load_spot_order_data),
-            OrderSchema.margin2: (self._handler.create_margin_order, utils.load_margin_order_data),
-            OrderSchema.futures: (self._handler.futures_create_order, utils.load_futures_order_data),
-            OrderSchema.futures_coin: (self._handler.futures_coin_create_order, utils.load_futures_coin_order_data),
+            OrderSchema.exchange: self._handler.create_order,
+            OrderSchema.margin2: self._handler.create_margin_order,
+            OrderSchema.futures: self._handler.futures_create_order,
+            OrderSchema.futures_coin: self._handler.futures_coin_create_order,
         }
         validate_schema(schema, schema_handlers)
         main_params = {
@@ -196,9 +196,9 @@ class BinanceRestApi(StockRestApi):
             'price': str(price),
         }
         params = utils.generate_parameters_by_order_type(main_params, options, schema)
-        data = self._binance_api(schema_handlers[schema.lower()][0], **params)
+        data = self._binance_api(schema_handlers[schema.lower()], **params)
         state_data = self.storage.get('symbol', self.name, schema).get(symbol.lower(), {})
-        return schema_handlers[schema.lower()][1](data, state_data)
+        return utils.load_order_data(data, state_data)
 
     def update_order(self, exchange_order_id: str, symbol: str,
                      schema: str, side: int, volume: float,
@@ -222,36 +222,36 @@ class BinanceRestApi(StockRestApi):
     def cancel_order(self, exchange_order_id: str, symbol: str, schema: str) -> dict:
         validate_exchange_order_id(exchange_order_id)
         schema_handlers = {
-            OrderSchema.exchange: (self._handler.cancel_order, utils.load_spot_order_data),
-            OrderSchema.margin2: (self._handler.cancel_margin_order, utils.load_margin_order_data),
-            OrderSchema.futures: (self._handler.futures_cancel_order, utils.load_futures_order_data),
-            OrderSchema.futures_coin: (self._handler.futures_coin_cancel_order, utils.load_futures_coin_order_data),
+            OrderSchema.exchange: self._handler.cancel_order,
+            OrderSchema.margin2: self._handler.cancel_margin_order,
+            OrderSchema.futures: self._handler.futures_cancel_order,
+            OrderSchema.futures_coin: self._handler.futures_coin_cancel_order,
         }
         validate_schema(schema, schema_handlers)
         params = utils.map_api_parameter_names({
             'exchange_order_id': int(exchange_order_id),
             'symbol': utils.symbol2stock(symbol),
         })
-        data = self._binance_api(schema_handlers[schema.lower()][0], **params)
+        data = self._binance_api(schema_handlers[schema.lower()], **params)
         state_data = self.storage.get('symbol', self.name, schema).get(symbol.lower(), {})
-        return schema_handlers[schema.lower()][1](data, state_data)
+        return utils.load_order_data(data, state_data)
 
     def get_order(self, exchange_order_id: str, symbol: str, schema: str):
         schema_handlers = {
-            OrderSchema.exchange: (self._handler.get_order, utils.load_spot_order_data),
-            OrderSchema.margin2: (self._handler.get_margin_order, utils.load_margin_order_data),
-            OrderSchema.futures: (self._handler.futures_get_order, utils.load_futures_order_data),
-            OrderSchema.futures_coin: (self._handler.futures_coin_get_order, utils.load_futures_coin_order_data),
+            OrderSchema.exchange: self._handler.get_order,
+            OrderSchema.margin2: self._handler.get_margin_order,
+            OrderSchema.futures: self._handler.futures_get_order,
+            OrderSchema.futures_coin: self._handler.futures_coin_get_order,
         }
         validate_schema(schema, schema_handlers)
         params = utils.map_api_parameter_names({
             'exchange_order_id': int(exchange_order_id),
             'symbol': utils.symbol2stock(symbol),
         })
-        if not (data := self._binance_api(schema_handlers[schema.lower()][0], **params)):
+        if not (data := self._binance_api(schema_handlers[schema.lower()], **params)):
             return None
         state_data = self.storage.get('symbol', self.name, schema).get(symbol.lower(), {})
-        return schema_handlers[schema.lower()][1](data, state_data)
+        return utils.load_order_data(data, state_data)
 
     def list_orders(self, schema: str,
                     symbol: str = None,
@@ -260,25 +260,11 @@ class BinanceRestApi(StockRestApi):
                     offset: int = 0,
                     options: dict = None) -> list:
         schema_handlers = {
-            OrderSchema.exchange: (
-                self._handler.get_open_orders,
-                self._handler.get_all_orders,
-                utils.load_spot_order_data,
-            ),
-            OrderSchema.margin2: (
-                self._handler.get_open_margin_orders,
-                self._handler.get_all_margin_orders,
-                utils.load_margin_order_data,
-            ),
-            OrderSchema.futures: (
-                self._handler.futures_get_open_orders,
-                self._handler.futures_get_all_orders,
-                utils.load_futures_order_data
-            ),
+            OrderSchema.exchange: (self._handler.get_open_orders, self._handler.get_all_orders),
+            OrderSchema.margin2: (self._handler.get_open_margin_orders, self._handler.get_all_margin_orders),
+            OrderSchema.futures: (self._handler.futures_get_open_orders, self._handler.futures_get_all_orders),
             OrderSchema.futures_coin: (
-                self._handler.futures_coin_get_open_orders,
-                self._handler.futures_coin_get_all_orders,
-                utils.load_futures_coin_order_data
+                self._handler.futures_coin_get_open_orders, self._handler.futures_coin_get_all_orders
             ),
         }
         validate_schema(schema, schema_handlers)
@@ -292,9 +278,9 @@ class BinanceRestApi(StockRestApi):
             state_data = self.storage.get('symbol', self.name, schema).get(symbol.lower(), {})
         if active_only:
             data = self._binance_api(schema_handlers[schema.lower()][0], **options)
-            return [schema_handlers[schema.lower()][2](order, state_data) for order in reversed(data)]
+            return [utils.load_order_data(order, state_data) for order in reversed(data)]
         data = self._binance_api(schema_handlers[schema.lower()][1], **options)
-        return [schema_handlers[schema.lower()][2](order, state_data) for order in reversed(data)][offset:count]
+        return [utils.load_order_data(order, state_data) for order in reversed(data)][offset:count]
 
     def list_trades(self, symbol: str, schema: str, **params) -> list:
         schema_handlers = {
