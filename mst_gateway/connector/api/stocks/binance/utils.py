@@ -298,6 +298,10 @@ def load_futures_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     return _load_order_data(raw_data, 'updateTime', state_data)
 
 
+def load_futures_coin_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+    return _load_order_data(raw_data, 'updateTime', state_data)
+
+
 def _load_order_data(raw_data: dict, time_field: Optional[str], state_data: Optional[dict]) -> dict:
     _time = to_date(raw_data.get(time_field))
     data = {
