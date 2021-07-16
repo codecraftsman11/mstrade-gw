@@ -51,10 +51,10 @@ class BinanceWalletSerializer(BinanceSerializer):
     def _wallet_list(self, item, state_data: dict, currencies: dict):
         assets = ('btc', 'usd')
         if self._wss_api.schema == OrderSchema.exchange:
-            fields = ('balance',)
+            fields = ('bl',)
             return utils.ws_spot_wallet(item, state_data, currencies, assets, fields)
         elif self._wss_api.schema == OrderSchema.margin2:
-            fields = ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed')
+            fields = ('bl', 'upnl', 'mbl', 'bor')
             return utils.ws_margin_wallet(item, state_data, currencies, assets, fields)
 
     def _wallet_detail(self, item, state_data):
@@ -78,12 +78,12 @@ class BinanceFuturesWalletSerializer(BinanceWalletSerializer):
 
     def _wallet_list(self, item, state_data: dict, currencies: dict):
         assets = ('btc', 'usd')
-        fields = ('balance', 'unrealised_pnl', 'margin_balance')
+        fields = ('bl', 'upnl', 'mbl')
         return utils.ws_futures_wallet(item, state_data, currencies, assets, fields)
 
     def _wallet_detail(self, item, state_data):
         balances = item['a']['B']
-        _state_balances = state_data.pop('balances', {})
+        _state_balances = state_data.pop('bls', {})
         return dict(
             balances=utils.ws_futures_balance_data(balances, item['a'].get('P', []), _state_balances)
         )

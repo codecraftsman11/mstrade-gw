@@ -372,36 +372,57 @@ class BinanceRestApi(StockRestApi):
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def _spot_wallet(self, **kwargs):
+        is_for_socket = kwargs.pop('is_for_socket', False)
         assets = kwargs.get('assets', ('btc', 'usd'))
         fields = ('balance',)
         data = self._binance_api(self._handler.get_account, **kwargs)
         currencies = self.storage.get('currency', self.name, OrderSchema.exchange)
+        if is_for_socket:
+            fields = ('bl',)
+            return utils.load_ws_spot_wallet_data(data, currencies, assets, fields)
         return utils.load_spot_wallet_data(data, currencies, assets, fields)
 
     def _margin_wallet(self, **kwargs):
+        is_for_socket = kwargs.pop('is_for_socket', False)
         assets = kwargs.get('assets', ('btc', 'usd'))
         fields = ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed', 'interest')
         data = self._binance_api(self._handler.get_margin_account, **kwargs)
         currencies = self.storage.get('currency', self.name, OrderSchema.margin2)
+        if is_for_socket:
+            fields = ('bl', 'upnl', 'mbl', 'bor', 'ist')
+            return utils.load_ws_margin_wallet_data(data, currencies, assets, fields)
         return utils.load_margin_wallet_data(data, currencies, assets, fields)
 
     def _futures_wallet(self, schema: str, **kwargs):
+        is_for_socket = kwargs.pop('is_for_socket', False)
         assets = kwargs.get('assets', ('btc', 'usd'))
         fields = ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed', 'interest')
-        schema_handlers = {
-            OrderSchema.futures: (self._handler.futures_account_v2, utils.load_futures_wallet_data),
-            OrderSchema.futures_coin: (self._handler.futures_coin_account, utils.load_futures_coin_wallet_data),
-        }
-        data = self._binance_api(schema_handlers[schema][0], **kwargs)
-        cross_collaterals = {}
-        if schema == OrderSchema.futures:
-            try:
-                cross_collaterals = self._binance_api(self._handler.futures_loan_wallet, **kwargs)
-            except ConnectorError:
-                pass
+        data = self._binance_api(self._handler.futures_account_v2, **kwargs)
+        try:
+            cross_collaterals = self._binance_api(self._handler.futures_loan_wallet, **kwargs)
+        except ConnectorError:
+            cross_collaterals = {}
         currencies = self.storage.get('currency', self.name, schema)
-        return schema_handlers[schema][1](
+        if is_for_socket:
+            fields = ('bl', 'upnl', 'mbl', 'bor', 'ist')
+            return utils.load_ws_futures_wallet_data(
+                data, currencies, assets, fields, cross_collaterals.get('crossCollaterals', [])
+                )
+        return utils.load_futures_wallet_data(
             data, currencies, assets, fields, cross_collaterals.get('crossCollaterals', [])
+        )
+
+    def _futures_coin_wallet(self, schema: str, **kwargs):
+        is_for_socket = kwargs.pop('is_for_socket', False)
+        assets = kwargs.get('assets', ('btc', 'usd'))
+        fields = ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed', 'interest')
+        data = self._binance_api(self._handler.futures_coin_account, **kwargs)
+        currencies = self.storage.get('currency', self.name, schema)
+        cross_collaterals = []
+        if is_for_socket:
+            fields = ('bl', 'upnl', 'mbl', 'bor', 'ist')
+        return utils.load_futures_coin_wallet_data(
+            data, currencies, assets, fields, cross_collaterals
         )
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
