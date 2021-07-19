@@ -283,10 +283,8 @@ def load_quote_bin_data(raw_data: list, state_data: Optional[dict]) -> dict:
 
 
 def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
-    _time = to_date(raw_data.get('time')) or \
-            to_date(raw_data.get('transactTime')) or \
-            to_date(raw_data.get('updateTime')) or \
-            datetime.now()
+    _time_field = raw_data.get('time') or raw_data.get('transactTime') or raw_data.get('updateTime')
+    _time = to_date(_time_field) or datetime.now()
     data = {
         'time': _time,
         'timestamp': time2timestamp(_time),
