@@ -26,7 +26,7 @@ class FinFactory:
 
     @classmethod
     @abstractmethod
-    def calc_leverage_level(cls, volume: Union[int, float], entry_price: float, wallet_balance: float,
+    def calc_leverage_level(cls, quantity: Union[int, float], entry_price: float, wallet_balance: float,
                             liquidation_price: float = None):
         raise NotImplementedError
 
