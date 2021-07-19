@@ -72,7 +72,7 @@ class BinanceRestApi(StockRestApi):
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
         state_data = self.storage.get('symbol', self.name, schema).get(utils.stock2symbol(symbol), {})
-        return utils.load_symbol_data(data, state_data)
+        return utils.load_symbol_data(schema, data, state_data)
 
     @staticmethod
     def _update_ticker_data(ticker_data: list, bid_ask_prices: dict) -> list:
@@ -104,7 +104,7 @@ class BinanceRestApi(StockRestApi):
         for d in data:
             symbol_state = state_data.get(d.get('symbol', '').lower())
             if symbol_state and (not _param or (_param and utils.to_float(d[_param]))):
-                symbols.append(utils.load_symbol_data(d, symbol_state))
+                symbols.append(utils.load_symbol_data(schema, d, symbol_state))
         return symbols
 
     def get_exchange_symbol_info(self, schema: str) -> list:

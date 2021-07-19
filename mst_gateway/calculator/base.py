@@ -1,8 +1,5 @@
 from abc import abstractmethod
-from typing import (
-    Union, Tuple, Optional
-)
-from mst_gateway.connector import api
+from typing import Tuple, Optional
 
 
 class FinFactory:
@@ -29,8 +26,12 @@ class FinFactory:
 
     @classmethod
     @abstractmethod
-    def calc_leverage_level(cls, quantity: Union[int, float], entry_price: float, wallet_balance: float,
-                            liquidation_price: float = None):
+    def direction_by_side(cls, side: int) -> int:
+        raise NotImplementedError
+
+    @classmethod
+    @abstractmethod
+    def side_by_direction(cls, direction: int) -> int:
         raise NotImplementedError
 
     @classmethod
@@ -48,20 +49,8 @@ class FinFactory:
         return (mark_price - entry_price) * direction * abs(volume)
 
     @classmethod
-    def direction_by_side(cls, side: int) -> int:
-        if side == api.BUY:
-            return 1
-        return -1
-
-    @classmethod
-    def side_by_direction(cls, direction: int) -> int:
-        if direction == 1:
-            return api.BUY
-        return api.SELL
-
-    @classmethod
     def calc_mark_price(cls, volume: float, entry_price: float, unrealised_pnl: float):
         try:
             return (entry_price * volume + unrealised_pnl) / volume
-        except (ValueError, ZeroDivisionError):
+        except (TypeError, ZeroDivisionError):
             return 0

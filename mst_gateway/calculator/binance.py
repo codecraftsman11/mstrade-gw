@@ -1,16 +1,9 @@
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 from mst_gateway.calculator.base import FinFactory
+from mst_gateway.connector import api
 
 
 class BinanceFinFactory(FinFactory):
-
-    @classmethod
-    def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float], Optional[bool]]:
-        return price, False
-
-    @classmethod
-    def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
-        return face_price
 
     @classmethod
     def calc_liquidation_isolated_price(cls, entry_price: float, maint_margin: float, side: int, **kwargs):
@@ -41,12 +34,6 @@ class BinanceFinFactory(FinFactory):
         return cls.calc_liquidation_isolated_price(entry_price, maint_margin, side, **kwargs)
 
     @classmethod
-    def calc_leverage_level(cls, quantity: Union[int, float], entry_price: float, wallet_balance: float,
-                            liquidation_price: float = None):
-        result = round(quantity / (wallet_balance * 100 * entry_price) * 100**2, 8)
-        return result
-
-    @classmethod
     def filter_leverage_brackets(cls, leverage_brackets: list, notional_value: float) -> tuple:
         maint_margin_rate = None
         maint_amount = None
@@ -55,3 +42,40 @@ class BinanceFinFactory(FinFactory):
                 maint_margin_rate = lb['maintMarginRatio']
                 maint_amount = lb['cum']
         return maint_margin_rate, maint_amount
+
+    @classmethod
+    def direction_by_side(cls, side: int) -> int:
+        if side == api.BUY:
+            return 1
+        return -1
+
+    @classmethod
+    def side_by_direction(cls, direction: int) -> int:
+        if direction == 1:
+            return api.BUY
+        return api.SELL
+
+    @classmethod
+    def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float], Optional[bool]]:
+        return price, False
+
+    @classmethod
+    def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
+        return face_price
+
+
+class BinanceFuturesCoinFinFactory(BinanceFinFactory):
+
+    @classmethod
+    def get_contract_multiplier(cls, symbol: str) -> int:
+        if 'btc' in symbol.lower():
+            return 100
+        return 10
+
+    @classmethod
+    def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float], Optional[bool]]:
+        return cls.get_contract_multiplier(symbol) / price, True
+
+    @classmethod
+    def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
+        return cls.get_contract_multiplier(symbol) / face_price
