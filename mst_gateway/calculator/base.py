@@ -49,7 +49,7 @@ class FinFactory:
         return (mark_price - entry_price) * direction * abs(volume)
 
     @classmethod
-    def calc_mark_price(cls, volume: float, entry_price: float, unrealised_pnl: float):
+    def calc_mark_price(cls, volume: float, entry_price: float, unrealised_pnl: float) -> Optional[float]:
         try:
             return (entry_price * volume + unrealised_pnl) / volume
         except (TypeError, ZeroDivisionError):
