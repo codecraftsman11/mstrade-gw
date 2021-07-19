@@ -6,6 +6,14 @@ from mst_gateway.connector import api
 class BinanceFinFactory(FinFactory):
 
     @classmethod
+    def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float], Optional[bool]]:
+        return price, False
+
+    @classmethod
+    def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
+        return face_price
+
+    @classmethod
     def calc_liquidation_isolated_price(cls, entry_price: float, maint_margin: float, side: int, **kwargs):
         liquidation_price = None
         volume = abs(kwargs.get('volume'))
@@ -54,14 +62,6 @@ class BinanceFinFactory(FinFactory):
         if direction == 1:
             return api.BUY
         return api.SELL
-
-    @classmethod
-    def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float], Optional[bool]]:
-        return price, False
-
-    @classmethod
-    def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
-        return face_price
 
 
 class BinanceFuturesCoinFinFactory(BinanceFinFactory):
