@@ -1,3 +1,3 @@
 from .base import FinFactory
 from .bitmex import BitmexFinFactory
-from .binance import BinanceFinFactory, BinanceFuturesCoinFinFactory
+from .binance import BinanceFinFactory

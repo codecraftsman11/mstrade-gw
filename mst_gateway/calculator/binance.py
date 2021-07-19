@@ -7,11 +7,31 @@ from mst_gateway.connector import api
 class BinanceFinFactory(FinFactory):
 
     @classmethod
-    def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float], Optional[bool]]:
+    def get_contract_multiplier(cls, symbol: str) -> int:
+        if re.match(r"^btcusd", symbol):
+            return 100
+        return 10
+
+    @classmethod
+    def _is_futures_coin(cls, **kwargs) -> bool:
+        return kwargs.get('schema', '').lower() == api.OrderSchema.futures_coin
+
+    @classmethod
+    def calc_face_price(cls, symbol: str, price: float, **kwargs) -> Tuple[Optional[float], Optional[bool]]:
+        if cls._is_futures_coin(**kwargs):
+            try:
+                return cls.get_contract_multiplier(symbol) / price, True
+            except (TypeError, ZeroDivisionError):
+                return None, None
         return price, False
 
     @classmethod
-    def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
+    def calc_price(cls, symbol: str, face_price: float, **kwargs) -> Optional[float]:
+        if cls._is_futures_coin(**kwargs):
+            try:
+                return cls.get_contract_multiplier(symbol) / face_price
+            except (TypeError, ZeroDivisionError):
+                return None
         return face_price
 
     @classmethod
@@ -63,30 +83,3 @@ class BinanceFinFactory(FinFactory):
         if direction == 1:
             return api.BUY
         return api.SELL
-
-
-class BinanceFuturesCoinFinFactory(BinanceFinFactory):
-
-    @classmethod
-    def get_contract_multiplier(cls, symbol: Optional[str]) -> Optional[int]:
-        try:
-            _symbol = symbol.lower()
-            if re.match(r"^btcusd(t)?$", _symbol) or re.match(r"^btcusd_\S{4,6}$", _symbol):
-                return 100
-            return 10
-        except (TypeError, AttributeError):
-            return None
-
-    @classmethod
-    def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float], Optional[bool]]:
-        try:
-            return cls.get_contract_multiplier(symbol) / price, True
-        except (TypeError, ZeroDivisionError):
-            return None, None
-
-    @classmethod
-    def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
-        try:
-            return cls.get_contract_multiplier(symbol) / face_price
-        except (TypeError, ZeroDivisionError):
-            return None
