@@ -1,5 +1,5 @@
 import re
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 from mst_gateway.calculator.base import FinFactory
 from mst_gateway.connector import api
 
@@ -62,6 +62,12 @@ class BinanceFinFactory(FinFactory):
     @classmethod
     def calc_liquidation_cross_price(cls, entry_price: float, maint_margin: float, side: int, **kwargs):
         return cls.calc_liquidation_isolated_price(entry_price, maint_margin, side, **kwargs)
+
+    @classmethod
+    def calc_leverage_level(cls, quantity: Union[int, float], entry_price: float, wallet_balance: float,
+                            liquidation_price: float = None):
+        result = round(quantity / (wallet_balance * 100 * entry_price) * 100**2, 8)
+        return result
 
     @classmethod
     def filter_leverage_brackets(cls, leverage_brackets: list, notional_value: float) -> tuple:

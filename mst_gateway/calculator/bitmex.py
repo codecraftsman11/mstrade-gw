@@ -1,5 +1,5 @@
 import re
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 from mst_gateway.calculator import FinFactory
 from mst_gateway.connector import api
 
@@ -42,6 +42,12 @@ class BitmexFinFactory(FinFactory):
         if liquidation_price is not None and liquidation_price < 0:
             liquidation_price = None
         return liquidation_price
+
+    @classmethod
+    def calc_leverage_level(cls, quantity: Union[int, float], entry_price: float, wallet_balance: float,
+                            liquidation_price: float = None):
+        result = round(quantity / (wallet_balance * 100 * entry_price) * 100**2, 8)
+        return result
 
     @classmethod
     def direction_by_side(cls, side: int) -> int:

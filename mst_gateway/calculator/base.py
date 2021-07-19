@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Tuple, Optional
+from typing import Optional, Tuple, Union
 
 
 class FinFactory:
@@ -22,6 +22,12 @@ class FinFactory:
     @classmethod
     @abstractmethod
     def calc_liquidation_cross_price(cls, entry_price: float, maint_margin: float, side: int, **kwargs):
+        raise NotImplementedError
+
+    @classmethod
+    @abstractmethod
+    def calc_leverage_level(cls, volume: Union[int, float], entry_price: float, wallet_balance: float,
+                            liquidation_price: float = None):
         raise NotImplementedError
 
     @classmethod
