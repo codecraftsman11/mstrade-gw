@@ -8,7 +8,8 @@ class BinanceFinFactory(FinFactory):
 
     @classmethod
     def get_contract_multiplier(cls, symbol: str) -> int:
-        if re.match(r"^btcusd", symbol):
+        _symbol = symbol.lower()
+        if re.match(r"^btcusd", _symbol):
             return 100
         return 10
 
