@@ -70,7 +70,8 @@ class BinanceFuturesCoinFinFactory(BinanceFinFactory):
     @classmethod
     def get_contract_multiplier(cls, symbol: Optional[str]) -> Optional[int]:
         try:
-            if re.match(r"^btcusd", symbol):
+            _symbol = symbol.lower()
+            if re.match(r"^btcusd", _symbol):
                 return 100
         except (TypeError, AttributeError):
             pass
