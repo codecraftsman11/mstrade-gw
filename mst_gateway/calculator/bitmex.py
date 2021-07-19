@@ -7,6 +7,12 @@ from mst_gateway.connector import api
 class BitmexFinFactory(FinFactory):
 
     @classmethod
+    def direction_by_side(cls, side: int) -> int:
+        if side == api.BUY:
+            return -1
+        return 1
+
+    @classmethod
     def calc_liquidation_isolated_price(cls, entry_price: float, maint_margin: float, side: int, **kwargs):
         liquidation_price = None
         leverage = kwargs.get('leverage')
@@ -48,18 +54,6 @@ class BitmexFinFactory(FinFactory):
                             liquidation_price: float = None):
         result = round(quantity / (wallet_balance * 100 * entry_price) * 100**2, 8)
         return result
-
-    @classmethod
-    def direction_by_side(cls, side: int) -> int:
-        if side == api.BUY:
-            return -1
-        return 1
-
-    @classmethod
-    def side_by_direction(cls, direction: int) -> int:
-        if direction == 1:
-            return api.SELL
-        return api.BUY
 
     @classmethod
     def calc_face_price(cls, symbol: str, price: float, **kwargs) -> Tuple[Optional[float], Optional[bool]]:
@@ -138,3 +132,9 @@ class BitmexFinFactory(FinFactory):
         except (ValueError, TypeError, ZeroDivisionError):
             pass
         return result
+
+    @classmethod
+    def side_by_direction(cls, direction: int) -> int:
+        if direction == 1:
+            return api.SELL
+        return api.BUY

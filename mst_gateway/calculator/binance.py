@@ -1,6 +1,6 @@
 import re
 from typing import Optional, Tuple, Union
-from mst_gateway.calculator.base import FinFactory
+from mst_gateway.calculator import FinFactory
 from mst_gateway.connector import api
 
 
