@@ -563,8 +563,8 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.futures_coin: self._handler.futures_coin_trade_level,
         }
         validate_schema(schema, schema_handlers)
-        commissions = self._binance_api(schema_handlers[schema.lower()])
-        return utils.load_commissions(commissions)
+        data = self._binance_api(schema_handlers[schema.lower()])
+        return utils.load_commissions(data)
 
     def get_vip_level(self, schema: str) -> str:
         try:

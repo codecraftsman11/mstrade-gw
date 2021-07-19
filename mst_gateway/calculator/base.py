@@ -53,4 +53,4 @@ class FinFactory:
         try:
             return (entry_price * volume + unrealised_pnl) / volume
         except (TypeError, ZeroDivisionError):
-            return 0
+            return None

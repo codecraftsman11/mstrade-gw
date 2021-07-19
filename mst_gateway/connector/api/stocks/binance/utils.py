@@ -799,13 +799,13 @@ def load_repay_data(raw_data: dict) -> dict:
     return data
 
 
-def load_commissions(commissions: dict) -> list:
+def load_commissions(raw_data: dict) -> list:
     return [
         {
             'maker': to_float(commission['makerCommission']),
             'taker': to_float(commission['takerCommission']),
             'type': f'VIP{commission["level"]}',
-        } for commission in commissions
+        } for commission in raw_data
     ]
 
 
