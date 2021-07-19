@@ -56,7 +56,7 @@ class BitmexFinFactory(FinFactory):
         return api.BUY
 
     @classmethod
-    def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float], Optional[bool]]:
+    def calc_face_price(cls, symbol: str, price: float, **kwargs) -> Tuple[Optional[float], Optional[bool]]:
         _symbol = symbol.lower()
         result = (None, None)
         try:
@@ -95,7 +95,7 @@ class BitmexFinFactory(FinFactory):
         return result
 
     @classmethod
-    def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
+    def calc_price(cls, symbol: str, face_price: float, **kwargs) -> Optional[float]:
         _symbol = symbol.lower()
         result = None
         try:
