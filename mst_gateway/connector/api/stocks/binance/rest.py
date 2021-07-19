@@ -139,16 +139,14 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.futures: self._handler.futures_klines,
             OrderSchema.futures_coin: self._handler.futures_coin_klines,
         }
-        try:
-            data = self._binance_api(
-                schema_handlers[schema.lower()],
-                symbol=symbol.upper(),
-                interval=binsize,
-                limit=count,
-                **kwargs,
-            )
-        except KeyError:
-            raise ConnectorError(f"Invalid schema {schema}.")
+        validate_schema(schema, schema_handlers)
+        data = self._binance_api(
+            schema_handlers[schema.lower()],
+            symbol=symbol.upper(),
+            interval=binsize,
+            limit=count,
+            **kwargs,
+        )
         return [utils.load_quote_bin_data(d, state_data) for d in data]
 
     def list_quote_bins(self, symbol, schema, binsize='1m', count=100, **kwargs) -> list:
@@ -289,14 +287,12 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.futures: self._handler.futures_recent_trades,
             OrderSchema.futures_coin: self._handler.futures_coin_recent_trades,
         }
-        try:
-            data = self._binance_api(
-                schema_handlers[schema.lower()],
-                symbol=symbol.upper(),
-                **self._api_kwargs(params),
-            )
-        except KeyError:
-            raise ConnectorError(f"Invalid schema {schema}.")
+        validate_schema(schema, schema_handlers)
+        data = self._binance_api(
+            schema_handlers[schema.lower()],
+            symbol=symbol.upper(),
+            **self._api_kwargs(params),
+        )
         state_data = self.storage.get('symbol', self.name, schema).get(symbol.lower(), {})
         return [utils.load_trade_data(d, state_data) for d in data]
 
@@ -323,6 +319,7 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.futures: self._handler.futures_order_book,
             OrderSchema.futures_coin: self._handler.futures_coin_order_book,
         }
+        validate_schema(schema, schema_handlers)
         limit = var.BINANCE_MAX_ORDER_BOOK_LIMIT
         if min_volume_buy is None and min_volume_sell is None:
             if depth:
@@ -330,14 +327,11 @@ class BinanceRestApi(StockRestApi):
                     if _l >= offset + depth:
                         limit = _l
                         break
-        try:
-            data = self._binance_api(
-                schema_handlers[schema.lower()],
-                symbol=symbol.upper(),
-                limit=limit,
-            )
-        except KeyError:
-            raise ConnectorError(f"Invalid schema {schema}.")
+        data = self._binance_api(
+            schema_handlers[schema.lower()],
+            symbol=symbol.upper(),
+            limit=limit,
+        )
         data = utils.filter_order_book_data(data, min_volume_buy, min_volume_sell)
         state_data = self.storage.get('symbol', self.name, schema).get(symbol.lower(), {})
         return utils.load_order_book_data(data, symbol, side, split, offset, depth, state_data)
@@ -505,10 +499,8 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.futures: self._handler.futures_symbol_ticker,
             OrderSchema.futures_coin: self._handler.futures_coin_symbol_ticker,
         }
-        try:
-            currency = self._binance_api(schema_handlers[schema.lower()], symbol=utils.symbol2stock(symbol))
-        except KeyError:
-            raise ConnectorError(f"Invalid schema {schema}.")
+        validate_schema(schema, schema_handlers)
+        currency = self._binance_api(schema_handlers[schema.lower()], symbol=utils.symbol2stock(symbol))
         return utils.load_currency_exchange_symbol(currency)
 
     def get_symbols_currencies(self, schema: str) -> dict:
@@ -518,10 +510,8 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.futures: self._handler.futures_symbol_ticker,
             OrderSchema.futures_coin: self._handler.futures_coin_symbol_ticker,
         }
-        try:
-            currency = self._binance_api(schema_handlers[schema.lower()])
-        except KeyError:
-            raise ConnectorError(f"Invalid schema {schema}.")
+        validate_schema(schema, schema_handlers)
+        currency = self._binance_api(schema_handlers[schema.lower()])
         return utils.load_symbols_currencies(currency)
 
     def get_wallet_summary(self, schemas: iter, **kwargs) -> dict:
@@ -572,10 +562,8 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.futures: self._handler.futures_trade_level,
             OrderSchema.futures_coin: self._handler.futures_coin_trade_level,
         }
-        try:
-            commissions = self._binance_api(schema_handlers[schema.lower()])
-        except KeyError:
-            raise ConnectorError(f"Invalid schema {schema}.")
+        validate_schema(schema, schema_handlers)
+        commissions = self._binance_api(schema_handlers[schema.lower()])
         return utils.load_commissions(commissions)
 
     def get_vip_level(self, schema: str) -> str:
