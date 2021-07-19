@@ -67,15 +67,23 @@ class BinanceFinFactory(FinFactory):
 class BinanceFuturesCoinFinFactory(BinanceFinFactory):
 
     @classmethod
-    def get_contract_multiplier(cls, symbol: str) -> int:
-        if 'btc' in symbol.lower():
-            return 100
-        return 10
+    def get_contract_multiplier(cls, symbol: Optional[str]) -> Optional[int]:
+        if symbol:
+            if 'btc' in symbol.lower():
+                return 100
+            return 10
+        return None
 
     @classmethod
     def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float], Optional[bool]]:
-        return cls.get_contract_multiplier(symbol) / price, True
+        try:
+            return cls.get_contract_multiplier(symbol) / price, True
+        except (TypeError, ZeroDivisionError):
+            return None, None
 
     @classmethod
     def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
-        return cls.get_contract_multiplier(symbol) / face_price
+        try:
+            return cls.get_contract_multiplier(symbol) / face_price
+        except (TypeError, ZeroDivisionError):
+            return None
