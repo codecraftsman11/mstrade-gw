@@ -32,6 +32,10 @@ def cmd_unsubscribe(subscr_name, symbol=None):
     return make_cmd("UNSUBSCRIBE", subscr_name, symbol)
 
 
+def cmd_request(listen_key, channel_name):
+    return make_cmd("REQUEST",  f'{listen_key}@{channel_name}')
+
+
 def is_ok(response: str) -> bool:
     try:
         data = json.loads(response)

@@ -8,7 +8,7 @@ from mst_gateway.exceptions import QueryError
 from .. import utils
 from ..lib import AsyncClient
 from ....wss.subscriber import Subscriber
-from .utils import cmd_subscribe, cmd_unsubscribe
+from .utils import cmd_subscribe, cmd_unsubscribe, cmd_request
 
 
 if TYPE_CHECKING:
@@ -83,6 +83,14 @@ class BinanceSubscriber(Subscriber):
                 if not api.handler or api.handler.closed:
                     return
                 await api.handler.send(command(subscription, symbols[i:i+400]))
+        except (CancelledError, ConnectionClosedError) as e:
+            api.logger.warning(f"{self.__class__.__name__} - {e}")
+
+    async def send_request(self, command: callable, api: BinanceWssApi, channel_name: str):
+        try:
+            if not api.handler or api.handler.closed:
+                return
+            await api.handler.send(command(api.listen_key, channel_name))
         except (CancelledError, ConnectionClosedError) as e:
             api.logger.warning(f"{self.__class__.__name__} - {e}")
 
@@ -199,10 +207,9 @@ class BinancePositionSubscriber(BinanceSubscriber):
         positions_state_data = await api.storage.get_pattern(
             f'{self.subscription}.{api.account_id}.{api.name}.{api.schema}.*'.lower()
         )
-        positions_state = utils.load_positions_state(positions_state_data)
         exchange_rates = await api.storage.get('exchange_rates', exchange=api.name, schema=api.schema)
         return {
-            'position_state': positions_state,
+            'positions_state': utils.load_positions_state(positions_state_data),
             'exchange_rates': exchange_rates,
         }
 
@@ -217,10 +224,37 @@ class BinanceFuturesPositionSubscriber(BinancePositionSubscriber):
         ) as client:
             try:
                 exchange_rates = await api.storage.get('exchange_rates', exchange=api.name, schema=api.schema)
-                position_state = await client.futures_account_v2()
+                account_info = await client.futures_account_v2()
                 leverage_brackets = await client.futures_leverage_bracket()
                 return {
-                    'position_state': utils.load_futures_positions_state(position_state),
+                    'positions_state': utils.load_futures_positions_state(account_info),
+                    'leverage_brackets': utils.load_leverage_brackets_as_dict(leverage_brackets),
+                    'exchange_rates': exchange_rates,
+                }
+            except Exception as e:
+                raise QueryError(f"Init partial state error: {e}")
+
+
+class BinanceFuturesCoinPositionSubscriber(BinanceFuturesPositionSubscriber):
+
+    async def request_positions(self, api: BinanceWssApi):
+        while True:
+            await self.send_request(cmd_request, api, self.subscription)
+            await asyncio.sleep(10)
+
+    async def init_partial_state(self, api: BinanceWssApi) -> dict:
+        api.tasks.append(asyncio.create_task(self.request_positions(api)))
+        api.tasks.append(asyncio.create_task(self.subscribe_exchange_rates(api)))
+        async with AsyncClient(
+            api_key=api.auth.get('api_key'), api_secret=api.auth.get('api_secret'), testnet=api.test
+        ) as client:
+            try:
+                account_info = await client.futures_coin_account()
+                state_data = await api.storage.get('symbol', api.name, api.schema)
+                leverage_brackets = await client.futures_coin_leverage_bracket()
+                exchange_rates = await api.storage.get('exchange_rates', exchange=api.name, schema=api.schema)
+                return {
+                    'positions_state': utils.load_futures_coin_positions_state(account_info, state_data),
                     'leverage_brackets': utils.load_leverage_brackets_as_dict(leverage_brackets),
                     'exchange_rates': exchange_rates,
                 }

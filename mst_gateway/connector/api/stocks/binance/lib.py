@@ -265,31 +265,6 @@ class Client(BaseClient):
             return res['userAssets']
         return []
 
-    def get_futures_assets_balance(self, **params):
-        """Get assets balance.
-
-        :returns: list
-
-        .. code-block:: python
-
-            [
-                {
-                    'accountAlias': 'fWXqfWsRTinY',
-                    'asset': 'USDT',
-                    'balance': '0.00000000',
-                    'withdrawAvailable': '0.00000000',
-                    'updateTime': 0
-                },
-            ]
-
-        :raises: BinanceRequestException, BinanceAPIException
-
-        """
-        res = self.futures_account_balance(**params)
-        if res:
-            return res
-        return {}
-
     def create_futures_loan(self, **params):
         """Apply for a loan.
 

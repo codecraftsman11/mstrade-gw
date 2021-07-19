@@ -84,3 +84,15 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
         'order': serializers.BinanceOrderSerializer,
         'position': serializers.BinanceFuturesPositionSerializer,
     }
+
+
+class BinanceFuturesCoinWssRouter(BinanceWssRouter):
+    table_route_map = {
+        'ACCOUNT_UPDATE': 'position',
+        'markPriceUpdate': 'position',
+        'position': 'position',
+    }
+
+    serializer_classes = {
+        'position': serializers.BinanceFuturesCoinPositionSerializer,
+    }

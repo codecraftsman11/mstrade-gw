@@ -4,10 +4,10 @@ from typing import Optional, Union
 from mst_gateway.exceptions import ConnectorError
 from websockets import client
 from . import subscribers as subscr_class
-from .router import BinanceWssRouter, BinanceFuturesWssRouter
+from .router import BinanceWssRouter, BinanceFuturesWssRouter, BinanceFuturesCoinWssRouter
 from .utils import is_auth_ok, make_cmd
 from ..lib import AsyncClient
-from ..utils import to_float
+from ..utils import to_float, remap_futures_coin_position_request_data
 from .... import OrderSchema
 from ....wss import StockWssApi
 from .. import var
@@ -51,6 +51,7 @@ class BinanceWssApi(StockWssApi):
                  register_state=True):
         super().__init__(name, account_name, url, test, auth, logger, options, throttle_rate,
                          throttle_storage, schema, state_storage, register_state)
+        self.listen_key = None
 
     async def _refresh_key(self):
         while True:
@@ -66,10 +67,10 @@ class BinanceWssApi(StockWssApi):
         return await super().open(**kwargs)
 
     async def _generate_auth_url(self):
-        key = await self._generate_listen_key()
-        self._url = f"{self._url}/{key}"
+        self.listen_key = await self.generate_listen_key()
+        self._url = f"{self._url}/{self.listen_key}"
 
-    async def _generate_listen_key(self):
+    async def generate_listen_key(self):
         async with AsyncClient(
                 api_key=self.auth.get('api_key'), api_secret=self.auth.get('api_secret'), testnet=self.test
         ) as bin_client:
@@ -80,6 +81,8 @@ class BinanceWssApi(StockWssApi):
                     key = await bin_client.margin_stream_get_listen_key()
                 elif self.schema == OrderSchema.futures:
                     key = await bin_client.futures_stream_get_listen_key()
+                elif self.schema == OrderSchema.futures_coin:
+                    key = await bin_client.futures_coin_stream_get_listen_key()
                 else:
                     raise ConnectorError(f"Invalid schema {self.schema}.")
             except Exception as e:
@@ -122,7 +125,7 @@ class BinanceWssApi(StockWssApi):
             return _message
         return None
 
-    def __split_message_map(self, key: str) -> Optional[callable]:
+    def _split_message_map(self, key: str) -> Optional[callable]:
         _map = {
             'depthUpdate': self.split_order_book,
             'executionReport': self.split_order,
@@ -131,7 +134,7 @@ class BinanceWssApi(StockWssApi):
         return _map.get(key)
 
     def _split_message(self, message):
-        method = self.__split_message_map(message['table'])
+        method = self._split_message_map(message['table'])
         if not method:
             return super(BinanceWssApi, self)._split_message(message)
         return super(BinanceWssApi, self)._split_message(method(message=message))
@@ -224,7 +227,7 @@ class BinanceFuturesWssApi(BinanceWssApi):
         super().__init__(name, account_name, url, test, auth, logger, options, throttle_rate,
                          throttle_storage, schema, state_storage, register_state)
 
-    def __split_message_map(self, key: str) -> Optional[callable]:
+    def _split_message_map(self, key: str) -> Optional[callable]:
         _map = {
             'depthUpdate': self.split_order_book,
             'ORDER_TRADE_UPDATE': self.split_order,
@@ -232,8 +235,7 @@ class BinanceFuturesWssApi(BinanceWssApi):
         return _map.get(key)
 
     def _split_message(self, message):
-        method = self.__split_message_map(message['table'])
-        if not method:
+        if not (method := self._split_message_map(message['table'])):
             return super(BinanceWssApi, self)._split_message(message)
         return super(BinanceWssApi, self)._split_message(method(message=message))
 
@@ -245,3 +247,52 @@ class BinanceFuturesWssApi(BinanceWssApi):
             action = self.define_action_by_order_status(item.get('X'))
             _messages.append(dict(**message, action=action, data=[item]))
         return _messages
+
+
+class BinanceFuturesCoinWssApi(BinanceFuturesWssApi):
+    BASE_URL = 'wss://dstream.binance.com/ws'
+    TEST_URL = 'wss://dstream.binancefuture.com/ws'
+
+    subscribers = {}
+    auth_subscribers = {
+        'position': subscr_class.BinanceFuturesCoinPositionSubscriber(),
+    }
+
+    router_class = BinanceFuturesCoinWssRouter
+
+    def _lookup_table(self, message: Union[dict, list]) -> Optional[dict]:
+        if isinstance(message, dict) and message.get('result'):
+            try:
+                result = message.get('result', [])[0]
+                table = result.get('req', []).split('@')[1]
+            except IndexError:
+                return None
+            _message = {
+                'table': table,
+                'action': 'update',
+                'data': []
+            }
+            if data := result.get('res', {}).get('positions', []):
+                _message['data'] = data
+            return _message
+        return super()._lookup_table(message)
+
+    def _split_position(self, message: dict) -> list:
+        _messages = []
+        for position in message.pop('data', []):
+            if position.get('positionSide', '') == var.BinancePositionSideMode.BOTH:
+                _messages.append(dict(**message, data=[
+                    remap_futures_coin_position_request_data(position)
+                ]))
+        return _messages
+
+    def _split_message_map(self, key: str) -> Optional[callable]:
+        _map = {
+            'position': self._split_position,
+        }
+        return _map.get(key)
+
+    def _split_message(self, message):
+        if not (method := self._split_message_map(message['table'])):
+            return super()._split_message(message)
+        return super(BinanceWssApi, self)._split_message(method(message=message))
