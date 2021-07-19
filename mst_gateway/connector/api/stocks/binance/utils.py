@@ -12,8 +12,8 @@ from ...types.asset import to_system_asset
 
 
 def load_symbol_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
-    symbol = raw_data.get('symbol')
     schema = schema.lower()
+    symbol = raw_data.get('symbol')
     symbol_time = to_date(raw_data.get('closeTime'))
     price = to_float(raw_data.get('lastPrice'))
     price24 = to_float(raw_data.get('weightedAvgPrice'))

@@ -1,3 +1,4 @@
+import re
 from typing import Optional, Tuple
 from mst_gateway.calculator.base import FinFactory
 from mst_gateway.connector import api
@@ -68,11 +69,13 @@ class BinanceFuturesCoinFinFactory(BinanceFinFactory):
 
     @classmethod
     def get_contract_multiplier(cls, symbol: Optional[str]) -> Optional[int]:
-        if symbol:
-            if 'btc' in symbol.lower():
+        try:
+            _symbol = symbol.lower()
+            if re.match(r"^btcusd(t)?$", _symbol) or re.match(r"^btcusd_\S{4,6}$", _symbol):
                 return 100
             return 10
-        return None
+        except (TypeError, AttributeError):
+            return None
 
     @classmethod
     def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float], Optional[bool]]:
