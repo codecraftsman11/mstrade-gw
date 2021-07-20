@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Optional
 from .base import BitmexSerializer
-from ...utils import load_order_book_data
+from ...utils import load_ws_order_book_data
 
 
 class BitmexOrderBookSerializer(BitmexSerializer):
@@ -17,7 +17,7 @@ class BitmexOrderBookSerializer(BitmexSerializer):
         if self._wss_api.register_state:
             if (state_data := self._wss_api.get_state_data(item.get('symbol'))) is None:
                 return None
-        return load_order_book_data(item, state_data)
+        return load_ws_order_book_data(item, state_data)
 
     def state(self, symbol: str = None) -> Optional[dict]:
         return None
