@@ -92,10 +92,12 @@ class BinanceFuturesCoinWssRouter(BinanceWssRouter):
         'bookTicker': 'symbol',
         'kline': 'quote_bin',
         'trade': 'trade',
+        'depthUpdate': 'order_book',
     }
 
     serializer_classes = {
         'symbol': serializers.BinanceFuturesSymbolSerializer,
         'quote_bin': serializers.BinanceQuoteBinSerializer,
         'trade': serializers.BinanceTradeSerializer,
+        'order_book': serializers.BinanceOrderBookSerializer,
     }
