@@ -90,8 +90,10 @@ class BinanceFuturesCoinWssRouter(BinanceWssRouter):
     table_route_map = {
         '24hrTicker': 'symbol',
         'bookTicker': 'symbol',
+        'kline': 'quote_bin',
     }
 
     serializer_classes = {
         'symbol': serializers.BinanceFuturesSymbolSerializer,
+        'quote_bin': serializers.BinanceQuoteBinSerializer,
     }

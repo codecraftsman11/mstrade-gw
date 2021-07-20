@@ -80,6 +80,8 @@ class BinanceWssApi(StockWssApi):
                     key = await bin_client.margin_stream_get_listen_key()
                 elif self.schema == OrderSchema.futures:
                     key = await bin_client.futures_stream_get_listen_key()
+                elif self.schema == OrderSchema.futures_coin:
+                    key = await bin_client.futures_coin_stream_get_listen_key()
                 else:
                     raise ConnectorError(f"Invalid schema {self.schema}.")
             except Exception as e:
@@ -253,6 +255,7 @@ class BinanceFuturesCoinWssApi(BinanceFuturesWssApi):
 
     subscribers = {
         'symbol': subscr_class.BinanceFuturesSymbolSubscriber(),
+        'quote_bin': subscr_class.BinanceQuoteBinSubscriber(),
     }
     auth_subscribers = {}
 
