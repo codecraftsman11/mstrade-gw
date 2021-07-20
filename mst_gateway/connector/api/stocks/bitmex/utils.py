@@ -264,9 +264,10 @@ def load_position_ws_data(raw_data: dict, state_data: Optional[dict], exchange_r
     side = load_position_side_by_volume(volume)
     unrealised_pnl = to_xbt(raw_data.get('unrealisedPnl'))
     leverage_type, leverage = load_leverage(raw_data)
+    _timestamp = raw_data.get('timestamp') or datetime.now()
     data = {
-        'tm': to_iso_datetime(raw_data.get('timestamp')),
-        'ts': time2timestamp(raw_data.get('timestamp')),
+        'tm': to_iso_datetime(_timestamp),
+        'ts': time2timestamp(_timestamp),
         's': raw_data.get('symbol'),
         'mp': to_float(raw_data.get('markPrice')),
         'vl': volume,
@@ -286,18 +287,20 @@ def load_position_ws_data(raw_data: dict, state_data: Optional[dict], exchange_r
     return data
 
 
-def load_ws_position_unrealised_pnl(base: float, exchange_rates: dict) -> dict:
+def load_ws_position_unrealised_pnl(base: Union[float, dict], exchange_rates: dict) -> dict:
     xbt_to_usd = exchange_rates.get('xbt')
-    return {
-        'base': base,
-        'btc': base,
-        'usd': to_usd(base, xbt_to_usd),
-    }
+    if isinstance(base, float):
+        return {
+            'base': base,
+            'btc': base,
+            'usd': to_usd(base, xbt_to_usd),
+        }
+    return base
 
 
 def to_usd(xbt_value: float, xbt_to_usd: float) -> Optional[float]:
     try:
-        return xbt_value * xbt_to_usd
+        return round(xbt_value * xbt_to_usd, 4)
     except TypeError:
         return None
 
