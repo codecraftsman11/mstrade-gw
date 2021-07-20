@@ -257,6 +257,7 @@ class BinanceFuturesCoinWssApi(BinanceFuturesWssApi):
         'symbol': subscr_class.BinanceFuturesSymbolSubscriber(),
         'quote_bin': subscr_class.BinanceQuoteBinSubscriber(),
         'trade': subscr_class.BinanceTradeSubscriber(),
+        'order_book': subscr_class.BinanceOrderBookSubscriber(),
     }
     auth_subscribers = {}
 
