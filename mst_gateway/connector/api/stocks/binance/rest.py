@@ -274,10 +274,11 @@ class BinanceRestApi(StockRestApi):
         if symbol is not None:
             options['symbol'] = utils.symbol2stock(symbol)
             state_data = self.storage.get('symbol', self.name, schema).get(symbol.lower(), {})
+        schema = schema.lower()
         if active_only:
-            data = self._binance_api(schema_handlers[schema.lower()][0], **options)
+            data = self._binance_api(schema_handlers[schema][0], **options)
             return [utils.load_order_data(order, state_data) for order in reversed(data)]
-        data = self._binance_api(schema_handlers[schema.lower()][1], **options)
+        data = self._binance_api(schema_handlers[schema][1], **options)
         return [utils.load_order_data(order, state_data) for order in reversed(data)][offset:count]
 
     def list_trades(self, symbol: str, schema: str, **params) -> list:
