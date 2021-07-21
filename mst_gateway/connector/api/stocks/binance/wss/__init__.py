@@ -261,6 +261,7 @@ class BinanceFuturesCoinWssApi(BinanceFuturesWssApi):
     }
     auth_subscribers = {
         'wallet': subscr_class.BinanceWalletSubscriber(),
+        'order': subscr_class.BinanceOrderSubscriber(),
     }
 
     router_class = BinanceFuturesCoinWssRouter

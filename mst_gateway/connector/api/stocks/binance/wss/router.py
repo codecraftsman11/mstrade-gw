@@ -94,6 +94,7 @@ class BinanceFuturesCoinWssRouter(BinanceWssRouter):
         'trade': 'trade',
         'depthUpdate': 'order_book',
         'ACCOUNT_UPDATE': 'wallet',
+        'ORDER_TRADE_UPDATE': 'order',
     }
 
     serializer_classes = {
@@ -102,4 +103,5 @@ class BinanceFuturesCoinWssRouter(BinanceWssRouter):
         'trade': serializers.BinanceTradeSerializer,
         'order_book': serializers.BinanceOrderBookSerializer,
         'wallet': serializers.BinanceFuturesWalletSerializer,
+        'order': serializers.BinanceOrderSerializer,
     }
