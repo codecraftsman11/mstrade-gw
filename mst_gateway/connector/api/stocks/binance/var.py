@@ -46,6 +46,27 @@ DEFAULT_PARAMETERS = [
 
 PARAMETERS_BY_ORDER_TYPE_MAP = {
 
+    api.OrderSchema.futures_coin: {
+        'MARKET': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'positionSide',
+                'reduceOnly'
+            ],
+            'additional_params': {}
+        },
+        'LIMIT': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'positionSide',
+                'reduceOnly',
+                'timeInForce',
+                'price'
+            ],
+            'additional_params': {}
+        },
+    },
+
     api.OrderSchema.futures: {
         'MARKET': {
             'params': [

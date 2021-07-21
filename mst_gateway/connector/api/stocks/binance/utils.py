@@ -11,16 +11,18 @@ from .converter import BinanceOrderTypeConverter
 from ...types.asset import to_system_asset
 
 
-def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+def load_symbol_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
+    schema = schema.lower()
     symbol = raw_data.get('symbol')
     symbol_time = to_date(raw_data.get('closeTime'))
     price = to_float(raw_data.get('lastPrice'))
     price24 = to_float(raw_data.get('weightedAvgPrice'))
-    face_price, _reversed = BinanceFinFactory.calc_face_price(symbol, price)
+    face_price, _reversed = BinanceFinFactory.calc_face_price(symbol, price, schema=schema)
     data = {
         'time': symbol_time,
         'timestamp': raw_data.get('closeTime'),
         'symbol': symbol,
+        'schema': schema,
         'price': price,
         'price24': price24,
         'delta': delta(price, price24),
@@ -37,7 +39,6 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
             'tick': state_data.get('tick'),
             'volume_tick': state_data.get('volume_tick'),
             'system_symbol': state_data.get('system_symbol'),
-            'schema': state_data.get('schema'),
             'symbol_schema': state_data.get('symbol_schema'),
             'created': to_date(state_data.get('created')),
             'max_leverage': state_data.get('max_leverage')
@@ -282,24 +283,9 @@ def load_quote_bin_data(raw_data: list, state_data: Optional[dict]) -> dict:
     return data
 
 
-def load_spot_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
-    return _load_order_data(raw_data, 'time', state_data)
-
-
-def load_spot_create_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
-    return _load_order_data(raw_data, 'transactTime', state_data)
-
-
-def load_margin_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
-    return _load_order_data(raw_data, 'transactTime', state_data)
-
-
-def load_futures_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
-    return _load_order_data(raw_data, 'updateTime', state_data)
-
-
-def _load_order_data(raw_data: dict, time_field: Optional[str], state_data: Optional[dict]) -> dict:
-    _time = to_date(raw_data.get(time_field))
+def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+    _time_field = raw_data.get('time') or raw_data.get('transactTime') or raw_data.get('updateTime')
+    _time = to_date(_time_field) or datetime.now()
     data = {
         'time': _time,
         'timestamp': time2timestamp(_time),
@@ -810,13 +796,13 @@ def load_repay_data(raw_data: dict) -> dict:
     return data
 
 
-def load_commissions(commissions: dict) -> list:
+def load_commissions(raw_data: dict) -> list:
     return [
         {
             'maker': to_float(commission['makerCommission']),
             'taker': to_float(commission['takerCommission']),
             'type': f'VIP{commission["level"]}',
-        } for commission in commissions
+        } for commission in raw_data
     ]
 
 
@@ -947,7 +933,7 @@ def load_order_book_ws_data(raw_data: dict, order: list, side: int, state_data: 
     return data
 
 
-def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+def load_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
     """
     {
       "e": "24hrTicker",  // Event type
@@ -975,14 +961,16 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
       "n": 18151          // Total number of trades
     }
     """
+    schema = schema.lower()
     symbol = raw_data.get('s')
     price = to_float(raw_data.get('c'))
     price24 = to_float(raw_data.get('w'))
-    face_price, _reversed = BinanceFinFactory.calc_face_price(symbol, price)
+    face_price, _reversed = BinanceFinFactory.calc_face_price(symbol, price, schema=schema)
     data = {
         'time': to_iso_datetime(raw_data.get('E')),
         'timestamp': raw_data.get('E'),
         'symbol': symbol,
+        'schema': schema,
         'price': price,
         'price24': price24,
         'delta': delta(price, price24),
@@ -999,7 +987,6 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
             'tick': state_data.get('tick'),
             'volume_tick': state_data.get('volume_tick'),
             'system_symbol': state_data.get('system_symbol'),
-            'schema': state_data.get('schema'),
             'symbol_schema': state_data.get('symbol_schema'),
             'created': to_iso_datetime(to_date(state_data.get('created'))),
             'max_leverage': state_data.get('max_leverage')
