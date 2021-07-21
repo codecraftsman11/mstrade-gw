@@ -18,7 +18,7 @@ class BinanceSymbolSerializer(BinanceSerializer):
         if self._wss_api.register_state:
             if (state_data := self._wss_api.get_state_data(item.get('s'))) is None:
                 return None
-        return load_symbol_ws_data(item, state_data)
+        return load_symbol_ws_data(self._wss_api.schema, item, state_data)
 
 
 class BinanceFuturesSymbolSerializer(BinanceSymbolSerializer):
@@ -43,4 +43,4 @@ class BinanceFuturesSymbolSerializer(BinanceSymbolSerializer):
             if (state_data := self._wss_api.get_state_data(item.get('s'))) is None:
                 return None
         item.update(**self._book_ticker.get(_symbol, {}))
-        return load_symbol_ws_data(item, state_data)
+        return load_symbol_ws_data(self._wss_api.schema, item, state_data)

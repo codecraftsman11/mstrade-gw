@@ -182,6 +182,30 @@ class Client(BaseClient):
         result = self._request('get', uri, signed)
         return result.get('data', [])
 
+    def futures_coin_trade_level(self, **params):
+        """
+        :returns: API response
+
+        .. code-block:: python
+            [
+                {
+                    'level': 0,
+                    'bnbFloor': 0.0,
+                    'bnbCeil': 50.0,
+                    'btcFloor': 0.0,
+                    'btcCeil': 250.0,
+                    'makerCommission': 0.0002,
+                    'takerCommission': 0.0004,
+                    'buyerCommission': 0.0,
+                    'sellerCommission': 0.0
+                }
+            ]
+        """
+        uri = 'https://www.binance.com/gateway-api/v1/public/delivery/trade-level/get'
+        signed = False
+        result = self._request('get', uri, signed)
+        return result.get('data', [])
+
     def futures_account_v2(self, **params):
         """Get current account information.
 
