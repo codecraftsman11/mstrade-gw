@@ -32,6 +32,7 @@ class OrderSchemaTradeMode(ClassWithAttributes):
     margin3 = ['margin3']
     futures = ['futures']
     exchange = ['trade', 'exchange']
+    futures_coin = ['futures_coin']
 
     @classmethod
     def schema_pairs(cls):

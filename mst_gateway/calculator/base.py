@@ -1,20 +1,17 @@
 from abc import abstractmethod
-from typing import (
-    Union, Tuple, Optional
-)
-from mst_gateway.connector import api
+from typing import Optional, Tuple, Union
 
 
 class FinFactory:
 
     @classmethod
     @abstractmethod
-    def calc_face_price(cls, symbol: str, price: float) -> Tuple[Optional[float], Optional[bool]]:
+    def calc_face_price(cls, symbol: str, price: float, **kwargs) -> Tuple[Optional[float], Optional[bool]]:
         raise NotImplementedError
 
     @classmethod
     @abstractmethod
-    def calc_price(cls, symbol: str, face_price: float) -> Optional[float]:
+    def calc_price(cls, symbol: str, face_price: float, **kwargs) -> Optional[float]:
         raise NotImplementedError
 
     @classmethod
@@ -34,6 +31,16 @@ class FinFactory:
         raise NotImplementedError
 
     @classmethod
+    @abstractmethod
+    def direction_by_side(cls, side: int) -> int:
+        raise NotImplementedError
+
+    @classmethod
+    @abstractmethod
+    def side_by_direction(cls, direction: int) -> int:
+        raise NotImplementedError
+
+    @classmethod
     def calc_unrealised_pnl_by_side(cls, entry_price: float, mark_price: float, volume: float,
                                     side: int) -> Optional[float]:
         if None in (entry_price, mark_price, volume, side):
@@ -48,20 +55,8 @@ class FinFactory:
         return (mark_price - entry_price) * direction * abs(volume)
 
     @classmethod
-    def direction_by_side(cls, side: int) -> int:
-        if side == api.BUY:
-            return 1
-        return -1
-
-    @classmethod
-    def side_by_direction(cls, direction: int) -> int:
-        if direction == 1:
-            return api.BUY
-        return api.SELL
-
-    @classmethod
-    def calc_mark_price(cls, volume: float, entry_price: float, unrealised_pnl: float):
+    def calc_mark_price(cls, volume: float, entry_price: float, unrealised_pnl: float) -> Optional[float]:
         try:
             return (entry_price * volume + unrealised_pnl) / volume
-        except (ValueError, ZeroDivisionError):
-            return 0
+        except (TypeError, ZeroDivisionError):
+            return None
