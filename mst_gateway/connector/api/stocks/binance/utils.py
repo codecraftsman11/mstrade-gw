@@ -973,7 +973,7 @@ def load_trade_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'tm': to_iso_datetime(raw_data.get('E')),
         'ts': raw_data.get('E'),
         'p': to_float(raw_data.get('p')),
-        'v': to_float(raw_data.get('q')),
+        'vl': to_float(raw_data.get('q')),
         'sd': load_order_side(raw_data.get('m')),
         's': raw_data.get('s')
     }
