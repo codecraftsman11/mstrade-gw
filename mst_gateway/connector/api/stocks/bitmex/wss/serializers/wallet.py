@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Optional, TYPE_CHECKING
 from .base import BitmexSerializer
-from ...utils import load_wallet_data
+from ...utils import load_ws_wallet_data
 
 if TYPE_CHECKING:
     from ... import BitmexWssApi
@@ -25,30 +25,30 @@ class BitmexWalletSerializer(BitmexSerializer):
         if not self.is_item_valid(message, item):
             return None
         state = self._get_state('wallet')
-        balances = state[0].get('balances', []) if state else []
+        balances = state[0].get('bls', []) if state else []
         for balance in balances:
-            if balance.get('currency', '').lower() == item.get('currency', '').lower():
+            if balance.get('cur', '').lower() == item.get('currency', '').lower():
                 self._check_balances_data(balance, item)
         if self._wss_api.register_state and not self.currency_state:
             return None
         assets = ('btc', 'usd')
-        fields = ('balance', 'unrealised_pnl', 'margin_balance')
-        return load_wallet_data(item, self.currency_state, assets, fields)
+        fields = ('bl', 'upnl', 'mbl')
+        return load_ws_wallet_data(item, self.currency_state, assets, fields)
 
     def _key_map(self, key: str):
         _map = {
-            'balance': 'walletBalance',
-            'margin_balance': 'marginBalance',
-            'available_margin': 'availableMargin',
-            'init_margin': 'initMargin',
-            'withdraw_balance': 'withdrawableMargin',
+            'bl': 'walletBalance',
+            'mbl': 'marginBalance',
+            'am': 'availableMargin',
+            'im': 'initMargin',
+            'wbl': 'withdrawableMargin',
         }
         return _map.get(key)
 
     def _check_balances_data(self, balance, item):
         for k, v in balance.items():
             _mapped_key = self._key_map(k)
-            if _mapped_key:
+            if _mapped_key not in item:
                 item[_mapped_key] = balance[k]
 
     async def _append_item(self, data: list, message: dict, item: dict):
