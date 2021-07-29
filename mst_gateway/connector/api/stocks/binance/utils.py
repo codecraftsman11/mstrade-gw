@@ -754,14 +754,18 @@ def _get_margin_balance(balance: dict, max_borrow: float = None, interest_rate: 
     return wallet_data
 
 
-def isolated_margin_balance_data(balances: list, max_borrow: float = None, interest_rate: float = None):
+def isolated_margin_balance_data(balances: list, max_borrow: dict = None, interest_rate: dict = None):
     result = list()
+    max_borrow_base_asset = _margin_max_borrow(max_borrow.get('base_asset')) if max_borrow else None
+    max_borrow_quote_asset = _margin_max_borrow(max_borrow.get('quote_asset')) if max_borrow else None
+    interest_rate_base_asset = interest_rate.get('base_asset') if max_borrow else None
+    interest_rate_quote_asset = interest_rate.get('quote_asset') if max_borrow else None
     for b in balances:
         try:
-            base_asset = _get_margin_balance(b['baseAsset'], max_borrow, interest_rate)
-            quote_asset = _get_margin_balance(b['quoteAsset'], max_borrow, interest_rate)
+            base_asset = _get_margin_balance(b['baseAsset'], max_borrow_base_asset, interest_rate_base_asset)
+            quote_asset = _get_margin_balance(b['quoteAsset'], max_borrow_quote_asset, interest_rate_quote_asset)
             result.append({
-                b['symbol']: {
+                b['symbol'].lower(): {
                     'base_asset': base_asset,
                     'quote_asset': quote_asset,
                     'type': to_wallet_state_type('trade' in (base_asset.get('type'), quote_asset.get('type'))),

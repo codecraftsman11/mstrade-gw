@@ -445,7 +445,25 @@ class BinanceRestApi(StockRestApi):
         if schema.lower() == OrderSchema.margin3:
             _isolate = self._binance_api(self._handler.get_isolated_margin_account, symbols=asset, **kwargs)
             try:
-                _isolate_data = utils.isolated_margin_balance_data(_isolate.get('assets', []))[0]
+                base_asset = _isolate["assets"][0]["baseAsset"]["asset"].upper()
+                quote_asset = _isolate["assets"][0]["quoteAsset"]["asset"].upper()
+                _vip = self.get_vip_level(schema.lower())
+                interest_rate = self._binance_api(self._handler.get_public_interest_rate, **kwargs)
+                _interest_rate = {
+                    'base_asset': utils.get_interest_rate(interest_rate, _vip, base_asset),
+                    'quote_asset': utils.get_interest_rate(interest_rate, _vip, quote_asset)
+                }
+                _borrow = {
+                    'base_asset': self._binance_api(self._handler.get_max_margin_loan, asset=base_asset),
+                    'quote_asset': self._binance_api(self._handler.get_max_margin_loan, asset=quote_asset),
+                }
+            except (KeyError, IndexError):
+                _borrow = None
+                _interest_rate = None
+            try:
+                _isolate_data = utils.isolated_margin_balance_data(
+                    _isolate.get('assets', []), max_borrow=_borrow, interest_rate=_interest_rate
+                )[0]
             except IndexError:
                 raise ConnectorError('Symbol does not exist.')
             return {
