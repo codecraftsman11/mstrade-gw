@@ -354,6 +354,8 @@ class BinanceRestApi(StockRestApi):
             return self._spot_wallet(**kwargs)
         if schema == OrderSchema.margin2:
             return self._margin_wallet(**kwargs)
+        if schema == OrderSchema.margin3:
+            return self._isolated_margin_wallet(**kwargs)
         if schema in (OrderSchema.futures, OrderSchema.futures_coin):
             return self._futures_wallet(schema, **kwargs)
         raise ConnectorError(f"Invalid schema {schema}.")
@@ -371,6 +373,13 @@ class BinanceRestApi(StockRestApi):
         data = self._binance_api(self._handler.get_margin_account, **kwargs)
         currencies = self.storage.get('currency', self.name, OrderSchema.margin2)
         return utils.load_margin_wallet_data(data, currencies, assets, fields)
+
+    def _isolated_margin_wallet(self, **kwargs):
+        assets = kwargs.get('assets', ('btc', 'usd'))
+        fields = ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed', 'interest')
+        data = self._binance_api(self._handler.get_isolated_margin_account, **kwargs)
+        currencies = self.storage.get('currency', self.name, OrderSchema.margin2)
+        return utils.load_isolated_margin_wallet_data(data, currencies, assets, fields)
 
     def _futures_wallet(self, schema: str, **kwargs):
         assets = kwargs.get('assets', ('btc', 'usd'))
@@ -392,15 +401,14 @@ class BinanceRestApi(StockRestApi):
         )
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
-        if schema.lower() == OrderSchema.exchange:
-            _spot = self._binance_api(self._handler.get_account, **kwargs)
-            return {
-                OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
-            }
         try:
             _spot = self._binance_api(self._handler.get_account, **kwargs)
         except ConnectorError:
             _spot = {}
+        if schema.lower() == OrderSchema.exchange:
+            return {
+                OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
+            }
         if schema.lower() == OrderSchema.margin2:
             _margin = self._binance_api(self._handler.get_margin_account, **kwargs)
             _borrow = self._binance_api(self._handler.get_max_margin_loan, asset=asset.upper())
@@ -412,6 +420,15 @@ class BinanceRestApi(StockRestApi):
             return {
                 OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
                 OrderSchema.margin2: utils.load_margin_wallet_detail_data(_margin, asset, _borrow, _interest_rate)
+            }
+        if schema.lower() == OrderSchema.margin3:
+            _isolate = self._binance_api(self._handler.get_isolated_margin_account, symbols=asset, **kwargs)
+            try:
+                _isolate_data = utils.isolated_margin_balance_data(_isolate.get('assets', []))[0]
+            except IndexError:
+                raise ConnectorError('Symbol does not exist.')
+            return {
+                OrderSchema.margin3: _isolate_data
             }
         if schema.lower() in (OrderSchema.futures, OrderSchema.futures_coin):
             schema_handlers = {
@@ -453,12 +470,14 @@ class BinanceRestApi(StockRestApi):
             return utils.load_futures_asset_balance(raw_data)
         raise ConnectorError(f"Invalid schema {schema}.")
 
-    def wallet_transfer(self, from_wallet: str, to_wallet: str, asset: str, amount: float) -> dict:
+    def wallet_transfer(self, from_wallet: str, to_wallet: str, asset: str, amount: float, symbol: str = None) -> dict:
         schemas_handlers = {
             (OrderSchema.exchange, OrderSchema.margin2): self._handler.transfer_spot_to_margin,
+            (OrderSchema.exchange, OrderSchema.margin3): self._handler.transfer_spot_to_isolated_margin,
             (OrderSchema.exchange, OrderSchema.futures): self._handler.transfer_spot_to_futures,
             (OrderSchema.exchange, OrderSchema.futures_coin): self._handler.transfer_spot_to_futures_coin,
             (OrderSchema.margin2, OrderSchema.exchange): self._handler.transfer_margin_to_spot,
+            (OrderSchema.margin3, OrderSchema.exchange): self._handler.transfer_isolated_margin_to_spot,
             (OrderSchema.futures, OrderSchema.exchange): self._handler.transfer_futures_to_spot,
             (OrderSchema.futures_coin, OrderSchema.exchange): self._handler.transfer_futures_coin_to_spot,
         }
@@ -467,6 +486,7 @@ class BinanceRestApi(StockRestApi):
                 schemas_handlers[(from_wallet.lower(), to_wallet.lower())],
                 asset=asset.upper(),
                 amount=str(amount),
+                symbol=symbol
             )
         except KeyError:
             raise ConnectorError(f"Invalid wallet pair {from_wallet} and {to_wallet}.")
@@ -475,6 +495,16 @@ class BinanceRestApi(StockRestApi):
     def wallet_borrow(self, schema: str, asset: str, amount: float, **kwargs):
         if schema.lower() == OrderSchema.margin2:
             data = self._binance_api(self._handler.create_margin_loan, asset=asset.upper(), amount=str(amount))
+            return utils.load_transaction_id(data)
+        if schema.lower() == OrderSchema.margin3:
+            symbol = kwargs.get('symbol')
+            data = self._binance_api(
+                self._handler.create_margin_loan,
+                asset=asset.upper(),
+                amount=str(amount),
+                isIsolated='TRUE',
+                symbol=symbol.upper()
+            )
             return utils.load_transaction_id(data)
         elif schema.lower() == OrderSchema.futures:
             collateral_asset = kwargs.get('collateral_asset', '')
@@ -494,6 +524,15 @@ class BinanceRestApi(StockRestApi):
     def wallet_repay(self, schema: str, asset: str, amount: float, **kwargs):
         if schema.lower() == OrderSchema.margin2:
             data = self._binance_api(self._handler.repay_margin_loan, asset=asset.upper(), amount=str(amount))
+        elif schema.lower() == OrderSchema.margin3:
+            symbol = kwargs.get('symbol')
+            data = self._binance_api(
+                self._handler.repay_margin_loan,
+                asset=asset.upper(),
+                amount=str(amount),
+                isIsolated='TRUE',
+                symbol=symbol.upper()
+            )
         elif schema.lower() == OrderSchema.futures:
             collateral_asset = kwargs.get('collateral_asset', '')
             data = self._binance_api(
