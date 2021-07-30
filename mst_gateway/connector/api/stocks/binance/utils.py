@@ -562,14 +562,14 @@ def load_margin_asset_balance(raw_data: list) -> dict:
     return load_exchange_asset_balance(raw_data)
 
 
-def load_futures_asset_balance(raw_data: dict) -> dict:
+def load_futures_asset_balance(raw_data: list) -> dict:
     balances = {}
     for balance in raw_data:
         balances[balance.get('asset', '').lower()] = to_float(balance.get('balance', 0))
     return balances
 
 
-def load_futures_coin_asset_balance(raw_data: dict) -> dict:
+def load_futures_coin_asset_balance(raw_data: list) -> dict:
     return load_futures_asset_balance(raw_data)
 
 
