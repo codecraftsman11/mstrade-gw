@@ -570,14 +570,6 @@ def load_total_wallet_summary(total_summary: dict, total_balance: dict, assets: 
     return total_summary
 
 
-def load_currency(currency: dict):
-    return {currency['symbol'].lower(): to_float(currency['price'])}
-
-
-def load_currencies_as_dict(currencies: list):
-    return {cur['symbol'].lower(): to_float(cur['price']) for cur in currencies}
-
-
 def load_commissions(commissions: dict) -> list:
     return [
         {

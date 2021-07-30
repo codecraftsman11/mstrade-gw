@@ -545,22 +545,18 @@ class BinanceRestApi(StockRestApi):
         total_summary = {}
         schema_handlers = {
             OrderSchema.exchange: (
-                self._handler.get_all_tickers,
                 self._handler.get_account,
                 utils.load_spot_wallet_balances
             ),
             OrderSchema.margin2: (
-                self._handler.get_all_tickers,
                 self._handler.get_margin_account,
                 utils.load_margin_wallet_balances
             ),
             OrderSchema.futures: (
-                self._handler.futures_symbol_ticker,
                 self._handler.futures_account_v2,
                 utils.load_future_wallet_balances
             ),
             OrderSchema.futures_coin: (
-                self._handler.futures_coin_symbol_ticker,
                 self._handler.futures_coin_account,
                 utils.load_future_coin_wallet_balances
             ),
@@ -573,8 +569,8 @@ class BinanceRestApi(StockRestApi):
             schema = schema.lower()
             total_balance = {schema: {}}
             try:
-                currencies = utils.load_futures_coin_currencies_as_dict(self._binance_api(schema_handlers[schema][0]))
-                balances = schema_handlers[schema][2](self._binance_api(schema_handlers[schema][1]))
+                currencies = utils.currencies_by_schema(self.storage.get('currency', self.name, schema), schema)
+                balances = schema_handlers[schema][1](self._binance_api(schema_handlers[schema][0]))
             except (KeyError, ConnectorError):
                 continue
             for asset in assets:

@@ -861,23 +861,17 @@ def load_wallet_summary(currencies: dict, balances: list, asset: str,
     return total_balance
 
 
-def load_currencies_as_dict(currencies: list):
-    return {cur['symbol'].lower(): to_float(cur['price']) for cur in currencies}
-
-
-def load_futures_coin_currencies_as_dict(currencies: list):
-    result = {}
-    for cur in currencies:
-        try:
-            _cur, _ = cur['symbol'].split('_', 1)
-        except ValueError:
-            _cur = cur['symbol']
-        result.update({_cur.lower(): to_float(cur['price'])})
-    return result
-
-
-def load_currencies_as_list(currencies: list):
-    return [{cur['symbol'].lower(): to_float(cur['price'])} for cur in currencies]
+def currencies_by_schema(currencies: dict, schema: str):
+    if schema == OrderSchema.futures_coin:
+        _currencies = {}
+        for symbol, price in currencies.items():
+            try:
+                _symbol, _ = symbol.split('_', 1)
+            except ValueError:
+                _symbol = symbol
+            _currencies.update({_symbol: price})
+        return _currencies
+    return currencies
 
 
 def load_leverage_brackets_as_dict(data: list) -> dict:
