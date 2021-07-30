@@ -569,6 +569,10 @@ def load_futures_asset_balance(raw_data: dict) -> dict:
     return balances
 
 
+def load_futures_coin_asset_balance(raw_data: dict) -> dict:
+    return load_futures_asset_balance(raw_data)
+
+
 def _ws_wallet(balances: list, state_balances: dict, state_data: dict, currencies: dict,
                assets: Union[list, tuple], fields: Union[list, tuple]):
     balances.extend([v for v in state_balances.values()])
@@ -835,20 +839,24 @@ def _load_total_wallet_summary_list(summary, fields, is_for_ws=False):
 
 
 def load_wallet_summary(currencies: dict, balances: list, asset: str,
-                        fields: Union[list, tuple, None]):
+                        fields: Union[list, tuple, None], schema):
+
     if fields is None:
         fields = ('balance',)
-    if asset.lower() == 'usd':
+    _usd_asset = 'usdt'
+    if schema == 'futures_coin':
+        _usd_asset = 'usd'
+    if schema != 'futures_coin' and asset.lower() == 'usd':
         asset = 'usdt'
     total_balance = dict()
     for f in fields:
         total_balance[f] = 0
-    _asset_price = (currencies.get(f"{asset}usdt".lower()) or 1)
+    _asset_price = (currencies.get(f"{asset}{_usd_asset}".lower()) or 1)
     for b in balances:
-        if b['currency'].lower() == asset.lower() or b['currency'].lower() == 'usdt':
+        if b['currency'].lower() == asset.lower() or b['currency'].lower() == _usd_asset:
             _price = 1
         else:
-            _price = currencies.get(f"{b['currency']}usdt".lower()) or 0
+            _price = currencies.get(f"{b['currency']}{_usd_asset}".lower()) or 0
         for f in fields:
             total_balance[f] += _price * (b[f] or 0) / _asset_price
     return total_balance
@@ -876,6 +884,17 @@ def load_ws_wallet_summary(currencies: dict, balances: list, asset: str,
 
 def load_currencies_as_dict(currencies: list):
     return {cur['symbol'].lower(): to_float(cur['price']) for cur in currencies}
+
+
+def load_futures_coin_currencies_as_dict(currencies: list):
+    result = {}
+    for cur in currencies:
+        try:
+            _cur, _ = cur['symbol'].split('_', 1)
+        except ValueError:
+            _cur = cur['symbol']
+        result.update({_cur.lower(): to_float(cur['price'])})
+    return result
 
 
 def load_currencies_as_list(currencies: list):

@@ -290,6 +290,12 @@ class Client(BaseClient):
             return res
         return {}
 
+    def get_futures_coin_assets_balance(self, **params):
+        res = self.futures_coin_account_balance(**params)
+        if res:
+            return res
+        return {}
+
     def create_futures_loan(self, **params):
         """Apply for a loan.
 

@@ -343,8 +343,10 @@ class BinanceRestApi(StockRestApi):
             return self._spot_wallet(**kwargs)
         if schema == OrderSchema.margin2:
             return self._margin_wallet(**kwargs)
-        if schema in (OrderSchema.futures, OrderSchema.futures_coin):
+        if schema == OrderSchema.futures:
             return self._futures_wallet(schema, **kwargs)
+        if schema == OrderSchema.futures_coin:
+            return self._futures_coin_wallet(schema, **kwargs)
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def _spot_wallet(self, **kwargs):
@@ -461,6 +463,9 @@ class BinanceRestApi(StockRestApi):
         if schema == OrderSchema.futures:
             raw_data = self._binance_api(self._handler.get_futures_assets_balance)
             return utils.load_futures_asset_balance(raw_data)
+        if schema == OrderSchema.futures_coin:
+            raw_data = self._binance_api(self._handler.get_futures_coin_assets_balance)
+            return utils.load_futures_coin_asset_balance(raw_data)
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def wallet_transfer(self, from_wallet: str, to_wallet: str, asset: str, amount: float) -> dict:
@@ -568,12 +573,12 @@ class BinanceRestApi(StockRestApi):
             schema = schema.lower()
             total_balance = {schema: {}}
             try:
-                currencies = utils.load_currencies_as_dict(self._binance_api(schema_handlers[schema][0]))
+                currencies = utils.load_futures_coin_currencies_as_dict(self._binance_api(schema_handlers[schema][0]))
                 balances = schema_handlers[schema][2](self._binance_api(schema_handlers[schema][1]))
             except (KeyError, ConnectorError):
                 continue
             for asset in assets:
-                total_balance[schema][asset] = utils.load_wallet_summary(currencies, balances, asset, fields)
+                total_balance[schema][asset] = utils.load_wallet_summary(currencies, balances, asset, fields, schema)
             utils.load_total_wallet_summary(total_summary, total_balance, assets, fields)
         return total_summary
 
