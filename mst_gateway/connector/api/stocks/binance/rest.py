@@ -24,8 +24,8 @@ class BinanceRestApi(StockRestApi):
 
     def ping(self, schema: str) -> bool:
         schema_handlers = {
-            OrderSchema.exchange: self._handler.ping,
-            OrderSchema.margin2: self._handler.ping,
+            OrderSchema.exchange: self._handler.spot_ping,
+            OrderSchema.margin2: self._handler.margin_ping,
             OrderSchema.futures: self._handler.futures_ping,
             OrderSchema.futures_coin: self._handler.futures_coin_ping,
         }
@@ -340,40 +340,40 @@ class BinanceRestApi(StockRestApi):
     def get_wallet(self, **kwargs) -> dict:
         schema = kwargs.pop('schema', '').lower()
         if schema == OrderSchema.exchange:
-            return self._spot_wallet(**kwargs)
+            return self._spot_wallet(schema, **kwargs)
         if schema == OrderSchema.margin2:
-            return self._margin_wallet(**kwargs)
+            return self._margin_wallet(schema, **kwargs)
         if schema == OrderSchema.futures:
             return self._futures_wallet(schema, **kwargs)
         if schema == OrderSchema.futures_coin:
             return self._futures_coin_wallet(schema, **kwargs)
         raise ConnectorError(f"Invalid schema {schema}.")
 
-    def _spot_wallet(self, **kwargs):
+    def _spot_wallet(self, schema: str, **kwargs):
         is_for_ws = kwargs.pop('is_for_ws', False)
-        assets = kwargs.get('assets', ('btc', 'usd'))
+        assets = kwargs.pop('assets', ('btc', 'usd'))
         fields = ('balance',)
         data = self._binance_api(self._handler.get_account, **kwargs)
-        currencies = self.storage.get('currency', self.name, OrderSchema.exchange)
+        currencies = self.storage.get('currency', self.name, schema)
         if is_for_ws:
             fields = ('bl',)
-            return utils.load_ws_spot_wallet_data(data, currencies, assets, fields)
-        return utils.load_spot_wallet_data(data, currencies, assets, fields)
+            return utils.load_ws_spot_wallet_data(data, currencies, assets, fields, schema)
+        return utils.load_spot_wallet_data(data, currencies, assets, fields, schema)
 
-    def _margin_wallet(self, **kwargs):
+    def _margin_wallet(self, schema: str, **kwargs):
         is_for_ws = kwargs.pop('is_for_ws', False)
-        assets = kwargs.get('assets', ('btc', 'usd'))
+        assets = kwargs.pop('assets', ('btc', 'usd'))
         fields = ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed', 'interest')
         data = self._binance_api(self._handler.get_margin_account, **kwargs)
-        currencies = self.storage.get('currency', self.name, OrderSchema.margin2)
+        currencies = self.storage.get('currency', self.name, schema)
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl', 'bor', 'ist')
-            return utils.load_ws_margin_wallet_data(data, currencies, assets, fields)
-        return utils.load_margin_wallet_data(data, currencies, assets, fields)
+            return utils.load_ws_margin_wallet_data(data, currencies, assets, fields, schema)
+        return utils.load_margin_wallet_data(data, currencies, assets, fields, schema)
 
     def _futures_wallet(self, schema: str, **kwargs):
         is_for_ws = kwargs.pop('is_for_ws', False)
-        assets = kwargs.get('assets', ('btc', 'usd'))
+        assets = kwargs.pop('assets', ('btc', 'usd'))
         fields = ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed', 'interest')
         data = self._binance_api(self._handler.futures_account_v2, **kwargs)
         try:
@@ -384,10 +384,10 @@ class BinanceRestApi(StockRestApi):
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl', 'bor', 'ist')
             return utils.load_ws_futures_wallet_data(
-                data, currencies, assets, fields, cross_collaterals.get('crossCollaterals', [])
-                )
+                data, currencies, assets, fields, cross_collaterals.get('crossCollaterals', []), schema
+            )
         return utils.load_futures_wallet_data(
-            data, currencies, assets, fields, cross_collaterals.get('crossCollaterals', [])
+            data, currencies, assets, fields, cross_collaterals.get('crossCollaterals', []), schema
         )
 
     def _futures_coin_wallet(self, schema: str, **kwargs):
@@ -400,7 +400,7 @@ class BinanceRestApi(StockRestApi):
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl', 'bor', 'ist')
         return utils.load_futures_coin_wallet_data(
-            data, currencies, assets, fields, cross_collaterals
+            data, currencies, assets, fields, cross_collaterals, schema
         )
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:

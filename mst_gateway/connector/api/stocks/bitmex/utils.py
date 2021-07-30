@@ -481,8 +481,8 @@ def load_ws_wallet_data(raw_data: dict, currencies: dict, assets: Union[tuple, l
     balances_summary = {}
     total_balance = {OrderSchema.margin1: {}}
     for asset in assets:
-        total_balance[OrderSchema.margin1][asset] = load_ws_wallet_summary(
-            currencies, balances, asset, fields
+        total_balance[OrderSchema.margin1][asset] = load_wallet_summary(
+            currencies, balances, asset, fields, is_for_ws=True
         )
     load_total_wallet_summary(balances_summary, total_balance, assets, fields, is_for_ws=True)
     return {
@@ -537,42 +537,22 @@ def to_wallet_state_type(value):
 
 
 def load_wallet_summary(currencies: dict, balances: list, asset: str,
-                        fields: Union[list, tuple, None]):
-    if fields is None:
-        fields = ('balance',)
+                        fields: Union[list, tuple], is_for_ws=False):
+
+    _currency_key = 'cur' if is_for_ws else 'currency'
+    _usd_asset = 'usd'
     if asset.lower() == 'btc':
         asset = 'xbt'
-    total_balance = dict()
+    total_balance = {}
     for f in fields:
         total_balance[f] = 0
     for b in balances:
-        if b['currency'].lower() == asset.lower() or b['currency'].lower() == 'usd':
+        if b[_currency_key].lower() == asset.lower() or b[_currency_key].lower() == _usd_asset:
             _price = 1
             _asset_price = 1
         else:
-            _price = currencies.get(f"{b['currency']}usd".lower()) or 0
-            _asset_price = currencies.get(f"{asset}usd".lower()) or 1
-        for f in fields:
-            total_balance[f] += _price * (b[f] or 0) / _asset_price
-    return total_balance
-
-
-def load_ws_wallet_summary(currencies: dict, balances: list, asset: str,
-                           fields: Union[list, tuple, None]):
-    if fields is None:
-        fields = ('bl',)
-    if asset.lower() == 'btc':
-        asset = 'xbt'
-    total_balance = dict()
-    for f in fields:
-        total_balance[f] = 0
-    for b in balances:
-        if b['cur'].lower() == asset.lower() or b['cur'].lower() == 'usd':
-            _price = 1
-            _asset_price = 1
-        else:
-            _price = currencies.get(f"{b['cur']}usd".lower()) or 0
-            _asset_price = currencies.get(f"{asset}usd".lower()) or 1
+            _price = currencies.get(f"{b[_currency_key]}{_usd_asset}".lower()) or 0
+            _asset_price = currencies.get(f"{asset}{_usd_asset}".lower()) or 1
         for f in fields:
             total_balance[f] += _price * (b[f] or 0) / _asset_price
     return total_balance
