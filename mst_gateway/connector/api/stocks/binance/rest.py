@@ -617,6 +617,11 @@ class BinanceRestApi(StockRestApi):
                 self._handler.get_margin_account,
                 utils.load_margin_wallet_balances
             ),
+            OrderSchema.margin3: (
+                self._handler.get_all_tickers,
+                self._handler.get_isolated_margin_account,
+                utils.load_isolated_margin_wallet_balances
+            ),
             OrderSchema.futures: (
                 self._handler.futures_symbol_ticker,
                 self._handler.futures_account_v2,
@@ -641,7 +646,10 @@ class BinanceRestApi(StockRestApi):
             except (KeyError, ConnectorError):
                 continue
             for asset in assets:
-                total_balance[schema][asset] = utils.load_wallet_summary(currencies, balances, asset, fields)
+                if schema != OrderSchema.margin3:
+                    total_balance[schema][asset] = utils.load_wallet_summary(currencies, balances, asset, fields)
+                else:
+                    total_balance[schema][asset] = utils.load_isolated_wallet_summary(currencies, balances, asset, fields)
             utils.load_total_wallet_summary(total_summary, total_balance, assets, fields)
         return total_summary
 

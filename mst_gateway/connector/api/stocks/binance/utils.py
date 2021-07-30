@@ -392,6 +392,10 @@ def load_margin_wallet_balances(raw_data: dict) -> list:
     return _margin_balance_data(raw_data.get('userAssets'))
 
 
+def load_isolated_margin_wallet_balances(raw_data: dict) -> list:
+    return isolated_margin_balance_data(raw_data.get('assets'))
+
+
 def load_margin_wallet_detail_data(raw_data: dict, asset: str,
                                    max_borrow: dict, interest_rate: float) -> dict:
     for a in raw_data.get('userAssets'):
