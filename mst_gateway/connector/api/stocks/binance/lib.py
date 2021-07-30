@@ -273,6 +273,48 @@ class Client(BaseClient):
             return res['userAssets']
         return []
 
+    def get_isolated_margin_assets_balance(self, **params):
+        """Get assets balance.
+
+        :returns: list
+
+        .. code-block:: python
+
+            [
+                {
+                    "asset": "BTC",
+                    "borrowed": "0.00000000",
+                    "free": "0.00499500",
+                    "interest": "0.00000000",
+                    "locked": "0.00000000",
+                    "netAsset": "0.00499500"
+                },
+            ]
+
+        :raises: BinanceRequestException, BinanceAPIException
+
+        """
+        res = self.get_isolated_margin_account(**params)
+        if wallet_data := res.get('assets'):
+            assets = {}
+            for balance in wallet_data:
+                base_asset = balance.get('baseAsset', {})
+                quote_asset = balance.get('quoteAsset', {})
+                for b in (base_asset, quote_asset):
+                    asset = b.get('asset')
+                    if asset in assets:
+                        assets[asset].update({
+                            'borrowed': float(assets[asset]['borrowed']) + float(b['borrowed']),
+                            'free': assets[asset]['free'] + b['free'],
+                            'interest': float(assets[asset]['interest']) + float(b['interest']),
+                            'locked': float(assets[asset]['locked']) + float(b['locked']),
+                            'netAsset': assets[asset]['netAsset'] + b['netAsset'],
+                        })
+                    else:
+                        assets[asset] = b
+            return assets.values()
+        return []
+
     def get_futures_assets_balance(self, **params):
         """Get assets balance.
 

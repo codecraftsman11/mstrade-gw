@@ -504,6 +504,9 @@ class BinanceRestApi(StockRestApi):
         if schema == OrderSchema.margin2:
             raw_data = self._binance_api(self._handler.get_margin_assets_balance)
             return utils.load_margin_asset_balance(raw_data)
+        if schema == OrderSchema.margin3:
+            raw_data = self._binance_api(self._handler.get_isolated_margin_assets_balance)
+            return utils.load_margin_asset_balance(raw_data)
         if schema == OrderSchema.futures:
             raw_data = self._binance_api(self._handler.get_futures_assets_balance)
             return utils.load_futures_asset_balance(raw_data)
