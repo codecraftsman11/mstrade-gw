@@ -2,9 +2,7 @@
 from importlib import import_module
 from .types import *
 
-
-DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f%z"
-DATETIME_OUT_FORMAT = "%Y-%m-%d %H:%M:%S.%fZ"
+DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
 
 def init(params: dict, auth=None, cls=None, logger=None):

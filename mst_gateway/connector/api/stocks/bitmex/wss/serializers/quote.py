@@ -51,7 +51,7 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
         return copy(self._update_quote_bin(item, state_data))
 
     def _get_quote_bin(self, item: dict, state_data: dict) -> dict:
-        quote = load_ws_quote_data(item, state_data, is_iso_datetime=True)
+        quote = load_ws_quote_data(item, state_data)
         quote_bin = self._bins.get(item['symbol'])
         if not quote_bin:
             return quote2bin(quote)
@@ -64,7 +64,7 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
     def _reset_quote_bin(self, message: dict, item: dict, state_data: dict) -> dict:
         # pylint: disable=unused-argument
         self._bins[item['symbol']] = None
-        return load_ws_quote_bin_data(item, state_data, is_iso_datetime=True)
+        return load_ws_quote_bin_data(item, state_data)
 
     def _update_data(self, data: list, item: dict):
         for ditem in data:
@@ -81,10 +81,10 @@ class BitmexQuoteBinFromTradeSerializer(BitmexQuoteBinSerializer):
     @classmethod
     def _minute_updated(cls, ts_old: str, ts_new: str) -> Optional[bool]:
         try:
-            ts_old = datetime.strptime(ts_old, api.DATETIME_OUT_FORMAT)
-            ts_new = datetime.strptime(ts_new, api.DATETIME_OUT_FORMAT)
-        except ValueError:
-            return False
+            ts_old = datetime.strptime(ts_old.split('Z')[0], api.DATETIME_FORMAT)
+            ts_new = datetime.strptime(ts_new.split('Z')[0], api.DATETIME_FORMAT)
+        except (ValueError, TypeError, IndexError):
+            return None
         diff_in_sec = (ts_new - ts_old).total_seconds()
         if diff_in_sec >= 60:
             return True
@@ -96,7 +96,7 @@ class BitmexQuoteBinFromTradeSerializer(BitmexQuoteBinSerializer):
         if message['table'] == 'tradeBin1m':
             return True
         if message['table'] == 'trade':
-            new = load_ws_quote_data(item, state_data, is_iso_datetime=True)
+            new = load_ws_quote_data(item, state_data)
             old = self._bins.get(item['symbol'])
             if not old:
                 return False
@@ -105,7 +105,7 @@ class BitmexQuoteBinFromTradeSerializer(BitmexQuoteBinSerializer):
 
     def _reset_quote_bin(self, message: dict, item: dict, state_data: dict) -> dict:
         if message['table'] == 'tradeBin1m':
-            self._bins[item['symbol']] = load_ws_quote_bin_data(item, state_data, is_iso_datetime=True)
+            self._bins[item['symbol']] = load_ws_quote_bin_data(item, state_data)
         else:
-            self._bins[item['symbol']] = quote2bin(load_ws_quote_data(item, state_data, is_iso_datetime=True))
+            self._bins[item['symbol']] = quote2bin(load_ws_quote_data(item, state_data))
         return self._bins[item['symbol']]

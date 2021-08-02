@@ -73,4 +73,4 @@ class BitmexSymbolSerializer(BitmexSerializer):
                 _mapped_key = self._key_map(k)
                 if _mapped_key and item.get(_mapped_key) is None:
                     item[_mapped_key] = state[0][k]
-        return load_symbol_ws_data(item, state_data, is_iso_datetime=True)
+        return load_symbol_ws_data(item, state_data)
