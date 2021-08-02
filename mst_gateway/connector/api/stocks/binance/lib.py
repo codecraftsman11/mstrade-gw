@@ -1,5 +1,5 @@
 import time
-from typing import Optional, Dict
+from typing import Dict
 from binance.client import AsyncClient as BaseAsyncClient, Client as BaseClient
 from binance.exceptions import BinanceRequestException
 
@@ -7,11 +7,6 @@ from binance.exceptions import BinanceRequestException
 class Client(BaseClient):
     MARGIN_TESTNET_URL = 'https://testnet.binance.vision/sapi'  # margin api does not exist
     MARGIN_API_VERSION2 = 'v2'
-
-    def __init__(self, api_key: Optional[str] = None, api_secret: Optional[str] = None,
-                 requests_params: Dict[str, str] = None, tld: str = 'com',
-                 testnet: bool = False):
-        super().__init__(api_key, api_secret, requests_params, tld, testnet)
 
     def ping(self) -> Dict:
         # disable spot ping for other schemas
