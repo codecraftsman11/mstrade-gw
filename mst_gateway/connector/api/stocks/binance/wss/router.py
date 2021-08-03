@@ -3,7 +3,6 @@ from typing import Dict, Optional
 from ....wss.router import Router
 from ....wss.serializer import Serializer
 from . import serializers
-from .serializers.base import BinanceSerializer
 
 
 class BinanceWssRouter(Router):
@@ -41,12 +40,7 @@ class BinanceWssRouter(Router):
                 _serializers[subscr_name] = serializer
         return _serializers
 
-    def _subscr_serializer(self, subscr_name) -> BinanceSerializer:
-        if subscr_name not in self._serializers:
-            self._serializers[subscr_name] = self.serializer_classes[subscr_name](self._wss_api)
-        return self._serializers[subscr_name]
-
-    def _lookup_serializer(self, subscr_name, data: dict) -> Optional[BinanceSerializer]:
+    def _lookup_serializer(self, subscr_name, data: dict) -> Optional[Serializer]:
         if subscr_name not in self._wss_api.subscriptions:
             return None
         serializer = self._subscr_serializer(subscr_name)
