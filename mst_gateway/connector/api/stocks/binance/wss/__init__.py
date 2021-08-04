@@ -67,10 +67,10 @@ class BinanceWssApi(StockWssApi):
         return await super().open(**kwargs)
 
     async def _generate_auth_url(self):
-        self.listen_key = await self.generate_listen_key()
+        self.listen_key = await self._generate_listen_key()
         self._url = f"{self._url}/{self.listen_key}"
 
-    async def generate_listen_key(self):
+    async def _generate_listen_key(self):
         async with AsyncClient(
                 api_key=self.auth.get('api_key'), api_secret=self.auth.get('api_secret'), testnet=self.test
         ) as bin_client:
@@ -125,7 +125,7 @@ class BinanceWssApi(StockWssApi):
             return _message
         return None
 
-    def _split_message_map(self, key: str) -> Optional[callable]:
+    def __split_message_map(self, key: str) -> Optional[callable]:
         _map = {
             'depthUpdate': self.split_order_book,
             'executionReport': self.split_order,
@@ -134,7 +134,7 @@ class BinanceWssApi(StockWssApi):
         return _map.get(key)
 
     def _split_message(self, message):
-        method = self._split_message_map(message['table'])
+        method = self.__split_message_map(message['table'])
         if not method:
             return super(BinanceWssApi, self)._split_message(message)
         return super(BinanceWssApi, self)._split_message(method(message=message))
@@ -227,7 +227,7 @@ class BinanceFuturesWssApi(BinanceWssApi):
         super().__init__(name, account_name, url, test, auth, logger, options, throttle_rate,
                          throttle_storage, schema, state_storage, register_state)
 
-    def _split_message_map(self, key: str) -> Optional[callable]:
+    def __split_message_map(self, key: str) -> Optional[callable]:
         _map = {
             'depthUpdate': self.split_order_book,
             'ORDER_TRADE_UPDATE': self.split_order,
@@ -235,7 +235,8 @@ class BinanceFuturesWssApi(BinanceWssApi):
         return _map.get(key)
 
     def _split_message(self, message):
-        if not (method := self._split_message_map(message['table'])):
+        method = self.__split_message_map(message['table'])
+        if not method:
             return super(BinanceWssApi, self)._split_message(message)
         return super(BinanceWssApi, self)._split_message(method(message=message))
 
@@ -286,13 +287,14 @@ class BinanceFuturesCoinWssApi(BinanceFuturesWssApi):
                 ]))
         return _messages
 
-    def _split_message_map(self, key: str) -> Optional[callable]:
+    def __split_message_map(self, key: str) -> Optional[callable]:
         _map = {
             'position': self._split_position,
         }
         return _map.get(key)
 
     def _split_message(self, message):
-        if not (method := self._split_message_map(message['table'])):
+        method = self.__split_message_map(message['table'])
+        if not method:
             return super()._split_message(message)
         return super(BinanceWssApi, self)._split_message(method(message=message))

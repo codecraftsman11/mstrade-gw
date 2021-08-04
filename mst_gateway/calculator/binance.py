@@ -36,9 +36,7 @@ class BinanceFinFactory(FinFactory):
         return face_price
 
     @classmethod
-    def calc_liquidation_price(
-        cls, side: int, leverage_type: str, entry_price: float, **kwargs
-    ) -> Optional[float]:
+    def calc_liquidation_price(cls, side: int, leverage_type: str, entry_price: float, **kwargs) -> Optional[float]:
         volume = kwargs.pop('volume', None)
         mark_price = kwargs.pop('mark_price', None)
         notional_value = cls.calc_notional_value(volume, mark_price, **kwargs)
@@ -115,9 +113,8 @@ class BinanceFinFactory(FinFactory):
             return None
 
     @classmethod
-    def calc_maint_margin(
-        cls, volume: float, mark_price: float, maint_amount: float, maint_margin_rate: float, **kwargs
-    ) -> Optional[float]:
+    def calc_maint_margin(cls, volume: float, mark_price: float, maint_amount: float, maint_margin_rate: float,
+                          **kwargs) -> Optional[float]:
         try:
             if cls._is_futures_coin(**kwargs):
                 return abs(volume) * cls.get_contract_multiplier(
@@ -160,9 +157,8 @@ class BinanceFinFactory(FinFactory):
         return maint_margin_sum, unrealised_pnl_sum
 
     @classmethod
-    def calc_unrealised_pnl_by_side(
-        cls, entry_price: float, mark_price: float, volume: float, side: int,  **kwargs
-    ) -> Optional[float]:
+    def calc_unrealised_pnl_by_side(cls, entry_price: float, mark_price: float, volume: float, side: int,
+                                    **kwargs) -> Optional[float]:
         if cls._is_futures_coin(**kwargs):
             try:
                 return abs(volume) * cls.direction_by_side(side) * cls.get_contract_multiplier(
@@ -173,9 +169,8 @@ class BinanceFinFactory(FinFactory):
         return super().calc_unrealised_pnl_by_side(entry_price, mark_price, volume, side)
 
     @classmethod
-    def calc_unrealised_pnl_by_direction(
-        cls, entry_price: float, mark_price: float, volume: float, direction: int, **kwargs
-    ) -> Optional[float]:
+    def calc_unrealised_pnl_by_direction(cls, entry_price: float, mark_price: float, volume: float, direction: int,
+                                         **kwargs) -> Optional[float]:
         if cls._is_futures_coin(**kwargs):
             try:
                 return abs(volume) * direction * cls.get_contract_multiplier(
@@ -186,9 +181,7 @@ class BinanceFinFactory(FinFactory):
         return super().calc_unrealised_pnl_by_direction(entry_price, mark_price, volume, direction)
 
     @classmethod
-    def calc_mark_price(
-        cls, volume: float, entry_price: float, unrealised_pnl: float, **kwargs
-    ) -> Optional[float]:
+    def calc_mark_price(cls, volume: float, entry_price: float, unrealised_pnl: float, **kwargs) -> Optional[float]:
         if cls._is_futures_coin(**kwargs):
             try:
                 return 1 / (1 / entry_price - (

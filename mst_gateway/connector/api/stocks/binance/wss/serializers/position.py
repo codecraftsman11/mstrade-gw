@@ -7,6 +7,7 @@ from mst_gateway.connector.api.stocks.binance import utils
 from mst_gateway.connector.api.stocks.binance.var import BinancePositionSideMode
 from mst_gateway.connector.api.stocks.binance.wss.serializers.base import BinanceSerializer
 
+
 if TYPE_CHECKING:
     from ... import BinanceWssApi
 
@@ -172,25 +173,25 @@ class BinanceFuturesPositionSerializer(BinancePositionSerializer):
             other_positions_state,
             self._leverage_brackets,
         )
+        entry_price = position_state['entry_price']
+        mark_price = position_state['mark_price']
+        volume = position_state['volume']
+        side = position_state['side']
         wallet_balance = self.get_wallet_balance(
             position_state['leverage_type'],
             position_state['isolated_wallet_balance'],
             position_state['cross_wallet_balance'],
         )
-        entry_price = position_state['entry_price']
-        mark_price = position_state['mark_price']
-        volume = position_state['volume']
-        side = position_state['side']
         position_state['liquidation_price'] = BinanceFinFactory.calc_liquidation_price(
-            side=side,
-            leverage_type=position_state['leverage_type'],
             entry_price=entry_price,
             mark_price=mark_price,
             volume=volume,
+            side=side,
+            leverage_type=position_state['leverage_type'],
             wallet_balance=wallet_balance,
+            leverage_brackets=self._leverage_brackets.get(symbol, {}),
             maint_margin_sum=maint_margin_sum,
             unrealised_pnl_sum=unrealised_pnl_sum,
-            leverage_brackets=self._leverage_brackets.get(symbol, {}),
             schema=self._wss_api.schema, symbol=symbol
         )
         position_state['unrealised_pnl'] = BinanceFinFactory.calc_unrealised_pnl_by_side(

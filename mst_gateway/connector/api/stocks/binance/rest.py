@@ -453,18 +453,16 @@ class BinanceRestApi(StockRestApi):
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_assets_balance(self, schema: str, **kwargs) -> dict:
-        schema_handlers = {
-            OrderSchema.exchange: (self._handler.get_assets_balance, utils.load_asset_balance),
-            OrderSchema.margin2: (self._handler.get_margin_assets_balance, utils.load_asset_balance),
-            OrderSchema.futures: (self._handler.futures_account_balance, utils.load_futures_asset_balance),
-            OrderSchema.futures_coin: (
-                self._handler.futures_coin_account_balance, utils.load_futures_asset_balance,
-            ),
-        }
-        validate_schema(schema, schema_handlers)
-        schema = schema.lower()
-        data = self._binance_api(schema_handlers[schema][0])
-        return schema_handlers[schema][1](data)
+        if schema == OrderSchema.exchange:
+            raw_data = self._binance_api(self._handler.get_assets_balance)
+            return utils.load_exchange_asset_balance(raw_data)
+        if schema == OrderSchema.margin2:
+            raw_data = self._binance_api(self._handler.get_margin_assets_balance)
+            return utils.load_margin_asset_balance(raw_data)
+        if schema == OrderSchema.futures:
+            raw_data = self._binance_api(self._handler.get_futures_assets_balance)
+            return utils.load_futures_asset_balance(raw_data)
+        raise ConnectorError(f"Invalid schema {schema}.")
 
     def wallet_transfer(self, from_wallet: str, to_wallet: str, asset: str, amount: float) -> dict:
         schemas_handlers = {
@@ -689,38 +687,50 @@ class BinanceRestApi(StockRestApi):
         schema = schema.lower()
         if schema in (OrderSchema.futures, OrderSchema.futures_coin):
             schema_handlers = {
-                OrderSchema.futures: self._handler.futures_position_information,
-                OrderSchema.futures_coin: self._handler.futures_coin_position_information,
+                OrderSchema.futures: (self._handler.futures_position_information, utils.load_futures_position),
+                OrderSchema.futures_coin: (
+                    self._handler.futures_coin_position_information, utils.load_futures_coin_position
+                )
             }
-            response = self._binance_api(schema_handlers[schema], symbol=symbol.upper())
+            response = self._binance_api(schema_handlers[schema][0], symbol=symbol.upper())
             try:
                 data = response[0]
             except IndexError:
                 return {}
-            return utils.load_futures_position(data, schema)
+            return schema_handlers[schema][1](data, schema)
         if schema in (OrderSchema.exchange, OrderSchema.margin2):
             data = self.storage.get(
                 f"position.{kwargs.get('account_id')}.{self.name}.{schema}.{symbol}".lower()
             )
+            schema_handlers = {
+                OrderSchema.exchange: utils.load_exchange_position,
+                OrderSchema.margin2: utils.load_margin2_position,
+            }
             symbol_data = self._binance_api(self._handler.get_ticker, symbol=symbol.upper())
-            utils.load_position(data, schema, symbol_data.get('lastPrice'))
+            return schema_handlers[schema](data, schema, symbol_data.get('lastPrice'))
 
     def list_positions(self, schema: str, **kwargs) -> list:
         validate_schema(schema)
         schema = schema.lower()
         if schema in (OrderSchema.futures, OrderSchema.futures_coin):
             schema_handlers = {
-                OrderSchema.futures: self._handler.futures_position_information,
-                OrderSchema.futures_coin: self._handler.futures_coin_position_information,
+                OrderSchema.futures: (self._handler.futures_position_information, utils.load_futures_position_list),
+                OrderSchema.futures_coin: (
+                    self._handler.futures_coin_position_information, utils.load_futures_coin_position_list
+                )
             }
-            data = self._binance_api(schema_handlers[schema])
-            return utils.load_futures_position_list(data, schema)
+            data = self._binance_api(schema_handlers[schema][0])
+            return schema_handlers[schema][1](data, schema)
         if schema in (OrderSchema.exchange, OrderSchema.margin2):
             data = self.storage.get_pattern(
                 f"position.{kwargs.get('account_id')}.{self.name}.{schema}.*".lower()
             )
+            schema_handlers = {
+                OrderSchema.exchange: utils.load_exchange_position_list,
+                OrderSchema.margin2: utils.load_margin2_position_list,
+            }
             symbols_data = self._binance_api(self._handler.get_ticker)
-            return utils.load_position_list(data, schema, symbols_data)
+            return schema_handlers[schema](data, schema, symbols_data)
 
     def _binance_api(self, method: callable, **kwargs):
         try:
@@ -790,15 +800,15 @@ class BinanceRestApi(StockRestApi):
                 leverage_brackets,
             )
             liquidation_price = BinanceFinFactory.calc_liquidation_price(
-                side=side,
-                leverage_type=leverage_type,
                 entry_price=price,
                 mark_price=mark_price,
                 volume=volume,
+                side=side,
+                leverage_type=leverage_type,
                 wallet_balance=wallet_balance,
+                leverage_brackets=leverage_brackets,
                 maint_margin_sum=maint_margin_sum,
                 unrealised_pnl_sum=unrealised_pnl_sum,
-                leverage_brackets=leverage_brackets,
                 schema=schema,
                 symbol=symbol,
             )

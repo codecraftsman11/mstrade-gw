@@ -552,11 +552,15 @@ def load_futures_cross_collaterals_data(cross_collaterals: list) -> list:
     return data
 
 
-def load_asset_balance(raw_data: list) -> dict:
+def load_exchange_asset_balance(raw_data: list) -> dict:
     balances = {}
     for balance in raw_data:
         balances[balance.get('asset', '').lower()] = to_float(balance.get('free', 0))
     return balances
+
+
+def load_margin_asset_balance(raw_data: list) -> dict:
+    return load_exchange_asset_balance(raw_data)
 
 
 def load_futures_asset_balance(raw_data: dict) -> dict:
@@ -1472,7 +1476,7 @@ def load_futures_coin_positions_state(account_info: dict, state_data: dict) -> d
     return positions_state
 
 
-def load_position(raw_data: dict, schema: str, mark_price: float) -> dict:
+def load_exchange_position(raw_data: dict, schema: str, mark_price: float) -> dict:
     symbol = raw_data.get('symbol')
     volume = to_float(raw_data.get('volume'))
     entry_price = to_float(raw_data.get('entry_price'))
@@ -1498,6 +1502,10 @@ def load_position(raw_data: dict, schema: str, mark_price: float) -> dict:
     return data
 
 
+def load_margin2_position(raw_data: dict, schema: str, mark_price: float) -> dict:
+    return load_exchange_position(raw_data, schema, mark_price)
+
+
 def load_futures_position(raw_data: dict, schema: str) -> dict:
     now = datetime.now()
     data = {
@@ -1517,15 +1525,27 @@ def load_futures_position(raw_data: dict, schema: str) -> dict:
     return data
 
 
-def load_position_list(raw_data: dict, schema: str, symbol_list: list) -> list:
+def load_futures_coin_position(raw_data: dict, schema: str) -> dict:
+    return load_futures_position(raw_data, schema)
+
+
+def load_exchange_position_list(raw_data: dict, schema: str, symbol_list: list) -> list:
     symbols_mark_price = {
         symbol.get('symbol', '').lower(): to_float(symbol.get('lastPrice')) for symbol in symbol_list
     }
-    return [load_position(v, schema, symbols_mark_price.get(v.get('symbol'))) for k, v in raw_data.items()]
+    return [load_exchange_position(v, schema, symbols_mark_price.get(v.get('symbol'))) for k, v in raw_data.items()]
+
+
+def load_margin2_position_list(raw_data: dict, schema: str, symbol_list: list) -> list:
+    return load_exchange_position_list(raw_data, schema, symbol_list)
 
 
 def load_futures_position_list(raw_data: list, schema: str) -> list:
     return [load_futures_position(data, schema) for data in raw_data if to_float(data.get('positionAmt')) != 0]
+
+
+def load_futures_coin_position_list(raw_data: list, schema: str) -> list:
+    return load_futures_position_list(raw_data, schema)
 
 
 def load_exchange_position_ws_data(

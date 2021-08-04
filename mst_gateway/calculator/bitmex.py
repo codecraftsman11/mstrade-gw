@@ -13,15 +13,13 @@ class BitmexFinFactory(FinFactory):
         return 1
 
     @classmethod
-    def calc_liquidation_price(
-        cls, side: int, leverage_type: str, entry_price: float, **kwargs
-    ) -> Optional[float]:
+    def calc_liquidation_price(cls, side: int, leverage_type: str, entry_price: float, **kwargs) -> Optional[float]:
+        liquidation_price = None
+        direction = cls.direction_by_side(side)
         taker_fee = kwargs.get('taker_fee')
         funding_rate = kwargs.get('funding_rate')
         maint_margin = kwargs.get('maint_margin')
         try:
-            liquidation_price = None
-            direction = cls.direction_by_side(side)
             leverage_type = leverage_type.lower()
             if leverage_type == api.LeverageType.isolated:
                 liquidation_price = round(
@@ -38,7 +36,7 @@ class BitmexFinFactory(FinFactory):
                         (direction * quantity)
                     ), 8)
         except (TypeError, ZeroDivisionError):
-            liquidation_price = None
+            pass
         if liquidation_price is not None and liquidation_price < 0:
             liquidation_price = None
         return liquidation_price
