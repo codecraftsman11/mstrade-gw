@@ -384,12 +384,12 @@ class BinanceRestApi(StockRestApi):
             return utils.load_ws_margin_wallet_data(data, currencies, assets, fields, schema)
         return utils.load_margin_wallet_data(data, currencies, assets, fields, schema)
 
-    def _isolated_margin_wallet(self, **kwargs):
+    def _isolated_margin_wallet(self, schema: str, **kwargs):
         assets = kwargs.pop('assets', ('btc', 'usd'))
         fields = ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed', 'interest')
         data = self._binance_api(self._handler.get_isolated_margin_account, **kwargs)
-        currencies = self.storage.get('currency', self.name, OrderSchema.margin2)
-        return utils.load_isolated_margin_wallet_data(data, currencies, assets, fields)
+        currencies = self.storage.get('currency', self.name, schema)
+        return utils.load_isolated_margin_wallet_data(data, currencies, assets, schema, fields)
 
     def _futures_wallet(self, schema: str, **kwargs):
         is_for_ws = kwargs.pop('is_for_ws', False)
@@ -605,6 +605,7 @@ class BinanceRestApi(StockRestApi):
         schema_handlers = {
             OrderSchema.exchange: self._handler.get_symbol_ticker,
             OrderSchema.margin2: self._handler.get_symbol_ticker,
+            OrderSchema.margin3: self._handler.get_symbol_ticker,
             OrderSchema.futures: self._handler.futures_symbol_ticker,
             OrderSchema.futures_coin: self._handler.futures_coin_symbol_ticker,
         }
@@ -649,10 +650,7 @@ class BinanceRestApi(StockRestApi):
             except (KeyError, ConnectorError):
                 continue
             for asset in assets:
-                if schema != OrderSchema.margin3:
-                    total_balance[schema][asset] = utils.load_wallet_summary(currencies, balances, asset, fields, schema)
-                else:
-                    total_balance[schema][asset] = utils.load_isolated_wallet_summary(currencies, balances, asset, fields)
+                total_balance[schema][asset] = utils.load_wallet_summary(currencies, balances, asset, fields, schema)
             utils.load_total_wallet_summary(total_summary, total_balance, assets, fields)
         return total_summary
 

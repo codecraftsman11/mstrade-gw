@@ -376,12 +376,12 @@ def load_ws_margin_wallet_data(raw_data: dict, currencies: dict,
     }
 
 
-def load_isolated_margin_wallet_data(raw_data: dict, currencies: dict,
-                                     assets: Union[list, tuple], schema: str, fields: Union[list, tuple]) -> dict:
+def load_isolated_margin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
+                                     schema: str, fields: Union[list, tuple]) -> dict:
     balances = isolated_margin_balance_data(raw_data.get('assets'))
     total_balance = dict()
     for asset in assets:
-        total_balance[asset] = load_isolated_wallet_summary(currencies, balances, asset, fields, schema)
+        total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields, schema)
     return {
         'balances': balances,
         **_load_total_wallet_summary_list(total_balance, fields)
@@ -888,35 +888,24 @@ def load_wallet_summary(currencies: dict, balances: list, asset: str,
     for f in fields:
         total_balance[f] = 0
     _asset_price = (currencies.get(f"{asset}{_usd_asset}".lower()) or 1)
-    for b in balances:
-        if b[_currency_key].lower() == asset.lower() or b[_currency_key].lower() == _usd_asset:
-            _price = 1
-        else:
-            _price = currencies.get(f"{b[_currency_key]}{_usd_asset}".lower()) or 0
-        for f in fields:
-            total_balance[f] += _price * (b[f] or 0) / _asset_price
-    return total_balance
-
-
-def load_isolated_wallet_summary(currencies: dict, balances: list, asset: str,
-                                 fields: Union[list, tuple, None]):
-    if fields is None:
-        fields = ('balance',)
-    if asset.lower() == 'usd':
-        asset = 'usdt'
-    total_balance = dict()
-    for f in fields:
-        total_balance[f] = 0
-    _asset_price = (currencies.get(f"{asset}usdt".lower()) or 1)
-    for symbol_balance in balances:
-        for balance in symbol_balance.values():
-            for b in (balance.get('base_asset'), balance.get('quote_asset')):
-                if b['currency'].lower() == asset.lower() or b['currency'].lower() == 'usdt':
-                    _price = 1
-                else:
-                    _price = currencies.get(f"{b['currency']}usdt".lower()) or 0
-                for f in fields:
-                    total_balance[f] += _price * (b[f] or 0) / _asset_price
+    if schema != OrderSchema.margin3:
+        for b in balances:
+            if b[_currency_key].lower() == asset.lower() or b[_currency_key].lower() == _usd_asset:
+                _price = 1
+            else:
+                _price = currencies.get(f"{b[_currency_key]}{_usd_asset}".lower()) or 0
+            for f in fields:
+                total_balance[f] += _price * (b[f] or 0) / _asset_price
+    else:
+        for symbol_balance in balances:
+            for balance in symbol_balance.values():
+                for b in (balance.get('base_asset'), balance.get('quote_asset')):
+                    if b[_currency_key].lower() == asset.lower() or b[_currency_key].lower() == _usd_asset:
+                        _price = 1
+                    else:
+                        _price = currencies.get(f"{b[_currency_key]}{_usd_asset}".lower()) or 0
+                    for f in fields:
+                        total_balance[f] += _price * (b[f] or 0) / _asset_price
     return total_balance
 
 
