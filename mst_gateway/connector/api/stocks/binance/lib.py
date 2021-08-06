@@ -1,4 +1,5 @@
 import time
+from typing import Dict
 from binance.client import AsyncClient as BaseAsyncClient, Client as BaseClient
 from binance.exceptions import BinanceRequestException
 
@@ -6,6 +7,10 @@ from binance.exceptions import BinanceRequestException
 class Client(BaseClient):
     MARGIN_TESTNET_URL = 'https://testnet.binance.vision/sapi'  # margin api does not exist
     MARGIN_API_VERSION2 = 'v2'
+
+    def ping(self) -> Dict:
+        # disable spot ping for other schemas
+        return {}
 
     def _create_margin_api_uri(self, path: str, version: str = BaseClient.MARGIN_API_VERSION) -> str:
         url = self.MARGIN_API_URL
@@ -34,6 +39,25 @@ class Client(BaseClient):
         if not (self.API_SECRET and isinstance(self.API_SECRET, str)):
             raise BinanceRequestException('API-key format invalid.')
         return super()._generate_signature(data)
+
+    def spot_ping(self) -> Dict:
+        """Test connectivity to the Rest API.
+
+        https://github.com/binance/binance-spot-api-docs/blob/master/rest-api.md#test-connectivity
+
+        :returns: Empty array
+
+        .. code-block:: python
+
+            {}
+
+        :raises: BinanceRequestException, BinanceAPIException
+
+        """
+        return self._get('ping', version=self.PRIVATE_API_VERSION)
+
+    def margin_ping(self) -> Dict:
+        return self.spot_ping()
 
     def transfer_spot_to_futures(self, **params):
         """Execute transfer between spot account and futures account.
@@ -296,7 +320,13 @@ class Client(BaseClient):
         res = self.futures_account_balance(**params)
         if res:
             return res
-        return {}
+        return []
+
+    def get_futures_coin_assets_balance(self, **params):
+        res = self.futures_coin_account_balance(**params)
+        if res:
+            return res
+        return []
 
     def create_futures_loan(self, **params):
         """Apply for a loan.
@@ -453,6 +483,10 @@ class AsyncClient(BaseAsyncClient):
     MARGIN_TESTNET_URL = 'https://testnet.binance.vision/sapi'  # margin api does not exist
     MARGIN_API_VERSION2 = 'v2'
 
+    async def ping(self) -> Dict:
+        # disable spot ping for other schemas
+        return {}
+
     def _create_margin_api_uri(self, path: str, version: str = BaseClient.MARGIN_API_VERSION) -> str:
         url = self.MARGIN_API_URL
         if self.testnet:
@@ -488,6 +522,12 @@ class AsyncClient(BaseAsyncClient):
 
         """
         return await self._request_futures_api_v2('get', 'account', True, data=params)
+
+    async def spot_ping(self) -> Dict:
+        return await self._get('ping', version=self.PRIVATE_API_VERSION)
+
+    async def margin_ping(self) -> Dict:
+        return await self.spot_ping()
 
     async def __aenter__(self):
         res = await self.get_server_time()

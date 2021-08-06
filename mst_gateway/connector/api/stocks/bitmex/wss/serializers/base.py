@@ -37,5 +37,5 @@ class BitmexSerializer(Serializer):
         valid_item = await self._load_data(message, item)
         if not valid_item:
             return None
-        self._update_state(stock2symbol(valid_item.get('symbol')), valid_item)
+        self._update_state(stock2symbol(valid_item.get('s')), valid_item)
         self._update_data(data, valid_item)

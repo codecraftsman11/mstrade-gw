@@ -308,14 +308,26 @@ def load_user_data(raw_data: dict) -> dict:
 
 
 def load_spot_wallet_data(raw_data: dict, currencies: dict,
-                          assets: Union[list, tuple], fields: Union[list, tuple]) -> dict:
+                          assets: Union[list, tuple], fields: Union[list, tuple], schema: str) -> dict:
     balances = _spot_balance_data(raw_data.get('balances'))
     total_balance = dict()
     for asset in assets:
-        total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
+        total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields, schema)
     return {
         'balances': balances,
         **_load_total_wallet_summary_list(total_balance, fields)
+    }
+
+
+def load_ws_spot_wallet_data(raw_data: dict, currencies: dict,
+                             assets: Union[list, tuple], fields: Union[list, tuple], schema: str) -> dict:
+    balances = _spot_ws_balance_data(raw_data.get('balances'))
+    total_balance = dict()
+    for asset in assets:
+        total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields, schema, is_for_ws=True)
+    return {
+        'bls': balances,
+        **_load_total_wallet_summary_list(total_balance, fields, is_for_ws=True)
     }
 
 
@@ -333,11 +345,11 @@ def load_spot_wallet_detail_data(raw_data: dict, asset: str) -> dict:
 
 
 def load_margin_wallet_data(raw_data: dict, currencies: dict,
-                            assets: Union[list, tuple], fields: Union[list, tuple]) -> dict:
+                            assets: Union[list, tuple], fields: Union[list, tuple], schema: str) -> dict:
     balances = _margin_balance_data(raw_data.get('userAssets'))
     total_balance = dict()
     for asset in assets:
-        total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
+        total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields, schema)
     return {
         'trade_enabled': raw_data.get('tradeEnabled'),
         'transfer_enabled': raw_data.get('transferEnabled'),
@@ -345,6 +357,22 @@ def load_margin_wallet_data(raw_data: dict, currencies: dict,
         'margin_level': raw_data.get('marginLevel'),
         'balances': balances,
         **_load_total_wallet_summary_list(total_balance, fields)
+    }
+
+
+def load_ws_margin_wallet_data(raw_data: dict, currencies: dict,
+                               assets: Union[list, tuple], fields: Union[list, tuple], schema: str) -> dict:
+    balances = _margin_ws_balance_data(raw_data.get('userAssets'))
+    total_balance = dict()
+    for asset in assets:
+        total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields, schema, is_for_ws=True)
+    return {
+        'tre': raw_data.get('tradeEnabled'),
+        'trse': raw_data.get('transferEnabled'),
+        'bore': raw_data.get('borrowEnabled'),
+        'mlvl': raw_data.get('marginLevel'),
+        'bls': balances,
+        **_load_total_wallet_summary_list(total_balance, fields, is_for_ws=True)
     }
 
 
@@ -381,12 +409,12 @@ def get_interest_rate(asset_rates: list, vip_level: str, asset: str):
 
 
 def _load_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
-                              fields: Union[list, tuple], cross_collaterals: list) -> dict:
+                              fields: Union[list, tuple], cross_collaterals: list, schema: str) -> dict:
     balances = _futures_balance_data(raw_data.get('assets'))
     _update_futures_balances(balances, cross_collaterals)
     total_balance = dict()
     for asset in assets:
-        total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
+        total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields, schema)
     return {
         'trade_enabled': raw_data.get('canTrade'),
         'balances': balances,
@@ -394,9 +422,23 @@ def _load_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union[li
     }
 
 
+def _load_ws_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
+                                 fields: Union[list, tuple], cross_collaterals: list, schema: str) -> dict:
+    balances = _ws_futures_balance_data(raw_data.get('assets'))
+    _update_ws_futures_balances(balances, cross_collaterals)
+    total_balance = dict()
+    for asset in assets:
+        total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields, schema, is_for_ws=True)
+    return {
+        'tre': raw_data.get('canTrade'),
+        'bls': balances,
+        **_load_total_wallet_summary_list(total_balance, fields, is_for_ws=True)
+    }
+
+
 def load_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
-                             fields: Union[list, tuple], cross_collaterals: list) -> dict:
-    data = _load_futures_wallet_data(raw_data, currencies, assets, fields, cross_collaterals)
+                             fields: Union[list, tuple], cross_collaterals: list, schema: str) -> dict:
+    data = _load_futures_wallet_data(raw_data, currencies, assets, fields, cross_collaterals, schema)
     data.update({
         'total_initial_margin': to_float(raw_data.get('totalInitialMargin')),
         'total_maint_margin': to_float(raw_data.get('totalMaintMargin')),
@@ -406,9 +448,21 @@ def load_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union[lis
     return data
 
 
+def load_ws_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
+                                fields: Union[list, tuple], cross_collaterals: list, schema: str) -> dict:
+    data = _load_ws_futures_wallet_data(raw_data, currencies, assets, fields, cross_collaterals, schema)
+    data.update({
+        'tim': to_float(raw_data.get('totalInitialMargin')),
+        'tmm': to_float(raw_data.get('totalMaintMargin')),
+        'toip': to_float(raw_data.get('totalOpenOrderInitialMargin')),
+        'tpim': to_float(raw_data.get('totalPositionInitialMargin')),
+    })
+    return data
+
+
 def load_futures_coin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
-                                  fields: Union[list, tuple], cross_collaterals: list) -> dict:
-    return _load_futures_wallet_data(raw_data, currencies, assets, fields, cross_collaterals)
+                                  fields: Union[list, tuple], cross_collaterals: list, schema: str) -> dict:
+    return _load_futures_wallet_data(raw_data, currencies, assets, fields, cross_collaterals, schema)
 
 
 def _update_futures_balances(balances: list, cross_collaterals: list) -> list:
@@ -417,6 +471,15 @@ def _update_futures_balances(balances: list, cross_collaterals: list) -> list:
             if balance['currency'] == collateral['loanCoin']:
                 balance['borrowed'] += to_float(collateral['loanAmount']) or 0
                 balance['interest'] += to_float(collateral['interest']) or 0
+    return balances
+
+
+def _update_ws_futures_balances(balances: list, cross_collaterals: list) -> list:
+    for balance in balances:
+        for collateral in cross_collaterals:
+            if balance['cur'] == collateral['loanCoin']:
+                balance['bor'] += to_float(collateral['loanAmount']) or 0
+                balance['ist'] += to_float(collateral['interest']) or 0
     return balances
 
 
@@ -490,108 +553,113 @@ def load_margin_asset_balance(raw_data: list) -> dict:
     return load_exchange_asset_balance(raw_data)
 
 
-def load_futures_asset_balance(raw_data: dict) -> dict:
+def load_futures_asset_balance(raw_data: list) -> dict:
     balances = {}
     for balance in raw_data:
         balances[balance.get('asset', '').lower()] = to_float(balance.get('balance', 0))
     return balances
 
 
+def load_futures_coin_asset_balance(raw_data: list) -> dict:
+    return load_futures_asset_balance(raw_data)
+
+
 def _ws_wallet(balances: list, state_balances: dict, state_data: dict, currencies: dict,
-               assets: Union[list, tuple], fields: Union[list, tuple]):
+               assets: Union[list, tuple], fields: Union[list, tuple], schema: str):
     balances.extend([v for v in state_balances.values()])
-    total_balance = dict()
+    total_balance = {}
     for asset in assets:
-        total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields)
+        total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields, schema, is_for_ws=True)
     state_data.update({
-        **_load_total_wallet_summary_list(total_balance, fields),
-        'balances': balances
+        **_load_total_wallet_summary_list(total_balance, fields, is_for_ws=True),
+        'bls': balances
     })
     return state_data
 
 
 def ws_spot_wallet(raw_data: dict, state_data: dict, currencies: dict,
-                   assets: Union[list, tuple], fields: Union[list, tuple]):
+                   assets: Union[list, tuple], fields: Union[list, tuple], schema: str):
     state_data.pop('*', None)
-    _state_balances = state_data.pop('balances', dict())
+    _state_balances = state_data.pop('bls', {})
     _balances = ws_spot_balance_data(raw_data.get('B'), _state_balances)
-    return _ws_wallet(_balances, _state_balances, state_data, currencies, assets, fields)
+    return _ws_wallet(_balances, _state_balances, state_data, currencies, assets, fields, schema)
 
 
 def ws_spot_balance_data(balances: list, state_balances: dict):
     result = list()
     for b in balances:
         _currency = b['a'].lower()
-        _currency_state = state_balances.pop(_currency, dict())
+        _currency_state = state_balances.pop(_currency, {})
         result.append({
-            'currency': b['a'],
-            'balance': to_float(b['f']),
-            'unrealised_pnl': _currency_state.get('unrealised_pnl', 0),
-            'margin_balance': to_float(b['f']),
-            'maint_margin': to_float(b['l']),
-            'init_margin': _currency_state.get('init_margin'),
-            'available_margin': round(to_float(b['f']) - to_float(b['l']), 8),
-            'type': _currency_state.get('type'),
+            'cur': b['a'],
+            'bl': to_float(b['f']),
+            'upnl': _currency_state.get('upnl', 0),
+            'mbl': to_float(b['f']),
+            'mm': to_float(b['l']),
+            'im': _currency_state.get('im'),
+            'am': round(to_float(b['f']) - to_float(b['l']), 8),
+            't': _currency_state.get('t'),
         })
     return result
 
 
 def ws_margin_wallet(raw_data: dict, state_data: dict, currencies: dict,
-                     assets: Union[list, tuple], fields: Union[list, tuple]):
+                     assets: Union[list, tuple], fields: Union[list, tuple], schema):
     state_data.pop('*', None)
-    _state_balances = state_data.pop('balances', dict())
+    _state_balances = state_data.pop('bls', {})
     _balances = ws_margin_balance_data(raw_data.get('B'), _state_balances)
-    return _ws_wallet(_balances, _state_balances, state_data, currencies, assets, fields)
+    return _ws_wallet(_balances, _state_balances, state_data, currencies, assets, fields, schema)
 
 
 def ws_margin_balance_data(balances: list, state_balances: dict):
-    result = list()
+    result = []
     for b in balances:
         _currency = b['a'].lower()
-        _currency_state = state_balances.pop(_currency, dict())
+        _currency_state = state_balances.pop(_currency, {})
         result.append({
-            'currency': b['a'],
-            'balance': to_float(b['f']),
-            'unrealised_pnl': _currency_state.get('unrealised_pnl', 0),
-            'margin_balance': _currency_state.get('margin_balance', 0),
-            'maint_margin': _currency_state.get('maint_margin', 0),
-            'init_margin': _currency_state.get('init_margin'),
-            'available_margin': round(to_float(b['f']) - to_float(b['l']), 8),
-            'borrowed': _currency_state.get('borrowed', 0),
-            'interest': _currency_state.get('interest', 0),
-            'type': to_wallet_state_type(to_float(b['l'])),
+            'cur': b['a'],
+            'bl': to_float(b['f']),
+            'upnl': _currency_state.get('upnl', 0),
+            'mbl': _currency_state.get('mbl', 0),
+            'mm': _currency_state.get('mm', 0),
+            'im': _currency_state.get('im'),
+            'am': round(to_float(b['f']) - to_float(b['l']), 8),
+            'bor': _currency_state.get('bor', 0),
+            'ist': _currency_state.get('ist', 0),
+            't': to_wallet_state_type(to_float(b['l'])),
         })
     return result
 
 
 def ws_futures_wallet(raw_data: dict, state_data: dict, currencies: dict,
-                      assets: Union[list, tuple], fields: Union[list, tuple]):
+                      assets: Union[list, tuple], fields: Union[list, tuple], schema):
     state_data.pop('*', None)
-    _state_balances = state_data.pop('balances', dict())
+    _state_balances = state_data.pop('bls', {})
     _balances = ws_futures_balance_data(
         raw_data.get('a', {}).get('B'), raw_data.get('a', {}).get('P'), _state_balances)
-    return _ws_wallet(_balances, _state_balances, state_data, currencies, assets, fields)
+    return _ws_wallet(_balances, _state_balances, state_data, currencies, assets, fields, schema)
 
 
 def ws_futures_balance_data(balances: list, position: list, state_balances: dict):
     unrealised_pnl = sum([to_float(p['up']) for p in position]) if position else 0
-    result = list()
+    result = []
     for b in balances:
         _currency = b['a'].lower()
-        _currency_state = state_balances.pop(_currency, dict())
+        _currency_state = state_balances.pop(_currency, {})
         margin_balance = to_float(b['wb']) + unrealised_pnl
-        maint_margin = _currency_state.get('maint_margin', 0)
+        maint_margin = _currency_state.get('mm', 0)
         result.append({
-            'currency': b['a'],
-            'balance': to_float(b['wb']),
-            'unrealised_pnl': unrealised_pnl,
-            'margin_balance': margin_balance,
-            'maint_margin': maint_margin,
-            'init_margin': _currency_state.get('init_margin'),
-            'available_margin': margin_balance - maint_margin,
-            'borrowed': _currency_state.get('borrowed', None),
-            'interest': _currency_state.get('interest', None),
-            'type': to_wallet_state_type(position),
+            'cur': b['a'],
+            'bl': to_float(b['wb']),
+            'wbl': _currency_state.get('wbl', 0),
+            'bor': _currency_state.get('bor', 0),
+            'ist': _currency_state.get('ist', 0),
+            'upnl': unrealised_pnl,
+            'mbl': margin_balance,
+            'mm': maint_margin,
+            'im': _currency_state.get('im', 0),
+            'am': margin_balance - maint_margin,
+            't': to_wallet_state_type(position),
         })
     return result
 
@@ -630,6 +698,22 @@ def _spot_balance_data(balances: list):
     ]
 
 
+def _spot_ws_balance_data(balances: list):
+    return [
+        {
+            'cur': b['asset'],
+            'bl': to_float(b['free']),
+            'wbl': to_float(b['free']),
+            'upnl': 0,
+            'mbl': to_float(b['free']),
+            'mm': to_float(b['locked']),
+            'im': None,
+            'am': round(to_float(b['free']) - to_float(b['locked']), 8),
+            't': to_wallet_state_type(to_float(b['locked'])),
+        } for b in balances
+    ]
+
+
 def _margin_balance_data(balances: list, max_borrow: float = None, interest_rate: float = None):
     result = list()
     for b in balances:
@@ -658,10 +742,38 @@ def _margin_balance_data(balances: list, max_borrow: float = None, interest_rate
     return result
 
 
+def _margin_ws_balance_data(balances: list, max_borrow: float = None, interest_rate: float = None):
+    result = list()
+    for b in balances:
+        _free = to_float(b['free'])
+        _locked = to_float(b['locked'])
+        borrowed = to_float(b['borrowed'])
+        interest = to_float(b['interest'])
+        withdraw_balance = to_float(b['netAsset']) - (borrowed + interest)
+        if withdraw_balance < 0:
+            withdraw_balance = 0
+        result.append({
+            'cur': b['asset'],
+            'bl': _free,
+            'wbl': withdraw_balance,
+            'bor': borrowed,
+            'abor': max_borrow,
+            'ist': interest,
+            'istr': interest_rate,
+            'upnl': 0,
+            'mbl': _free,
+            'mm': _locked,
+            'im': None,
+            'am': round(_free - _locked, 8),
+            't': to_wallet_state_type(_locked),
+        })
+    return result
+
+
 def _margin_max_borrow(data):
     if isinstance(data, dict):
         return to_float(data.get('amount'))
-    return None
+    return 0
 
 
 def _futures_balance_data(balances: list):
@@ -682,10 +794,30 @@ def _futures_balance_data(balances: list):
     ]
 
 
-def _load_total_wallet_summary_list(summary, fields):
+def _ws_futures_balance_data(balances: list):
+    return [
+        {
+            'cur': b['asset'],
+            'bl': to_float(b['walletBalance']),
+            'wbl': to_float(b['maxWithdrawAmount']),
+            'bor': 0,
+            'ist': 0,
+            'upnl': to_float(b['unrealizedProfit']),
+            'mbl': to_float(b['marginBalance']),
+            'mm': to_float(b['maintMargin']),
+            'im': to_float(b['initialMargin']),
+            'am': round(to_float(b['marginBalance']) - to_float(b['maintMargin']), 8),
+            't': to_wallet_state_type(to_float(b['maintMargin'])),
+        } for b in balances
+    ]
+
+
+def _load_total_wallet_summary_list(summary, fields, is_for_ws=False):
     total = dict()
     for field in fields:
         t_field = f'total_{field}'
+        if is_for_ws:
+            t_field = f't{field}'
         total[t_field] = dict()
         for k, v in summary.items():
             if total[t_field].get(k):
@@ -699,31 +831,38 @@ def _load_total_wallet_summary_list(summary, fields):
 
 
 def load_wallet_summary(currencies: dict, balances: list, asset: str,
-                        fields: Union[list, tuple, None]):
-    if fields is None:
-        fields = ('balance',)
-    if asset.lower() == 'usd':
+                        fields: Union[list, tuple], schema, is_for_ws=False):
+    _currency_key = 'cur' if is_for_ws else 'currency'
+    _usd_asset = 'usdt'
+    if schema == OrderSchema.futures_coin:
+        _usd_asset = 'usd'
+    if schema != OrderSchema.futures_coin and asset.lower() == 'usd':
         asset = 'usdt'
-    total_balance = dict()
+    total_balance = {}
     for f in fields:
         total_balance[f] = 0
-    _asset_price = (currencies.get(f"{asset}usdt".lower()) or 1)
+    _asset_price = (currencies.get(f"{asset}{_usd_asset}".lower()) or 1)
     for b in balances:
-        if b['currency'].lower() == asset.lower() or b['currency'].lower() == 'usdt':
+        if b[_currency_key].lower() == asset.lower() or b[_currency_key].lower() == _usd_asset:
             _price = 1
         else:
-            _price = currencies.get(f"{b['currency']}usdt".lower()) or 0
+            _price = currencies.get(f"{b[_currency_key]}{_usd_asset}".lower()) or 0
         for f in fields:
             total_balance[f] += _price * (b[f] or 0) / _asset_price
     return total_balance
 
 
-def load_currencies_as_dict(currencies: list):
-    return {cur['symbol'].lower(): to_float(cur['price']) for cur in currencies}
-
-
-def load_currencies_as_list(currencies: list):
-    return [{cur['symbol'].lower(): to_float(cur['price'])} for cur in currencies]
+def currencies_by_schema(currencies: dict, schema: str):
+    if schema == OrderSchema.futures_coin:
+        _currencies = {}
+        for symbol, price in currencies.items():
+            try:
+                _symbol, _ = symbol.split('_', 1)
+            except ValueError:
+                _symbol = symbol
+            _currencies.update({_symbol: price})
+        return _currencies
+    return currencies
 
 
 def load_leverage_brackets_as_dict(data: list) -> dict:
@@ -814,17 +953,17 @@ def load_trade_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     }
     """
     data = {
-        'time': to_iso_datetime(raw_data.get('E')),
-        'timestamp': raw_data.get('E'),
-        'price': to_float(raw_data.get('p')),
-        'volume': to_float(raw_data.get('q')),
-        'side': load_order_side(raw_data.get('m')),
-        'symbol': raw_data.get('s')
+        'tm': to_iso_datetime(raw_data.get('E')),
+        'ts': raw_data.get('E'),
+        'p': to_float(raw_data.get('p')),
+        'vl': to_float(raw_data.get('q')),
+        'sd': load_order_side(raw_data.get('m')),
+        's': raw_data.get('s')
     }
     if isinstance(state_data, dict):
         data.update({
-            'system_symbol': state_data.get('system_symbol'),
-            'schema': state_data.get('schema')
+            'ss': state_data.get('system_symbol'),
+            'sch': state_data.get('schema')
         })
     return data
 
@@ -859,19 +998,19 @@ def load_quote_bin_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     raw_data = raw_data.get('k', {})
     _timestamp = raw_data.get('t')
     data = {
-        'time': to_iso_datetime(_timestamp),
-        'timestamp': _timestamp,
-        'open': to_float(raw_data.get("o")),
-        'close': to_float(raw_data.get("c")),
-        'high': to_float(raw_data.get("h")),
-        'low': to_float(raw_data.get('l')),
-        'volume': to_float(raw_data.get('v'))
+        'tm': to_iso_datetime(_timestamp),
+        'ts': _timestamp,
+        'op': to_float(raw_data.get("o")),
+        'cl': to_float(raw_data.get("c")),
+        'hi': to_float(raw_data.get("h")),
+        'lw': to_float(raw_data.get('l')),
+        'vl': to_float(raw_data.get('v'))
     }
     if isinstance(state_data, dict):
         data.update({
-            'symbol': state_data.get('symbol'),
-            'system_symbol': state_data.get('system_symbol'),
-            'schema': state_data.get('schema')
+            's': state_data.get('symbol'),
+            'ss': state_data.get('system_symbol'),
+            'sch': state_data.get('schema')
         })
     return data
 
@@ -911,15 +1050,15 @@ def load_order_book_ws_data(raw_data: dict, order: list, side: int, state_data: 
 
     data = {
         'id': generate_order_book_id(price),
-        'symbol': symbol,
-        'price': price,
-        'volume': to_float(order[1]),
-        'side': side
+        's': symbol,
+        'p': price,
+        'vl': to_float(order[1]),
+        'sd': side
     }
     if isinstance(state_data, dict):
         data.update({
-            'schema': state_data.get('schema'),
-            'system_symbol': state_data.get('system_symbol')
+            'sch': state_data.get('schema'),
+            'ss': state_data.get('system_symbol')
         })
     return data
 
@@ -958,29 +1097,29 @@ def load_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict])
     price24 = to_float(raw_data.get('w'))
     face_price, _reversed = BinanceFinFactory.calc_face_price(symbol, price, schema=schema)
     data = {
-        'time': to_iso_datetime(raw_data.get('E')),
-        'timestamp': raw_data.get('E'),
-        'symbol': symbol,
-        'schema': schema,
-        'price': price,
-        'price24': price24,
-        'delta': delta(price, price24),
-        'face_price': face_price,
-        'bid_price': to_float(raw_data.get('b')),
-        'ask_price': to_float(raw_data.get('a')),
-        'reversed': _reversed,
-        'volume24': to_float(raw_data.get('v')),
+        'tm': to_iso_datetime(raw_data.get('E')),
+        'ts': raw_data.get('E'),
+        's': symbol,
+        'sch': schema,
+        'p': price,
+        'p24': price24,
+        'dt': delta(price, price24),
+        'fp': face_price,
+        'bip': to_float(raw_data.get('b')),
+        'asp': to_float(raw_data.get('a')),
+        're': _reversed,
+        'v24': to_float(raw_data.get('v')),
     }
     if isinstance(state_data, dict):
         data.update({
-            'expiration': state_data.get('expiration'),
-            'pair': state_data.get('pair'),
-            'tick': state_data.get('tick'),
-            'volume_tick': state_data.get('volume_tick'),
-            'system_symbol': state_data.get('system_symbol'),
-            'symbol_schema': state_data.get('symbol_schema'),
-            'created': to_iso_datetime(to_date(state_data.get('created'))),
-            'max_leverage': state_data.get('max_leverage')
+            'exp': state_data.get('expiration'),
+            'pa': state_data.get('pair'),
+            'tck': state_data.get('tick'),
+            'vt': state_data.get('volume_tick'),
+            'ss': state_data.get('system_symbol'),
+            'ssch': state_data.get('symbol_schema'),
+            'crt': to_iso_datetime(to_date(state_data.get('created'))),
+            'mlvr': state_data.get('max_leverage')
         })
     return data
 
@@ -1013,7 +1152,7 @@ def to_float(token: Union[int, float, str, None]) -> Optional[float]:
     try:
         return float(token)
     except (ValueError, TypeError):
-        return None
+        return 0
 
 
 def symbol2stock(symbol):
@@ -1035,29 +1174,30 @@ def load_ws_order_side(order_side: Optional[str]) -> Optional[int]:
 
 def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     data = {
-        'exchange_order_id': raw_data.get('i'),
-        'side': load_ws_order_side(raw_data.get('S')),
-        'tick_volume': to_float(raw_data.get('l')),
-        'tick_price': to_float(raw_data.get('L')),
-        'volume': to_float(raw_data.get('q')),
-        'price': to_float(raw_data.get('p')),
-        'status': load_ws_order_status(raw_data.get('X')),
-        'leaves_volume': calculate_ws_order_leaves_volume(raw_data),
-        'filled_volume': to_float(raw_data.get('z')),
-        'avg_price': calculate_ws_order_avg_price(raw_data),
-        'timestamp': to_date(raw_data.get('E')),
-        'symbol': raw_data.get('s'),
-        'stop': to_float(raw_data['P']) if raw_data.get('P') else to_float(raw_data.get('sp')),
-        'created': to_iso_datetime(raw_data['O']) if raw_data.get('O') else to_date(raw_data.get('T')),
-        'type': raw_data.get('o', '').lower(),
-        'execution': raw_data.get('o', '').lower(),
+        'eoid': raw_data.get('i'),
+        'sd': load_ws_order_side(raw_data.get('S')),
+        'tv': to_float(raw_data.get('l')),
+        'tp': to_float(raw_data.get('L')),
+        'vl': to_float(raw_data.get('q')),
+        'p': to_float(raw_data.get('p')),
+        'sy': load_ws_order_status(raw_data.get('X')),
+        'lv': calculate_ws_order_leaves_volume(raw_data),
+        'fv': to_float(raw_data.get('z')),
+        'ap': calculate_ws_order_avg_price(raw_data),
+        'ts': to_date(raw_data.get('E')),
+        's': raw_data.get('s'),
+        'stp': to_float(raw_data['P']) if raw_data.get('P') else to_float(raw_data.get('sp')),
+        'crt': to_iso_datetime(raw_data['O']) if raw_data.get('O') else to_date(raw_data.get('T')),
+        't': raw_data.get('o', '').lower(),
+        'exc': raw_data.get('o', '').lower(),
     }
     if isinstance(state_data, dict):
         order_type_and_exec = load_order_type_and_exec(state_data.get('schema'), raw_data.get('o', '').upper())
         data.update({
-            'system_symbol': state_data.get('system_symbol'),
-            'schema': state_data.get('schema'),
-            **order_type_and_exec
+            'ss': state_data.get('system_symbol'),
+            'sch': state_data.get('schema'),
+            't': order_type_and_exec.get('type'),
+            'exc':  order_type_and_exec.get('execution')
         })
     return data
 
@@ -1210,26 +1350,27 @@ def load_ws_futures_position_leverage_type(margin_type: Optional[str]) -> Option
     return None
 
 
-def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, state_data: Optional[dict], exchange_rates: dict) -> dict:
+def load_futures_position_ws_data(
+        raw_data: dict, position_state_data: dict, state_data: Optional[dict], exchange_rates: dict) -> dict:
     unrealised_pnl = position_state_data['unrealised_pnl']
     data = {
-        'time': to_iso_datetime(raw_data.get('E')),
-        'timestamp': raw_data.get('E'),
-        'symbol': position_state_data['symbol'].lower(),
-        'side': position_state_data['side'],
-        'volume': position_state_data['volume'],
-        'entry_price': position_state_data['entry_price'],
-        'mark_price': position_state_data['mark_price'],
-        'unrealised_pnl': load_ws_futures_position_unrealised_pnl(unrealised_pnl, exchange_rates),
-        'leverage_type': position_state_data['leverage_type'],
-        'leverage': position_state_data['leverage'],
-        'liquidation_price': position_state_data['liquidation_price'],
-        'action': position_state_data['action']
+        'tm': to_iso_datetime(raw_data.get('E')),
+        'ts': raw_data.get('E'),
+        's': position_state_data['symbol'].lower(),
+        'sd': position_state_data['side'],
+        'vl': position_state_data['volume'],
+        'ep': position_state_data['entry_price'],
+        'mp': position_state_data['mark_price'],
+        'upnl': load_ws_futures_position_unrealised_pnl(unrealised_pnl, exchange_rates),
+        'lvrp': position_state_data['leverage_type'],
+        'lvr': position_state_data['leverage'],
+        'lp': position_state_data['liquidation_price'],
+        'act': position_state_data['action']
     }
     if isinstance(state_data, dict):
         data.update({
-            'system_symbol': state_data.get('system_symbol'),
-            'schema': state_data.get('schema')
+            'ss': state_data.get('system_symbol'),
+            'sch': state_data.get('schema')
         })
     return data
 
@@ -1349,7 +1490,8 @@ def load_futures_position_list(raw_data: list, schema: str) -> list:
     return [load_futures_position(data, schema) for data in raw_data if to_float(data.get('positionAmt')) != 0]
 
 
-def load_exchange_position_ws_data(raw_data: dict, position_state: dict, state_data: Optional[dict], exchange_rates: dict) -> dict:
+def load_exchange_position_ws_data(
+        raw_data: dict, position_state: dict, state_data: Optional[dict], exchange_rates: dict) -> dict:
     side = position_state['side']
     volume = to_float(position_state['volume'])
     mark_price = to_float(raw_data.get('c'))
@@ -1358,23 +1500,23 @@ def load_exchange_position_ws_data(raw_data: dict, position_state: dict, state_d
         side=side, volume=volume, mark_price=mark_price, entry_price=entry_price
     )
     data = {
-        'time': to_iso_datetime(raw_data.get('E')),
-        'timestamp': raw_data.get('E'),
-        'symbol': raw_data['s'].lower(),
-        'side': side,
-        'volume': volume,
-        'entry_price': entry_price,
-        'mark_price': mark_price,
-        'unrealised_pnl': load_ws_position_unrealised_pnl(unrealised_pnl, state_data, side, exchange_rates),
-        'leverage_type': position_state['leverage_type'],
-        'leverage': to_float(position_state['leverage']),
-        'liquidation_price': None,
-        'action': 'update'
+        'tm': to_iso_datetime(raw_data.get('E')),
+        'ts': raw_data.get('E'),
+        's': raw_data['s'].lower(),
+        'sd': side,
+        'vl': volume,
+        'ep': entry_price,
+        'mp': mark_price,
+        'upnl': load_ws_position_unrealised_pnl(unrealised_pnl, state_data, side, exchange_rates),
+        'lvrp': position_state['leverage_type'],
+        'lvr': to_float(position_state['leverage']),
+        'lp': None,
+        'act': 'update'
     }
     if isinstance(state_data, dict):
         data.update({
-            'system_symbol': state_data.get('system_symbol'),
-            'schema': state_data.get('schema')
+            'ss': state_data.get('system_symbol'),
+            'sch': state_data.get('schema')
         })
     return data
 
@@ -1401,10 +1543,11 @@ def to_usd(base: float, asset: str, exchange_rates: dict) -> Optional[float]:
         return None
 
 
-def load_margin2_position_ws_data(raw_data: dict, position_state: dict, state_data: Optional[dict], exchange_rates: dict) -> dict:
+def load_margin2_position_ws_data(
+        raw_data: dict, position_state: dict, state_data: Optional[dict], exchange_rates: dict) -> dict:
     data = load_exchange_position_ws_data(raw_data, position_state, state_data, exchange_rates)
     if not data['leverage_type']:
-        data['leverage_type'] = LeverageType.cross
+        data['lvrp'] = LeverageType.cross
     if not data['leverage']:
-        data['leverage'] = 3
+        data['lvr'] = 3
     return data

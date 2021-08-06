@@ -32,6 +32,12 @@ class BitmexWssApi(StockWssApi):
     router_class = BitmexWssRouter
 
     async def _connect(self, **kwargs):
+        kwargs['ws_options'] = {
+            'max_size': 2 ** 24,
+            'max_queue': 2 ** 13,
+            'read_limit': 2 ** 18,
+            'write_limit': 2 ** 18,
+        }
         _ws: client.WebSocketClientProtocol = await super()._connect(**kwargs)
         res = await _ws.recv()
         self._logger.info(res)

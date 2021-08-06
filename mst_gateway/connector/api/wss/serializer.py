@@ -47,11 +47,11 @@ class Serializer:
         if not data:
             return None
         return {
-            'account': self._wss_api.account_name,
-            'table': self.subscription,
-            'schema': self._wss_api.schema,
-            'action': action,
-            'data': data
+            'acc': self._wss_api.account_name,
+            'tb': self.subscription,
+            'sch': self._wss_api.schema,
+            'act': action,
+            'd': data
         }
 
     def state(self, symbol: str = None) -> Optional[dict]:
@@ -59,9 +59,9 @@ class Serializer:
         if not data:
             return None
         return {
-            'account': self._wss_api.account_name,
-            'table': self.subscription,
-            'schema': self._wss_api.schema,
-            'action': "partial",
-            'data': data
+            'acc': self._wss_api.account_name,
+            'tb': self.subscription,
+            'sch': self._wss_api.schema,
+            'act': "partial",
+            'd': data
         }

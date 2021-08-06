@@ -38,5 +38,5 @@ class BinanceSerializer(Serializer):
         valid_item = await self._load_data(message, item)
         if not valid_item:
             return None
-        self._update_state(valid_item['symbol'], valid_item)
+        self._update_state(valid_item['s'], valid_item)
         self._update_data(data, valid_item)
