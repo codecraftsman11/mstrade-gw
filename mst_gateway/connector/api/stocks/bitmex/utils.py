@@ -37,6 +37,7 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime
     if isinstance(state_data, dict):
         data.update({
             'expiration': state_data.get('expiration'),
+            'expiration_date': state_data.get('expiration_date'),
             'pair': state_data.get('pair'),
             'tick': state_data.get('tick'),
             'volume_tick': state_data.get('volume_tick'),
@@ -73,6 +74,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict], is_iso_datet
     if isinstance(state_data, dict):
         data.update({
             'exp': state_data.get('expiration'),
+            'exp_d': state_data.get('expiration_date'),
             'pa': state_data.get('pair'),
             'tck': state_data.get('tick'),
             'vt': state_data.get('volume_tick'),
@@ -137,6 +139,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                 'system_base_asset': system_base_asset,
                 'system_quote_asset': system_quote_asset,
                 'expiration': expiration,
+                'expiration_date': to_date(d.get('expiry')),
                 'pair': [base_asset.upper(), quote_asset.upper()],
                 'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
                 'schema': OrderSchema.margin1,
