@@ -446,8 +446,6 @@ class BitmexRestApi(StockRestApi):
         side: int,
         volume: float,
         price: float,
-        leverage: Optional[float],
-        mark_price: Optional[float],
         **kwargs,
     ) -> dict:
         schema = schema.lower()
@@ -460,10 +458,10 @@ class BitmexRestApi(StockRestApi):
                 entry_price=price,
                 maint_margin=kwargs.get('wallet_detail',  {}).get(schema, {}).get('maint_margin'),
                 volume=volume,
-                leverage=leverage,
                 wallet_balance=wallet_balance,
                 taker_fee=kwargs.get('taker_fee'),
                 funding_rate=kwargs.get('funding_rate'),
+                leverage=kwargs.get('leverage'),
             )}
 
     def _bitmex_api(self, method: callable, **kwargs):
