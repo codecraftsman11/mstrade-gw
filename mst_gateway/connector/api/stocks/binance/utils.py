@@ -1421,10 +1421,7 @@ def load_futures_positions_state(account_info: dict) -> dict:
             side = load_position_side_by_volume(volume)
             entry_price = to_float(position['entryPrice'])
             _unrealised_pnl = to_float(position['unrealizedProfit'])
-            mark_price = BinanceFinFactory.calc_mark_price(
-                volume, entry_price, _unrealised_pnl,
-                symbol=symbol, schema=OrderSchema.futures, side=side,
-            )
+            mark_price = BinanceFinFactory.calc_mark_price(volume, entry_price, _unrealised_pnl)
             positions_state[symbol] = {
                 'symbol': symbol,
                 'volume': volume,
@@ -1448,6 +1445,14 @@ def load_futures_coin_positions_state(account_info: dict, state_data: dict) -> d
     for position in account_info.get('positions', []):
         if position['positionSide'].upper() == BinancePositionSideMode.BOTH:
             symbol = position['symbol'].lower()
+            volume = to_float(position['positionAmt'])
+            side = load_position_side_by_volume(volume)
+            entry_price = to_float(position['entryPrice'])
+            _unrealised_pnl = to_float(position['unrealizedProfit'])
+            mark_price = BinanceFinFactory.calc_mark_price(
+                volume, entry_price, _unrealised_pnl,
+                schema=OrderSchema.futures_coin, symbol=symbol, side=side,
+            )
             try:
                 wallet_asset = state_data.get(symbol, {}).get('pair', [])[0].lower()
                 cross_wallet_balance = balances.get(wallet_asset)
@@ -1455,10 +1460,10 @@ def load_futures_coin_positions_state(account_info: dict, state_data: dict) -> d
                 cross_wallet_balance = None
             positions_state[symbol] = {
                 'symbol': symbol,
-                'volume': 0,
-                'side': None,
-                'entry_price': to_float(position['entryPrice']),
-                'mark_price': None,
+                'volume': volume,
+                'side': side,
+                'entry_price': entry_price,
+                'mark_price': mark_price,
                 'leverage_type': load_position_leverage_type(position),
                 'leverage': to_float(position['leverage']),
                 'isolated_wallet_balance': to_float(position.get('isolatedWallet')),
