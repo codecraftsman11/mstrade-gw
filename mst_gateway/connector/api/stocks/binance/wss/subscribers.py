@@ -209,7 +209,7 @@ class BinancePositionSubscriber(BinanceSubscriber):
         )
         exchange_rates = await api.storage.get('exchange_rates', exchange=api.name, schema=api.schema)
         return {
-            'positions_state': utils.load_positions_state(positions_state_data),
+            'position_state': utils.load_positions_state(positions_state_data),
             'exchange_rates': exchange_rates,
         }
 
@@ -227,7 +227,7 @@ class BinanceFuturesPositionSubscriber(BinancePositionSubscriber):
                 account_info = await client.futures_account_v2()
                 leverage_brackets = await client.futures_leverage_bracket()
                 return {
-                    'positions_state': utils.load_futures_positions_state(account_info),
+                    'position_state': utils.load_futures_positions_state(account_info),
                     'leverage_brackets': utils.load_leverage_brackets_as_dict(leverage_brackets),
                     'exchange_rates': exchange_rates,
                 }
@@ -254,7 +254,7 @@ class BinanceFuturesCoinPositionSubscriber(BinanceFuturesPositionSubscriber):
                 leverage_brackets = await client.futures_coin_leverage_bracket()
                 exchange_rates = await api.storage.get('exchange_rates', exchange=api.name, schema=api.schema)
                 return {
-                    'positions_state': utils.load_futures_coin_positions_state(account_info, state_data),
+                    'position_state': utils.load_futures_coin_positions_state(account_info, state_data),
                     'leverage_brackets': utils.load_leverage_brackets_as_dict(leverage_brackets),
                     'exchange_rates': exchange_rates,
                 }
