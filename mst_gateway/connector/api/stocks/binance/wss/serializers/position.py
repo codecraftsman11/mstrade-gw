@@ -19,8 +19,11 @@ class BinancePositionSerializer(BinanceSerializer):
         super().__init__(wss_api)
         self._positions_state = wss_api.partial_state_data.get(self.subscription, {}).get('positions_state', {})
         self._exchange_rates = wss_api.partial_state_data.get(self.subscription, {}).get('exchange_rates', {})
-        self._initialized = bool(self.subscription in self._wss_api.subscriptions)
         self._item_symbol = None
+
+    @property
+    def _initialized(self) -> bool:
+        return bool(self.subscription in self._wss_api.subscriptions)
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
         if self._initialized:
