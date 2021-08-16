@@ -7,6 +7,7 @@ from mst_gateway.connector.api.stocks.binance import utils
 from mst_gateway.connector.api.stocks.binance.var import BinancePositionSideMode
 from mst_gateway.connector.api.stocks.binance.wss.serializers.base import BinanceSerializer
 
+
 if TYPE_CHECKING:
     from ... import BinanceWssApi
 
@@ -24,6 +25,10 @@ class BinancePositionSerializer(BinanceSerializer):
     def _initialized(self) -> bool:
         return bool(self.subscription in self._wss_api.subscriptions)
 
+    @staticmethod
+    def get_position_state(positions_state: dict, symbol: str) -> dict:
+        return positions_state.get(symbol.lower(), {})
+
     def is_item_valid(self, message: dict, item: dict) -> bool:
         if self._initialized:
             self._item_symbol = item.get('s', '').lower()
@@ -38,11 +43,11 @@ class BinancePositionSerializer(BinanceSerializer):
         if self._wss_api.register_state:
             if (state_data := self._wss_api.get_state_data(self._item_symbol)) is None:
                 return None
-        position_state = self.position_state[self._item_symbol]
+        symbol_position_state = self.get_position_state(self.position_state, self._item_symbol)
         if self._wss_api.schema == OrderSchema.exchange:
-            return utils.load_exchange_position_ws_data(item, position_state, state_data, self.exchange_rates)
+            return utils.load_exchange_position_ws_data(item, symbol_position_state, state_data, self.exchange_rates)
         if self._wss_api.schema == OrderSchema.margin2:
-            return utils.load_margin2_position_ws_data(item, position_state, state_data, self.exchange_rates)
+            return utils.load_margin2_position_ws_data(item, symbol_position_state, state_data, self.exchange_rates)
         return None
 
 
@@ -155,10 +160,6 @@ class BinanceFuturesPositionSerializer(BinancePositionSerializer):
         positions_state = deepcopy(position_state)
         symbol_position_state = positions_state.pop(symbol.lower(), {})
         return symbol_position_state, positions_state
-
-    @staticmethod
-    def get_position_state(positions_state: dict, symbol: str) -> dict:
-        return positions_state.get(symbol.lower(), {})
 
     async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
