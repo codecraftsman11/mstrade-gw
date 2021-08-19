@@ -60,7 +60,7 @@ class BitmexFinFactory(FinFactory):
         _symbol = symbol.lower()
         result = (None, None)
         try:
-            if re.match(r"^xbtusd(t)?$", _symbol):
+            if re.match(r"^xbt(usd(t)?|eur)$", _symbol):
                 result = (1 / price, True)
             elif re.match(r"^xbt[fghjkmnquvxz]\d{2}$", _symbol):
                 result = (1 / price, True)
@@ -72,21 +72,25 @@ class BitmexFinFactory(FinFactory):
                 result = (0.1 * price, False)
             elif re.match(r"^adausd(t)?([fghjkmnquvxz]\d{2})?$", _symbol):
                 result = (0.01 * price, False)
+            elif re.match(r"^(altmex|defimex|fil|aave)usd(t)?$", _symbol):
+                result = (1e-6 * price, False)
             elif re.match(r"^(eth|bch)usd(t)?([fghjkmnquvxz]\d{2})?$", _symbol):
                 result = (1e-6 * price, False)
             elif re.match(r"^yfiusd(t)?([fghjkmnquvxz]\d{2})?$", _symbol):
                 result = (1e-7 * price, False)
             elif re.match(r"^ltcusd(t)?$", _symbol):
                 result = (2e-6 * price, False)
-            elif re.match(r"^uniusd(t)?$", _symbol):
+            elif re.match(r"^(uni|sol|sushi)usd(t)?$", _symbol):
                 result = (1e-5 * price, False)
-            elif re.match(r"^dogeusd(t)?$", _symbol):
+            elif re.match(r"^(doge|trx|xlm|vet)usd(t)?$", _symbol):
                 result = (0.001 * price, False)
+            elif re.match(r"^maticusd(t)?$", _symbol):
+                result = (0.0001 * price, False)
             elif re.match(r"^(bnb|dot|eos|link|xtz)usd(t)?([fghjkmnquvxz]\d{2})?$", _symbol):
                 result = (0.0001 * price, False)
             elif re.match(r"^xrpusd(t)?$", _symbol):
                 result = (0.0002 * price, False)
-            elif re.match(r"^(ada|bch|eos|eth|ltc|trx|xrp)[fghjkmnquvxz]\d{2}$", _symbol):
+            elif re.match(r"^(ada|bch|eos|eth|ltc|trx|xrp|xbteur)[fghjkmnquvxz]\d{2}$", _symbol):
                 result = (price, False)
             elif re.match(r"^\w*xbt$", _symbol):
                 result = (price, False)
@@ -99,7 +103,7 @@ class BitmexFinFactory(FinFactory):
         _symbol = symbol.lower()
         result = None
         try:
-            if re.match(r"^xbtusd(t)?$", _symbol):
+            if re.match(r"^xbt(usd(t)?|eur)$", _symbol):
                 result = 1 / face_price
             elif re.match(r"^xbt[fghjkmnquvxz]\d{2}$", _symbol):
                 result = 1 / face_price
@@ -111,21 +115,25 @@ class BitmexFinFactory(FinFactory):
                 result = face_price / 0.1
             elif re.match(r"^adausd(t)?([fghjkmnquvxz]\d{2})?$", _symbol):
                 result = face_price / 0.01
+            elif re.match(r"^(altmex|defimex|fil|aave)usd(t)?$", _symbol):
+                result = face_price / 1e-6
             elif re.match(r"^(eth|bch)usd(t)?([fghjkmnquvxz]\d{2})?$", _symbol):
                 result = face_price / 1e-6
             elif re.match(r"^yfiusd(t)?([fghjkmnquvxz]\d{2})?$", _symbol):
                 result = face_price / 1e-7
             elif re.match(r"^ltcusd(t)?$", _symbol):
                 result = face_price / 2e-6
-            elif re.match(r"^uniusd(t)?$", _symbol):
+            elif re.match(r"^(uni|sol|sushi)usd(t)?$", _symbol):
                 result = face_price / 1e-5
-            elif re.match(r"^dogeusd(t)?$", _symbol):
+            elif re.match(r"^(doge|trx|xlm|vet)usd(t)?$", _symbol):
                 result = face_price / 0.001
+            elif re.match(r"^maticusd(t)?$", _symbol):
+                result = face_price / 0.0001
             elif re.match(r"^(bnb|dot|eos|link|xtz)usd(t)?([fghjkmnquvxz]\d{2})?$", _symbol):
                 result = face_price / 0.0001
             elif re.match(r"^xrpusd(t)?$", _symbol):
                 result = face_price / 0.0002
-            elif re.match(r"^(ada|bch|eos|eth|ltc|trx|xrp)[fghjkmnquvxz]\d{2}$", _symbol):
+            elif re.match(r"^(ada|bch|eos|eth|ltc|trx|xrp|xbteur)[fghjkmnquvxz]\d{2}$", _symbol):
                 result = face_price
             elif re.match(r"^\w*xbt$", _symbol):
                 result = face_price
