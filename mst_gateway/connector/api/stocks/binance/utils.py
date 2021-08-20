@@ -1360,9 +1360,17 @@ def load_ws_futures_position_leverage_type(margin_type: Optional[str]) -> Option
     return None
 
 
-def load_futures_position_ws_data(
-        raw_data: dict, position_state_data: dict, state_data: Optional[dict], exchange_rates: dict) -> dict:
+def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, state_data: Optional[dict],
+                                  exchange_rates: dict, schema: str) -> dict:
     unrealised_pnl = position_state_data['unrealised_pnl']
+    if schema == OrderSchema.futures_coin:
+        try:
+            asset = state_data.get('pair')[0].lower()
+        except (TypeError, IndexError, AttributeError):
+            asset = None
+        unrealised_pnl = load_ws_futures_coin_position_unrealised_pnl(unrealised_pnl, exchange_rates, asset)
+    else:
+        unrealised_pnl = load_ws_futures_position_unrealised_pnl(unrealised_pnl, exchange_rates)
     data = {
         'tm': to_iso_datetime(raw_data.get('E')),
         'ts': raw_data.get('E'),
@@ -1371,7 +1379,7 @@ def load_futures_position_ws_data(
         'vl': position_state_data['volume'],
         'ep': position_state_data['entry_price'],
         'mp': position_state_data['mark_price'],
-        'upnl': load_ws_futures_position_unrealised_pnl(unrealised_pnl, exchange_rates),
+        'upnl': unrealised_pnl,
         'lvrp': position_state_data['leverage_type'],
         'lvr': position_state_data['leverage'],
         'lp': position_state_data['liquidation_price'],
@@ -1390,6 +1398,18 @@ def load_ws_futures_position_unrealised_pnl(base: float, exchange_rates: dict) -
         'base': base,
         'usd': base,
         'btc': to_btc(base, exchange_rates),
+    }
+
+
+def load_ws_futures_coin_position_unrealised_pnl(base: float, exchange_rates: dict, asset: str) -> dict:
+    try:
+        usd = exchange_rates.get(asset) * base
+    except TypeError:
+        usd = None
+    return {
+        'base': base,
+        'usd': usd,
+        'btc': to_btc(usd, exchange_rates),
     }
 
 

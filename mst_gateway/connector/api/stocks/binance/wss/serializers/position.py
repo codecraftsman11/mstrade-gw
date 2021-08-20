@@ -201,7 +201,9 @@ class BinanceFuturesPositionSerializer(BinancePositionSerializer):
             entry_price, mark_price, volume, side,
             schema=self._wss_api.schema, symbol=symbol
         )
-        return utils.load_futures_position_ws_data(item, symbol_position_state, state_data, self.exchange_rates)
+        return utils.load_futures_position_ws_data(
+            item, symbol_position_state, state_data, self.exchange_rates, self._wss_api.schema
+        )
 
     @staticmethod
     def get_wallet_balance(leverage_type: str, isolated_balance: float, cross_balance: float) -> Optional[float]:
@@ -291,5 +293,7 @@ class BinanceFuturesCoinPositionSerializer(BinanceFuturesPositionSerializer):
                 if (state_data := self._wss_api.get_state_data(symbol)) is None:
                     return None
             symbol_position_state = self.get_position_state(self.position_state, symbol)
-            return utils.load_futures_position_ws_data(item, symbol_position_state, state_data, self.exchange_rates)
+            return utils.load_futures_position_ws_data(
+                item, symbol_position_state, state_data, self.exchange_rates, self._wss_api.schema
+            )
         return await super()._load_data(message, item)
