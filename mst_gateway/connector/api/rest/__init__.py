@@ -240,8 +240,6 @@ class StockRestApi(Connector):
         side: int,
         volume: float,
         price: float,
-        leverage: Optional[float],
-        mark_price: Optional[float],
         **kwargs,
     ) -> dict:
         raise NotImplementedError

@@ -13,38 +13,30 @@ class BitmexFinFactory(FinFactory):
         return 1
 
     @classmethod
-    def calc_liquidation_isolated_price(cls, entry_price: float, maint_margin: float, side: int, **kwargs):
+    def calc_liquidation_price(cls, side: int, leverage_type: str, entry_price: float, **kwargs) -> Optional[float]:
         liquidation_price = None
-        leverage = kwargs.get('leverage')
+        direction = cls.direction_by_side(side)
         taker_fee = kwargs.get('taker_fee')
         funding_rate = kwargs.get('funding_rate')
-        if None not in (entry_price, maint_margin, side, leverage, taker_fee, funding_rate):
-            direction = cls.direction_by_side(side)
-            liquidation_price = round(
-                entry_price / (
-                        1 +
-                        (-direction * ((100 / leverage / 100) + 2 * taker_fee / 100)) +
+        maint_margin = kwargs.get('maint_margin')
+        try:
+            leverage_type = leverage_type.lower()
+            if leverage_type == api.LeverageType.isolated:
+                liquidation_price = round(
+                    entry_price / (
+                        1 + (-direction * ((100 / kwargs.get('leverage') / 100) + 2 * taker_fee / 100)) +
                         (direction * (maint_margin + taker_fee + funding_rate) / 100)
-                ), 8)
-        if liquidation_price is not None and liquidation_price < 0:
-            liquidation_price = None
-        return liquidation_price
-
-    @classmethod
-    def calc_liquidation_cross_price(cls, entry_price: float, maint_margin: float, side: int, **kwargs):
-        liquidation_price = None
-        quantity = abs(kwargs.get('quantity'))
-        margin_balance = kwargs.get('margin_balance')
-        taker_fee = kwargs.get('taker_fee')
-        funding_rate = kwargs.get('funding_rate')
-        if quantity and None not in (entry_price, maint_margin, side, margin_balance, taker_fee, funding_rate):
-            direction = cls.direction_by_side(side)
-            liquidation_price = round(
-                (direction * quantity * entry_price) / (
-                    (-margin_balance * entry_price) +
-                    ((maint_margin + taker_fee + funding_rate) / 100 * quantity) +
-                    (direction * quantity)
-                ), 8)
+                    ), 8)
+            if leverage_type == api.LeverageType.cross:
+                quantity = abs(kwargs.get('volume'))
+                liquidation_price = round(
+                    (direction * quantity * entry_price) / (
+                        (-kwargs.get('wallet_balance') * entry_price) +
+                        ((maint_margin + taker_fee + funding_rate) / 100 * quantity) +
+                        (direction * quantity)
+                    ), 8)
+        except (TypeError, ZeroDivisionError):
+            pass
         if liquidation_price is not None and liquidation_price < 0:
             liquidation_price = None
         return liquidation_price
