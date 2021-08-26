@@ -56,10 +56,10 @@ class StockWssApi(Connector):
         self._throttle_rate = throttle_rate
         self.auth_connect = False
         if throttle_storage is not None:
-            self.throttle = ThrottleWss(throttle_storage)
+            self.throttle.storage = throttle_storage
         self.schema = schema
         if state_storage is not None:
-            self.storage = AsyncStateStorage(state_storage)
+            self.storage.storage = state_storage
         self.register_state = register_state
         super().__init__(auth, logger)
         self.__init_partial_state_data()
@@ -366,3 +366,12 @@ class StockWssApi(Connector):
 
     async def __adel__(self):
         await self.close()
+
+    def __setstate__(self, state):
+        self.__dict__ = state
+
+    def __getstate__(self):
+        self.storage.storage = {}
+        self.throttle.storage = {}
+        state = self.__dict__.copy()
+        return state
