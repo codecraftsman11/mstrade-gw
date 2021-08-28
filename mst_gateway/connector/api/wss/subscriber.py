@@ -39,3 +39,7 @@ class Subscriber:
 
     async def init_partial_state(self, api: StockWssApi):
         return {}
+
+    @abstractmethod
+    async def request(self, api: StockWssApi, channel_name):
+        pass

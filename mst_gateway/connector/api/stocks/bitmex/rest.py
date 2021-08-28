@@ -446,33 +446,23 @@ class BitmexRestApi(StockRestApi):
         side: int,
         volume: float,
         price: float,
-        leverage: Optional[float],
-        mark_price: Optional[float],
         **kwargs,
     ) -> dict:
+        schema = schema.lower()
         if schema != OrderSchema.margin1:
             raise ConnectorError(f'Invalid schema {schema}.')
-        maint_margin = kwargs.get('wallet_detail',  {}).get(schema, {}).get('maint_margin')
-        params = {
-            'taker_fee': kwargs.get('taker_fee'),
-            'funding_rate': kwargs.get('funding_rate'),
-        }
-        if leverage_type == LeverageType.isolated:
-            params.update({
-                'leverage': leverage,
-            })
-            liquidation_price = self.fin_factory.calc_liquidation_isolated_price(
-                entry_price=price, maint_margin=maint_margin, side=side, **params,
-            )
-        else:
-            params.update({
-                'quantity': volume,
-                'margin_balance': wallet_balance,
-            })
-            liquidation_price = self.fin_factory.calc_liquidation_cross_price(
-                entry_price=price, maint_margin=maint_margin, side=side, **params,
-            )
-        return {'liquidation_price': liquidation_price}
+        return {
+            'liquidation_price': self.fin_factory.calc_liquidation_price(
+                side=side,
+                leverage_type=leverage_type,
+                entry_price=price,
+                maint_margin=kwargs.get('wallet_detail',  {}).get(schema, {}).get('maint_margin'),
+                volume=volume,
+                wallet_balance=wallet_balance,
+                taker_fee=kwargs.get('taker_fee'),
+                funding_rate=kwargs.get('funding_rate'),
+                leverage=kwargs.get('leverage'),
+            )}
 
     def _bitmex_api(self, method: callable, **kwargs):
         headers = {}
