@@ -398,6 +398,9 @@ class BinanceRestApi(StockRestApi):
         cross_collaterals = []
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl', 'bor', 'ist')
+            return utils.load_ws_futures_coin_wallet_data(
+                data, currencies, assets, fields, cross_collaterals, schema
+            )
         return utils.load_futures_coin_wallet_data(
             data, currencies, assets, fields, cross_collaterals, schema
         )

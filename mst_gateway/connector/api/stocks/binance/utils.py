@@ -475,6 +475,11 @@ def load_futures_coin_wallet_data(raw_data: dict, currencies: dict, assets: Unio
     return _load_futures_wallet_data(raw_data, currencies, assets, fields, cross_collaterals, schema)
 
 
+def load_ws_futures_coin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
+                                     fields: Union[list, tuple], cross_collaterals: list, schema: str) -> dict:
+    return _load_ws_futures_wallet_data(raw_data, currencies, assets, fields, cross_collaterals, schema)
+
+
 def _update_futures_balances(balances: list, cross_collaterals: list) -> list:
     for balance in balances:
         for collateral in cross_collaterals:
