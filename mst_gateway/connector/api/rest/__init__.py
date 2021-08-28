@@ -249,6 +249,8 @@ class StockRestApi(Connector):
         self.open()
 
     def __getstate__(self):
+        self.storage.storage = {}
+        self.throttle.storage = {}
         state = self.__dict__.copy()
         state.pop('_handler', None)
         return state

@@ -366,3 +366,12 @@ class StockWssApi(Connector):
 
     async def __adel__(self):
         await self.close()
+
+    def __setstate__(self, state):
+        self.__dict__ = state
+
+    def __getstate__(self):
+        self.storage.storage = {}
+        self.throttle.storage = {}
+        state = self.__dict__.copy()
+        return state
