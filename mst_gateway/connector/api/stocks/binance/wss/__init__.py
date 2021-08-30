@@ -254,7 +254,12 @@ class BinanceFuturesCoinWssApi(BinanceFuturesWssApi):
     BASE_URL = 'wss://dstream.binance.com/ws'
     TEST_URL = 'wss://dstream.binancefuture.com/ws'
 
-    subscribers = {}
+    subscribers = {
+        'symbol': subscr_class.BinanceFuturesSymbolSubscriber(),
+        'quote_bin': subscr_class.BinanceQuoteBinSubscriber(),
+        'trade': subscr_class.BinanceTradeSubscriber(),
+        'order_book': subscr_class.BinanceOrderBookSubscriber(),
+    }
     auth_subscribers = {
         'position': subscr_class.BinanceFuturesCoinPositionSubscriber(),
     }
