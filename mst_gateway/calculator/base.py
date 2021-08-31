@@ -16,12 +16,7 @@ class FinFactory:
 
     @classmethod
     @abstractmethod
-    def calc_liquidation_isolated_price(cls, entry_price: float, maint_margin: float, side: int, **kwargs):
-        raise NotImplementedError
-
-    @classmethod
-    @abstractmethod
-    def calc_liquidation_cross_price(cls, entry_price: float, maint_margin: float, side: int, **kwargs):
+    def calc_liquidation_price(cls, side: int, leverage_type: str, entry_price: float, **kwargs) -> Optional[float]:
         raise NotImplementedError
 
     @classmethod
@@ -41,21 +36,23 @@ class FinFactory:
         raise NotImplementedError
 
     @classmethod
-    def calc_unrealised_pnl_by_side(cls, entry_price: float, mark_price: float, volume: float,
-                                    side: int) -> Optional[float]:
-        if None in (entry_price, mark_price, volume, side):
+    def calc_unrealised_pnl_by_side(cls, entry_price: float, mark_price: float, volume: float, side: int,
+                                    **kwargs) -> Optional[float]:
+        try:
+            return (mark_price - entry_price) * cls.direction_by_side(side) * abs(volume)
+        except TypeError:
             return None
-        return (mark_price - entry_price) * cls.direction_by_side(side) * abs(volume)
 
     @classmethod
-    def calc_unrealised_pnl_by_direction(cls, entry_price: float, mark_price: float, volume: float,
-                                         direction: int) -> Optional[float]:
-        if None in (entry_price, mark_price, volume, direction):
+    def calc_unrealised_pnl_by_direction(cls, entry_price: float, mark_price: float, volume: float, direction: int,
+                                         **kwargs) -> Optional[float]:
+        try:
+            return (mark_price - entry_price) * direction * abs(volume)
+        except TypeError:
             return None
-        return (mark_price - entry_price) * direction * abs(volume)
 
     @classmethod
-    def calc_mark_price(cls, volume: float, entry_price: float, unrealised_pnl: float) -> Optional[float]:
+    def calc_mark_price(cls, volume: float, entry_price: float, unrealised_pnl: float, **kwargs) -> Optional[float]:
         try:
             return (entry_price * volume + unrealised_pnl) / volume
         except (TypeError, ZeroDivisionError):
