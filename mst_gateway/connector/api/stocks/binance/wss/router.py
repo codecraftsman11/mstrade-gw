@@ -93,7 +93,8 @@ class BinanceFuturesCoinWssRouter(BinanceWssRouter):
         'kline': 'quote_bin',
         'trade': 'trade',
         'depthUpdate': 'order_book',
-        'ACCOUNT_UPDATE': 'position',
+        'ACCOUNT_UPDATE': ['wallet', 'position'],
+        'ORDER_TRADE_UPDATE': 'order',
         'markPriceUpdate': 'position',
         'position': 'position'
     }
@@ -103,5 +104,7 @@ class BinanceFuturesCoinWssRouter(BinanceWssRouter):
         'quote_bin': serializers.BinanceQuoteBinSerializer,
         'trade': serializers.BinanceTradeSerializer,
         'order_book': serializers.BinanceOrderBookSerializer,
+        'wallet': serializers.BinanceFuturesWalletSerializer,
+        'order': serializers.BinanceOrderSerializer,
         'position': serializers.BinanceFuturesCoinPositionSerializer
     }

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Optional, TYPE_CHECKING
 from .base import BitmexSerializer
-from ...utils import load_ws_wallet_data
+from ...utils import load_wallet_data
 
 if TYPE_CHECKING:
     from ... import BitmexWssApi
@@ -15,8 +15,8 @@ class BitmexWalletSerializer(BitmexSerializer):
         self._state_data = wss_api.partial_state_data[self.subscription]
 
     @property
-    def currency_state(self):
-        return self._state_data.get('currency_state', {})
+    def exchange_rates(self):
+        return self._state_data.get('exchange_rates', {})
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
         return message.get('table') == "margin"
@@ -29,11 +29,11 @@ class BitmexWalletSerializer(BitmexSerializer):
         for balance in balances:
             if balance.get('cur', '').lower() == item.get('currency', '').lower():
                 self._check_balances_data(balance, item)
-        if self._wss_api.register_state and not self.currency_state:
+        if self._wss_api.register_state and not self.exchange_rates:
             return None
         assets = ('btc', 'usd')
         fields = ('bl', 'upnl', 'mbl')
-        return load_ws_wallet_data(item, self.currency_state, assets, fields)
+        return load_wallet_data(item, self.exchange_rates, assets, fields, is_for_ws=True)
 
     def _key_map(self, key: str):
         _map = {

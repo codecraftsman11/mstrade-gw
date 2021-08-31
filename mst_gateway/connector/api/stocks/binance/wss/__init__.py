@@ -261,6 +261,8 @@ class BinanceFuturesCoinWssApi(BinanceFuturesWssApi):
         'order_book': subscr_class.BinanceOrderBookSubscriber(),
     }
     auth_subscribers = {
+        'wallet': subscr_class.BinanceWalletSubscriber(),
+        'order': subscr_class.BinanceOrderSubscriber(),
         'position': subscr_class.BinanceFuturesCoinPositionSubscriber(),
     }
 
