@@ -1192,7 +1192,7 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'tp': to_float(raw_data.get('L')),
         'vl': to_float(raw_data.get('q')),
         'p': to_float(raw_data.get('p')),
-        'sy': load_ws_order_status(raw_data.get('X')),
+        'st': load_ws_order_status(raw_data.get('X')),
         'lv': calculate_ws_order_leaves_volume(raw_data),
         'fv': to_float(raw_data.get('z')),
         'ap': calculate_ws_order_avg_price(raw_data),

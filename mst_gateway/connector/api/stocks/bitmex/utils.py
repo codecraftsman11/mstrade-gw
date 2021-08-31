@@ -208,7 +208,6 @@ def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
 
 def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     data = {
-        'oid': raw_data.get('clOrdID'),
         'eoid': raw_data.get('orderID'),
         'sd': load_order_side(raw_data.get('side')),
         'tv': raw_data.get('lastQty'),
