@@ -10,6 +10,7 @@ from mst_gateway.connector.api.stocks.binance.wss.serializers.position import Bi
 from .lib import Client
 from . import utils, var
 from ...rest import StockRestApi
+from ...utils import load_wallet_summary_in_usd, convert_to_currency
 from .....exceptions import GatewayError, ConnectorError, RecoverableError, NotFoundError
 
 
@@ -351,9 +352,9 @@ class BinanceRestApi(StockRestApi):
     def _spot_wallet(self, schema: str, **kwargs):
         is_for_ws = kwargs.pop('is_for_ws', False)
         assets = kwargs.pop('assets', ('btc', 'usd'))
-        fields = ('balance',)
+        fields = kwargs.pop('fields', ('balance',))
         data = self._binance_api(self._handler.get_account, **kwargs)
-        currencies = self.storage.get('currency', self.name, schema)
+        currencies = self.storage.get('exchange_rates', self.name, schema)
         if is_for_ws:
             fields = ('bl',)
             return utils.load_ws_spot_wallet_data(data, currencies, assets, fields, schema)
@@ -362,9 +363,9 @@ class BinanceRestApi(StockRestApi):
     def _margin_wallet(self, schema: str, **kwargs):
         is_for_ws = kwargs.pop('is_for_ws', False)
         assets = kwargs.pop('assets', ('btc', 'usd'))
-        fields = ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed', 'interest')
+        fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed', 'interest'))
         data = self._binance_api(self._handler.get_margin_account, **kwargs)
-        currencies = self.storage.get('currency', self.name, schema)
+        currencies = self.storage.get('exchange_rates', self.name, schema)
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl', 'bor', 'ist')
             return utils.load_ws_margin_wallet_data(data, currencies, assets, fields, schema)
@@ -373,13 +374,13 @@ class BinanceRestApi(StockRestApi):
     def _futures_wallet(self, schema: str, **kwargs):
         is_for_ws = kwargs.pop('is_for_ws', False)
         assets = kwargs.pop('assets', ('btc', 'usd'))
-        fields = ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed', 'interest')
+        fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed', 'interest'))
         data = self._binance_api(self._handler.futures_account_v2, **kwargs)
         try:
             cross_collaterals = self._binance_api(self._handler.futures_loan_wallet, **kwargs)
         except ConnectorError:
             cross_collaterals = {}
-        currencies = self.storage.get('currency', self.name, schema)
+        currencies = self.storage.get('exchange_rates', self.name, schema)
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl', 'bor', 'ist')
             return utils.load_ws_futures_wallet_data(
@@ -391,10 +392,10 @@ class BinanceRestApi(StockRestApi):
 
     def _futures_coin_wallet(self, schema: str, **kwargs):
         is_for_ws = kwargs.pop('is_for_ws', False)
-        assets = kwargs.get('assets', ('btc', 'usd'))
-        fields = ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed', 'interest')
+        assets = kwargs.pop('assets', ('btc', 'usd'))
+        fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed', 'interest'))
         data = self._binance_api(self._handler.futures_coin_account, **kwargs)
-        currencies = self.storage.get('currency', self.name, schema)
+        currencies = self.storage.get('exchange_rates', self.name, schema)
         cross_collaterals = []
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl', 'bor', 'ist')
@@ -565,19 +566,22 @@ class BinanceRestApi(StockRestApi):
             ),
         }
         if not schemas:
-            schemas = list(list(schema_handlers))
+            schemas = schema_handlers.keys()
         assets = kwargs.get('assets', ('btc', 'usd'))
         fields = ('balance', 'unrealised_pnl', 'margin_balance')
         for schema in schemas:
             schema = schema.lower()
             total_balance = {schema: {}}
             try:
-                currencies = utils.currencies_by_schema(self.storage.get('currency', self.name, schema), schema)
+                currencies = self.storage.get('exchange_rates', self.name, schema)
                 balances = schema_handlers[schema][1](self._binance_api(schema_handlers[schema][0]))
             except (KeyError, ConnectorError):
                 continue
+            wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields)
             for asset in assets:
-                total_balance[schema][asset] = utils.load_wallet_summary(currencies, balances, asset, fields, schema)
+                total_balance[schema][asset] = convert_to_currency(
+                    wallet_summary_in_usd, currencies.get(utils.to_exchange_asset(asset, schema))
+                )
             utils.load_total_wallet_summary(total_summary, total_balance, assets, fields)
         return total_summary
 

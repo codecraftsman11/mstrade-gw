@@ -6,8 +6,9 @@ from .lib import (
     bitmex_connector, APIKeyAuthenticator, SwaggerClient
 )
 from mst_gateway.calculator import BitmexFinFactory
-from mst_gateway.connector.api.types import LeverageType, OrderSchema
+from mst_gateway.connector.api.types import OrderSchema
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
+from mst_gateway.connector.api.utils.utils import convert_to_currency
 from . import utils, var
 from .utils import binsize2timedelta
 from ...rest import StockRestApi
@@ -119,11 +120,11 @@ class BitmexRestApi(StockRestApi):
 
     def get_wallet(self, **kwargs) -> dict:
         schema = kwargs.pop('schema', OrderSchema.margin1).lower()
+        assets = kwargs.pop('assets', ('btc', 'usd'))
+        fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance'))
         if schema == OrderSchema.margin1:
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
-            currencies = self.storage.get('currency', self.name, schema)
-            assets = kwargs.get('assets', ('btc', 'usd'))
-            fields = ('balance', 'unrealised_pnl', 'margin_balance')
+            currencies = self.storage.get('exchange_rates', self.name, schema)
             return utils.load_wallet_data(data, currencies, assets, fields)
         raise ConnectorError(f"Invalid schema {schema}.")
 
@@ -341,16 +342,20 @@ class BitmexRestApi(StockRestApi):
         assets = kwargs.get('assets', ('btc', 'usd'))
         fields = ('balance', 'unrealised_pnl', 'margin_balance')
 
-        total_summary = dict()
+        total_summary = {}
         for schema in schemas:
             total_balance = {schema: {}}
             if schema == OrderSchema.margin1:
-                balances = self.get_wallet(schema=schema)['balances']
-                currencies = self.storage.get('currency', self.name, schema)
+                data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
+                balances = [utils.load_wallet_detail_data(data)]
+                currencies = self.storage.get('exchange_rates', self.name, schema)
             else:
                 continue
+            wallet_summary_in_usd = utils.load_wallet_summary_in_usd(currencies, balances, fields)
             for asset in assets:
-                total_balance[schema][asset] = utils.load_wallet_summary(currencies, balances, asset, fields)
+                total_balance[OrderSchema.margin1][asset] = convert_to_currency(
+                    wallet_summary_in_usd, currencies.get(utils.to_exchange_asset(asset))
+                )
             utils.load_total_wallet_summary(total_summary, total_balance, assets, fields)
         return total_summary
 
