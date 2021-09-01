@@ -78,3 +78,27 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
         'order': serializers.BinanceOrderSerializer,
         'position': serializers.BinanceFuturesPositionSerializer,
     }
+
+
+class BinanceFuturesCoinWssRouter(BinanceWssRouter):
+    table_route_map = {
+        '24hrTicker': 'symbol',
+        'bookTicker': 'symbol',
+        'kline': 'quote_bin',
+        'trade': 'trade',
+        'depthUpdate': 'order_book',
+        'ACCOUNT_UPDATE': ['wallet', 'position'],
+        'ORDER_TRADE_UPDATE': 'order',
+        'markPriceUpdate': 'position',
+        'position': 'position'
+    }
+
+    serializer_classes = {
+        'symbol': serializers.BinanceFuturesSymbolSerializer,
+        'quote_bin': serializers.BinanceQuoteBinSerializer,
+        'trade': serializers.BinanceTradeSerializer,
+        'order_book': serializers.BinanceOrderBookSerializer,
+        'wallet': serializers.BinanceFuturesWalletSerializer,
+        'order': serializers.BinanceOrderSerializer,
+        'position': serializers.BinanceFuturesCoinPositionSerializer
+    }
