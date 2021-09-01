@@ -59,14 +59,14 @@ class BitmexTradeSubscriber(BitmexSubscriber):
     is_close_connection = False
 
 
-class BitmexOrderSubscriber(BitmexSubscriber):
-    subscription = "order"
-    subscriptions = ("execution",)
+class BitmexWalletSubscriber(BitmexSubscriber):
+    subscription = "wallet"
+    subscriptions = ("margin",)
 
-
-class BitmexPositionSubscriber(BitmexSubscriber):
-    subscription = "position"
-    subscriptions = ("position",)
+    async def _subscribe(self, api: BitmexWssApi, symbol=None):
+        if 'wallet' in api.subscriptions:
+            return True
+        return await super()._subscribe(api)
 
     async def subscribe_exchange_rates(self, api: BitmexWssApi):
         redis = await api.storage.get_client()
@@ -82,26 +82,11 @@ class BitmexPositionSubscriber(BitmexSubscriber):
         return {'exchange_rates': exchange_rates}
 
 
-class BitmexWalletSubscriber(BitmexSubscriber):
-    subscription = "wallet"
-    subscriptions = ("margin",)
+class BitmexOrderSubscriber(BitmexSubscriber):
+    subscription = "order"
+    subscriptions = ("execution",)
 
-    async def _subscribe(self, api: BitmexWssApi, symbol=None):
-        if 'wallet' in api.subscriptions:
-            return True
-        return await super()._subscribe(api)
 
-    async def subscribe_currency_state(self, api: BitmexWssApi):
-        redis = await api.storage.get_client()
-        state_channel = (await redis.subscribe('currency'))[0]
-        while await state_channel.wait_message():
-            state_data = await state_channel.get_json()
-            currency_state = state_data.get(api.name.lower(), {}).get(api.schema, {})
-            api.partial_state_data[self.subscription].update({'currency_state': currency_state})
-
-    async def init_partial_state(self, api: BitmexWssApi) -> dict:
-        currency_state = {}
-        if api.register_state:
-            api.tasks.append(asyncio.create_task(self.subscribe_currency_state(api)))
-            currency_state = await api.storage.get('currency', exchange=api.name, schema=api.schema)
-        return {'currency_state': currency_state}
+class BitmexPositionSubscriber(BitmexWalletSubscriber):
+    subscription = "position"
+    subscriptions = ("position",)

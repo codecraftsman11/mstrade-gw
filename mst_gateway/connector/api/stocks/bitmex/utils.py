@@ -3,7 +3,8 @@ from typing import Dict, Union, Optional
 from datetime import datetime, timedelta, timezone
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
-from mst_gateway.connector.api.utils import time2timestamp
+from mst_gateway.connector.api.utils.time import time2timestamp
+from mst_gateway.connector.api.utils.utils import convert_to_currency, load_wallet_summary_in_usd
 from mst_gateway.exceptions import ConnectorError
 from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
 from mst_gateway.utils import delta
@@ -210,7 +211,6 @@ def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
 
 def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     data = {
-        'oid': raw_data.get('clOrdID'),
         'eoid': raw_data.get('orderID'),
         'sd': load_order_side(raw_data.get('side')),
         'tv': raw_data.get('lastQty'),
@@ -464,32 +464,25 @@ def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
     return quote_bin
 
 
-def load_wallet_data(raw_data: dict, currencies: dict, assets: Union[tuple, list], fields: tuple) -> dict:
-    balances = [load_wallet_detail_data(raw_data)]
+def load_wallet_data(raw_data: dict, currencies: dict, assets: Union[tuple, list], fields: tuple,
+                     is_for_ws=False) -> dict:
+    if is_for_ws:
+        bls_key = 'bls'
+        balances = [load_ws_wallet_detail_data(raw_data)]
+    else:
+        bls_key = 'balances'
+        balances = [load_wallet_detail_data(raw_data)]
+
     balances_summary = {}
     total_balance = {OrderSchema.margin1: {}}
+    wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields, is_for_ws=is_for_ws)
     for asset in assets:
-        total_balance[OrderSchema.margin1][asset] = load_wallet_summary(
-            currencies, balances, asset, fields
+        total_balance[OrderSchema.margin1][asset] = convert_to_currency(
+            wallet_summary_in_usd, currencies.get(to_exchange_asset(asset))
         )
-    load_total_wallet_summary(balances_summary, total_balance, assets, fields)
+    load_total_wallet_summary(balances_summary, total_balance, assets, fields, is_for_ws=is_for_ws)
     return {
-        'balances': balances,
-        **balances_summary,
-    }
-
-
-def load_ws_wallet_data(raw_data: dict, currencies: dict, assets: Union[tuple, list], fields: tuple) -> dict:
-    balances = [load_ws_wallet_detail_data(raw_data)]
-    balances_summary = {}
-    total_balance = {OrderSchema.margin1: {}}
-    for asset in assets:
-        total_balance[OrderSchema.margin1][asset] = load_wallet_summary(
-            currencies, balances, asset, fields, is_for_ws=True
-        )
-    load_total_wallet_summary(balances_summary, total_balance, assets, fields, is_for_ws=True)
-    return {
-        'bls': balances,
+        bls_key: balances,
         **balances_summary,
     }
 
@@ -539,33 +532,17 @@ def to_wallet_state_type(value):
     return 'hold'
 
 
-def load_wallet_summary(currencies: dict, balances: list, asset: str,
-                        fields: Union[list, tuple], is_for_ws=False):
-
-    _currency_key = 'cur' if is_for_ws else 'currency'
-    _usd_asset = 'usd'
-    if asset.lower() == 'btc':
-        asset = 'xbt'
-    total_balance = {}
-    for f in fields:
-        total_balance[f] = 0
-    for b in balances:
-        if b[_currency_key].lower() == asset.lower() or b[_currency_key].lower() == _usd_asset:
-            _price = 1
-            _asset_price = 1
-        else:
-            _price = currencies.get(f"{b[_currency_key]}{_usd_asset}".lower()) or 0
-            _asset_price = currencies.get(f"{asset}{_usd_asset}".lower()) or 1
-        for f in fields:
-            total_balance[f] += _price * (b[f] or 0) / _asset_price
-    return total_balance
+def to_exchange_asset(asset: str):
+    if asset == 'btc':
+        return 'xbt'
+    return asset
 
 
 def load_total_wallet_summary(total_summary: dict, total_balance: dict, assets: Union[list, tuple],
                               fields: Union[list, tuple], is_for_ws=False):
     for schema in total_balance.keys():
         for field in fields:
-            t_field = f't_{field}' if is_for_ws else f'total_{field}'
+            t_field = f't{field}' if is_for_ws else f'total_{field}'
             total_summary.setdefault(t_field, {})
             for asset in assets:
                 total_summary[t_field].setdefault(asset, 0)

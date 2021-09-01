@@ -312,11 +312,13 @@ class StockWssApi(Connector):
                 response = True
         return response
 
-    def _get_subscriber(self, subscr_name: str) -> Subscriber:
+    def _get_subscriber(self, subscr_name: str) -> Optional[Subscriber]:
         subscr_name = subscr_name.lower()
         if subscr_name in self.subscribers:
             return self.subscribers[subscr_name]
-        return self.auth_subscribers[subscr_name]
+        if subscr_name in self.auth_subscribers:
+            return self.auth_subscribers[subscr_name]
+        return None
 
     def _lookup_table(self, message: Union[dict, list]) -> Optional[dict]:
         if 'table' in message:
@@ -364,3 +366,12 @@ class StockWssApi(Connector):
 
     async def __adel__(self):
         await self.close()
+
+    def __setstate__(self, state):
+        self.__dict__ = state
+
+    def __getstate__(self):
+        self.storage.storage = {}
+        self.throttle.storage = {}
+        state = self.__dict__.copy()
+        return state
