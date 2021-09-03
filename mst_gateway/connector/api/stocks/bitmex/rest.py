@@ -366,7 +366,18 @@ class BitmexRestApi(StockRestApi):
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_vip_level(self, schema: str) -> str:
-        return '0'
+        if schema == OrderSchema.margin1:
+            from bravado_core.exception import SwaggerMappingError
+            try:
+                trading_volume, _ = self._bitmex_api(self._handler.User.User_getTradingVolume)
+                trading_volume = trading_volume[0].get('advUsd')
+            except (IndexError, AttributeError):
+                trading_volume = 0
+            except SwaggerMappingError as e:
+                import re
+                trading_volume = re.findall(r'\d+.\d+', str(e))[0]
+            return utils.load_vip_level(trading_volume)
+        raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_funding_rates(self, symbol: str, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
         if schema.lower() == OrderSchema.margin1:

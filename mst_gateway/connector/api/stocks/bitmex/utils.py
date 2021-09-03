@@ -549,14 +549,33 @@ def load_total_wallet_summary(total_summary: dict, total_balance: dict, assets: 
 
 
 def load_commissions(commissions: dict) -> list:
-    return [
-        {
-            'symbol': symbol.lower(),
-            'maker': to_float(commission['makerFee']),
-            'taker': to_float(commission['takerFee']),
-            'type': 'VIP0',
-        } for symbol, commission in commissions.items()
-    ]
+    commissions_list = []
+    for symbol, commission in commissions.items():
+        for vip in var.BITMEX_VIP_LEVELS:
+            commissions_list.append(
+                {
+                    'symbol': symbol.lower(),
+                    'maker': to_float(commission['makerFee']),
+                    'taker': to_float(vip['taker']),
+                    'type': vip['type'],
+                }
+            )
+    return commissions_list
+
+
+def load_vip_level(trading_volume: Union[str, float]) -> str:
+    trading_volume = to_float(trading_volume)
+    if trading_volume >= var.BITMEX_AVERAGE_DAILY_VOLUME['VIP4']:
+        vip_level = '4'
+    elif trading_volume >= var.BITMEX_AVERAGE_DAILY_VOLUME['VIP3']:
+        vip_level = '3'
+    elif trading_volume >= var.BITMEX_AVERAGE_DAILY_VOLUME['VIP2']:
+        vip_level = '2'
+    elif trading_volume >= var.BITMEX_AVERAGE_DAILY_VOLUME['VIP1']:
+        vip_level = '1'
+    else:
+        vip_level = '0'
+    return vip_level
 
 
 def to_xbt(value: int):
@@ -587,7 +606,7 @@ def to_iso_datetime(token: Union[datetime, int, str]) -> Optional[str]:
     return None
 
 
-def to_float(token: Union[int, float, None]) -> Optional[float]:
+def to_float(token: Union[int, float, str, None]) -> Optional[float]:
     try:
         return float(token)
     except (ValueError, TypeError):
