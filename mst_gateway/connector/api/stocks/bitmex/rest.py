@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timedelta
 from typing import Optional, Union
 from bravado.exception import HTTPError
+from bravado_core.exception import SwaggerMappingError
 from .lib import (
     bitmex_connector, APIKeyAuthenticator, SwaggerClient
 )
@@ -367,7 +368,6 @@ class BitmexRestApi(StockRestApi):
 
     def get_vip_level(self, schema: str) -> str:
         if schema == OrderSchema.margin1:
-            from bravado_core.exception import SwaggerMappingError
             try:
                 trading_volume, _ = self._bitmex_api(self._handler.User.User_getTradingVolume)
                 trading_volume = trading_volume[0].get('advUsd')
