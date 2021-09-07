@@ -375,7 +375,10 @@ class BitmexRestApi(StockRestApi):
                 trading_volume = 0
             except SwaggerMappingError as e:
                 import re
-                trading_volume = re.findall(r'\d+.\d+', str(e))[0]
+                try:
+                    trading_volume = re.findall(r'\d*\.\d+|\d+', str(e))[0]
+                except IndexError:
+                    trading_volume = '0'
             return utils.load_vip_level(trading_volume)
         raise ConnectorError(f"Invalid schema {schema}.")
 
