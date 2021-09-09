@@ -373,6 +373,7 @@ class BitmexRestApi(StockRestApi):
                 trading_volume = trading_volume[0].get('advUsd')
             except (IndexError, AttributeError):
                 trading_volume = 0
+            # TODO: delete when Bitmex fixes the response
             except SwaggerMappingError as e:
                 import re
                 try:
