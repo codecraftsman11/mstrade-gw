@@ -1144,7 +1144,7 @@ def to_date(token: Union[datetime, int, str]) -> Optional[datetime]:
         if isinstance(token, str):
             return datetime.strptime(token.split('Z')[0], api.DATETIME_FORMAT)
         elif isinstance(token, int):
-            return datetime.fromtimestamp(int(token / 1000), tz=timezone.utc)
+            return datetime.fromtimestamp(token / 1000, tz=timezone.utc)
     except (ValueError, TypeError, IndexError):
         return None
 
@@ -1154,7 +1154,7 @@ def to_iso_datetime(token: Union[datetime, int, str]) -> Optional[str]:
         if isinstance(token, datetime):
             return token.strftime(api.DATETIME_FORMAT)
         elif isinstance(token, int):
-            return datetime.fromtimestamp(int(token / 1000), tz=timezone.utc).strftime(api.DATETIME_FORMAT)
+            return datetime.fromtimestamp(token / 1000, tz=timezone.utc).strftime(api.DATETIME_FORMAT)
         elif isinstance(token, str):
             return datetime.strptime(token.split('Z')[0], api.DATETIME_FORMAT).strftime(api.DATETIME_FORMAT)
     except (ValueError, TypeError, IndexError):
