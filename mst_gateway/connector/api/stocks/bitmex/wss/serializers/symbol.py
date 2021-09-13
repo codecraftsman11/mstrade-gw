@@ -31,6 +31,8 @@ class BitmexSymbolSerializer(BitmexSerializer):
                             state[0]['asp'] = to_float(item['askPrice'])
                         if item.get('bidPrice'):
                             state[0]['bip'] = to_float(item['bidPrice'])
+                        if item.get('markPrice'):
+                            state[0]['mp'] = to_float(item['markPrice'])
                         self._update_state(stock2symbol(item['symbol']), state[0])
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
@@ -56,6 +58,7 @@ class BitmexSymbolSerializer(BitmexSerializer):
             'asp': 'askPrice',
             'bip': 'bidPrice',
             'v24': 'volume24h',
+            'mp': 'markPrice',
         }
         return _map.get(key)
 

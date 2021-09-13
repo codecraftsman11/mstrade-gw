@@ -70,6 +70,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict], is_iso_datet
         'asp': to_float(raw_data.get('askPrice')),
         're': _reversed,
         'v24': raw_data.get('volume24h'),
+        'mp': to_float(raw_data.get('markPrice')),
     }
     if isinstance(state_data, dict):
         data.update({

@@ -1122,6 +1122,7 @@ def load_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict])
         'asp': to_float(raw_data.get('a')),
         're': _reversed,
         'v24': to_float(raw_data.get('v')),
+        'mp': to_float(raw_data.get('c')),
     }
     if isinstance(state_data, dict):
         data.update({
