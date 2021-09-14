@@ -678,7 +678,7 @@ class BinanceRestApi(StockRestApi):
         if schema.lower() == OrderSchema.futures:
             data = self._binance_api(self._handler.futures_position_information, symbol=utils.symbol2stock(symbol))
         else:
-            data = self.get_futures_coin_position_data_by_symbol(symbol)
+            data = self._get_futures_coin_position_data_by_symbol(symbol)
         return utils.load_leverage(data)
 
     def change_leverage(self, schema: str, symbol: str, leverage_type: str,
@@ -708,7 +708,7 @@ class BinanceRestApi(StockRestApi):
             leverage = utils.to_float(data["leverage"])
         return leverage_type, leverage
 
-    def get_futures_coin_position_data_by_symbol(self, symbol: str) -> list:
+    def _get_futures_coin_position_data_by_symbol(self, symbol: str) -> list:
         return [d for d in self._binance_api(self._handler.futures_coin_position_information)
                 if d.get('symbol', '').upper() == symbol.upper() and
                 d.get('positionSide', '').upper() == var.BinancePositionSideMode.BOTH]
@@ -717,7 +717,7 @@ class BinanceRestApi(StockRestApi):
         validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin2, OrderSchema.futures,
                                  OrderSchema.futures_coin))
         schema = schema.lower()
-        schema_loaders = {
+        schema_handlers = {
             OrderSchema.exchange: utils.load_exchange_position,
             OrderSchema.margin2: utils.load_margin2_position,
             OrderSchema.futures: utils.load_futures_position,
@@ -728,16 +728,16 @@ class BinanceRestApi(StockRestApi):
                 if schema == OrderSchema.futures:
                     data = self._binance_api(self._handler.futures_position_information, symbol=symbol.upper())[0]
                 else:
-                    data = self.get_futures_coin_position_data_by_symbol(symbol)[0]
+                    data = self._get_futures_coin_position_data_by_symbol(symbol)[0]
             except IndexError:
                 return {}
-            return schema_loaders[schema](data, schema)
+            return schema_handlers[schema](data, schema)
         if schema in (OrderSchema.exchange, OrderSchema.margin2):
             data = self.storage.get(
                 f"position.{kwargs.get('account_id')}.{self.name}.{schema}.{symbol}".lower()
             )
             symbol_data = self._binance_api(self._handler.get_ticker, symbol=symbol.upper())
-            return schema_loaders[schema](data, schema, symbol_data.get('lastPrice'))
+            return schema_handlers[schema](data, schema, symbol_data.get('lastPrice'))
 
     def list_positions(self, schema: str, **kwargs) -> list:
         validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin2, OrderSchema.futures,
