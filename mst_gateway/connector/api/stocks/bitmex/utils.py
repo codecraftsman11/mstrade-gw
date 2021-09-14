@@ -15,16 +15,15 @@ from ...types.asset import to_system_asset
 from ...types.binsize import BinSize
 
 
-def load_symbol_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime=False) -> dict:
+def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     symbol = raw_data.get('symbol')
-    symbol_datetime = to_date(raw_data.get('timestamp'))
-    symbol_time = to_iso_datetime(symbol_datetime) if is_iso_datetime else symbol_datetime
+    symbol_time = to_date(raw_data.get('timestamp'))
     price = to_float(raw_data.get('lastPrice'))
     price24 = to_float(raw_data.get('prevPrice24h'))
     face_price, _reversed = BitmexFinFactory.calc_face_price(symbol, price)
     data = {
         'time': symbol_time,
-        'timestamp': time2timestamp(symbol_datetime),
+        'timestamp': time2timestamp(symbol_time),
         'symbol': symbol,
         'price': price,
         'price24': price24,
@@ -45,23 +44,21 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime
             'system_symbol': state_data.get('system_symbol'),
             'schema': state_data.get('schema'),
             'symbol_schema': state_data.get('symbol_schema'),
-            'created': to_iso_datetime(
-                state_data.get('created')) if is_iso_datetime else to_date(state_data.get('created')),
+            'created': to_date(state_data.get('created')),
             'max_leverage': state_data.get('max_leverage')
         })
     return data
 
 
-def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime=False) -> dict:
+def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     symbol = raw_data.get('symbol')
-    symbol_datetime = to_date(raw_data.get('timestamp'))
-    symbol_time = to_iso_datetime(symbol_datetime) if is_iso_datetime else symbol_datetime
+    symbol_time = to_iso_datetime(raw_data.get('timestamp'))
     price = to_float(raw_data.get('lastPrice'))
     price24 = to_float(raw_data.get('prevPrice24h'))
     face_price, _reversed = BitmexFinFactory.calc_face_price(symbol, price)
     data = {
         'tm': symbol_time,
-        'ts': time2timestamp(symbol_datetime),
+        'ts': time2timestamp(symbol_time),
         's': symbol,
         'p': price,
         'p24': price24,
@@ -82,8 +79,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict], is_iso_datet
             'ss': state_data.get('system_symbol'),
             'sch': state_data.get('schema'),
             'ssch': state_data.get('symbol_schema'),
-            'crt': to_iso_datetime(
-                state_data.get('created')) if is_iso_datetime else to_date(state_data.get('created')),
+            'crt': to_iso_datetime(state_data.get('created')),
             'mlvr': state_data.get('max_leverage')
         })
     return data
@@ -316,15 +312,15 @@ def load_user_data(raw_data: dict) -> dict:
     return data
 
 
-def load_trade_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime=False) -> dict:
-    return load_quote_data(raw_data, state_data, is_iso_datetime=is_iso_datetime)
+def load_trade_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+    return load_quote_data(raw_data, state_data)
 
 
-def load_quote_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime=False) -> dict:
-    quote_time = to_iso_datetime(raw_data.get('timestamp')) if is_iso_datetime else to_date(raw_data.get('timestamp'))
+def load_quote_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+    quote_time = to_date(raw_data.get('timestamp'))
     data = {
         'time': quote_time,
-        'timestamp': time2timestamp(to_date(raw_data.get('timestamp'))),
+        'timestamp': time2timestamp(quote_time),
         'symbol': raw_data.get('symbol'),
         'price': to_float(raw_data.get('price')),
         'volume': raw_data.get('size'),
@@ -338,11 +334,11 @@ def load_quote_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime=
     return data
 
 
-def load_ws_quote_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime=False) -> dict:
-    quote_time = to_iso_datetime(raw_data.get('timestamp')) if is_iso_datetime else to_date(raw_data.get('timestamp'))
+def load_ws_quote_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+    quote_time = to_iso_datetime(raw_data.get('timestamp'))
     data = {
         'tm': quote_time,
-        'ts': time2timestamp(to_date(raw_data.get('timestamp'))),
+        'ts': time2timestamp(quote_time),
         's': raw_data.get('symbol'),
         'p': to_float(raw_data.get('price')),
         'vl': raw_data.get('size'),
@@ -356,14 +352,13 @@ def load_ws_quote_data(raw_data: dict, state_data: Optional[dict], is_iso_dateti
     return data
 
 
-def load_quote_bin_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime=False, binsize=None) -> dict:
+def load_quote_bin_data(raw_data: dict, state_data: Optional[dict], binsize=None) -> dict:
     if binsize and isinstance(raw_data.get('timestamp'), datetime):
         raw_data['timestamp'] = raw_data['timestamp'] - binsize2timedelta(binsize)
-    _timestamp = to_date(raw_data.get('timestamp'))
-    quote_time = to_iso_datetime(_timestamp) if is_iso_datetime else _timestamp
+    quote_bin_time = to_date(raw_data.get('timestamp'))
     data = {
-        'time': quote_time,
-        'timestamp': time2timestamp(_timestamp),
+        'time': quote_bin_time,
+        'timestamp': time2timestamp(quote_bin_time),
         'symbol': raw_data.get('symbol'),
         'open': to_float(raw_data.get('open')),
         'close': to_float(raw_data.get('close')),
@@ -379,14 +374,11 @@ def load_quote_bin_data(raw_data: dict, state_data: Optional[dict], is_iso_datet
     return data
 
 
-def load_ws_quote_bin_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime=False, binsize=None) -> dict:
-    if binsize and isinstance(raw_data.get('timestamp'), datetime):
-        raw_data['timestamp'] = raw_data['timestamp'] - binsize2timedelta(binsize)
-    _timestamp = to_date(raw_data.get('timestamp'))
-    quote_time = to_iso_datetime(_timestamp) if is_iso_datetime else _timestamp
+def load_ws_quote_bin_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+    quote_bin_time = to_iso_datetime(raw_data.get('timestamp'))
     data = {
-        'tm': quote_time,
-        'ts': time2timestamp(_timestamp),
+        'tm': quote_bin_time,
+        'ts': time2timestamp(quote_bin_time),
         's': raw_data.get('symbol'),
         'op': to_float(raw_data.get('open')),
         'cl': to_float(raw_data.get('close')),
@@ -460,8 +452,8 @@ def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
     quote_bin['hi'] = max(quote_bin['hi'], quote['p'])
     quote_bin['lw'] = min(quote_bin['lw'], quote['p'])
     quote_bin['vl'] += quote['vl']
-    quote_bin['ss'] = quote['ss']
-    quote_bin['sch'] = quote['sch']
+    quote_bin['ss'] = quote.get('ss')
+    quote_bin['sch'] = quote.get('sch')
     return quote_bin
 
 
@@ -572,22 +564,19 @@ def to_date(token: Union[datetime, str]) -> Optional[datetime]:
     if isinstance(token, datetime):
         return token
     try:
-        return datetime.strptime(token, api.DATETIME_FORMAT)
-    except (ValueError, TypeError):
+        return datetime.strptime(token.split('Z')[0], api.DATETIME_FORMAT)
+    except (ValueError, TypeError, IndexError):
         return None
 
 
-def to_iso_datetime(token: Union[datetime, int, str]) -> Optional[str]:
-    if isinstance(token, str):
-        try:
-            return datetime.strptime(token, api.DATETIME_FORMAT).strftime(api.DATETIME_OUT_FORMAT)
-        except ValueError:
-            return None
-    if isinstance(token, datetime):
-        return token.strftime(api.DATETIME_OUT_FORMAT)
-    if isinstance(token, int):
-        return datetime.fromtimestamp(token, tz=timezone.utc).strftime(api.DATETIME_OUT_FORMAT)
-    return None
+def to_iso_datetime(token: Union[datetime, str]) -> Optional[str]:
+    try:
+        if isinstance(token, datetime):
+            return token.strftime(api.DATETIME_FORMAT)
+        elif isinstance(token, str):
+            return datetime.strptime(token.split('Z')[0], api.DATETIME_FORMAT).strftime(api.DATETIME_FORMAT)
+    except (ValueError, TypeError, IndexError):
+        return None
 
 
 def to_float(token: Union[int, float, None]) -> Optional[float]:
