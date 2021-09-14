@@ -1138,6 +1138,12 @@ def load_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict])
     return data
 
 
+def load_futures_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
+    if data := load_symbol_ws_data(schema, raw_data, state_data):
+        data['mp'] = to_float(raw_data.get('mp'))
+    return data
+
+
 def to_date(token: Union[datetime, int, str]) -> Optional[datetime]:
     if isinstance(token, datetime):
         return token
