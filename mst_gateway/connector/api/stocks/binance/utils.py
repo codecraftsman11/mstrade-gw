@@ -33,6 +33,7 @@ def load_symbol_data(schema: str, raw_data: dict, state_data: Optional[dict]) ->
         'ask_price': to_float(raw_data.get('askPrice')),
         'reversed': _reversed,
         'volume24': to_float(raw_data.get('volume')),
+        'mark_price': price,
     }
     if isinstance(state_data, dict):
         data.update({
@@ -45,6 +46,12 @@ def load_symbol_data(schema: str, raw_data: dict, state_data: Optional[dict]) ->
             'created': to_date(state_data.get('created')),
             'max_leverage': state_data.get('max_leverage')
         })
+    return data
+
+
+def load_futures_symbol_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
+    if data := load_symbol_data(schema, raw_data, state_data):
+        data['mark_price'] = to_float(raw_data.get('markPrice'))
     return data
 
 

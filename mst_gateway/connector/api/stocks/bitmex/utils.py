@@ -34,6 +34,7 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime
         'ask_price': to_float(raw_data.get('askPrice')),
         'reversed': _reversed,
         'volume24': raw_data.get('volume24h'),
+        'mark_price': raw_data.get('markPrice'),
     }
     if isinstance(state_data, dict):
         data.update({
