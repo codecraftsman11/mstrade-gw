@@ -73,7 +73,7 @@ class BinanceRestApi(StockRestApi):
         if isinstance(data_bid_ask_price, list):
             data_bid_ask_price = data_bid_ask_price[0]
         mark_price = self._binance_api(schema_handlers[schema][2], symbol=symbol)
-        if isinstance(data_bid_ask_price, list):
+        if isinstance(mark_price, list):
             mark_price = mark_price[0]
         data.update({
             'bidPrice': data_bid_ask_price.get('bidPrice'),
