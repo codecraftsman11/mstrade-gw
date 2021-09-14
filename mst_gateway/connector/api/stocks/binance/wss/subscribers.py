@@ -143,7 +143,7 @@ class BinanceSymbolSubscriber(BinanceSubscriber):
 
 
 class BinanceFuturesSymbolSubscriber(BinanceSymbolSubscriber):
-    subscriptions = ("!ticker@arr", "!bookTicker", "markPrice", "!markPrice@arr")
+    subscriptions = ("!ticker@arr", "!bookTicker", "!markPrice@arr")
 
 
 class BinanceWalletSubscriber(BinanceSubscriber):

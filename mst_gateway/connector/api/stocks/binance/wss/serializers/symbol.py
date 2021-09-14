@@ -32,9 +32,8 @@ class BinanceFuturesSymbolSerializer(BinanceSymbolSerializer):
         table = message.get('table')
         if table == 'bookTicker':
             for item in message.get('data', []):
-                if {'s', 'a', 'b'} <= item.keys():
-                    if symbol := item.get('s', '').lower():
-                        self._book_ticker[symbol] = {'a': item.get('a'), 'b': item.get('b')}
+                if symbol := item.get('s', '').lower():
+                    self._book_ticker[symbol] = {'a': item.get('a'), 'b': item.get('b')}
         elif table == 'markPriceUpdate':
             for item in message.get('data', []):
                 if symbol := item.get('s', '').lower():
