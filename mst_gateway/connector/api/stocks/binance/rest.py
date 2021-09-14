@@ -74,7 +74,7 @@ class BinanceRestApi(StockRestApi):
             data_bid_ask_price = data_bid_ask_price[0]
         mark_price = None
         for p in self._binance_api(schema_handlers[schema][2]):
-            if p['symbol'].upper() == symbol:
+            if p['symbol'].upper() == symbol and p.get('positionSide', '').upper() == var.BinancePositionSideMode.BOTH:
                 mark_price = p.get('markPrice')
         data.update({
             'bidPrice': data_bid_ask_price.get('bidPrice'),
@@ -122,7 +122,8 @@ class BinanceRestApi(StockRestApi):
                     symbols.append(utils.load_symbol_data(schema, d, symbol_state))
             return symbols
         bid_ask_prices = {bap['symbol'].lower(): bap for bap in self._binance_api(schema_handlers[schema][1])}
-        mark_prices = {p['symbol'].lower(): p.get('markPrice') for p in self._binance_api(schema_handlers[schema][2])}
+        mark_prices = {p['symbol'].lower(): p.get('markPrice') for p in self._binance_api(schema_handlers[schema][2])
+                       if p.get('positionSide', '').upper() == var.BinancePositionSideMode.BOTH}
         data = self._update_ticker_data(data, bid_ask_prices, mark_prices)
         return [utils.load_futures_symbol_data(schema, d, state_data[d['symbol'].lower()])
                 for d in data if state_data.get(d['symbol'].lower())]
@@ -675,12 +676,11 @@ class BinanceRestApi(StockRestApi):
             return utils.load_funding_rates(funding_rates)
 
     def get_leverage(self, schema: str, symbol: str, **kwargs) -> tuple:
-        schema_handlers = {
-            OrderSchema.futures: self._handler.futures_position_information,
-            OrderSchema.futures_coin: self._handler.futures_coin_position_information,
-        }
-        validate_schema(schema, schema_handlers)
-        data = self._binance_api(schema_handlers[schema.lower()], symbol=utils.symbol2stock(symbol))
+        validate_schema(schema, (OrderSchema.futures, OrderSchema.futures_coin))
+        if schema.lower() == OrderSchema.futures:
+            data = self._binance_api(self._handler.futures_position_information, symbol=utils.symbol2stock(symbol))
+        else:
+            data = self.get_futures_coin_position_data_by_symbol(symbol)
         return utils.load_leverage(data)
 
     def change_leverage(self, schema: str, symbol: str, leverage_type: str,
@@ -710,33 +710,36 @@ class BinanceRestApi(StockRestApi):
             leverage = utils.to_float(data["leverage"])
         return leverage_type, leverage
 
+    def get_futures_coin_position_data_by_symbol(self, symbol: str) -> list:
+        return [d for d in self._binance_api(self._handler.futures_coin_position_information)
+                if d.get('symbol', '').upper() == symbol.upper() and
+                d.get('positionSide', '').upper() == var.BinancePositionSideMode.BOTH]
+
     def get_position(self, schema: str, symbol: str, **kwargs) -> dict:
         validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin2, OrderSchema.futures,
                                  OrderSchema.futures_coin))
         schema = schema.lower()
+        schema_loaders = {
+            OrderSchema.exchange: utils.load_exchange_position,
+            OrderSchema.margin2: utils.load_margin2_position,
+            OrderSchema.futures: utils.load_futures_position,
+            OrderSchema.futures_coin: utils.load_futures_coin_position,
+        }
         if schema in (OrderSchema.futures, OrderSchema.futures_coin):
-            schema_handlers = {
-                OrderSchema.futures: (self._handler.futures_position_information, utils.load_futures_position),
-                OrderSchema.futures_coin: (
-                    self._handler.futures_coin_position_information, utils.load_futures_coin_position
-                )
-            }
-            response = self._binance_api(schema_handlers[schema][0], symbol=symbol.upper())
             try:
-                data = response[0]
+                if schema == OrderSchema.futures:
+                    data = self._binance_api(self._handler.futures_position_information, symbol=symbol.upper())[0]
+                else:
+                    data = self.get_futures_coin_position_data_by_symbol(symbol)[0]
             except IndexError:
                 return {}
-            return schema_handlers[schema][1](data, schema)
+            return schema_loaders[schema](data, schema)
         if schema in (OrderSchema.exchange, OrderSchema.margin2):
             data = self.storage.get(
                 f"position.{kwargs.get('account_id')}.{self.name}.{schema}.{symbol}".lower()
             )
-            schema_handlers = {
-                OrderSchema.exchange: utils.load_exchange_position,
-                OrderSchema.margin2: utils.load_margin2_position,
-            }
             symbol_data = self._binance_api(self._handler.get_ticker, symbol=symbol.upper())
-            return schema_handlers[schema](data, schema, symbol_data.get('lastPrice'))
+            return schema_loaders[schema](data, schema, symbol_data.get('lastPrice'))
 
     def list_positions(self, schema: str, **kwargs) -> list:
         validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin2, OrderSchema.futures,
