@@ -52,12 +52,12 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.futures: (
                 self._handler.futures_ticker,
                 self._handler.futures_orderbook_ticker,
-                self._handler.futures_position_information,
+                self._handler.futures_mark_price,
             ),
             OrderSchema.futures_coin: (
                 self._handler.futures_coin_ticker,
                 self._handler.futures_coin_orderbook_ticker,
-                self._handler.futures_coin_position_information,
+                self._handler.futures_coin_mark_price,
             ),
         }
         validate_schema(schema, schema_handlers)
@@ -72,14 +72,13 @@ class BinanceRestApi(StockRestApi):
         data_bid_ask_price = self._binance_api(schema_handlers[schema][1], symbol=symbol)
         if isinstance(data_bid_ask_price, list):
             data_bid_ask_price = data_bid_ask_price[0]
-        mark_price = None
-        for p in self._binance_api(schema_handlers[schema][2]):
-            if p['symbol'].upper() == symbol and p.get('positionSide', '').upper() == var.BinancePositionSideMode.BOTH:
-                mark_price = p.get('markPrice')
+        mark_price = self._binance_api(schema_handlers[schema][2], symbol=symbol)
+        if isinstance(data_bid_ask_price, list):
+            mark_price = mark_price[0]
         data.update({
             'bidPrice': data_bid_ask_price.get('bidPrice'),
             'askPrice': data_bid_ask_price.get('askPrice'),
-            'markPrice': mark_price,
+            'markPrice': mark_price.get('markPrice'),
         })
         return utils.load_futures_symbol_data(schema, data, state_data)
 
@@ -102,12 +101,12 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.futures: (
                 self._handler.futures_ticker,
                 self._handler.futures_orderbook_ticker,
-                self._handler.futures_position_information,
+                self._handler.futures_mark_price,
             ),
             OrderSchema.futures_coin: (
                 self._handler.futures_coin_ticker,
                 self._handler.futures_coin_orderbook_ticker,
-                self._handler.futures_coin_position_information,
+                self._handler.futures_coin_mark_price,
             ),
         }
         validate_schema(schema, schema_handlers)
@@ -122,8 +121,7 @@ class BinanceRestApi(StockRestApi):
                     symbols.append(utils.load_symbol_data(schema, d, symbol_state))
             return symbols
         bid_ask_prices = {bap['symbol'].lower(): bap for bap in self._binance_api(schema_handlers[schema][1])}
-        mark_prices = {p['symbol'].lower(): p.get('markPrice') for p in self._binance_api(schema_handlers[schema][2])
-                       if p.get('positionSide', '').upper() == var.BinancePositionSideMode.BOTH}
+        mark_prices = {p['symbol'].lower(): p.get('markPrice') for p in self._binance_api(schema_handlers[schema][2])}
         data = self._update_ticker_data(data, bid_ask_prices, mark_prices)
         return [utils.load_futures_symbol_data(schema, d, state_data[d['symbol'].lower()])
                 for d in data if state_data.get(d['symbol'].lower())]
