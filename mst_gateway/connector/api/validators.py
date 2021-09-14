@@ -39,7 +39,7 @@ def iso_datetime_valid(value):
     if not isinstance(value, str):
         return False
     try:
-        datetime.strptime(value, api.DATETIME_OUT_FORMAT)
+        datetime.strptime(value, api.DATETIME_FORMAT)
     except ValueError:
         return False
     return True
