@@ -113,7 +113,6 @@ class BitmexRestApi(StockRestApi):
                                                 **kwargs)
             quotes_len = len(quotes)
             if quotes_len == 1 and quotes_len != items_count:
-                quote_bins = quotes + quote_bins
                 break
             quote_bins += quotes
         return list(reversed(quote_bins))
