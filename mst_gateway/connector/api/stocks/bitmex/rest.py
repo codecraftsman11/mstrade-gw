@@ -111,7 +111,12 @@ class BitmexRestApi(StockRestApi):
                                                 offset=i * var.BITMEX_MAX_QUOTE_BINS_COUNT,
                                                 count=items_count,
                                                 **kwargs)
-            quote_bins += quotes
+            quotes_len = len(quotes)
+            if quotes_len == 1 and quotes_len != items_count:
+                quote_bins = quotes + quote_bins
+                break
+            else:
+                quote_bins += quotes
         return list(reversed(quote_bins))
 
     def get_user(self, **kwargs) -> dict:
