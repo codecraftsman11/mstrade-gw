@@ -115,8 +115,7 @@ class BitmexRestApi(StockRestApi):
             if quotes_len == 1 and quotes_len != items_count:
                 quote_bins = quotes + quote_bins
                 break
-            else:
-                quote_bins += quotes
+            quote_bins += quotes
         return list(reversed(quote_bins))
 
     def get_user(self, **kwargs) -> dict:
