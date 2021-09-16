@@ -1665,3 +1665,7 @@ def remap_futures_coin_position_request_data(data: dict) -> dict:
         'unrealised_pnl': to_float(data.get('unRealizedProfit')),
         'liquidation_price': to_float(data.get('liquidationPrice')),
     }
+
+
+def symbol2pair(symbol: str) -> str:
+    return symbol.split('_')[0]
