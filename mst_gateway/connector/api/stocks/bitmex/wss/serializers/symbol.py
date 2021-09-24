@@ -31,6 +31,8 @@ class BitmexSymbolSerializer(BitmexSerializer):
                             state[0]['asp'] = to_float(item['askPrice'])
                         if item.get('bidPrice'):
                             state[0]['bip'] = to_float(item['bidPrice'])
+                        if item.get('markPrice'):
+                            state[0]['mp'] = to_float(item['markPrice'])
                         self._update_state(stock2symbol(item['symbol']), state[0])
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
@@ -42,9 +44,10 @@ class BitmexSymbolSerializer(BitmexSerializer):
         elif message['action'] == 'partial' and symbol in self._symbols:
             self._symbols.discard(symbol)
         return symbol in self._symbols and (
-                'lastPrice' in item or
-                'askPrice' in item or
-                'bidPrice' in item
+            'lastPrice' in item or
+            'askPrice' in item or
+            'bidPrice' in item or
+            'markPrice' in item
         )
 
     def _key_map(self, key: str):
@@ -56,6 +59,7 @@ class BitmexSymbolSerializer(BitmexSerializer):
             'asp': 'askPrice',
             'bip': 'bidPrice',
             'v24': 'volume24h',
+            'mp': 'markPrice',
         }
         return _map.get(key)
 

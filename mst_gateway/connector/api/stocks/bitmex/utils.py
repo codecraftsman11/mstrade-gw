@@ -33,6 +33,7 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'ask_price': to_float(raw_data.get('askPrice')),
         'reversed': _reversed,
         'volume24': raw_data.get('volume24h'),
+        'mark_price': raw_data.get('markPrice'),
     }
     if isinstance(state_data, dict):
         data.update({
@@ -67,6 +68,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'asp': to_float(raw_data.get('askPrice')),
         're': _reversed,
         'v24': raw_data.get('volume24h'),
+        'mp': to_float(raw_data.get('markPrice')),
     }
     if isinstance(state_data, dict):
         data.update({
