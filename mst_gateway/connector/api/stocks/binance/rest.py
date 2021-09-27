@@ -169,14 +169,14 @@ class BinanceRestApi(StockRestApi):
         return [utils.load_quote_bin_data(d, state_data) for d in data]
 
     def list_quote_bins(self, symbol, schema, binsize='1m', count=100, **kwargs) -> list:
-        pages = int((count - 1) / var.BINANCE_MAX_QUOTE_BINS_COUNT + 1)
-        rest = count % var.BINANCE_MAX_QUOTE_BINS_COUNT or var.BINANCE_MAX_QUOTE_BINS_COUNT
+        pages = count // var.BINANCE_MAX_QUOTE_BINS_COUNT
+        pages_mod = count % var.BINANCE_MAX_QUOTE_BINS_COUNT or var.BINANCE_MAX_QUOTE_BINS_COUNT
         quote_bins = []
         kwargs = self._api_kwargs(kwargs)
         kwargs['state_data'] = self.storage.get('symbol', self.name, schema).get(symbol.lower(), {})
         for i in range(pages):
             if i == pages - 1:
-                items_count = rest
+                items_count = pages_mod
             else:
                 items_count = var.BINANCE_MAX_QUOTE_BINS_COUNT
             quotes = self._list_quote_bins_page(symbol=symbol,

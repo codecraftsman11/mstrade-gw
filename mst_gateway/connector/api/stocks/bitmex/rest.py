@@ -97,12 +97,12 @@ class BitmexRestApi(StockRestApi):
         kwargs['state_data'] = self.storage.get(
             'symbol', self.name, schema
         ).get(symbol.lower(), dict())
-        pages = int((count - 1) / var.BITMEX_MAX_QUOTE_BINS_COUNT) + 1
-        rest = count % var.BITMEX_MAX_QUOTE_BINS_COUNT
+        pages = count // var.BITMEX_MAX_QUOTE_BINS_COUNT
+        pages_mod = count % var.BITMEX_MAX_QUOTE_BINS_COUNT or var.BITMEX_MAX_QUOTE_BINS_COUNT
         quote_bins = []
         for i in range(pages):
             if i == pages - 1:
-                items_count = rest
+                items_count = pages_mod
             else:
                 items_count = var.BITMEX_MAX_QUOTE_BINS_COUNT
             quotes = self._list_quote_bins_page(symbol=symbol,
