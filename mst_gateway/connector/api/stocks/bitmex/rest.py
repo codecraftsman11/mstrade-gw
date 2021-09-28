@@ -94,15 +94,13 @@ class BitmexRestApi(StockRestApi):
         return [utils.load_quote_bin_data(data, state_data, binsize=binsize) for data in quote_bins]
 
     def list_quote_bins(self, symbol, schema, binsize='1m', count=100, **kwargs) -> list:
-        kwargs['state_data'] = self.storage.get(
-            'symbol', self.name, schema
-        ).get(symbol.lower(), dict())
-        pages = int((count - 1) / var.BITMEX_MAX_QUOTE_BINS_COUNT) + 1
-        rest = count % var.BITMEX_MAX_QUOTE_BINS_COUNT
+        kwargs['state_data'] = self.storage.get('symbol', self.name, schema).get(symbol.lower(), {})
+        pages = count // var.BITMEX_MAX_QUOTE_BINS_COUNT + 1
+        pages_mod = count % var.BITMEX_MAX_QUOTE_BINS_COUNT or var.BITMEX_MAX_QUOTE_BINS_COUNT
         quote_bins = []
         for i in range(pages):
             if i == pages - 1:
-                items_count = rest
+                items_count = pages_mod
             else:
                 items_count = var.BITMEX_MAX_QUOTE_BINS_COUNT
             quotes = self._list_quote_bins_page(symbol=symbol,
@@ -111,6 +109,9 @@ class BitmexRestApi(StockRestApi):
                                                 offset=i * var.BITMEX_MAX_QUOTE_BINS_COUNT,
                                                 count=items_count,
                                                 **kwargs)
+            quotes_len = len(quotes)
+            if quotes_len == 1 and quotes_len != items_count:
+                break
             quote_bins += quotes
         return list(reversed(quote_bins))
 
