@@ -65,7 +65,7 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
         'bookTicker': 'symbol',
         'ACCOUNT_UPDATE': ['wallet', 'position'],
         'ORDER_TRADE_UPDATE': 'order',
-        'markPriceUpdate': 'position',
+        'markPriceUpdate': ['position', 'symbol'],
         'ACCOUNT_CONFIG_UPDATE': 'position',
     }
 
@@ -89,7 +89,7 @@ class BinanceFuturesCoinWssRouter(BinanceWssRouter):
         'depthUpdate': 'order_book',
         'ACCOUNT_UPDATE': ['wallet', 'position'],
         'ORDER_TRADE_UPDATE': 'order',
-        'markPriceUpdate': 'position',
+        'markPriceUpdate': ['position', 'symbol'],
         'position': 'position'
     }
 
