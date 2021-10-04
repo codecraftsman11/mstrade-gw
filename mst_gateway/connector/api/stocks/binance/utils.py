@@ -33,6 +33,7 @@ def load_symbol_data(schema: str, raw_data: dict, state_data: Optional[dict]) ->
         'ask_price': to_float(raw_data.get('askPrice')),
         'reversed': _reversed,
         'volume24': to_float(raw_data.get('volume')),
+        'mark_price': price,
     }
     if isinstance(state_data, dict):
         data.update({
@@ -46,6 +47,12 @@ def load_symbol_data(schema: str, raw_data: dict, state_data: Optional[dict]) ->
             'created': to_date(state_data.get('created')),
             'max_leverage': state_data.get('max_leverage')
         })
+    return data
+
+
+def load_futures_symbol_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
+    if data := load_symbol_data(schema, raw_data, state_data):
+        data['mark_price'] = to_float(raw_data.get('markPrice'))
     return data
 
 
@@ -1141,6 +1148,7 @@ def load_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict])
         'asp': to_float(raw_data.get('a')),
         're': _reversed,
         'v24': to_float(raw_data.get('v')),
+        'mp': to_float(raw_data.get('c')),
     }
     if isinstance(state_data, dict):
         data.update({
@@ -1154,6 +1162,12 @@ def load_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict])
             'crt': to_iso_datetime(to_date(state_data.get('created'))),
             'mlvr': state_data.get('max_leverage')
         })
+    return data
+
+
+def load_futures_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
+    if data := load_symbol_ws_data(schema, raw_data, state_data):
+        data['mp'] = to_float(raw_data.get('mp'))
     return data
 
 
@@ -1671,3 +1685,7 @@ def remap_futures_coin_position_request_data(data: dict) -> dict:
         'unrealised_pnl': to_float(data.get('unRealizedProfit')),
         'liquidation_price': to_float(data.get('liquidationPrice')),
     }
+
+
+def symbol2pair(symbol: str) -> str:
+    return symbol.split('_')[0]

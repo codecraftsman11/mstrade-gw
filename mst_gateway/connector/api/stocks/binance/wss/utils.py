@@ -21,6 +21,8 @@ def convert_args(args):
         args = 'ticker'
     elif args == '!bookTicker':
         args = 'bookTicker'
+    elif args == '!markPrice@arr':
+        args = 'markPrice'
     return args
 
 
