@@ -1153,7 +1153,7 @@ def load_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict])
     if isinstance(state_data, dict):
         data.update({
             'exp': state_data.get('expiration'),
-            'exp_d': state_data.get('expiration_date'),
+            'expd': state_data.get('expiration_date'),
             'pa': state_data.get('pair'),
             'tck': state_data.get('tick'),
             'vt': state_data.get('volume_tick'),
