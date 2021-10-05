@@ -2,6 +2,7 @@ import time
 from typing import Dict
 from binance.client import AsyncClient as BaseAsyncClient, Client as BaseClient
 from binance.exceptions import BinanceRequestException
+from mst_gateway.connector.api.stocks.binance import utils
 
 
 class Client(BaseClient):
@@ -477,6 +478,13 @@ class Client(BaseClient):
 
         """
         return self._request_margin_v2_api('get', 'futures/loan/wallet', signed=True, data=params)
+
+    def futures_coin_position_information(self, **params):
+        if symbol := params.pop('symbol', None):
+            params['pair'] = utils.symbol2pair(symbol)
+            return [position for position in super().futures_coin_position_information(**params)
+                    if position.get('symbol', '').lower() == symbol.lower()]
+        return super().futures_coin_position_information(**params)
 
 
 class AsyncClient(BaseAsyncClient):

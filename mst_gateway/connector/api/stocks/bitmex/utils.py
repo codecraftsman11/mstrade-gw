@@ -3,7 +3,8 @@ from typing import Dict, Union, Optional
 from datetime import datetime, timedelta, timezone
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
-from mst_gateway.connector.api.utils import time2timestamp
+from mst_gateway.connector.api.utils.time import time2timestamp
+from mst_gateway.connector.api.utils.utils import convert_to_currency, load_wallet_summary_in_usd
 from mst_gateway.exceptions import ConnectorError
 from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
 from mst_gateway.utils import delta
@@ -14,16 +15,15 @@ from ...types.asset import to_system_asset
 from ...types.binsize import BinSize
 
 
-def load_symbol_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime=False) -> dict:
+def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     symbol = raw_data.get('symbol')
-    symbol_datetime = to_date(raw_data.get('timestamp'))
-    symbol_time = to_iso_datetime(symbol_datetime) if is_iso_datetime else symbol_datetime
+    symbol_time = to_date(raw_data.get('timestamp'))
     price = to_float(raw_data.get('lastPrice'))
     price24 = to_float(raw_data.get('prevPrice24h'))
     face_price, _reversed = BitmexFinFactory.calc_face_price(symbol, price)
     data = {
         'time': symbol_time,
-        'timestamp': time2timestamp(symbol_datetime),
+        'timestamp': time2timestamp(symbol_time),
         'symbol': symbol,
         'price': price,
         'price24': price24,
@@ -33,6 +33,7 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime
         'ask_price': to_float(raw_data.get('askPrice')),
         'reversed': _reversed,
         'volume24': raw_data.get('volume24h'),
+        'mark_price': raw_data.get('markPrice'),
     }
     if isinstance(state_data, dict):
         data.update({
@@ -43,23 +44,21 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime
             'system_symbol': state_data.get('system_symbol'),
             'schema': state_data.get('schema'),
             'symbol_schema': state_data.get('symbol_schema'),
-            'created': to_iso_datetime(
-                state_data.get('created')) if is_iso_datetime else to_date(state_data.get('created')),
+            'created': to_date(state_data.get('created')),
             'max_leverage': state_data.get('max_leverage')
         })
     return data
 
 
-def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime=False) -> dict:
+def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     symbol = raw_data.get('symbol')
-    symbol_datetime = to_date(raw_data.get('timestamp'))
-    symbol_time = to_iso_datetime(symbol_datetime) if is_iso_datetime else symbol_datetime
+    symbol_time = to_iso_datetime(raw_data.get('timestamp'))
     price = to_float(raw_data.get('lastPrice'))
     price24 = to_float(raw_data.get('prevPrice24h'))
     face_price, _reversed = BitmexFinFactory.calc_face_price(symbol, price)
     data = {
         'tm': symbol_time,
-        'ts': time2timestamp(symbol_datetime),
+        'ts': time2timestamp(symbol_time),
         's': symbol,
         'p': price,
         'p24': price24,
@@ -69,6 +68,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict], is_iso_datet
         'asp': to_float(raw_data.get('askPrice')),
         're': _reversed,
         'v24': raw_data.get('volume24h'),
+        'mp': to_float(raw_data.get('markPrice')),
     }
     if isinstance(state_data, dict):
         data.update({
@@ -79,8 +79,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict], is_iso_datet
             'ss': state_data.get('system_symbol'),
             'sch': state_data.get('schema'),
             'ssch': state_data.get('symbol_schema'),
-            'crt': to_iso_datetime(
-                state_data.get('created')) if is_iso_datetime else to_date(state_data.get('created')),
+            'crt': to_iso_datetime(state_data.get('created')),
             'mlvr': state_data.get('max_leverage')
         })
     return data
@@ -185,8 +184,9 @@ def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     data = {
         'exchange_order_id': raw_data.get('orderID'),
         'symbol': raw_data.get('symbol'),
-        'volume': raw_data.get('orderQty'),
-        'stop': raw_data.get('stopPx'),
+        'volume': to_float(raw_data.get('orderQty')),
+        'filled_volume': to_float(raw_data.get('cumQty')),
+        'stop': to_float(raw_data.get('stopPx')),
         'side': load_order_side(raw_data.get('side')),
         'price': to_float(raw_data.get('price')),
         'time': order_time,
@@ -207,20 +207,19 @@ def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
 
 def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     data = {
-        'oid': raw_data.get('clOrdID'),
         'eoid': raw_data.get('orderID'),
         'sd': load_order_side(raw_data.get('side')),
-        'tv': raw_data.get('lastQty'),
-        'tp': raw_data.get('lastPx'),
-        'vl': raw_data.get('orderQty'),
+        'tv': to_float(raw_data.get('lastQty')),
+        'tp': to_float(raw_data.get('lastPx')),
+        'vl': to_float(raw_data.get('orderQty')),
         'p': to_float(raw_data.get('price')),
         'st': BITMEX_ORDER_STATUS_MAP.get(raw_data.get('ordStatus')),
-        'lv': raw_data.get('leavesQty'),
-        'fv': raw_data.get('cumQty'),
-        'ap': raw_data.get('avgPx'),
+        'lv': to_float(raw_data.get('leavesQty')),
+        'fv': to_float(raw_data.get('cumQty')),
+        'ap': to_float(raw_data.get('avgPx')),
         'ts': time2timestamp(raw_data.get('timestamp')),
         's': raw_data.get('symbol'),
-        'stp': raw_data.get('stopPx'),
+        'stp': to_float(raw_data.get('stopPx')),
         'tm': to_iso_datetime(raw_data.get('timestamp')),
         't': raw_data.get('ordType', '').lower(),
         'exc': raw_data.get('ordType', '').lower(),
@@ -312,15 +311,15 @@ def load_user_data(raw_data: dict) -> dict:
     return data
 
 
-def load_trade_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime=False) -> dict:
-    return load_quote_data(raw_data, state_data, is_iso_datetime=is_iso_datetime)
+def load_trade_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+    return load_quote_data(raw_data, state_data)
 
 
-def load_quote_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime=False) -> dict:
-    quote_time = to_iso_datetime(raw_data.get('timestamp')) if is_iso_datetime else to_date(raw_data.get('timestamp'))
+def load_quote_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+    quote_time = to_date(raw_data.get('timestamp'))
     data = {
         'time': quote_time,
-        'timestamp': time2timestamp(to_date(raw_data.get('timestamp'))),
+        'timestamp': time2timestamp(quote_time),
         'symbol': raw_data.get('symbol'),
         'price': to_float(raw_data.get('price')),
         'volume': raw_data.get('size'),
@@ -334,11 +333,11 @@ def load_quote_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime=
     return data
 
 
-def load_ws_quote_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime=False) -> dict:
-    quote_time = to_iso_datetime(raw_data.get('timestamp')) if is_iso_datetime else to_date(raw_data.get('timestamp'))
+def load_ws_quote_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+    quote_time = to_iso_datetime(raw_data.get('timestamp'))
     data = {
         'tm': quote_time,
-        'ts': time2timestamp(to_date(raw_data.get('timestamp'))),
+        'ts': time2timestamp(quote_time),
         's': raw_data.get('symbol'),
         'p': to_float(raw_data.get('price')),
         'vl': raw_data.get('size'),
@@ -352,14 +351,13 @@ def load_ws_quote_data(raw_data: dict, state_data: Optional[dict], is_iso_dateti
     return data
 
 
-def load_quote_bin_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime=False, binsize=None) -> dict:
+def load_quote_bin_data(raw_data: dict, state_data: Optional[dict], binsize=None) -> dict:
     if binsize and isinstance(raw_data.get('timestamp'), datetime):
         raw_data['timestamp'] = raw_data['timestamp'] - binsize2timedelta(binsize)
-    _timestamp = to_date(raw_data.get('timestamp'))
-    quote_time = to_iso_datetime(_timestamp) if is_iso_datetime else _timestamp
+    quote_bin_time = to_date(raw_data.get('timestamp'))
     data = {
-        'time': quote_time,
-        'timestamp': time2timestamp(_timestamp),
+        'time': quote_bin_time,
+        'timestamp': time2timestamp(quote_bin_time),
         'symbol': raw_data.get('symbol'),
         'open': to_float(raw_data.get('open')),
         'close': to_float(raw_data.get('close')),
@@ -375,14 +373,11 @@ def load_quote_bin_data(raw_data: dict, state_data: Optional[dict], is_iso_datet
     return data
 
 
-def load_ws_quote_bin_data(raw_data: dict, state_data: Optional[dict], is_iso_datetime=False, binsize=None) -> dict:
-    if binsize and isinstance(raw_data.get('timestamp'), datetime):
-        raw_data['timestamp'] = raw_data['timestamp'] - binsize2timedelta(binsize)
-    _timestamp = to_date(raw_data.get('timestamp'))
-    quote_time = to_iso_datetime(_timestamp) if is_iso_datetime else _timestamp
+def load_ws_quote_bin_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+    quote_bin_time = to_iso_datetime(raw_data.get('timestamp'))
     data = {
-        'tm': quote_time,
-        'ts': time2timestamp(_timestamp),
+        'tm': quote_bin_time,
+        'ts': time2timestamp(quote_bin_time),
         's': raw_data.get('symbol'),
         'op': to_float(raw_data.get('open')),
         'cl': to_float(raw_data.get('close')),
@@ -456,37 +451,30 @@ def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
     quote_bin['hi'] = max(quote_bin['hi'], quote['p'])
     quote_bin['lw'] = min(quote_bin['lw'], quote['p'])
     quote_bin['vl'] += quote['vl']
-    quote_bin['ss'] = quote['ss']
-    quote_bin['sch'] = quote['sch']
+    quote_bin['ss'] = quote.get('ss')
+    quote_bin['sch'] = quote.get('sch')
     return quote_bin
 
 
-def load_wallet_data(raw_data: dict, currencies: dict, assets: Union[tuple, list], fields: tuple) -> dict:
-    balances = [load_wallet_detail_data(raw_data)]
+def load_wallet_data(raw_data: dict, currencies: dict, assets: Union[tuple, list], fields: tuple,
+                     is_for_ws=False) -> dict:
+    if is_for_ws:
+        bls_key = 'bls'
+        balances = [load_ws_wallet_detail_data(raw_data)]
+    else:
+        bls_key = 'balances'
+        balances = [load_wallet_detail_data(raw_data)]
+
     balances_summary = {}
     total_balance = {OrderSchema.margin1: {}}
+    wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields, is_for_ws=is_for_ws)
     for asset in assets:
-        total_balance[OrderSchema.margin1][asset] = load_wallet_summary(
-            currencies, balances, asset, fields
+        total_balance[OrderSchema.margin1][asset] = convert_to_currency(
+            wallet_summary_in_usd, currencies.get(to_exchange_asset(asset))
         )
-    load_total_wallet_summary(balances_summary, total_balance, assets, fields)
+    load_total_wallet_summary(balances_summary, total_balance, assets, fields, is_for_ws=is_for_ws)
     return {
-        'balances': balances,
-        **balances_summary,
-    }
-
-
-def load_ws_wallet_data(raw_data: dict, currencies: dict, assets: Union[tuple, list], fields: tuple) -> dict:
-    balances = [load_ws_wallet_detail_data(raw_data)]
-    balances_summary = {}
-    total_balance = {OrderSchema.margin1: {}}
-    for asset in assets:
-        total_balance[OrderSchema.margin1][asset] = load_wallet_summary(
-            currencies, balances, asset, fields, is_for_ws=True
-        )
-    load_total_wallet_summary(balances_summary, total_balance, assets, fields, is_for_ws=True)
-    return {
-        'bls': balances,
+        bls_key: balances,
         **balances_summary,
     }
 
@@ -536,33 +524,17 @@ def to_wallet_state_type(value):
     return 'hold'
 
 
-def load_wallet_summary(currencies: dict, balances: list, asset: str,
-                        fields: Union[list, tuple], is_for_ws=False):
-
-    _currency_key = 'cur' if is_for_ws else 'currency'
-    _usd_asset = 'usd'
-    if asset.lower() == 'btc':
-        asset = 'xbt'
-    total_balance = {}
-    for f in fields:
-        total_balance[f] = 0
-    for b in balances:
-        if b[_currency_key].lower() == asset.lower() or b[_currency_key].lower() == _usd_asset:
-            _price = 1
-            _asset_price = 1
-        else:
-            _price = currencies.get(f"{b[_currency_key]}{_usd_asset}".lower()) or 0
-            _asset_price = currencies.get(f"{asset}{_usd_asset}".lower()) or 1
-        for f in fields:
-            total_balance[f] += _price * (b[f] or 0) / _asset_price
-    return total_balance
+def to_exchange_asset(asset: str):
+    if asset == 'btc':
+        return 'xbt'
+    return asset
 
 
 def load_total_wallet_summary(total_summary: dict, total_balance: dict, assets: Union[list, tuple],
                               fields: Union[list, tuple], is_for_ws=False):
     for schema in total_balance.keys():
         for field in fields:
-            t_field = f't_{field}' if is_for_ws else f'total_{field}'
+            t_field = f't{field}' if is_for_ws else f'total_{field}'
             total_summary.setdefault(t_field, {})
             for asset in assets:
                 total_summary[t_field].setdefault(asset, 0)
@@ -571,14 +543,33 @@ def load_total_wallet_summary(total_summary: dict, total_balance: dict, assets: 
 
 
 def load_commissions(commissions: dict) -> list:
-    return [
-        {
-            'symbol': symbol.lower(),
-            'maker': to_float(commission['makerFee']),
-            'taker': to_float(commission['takerFee']),
-            'type': 'VIP0',
-        } for symbol, commission in commissions.items()
-    ]
+    commissions_list = []
+    for symbol, commission in commissions.items():
+        for vip in var.BITMEX_VIP_LEVELS:
+            commissions_list.append(
+                {
+                    'symbol': symbol.lower(),
+                    'maker': to_float(commission['makerFee']),
+                    'taker': to_float(vip['taker']),
+                    'type': vip['type'],
+                }
+            )
+    return commissions_list
+
+
+def load_vip_level(trading_volume: Union[str, float]) -> str:
+    trading_volume = to_float(trading_volume)
+    if trading_volume >= var.BITMEX_AVERAGE_DAILY_VOLUME['VIP4']:
+        vip_level = '4'
+    elif trading_volume >= var.BITMEX_AVERAGE_DAILY_VOLUME['VIP3']:
+        vip_level = '3'
+    elif trading_volume >= var.BITMEX_AVERAGE_DAILY_VOLUME['VIP2']:
+        vip_level = '2'
+    elif trading_volume >= var.BITMEX_AVERAGE_DAILY_VOLUME['VIP1']:
+        vip_level = '1'
+    else:
+        vip_level = '0'
+    return vip_level
 
 
 def to_xbt(value: int):
@@ -591,25 +582,22 @@ def to_date(token: Union[datetime, str]) -> Optional[datetime]:
     if isinstance(token, datetime):
         return token
     try:
-        return datetime.strptime(token, api.DATETIME_FORMAT)
-    except (ValueError, TypeError):
+        return datetime.strptime(token.split('Z')[0], api.DATETIME_FORMAT)
+    except (ValueError, TypeError, IndexError):
         return None
 
 
-def to_iso_datetime(token: Union[datetime, int, str]) -> Optional[str]:
-    if isinstance(token, str):
-        try:
-            return datetime.strptime(token, api.DATETIME_FORMAT).strftime(api.DATETIME_OUT_FORMAT)
-        except ValueError:
-            return None
-    if isinstance(token, datetime):
-        return token.strftime(api.DATETIME_OUT_FORMAT)
-    if isinstance(token, int):
-        return datetime.fromtimestamp(token, tz=timezone.utc).strftime(api.DATETIME_OUT_FORMAT)
-    return None
+def to_iso_datetime(token: Union[datetime, str]) -> Optional[str]:
+    try:
+        if isinstance(token, datetime):
+            return token.strftime(api.DATETIME_FORMAT)
+        elif isinstance(token, str):
+            return datetime.strptime(token.split('Z')[0], api.DATETIME_FORMAT).strftime(api.DATETIME_FORMAT)
+    except (ValueError, TypeError, IndexError):
+        return None
 
 
-def to_float(token: Union[int, float, None]) -> Optional[float]:
+def to_float(token: Union[int, float, str, None]) -> Optional[float]:
     try:
         return float(token)
     except (ValueError, TypeError):

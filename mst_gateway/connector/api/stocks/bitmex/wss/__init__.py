@@ -62,6 +62,7 @@ class BitmexWssApi(StockWssApi):
     def __split_message_map(self, key: str) -> Optional[callable]:
         _map = {
             'execution': self.split_order,
+            'trade': self.split_trade,
         }
         return _map.get(key)
 
@@ -71,7 +72,7 @@ class BitmexWssApi(StockWssApi):
             return super()._split_message(message)
         return super()._split_message(method(message=message))
 
-    def split_order(self, message):
+    def split_order(self, message: dict) -> list:
         _messages = list()
         _orders = message.pop('data', [])
         message.pop('action', None)
@@ -79,6 +80,9 @@ class BitmexWssApi(StockWssApi):
             action = self.define_action_by_order_status(order.get('ordStatus'))
             _messages.append(dict(**message, action=action, data=[order]))
         return _messages
+
+    def split_trade(self, message: dict) -> list:
+        return [dict(**message, data=[trade]) for trade in message.pop('data', [])]
 
     def define_action_by_order_status(self, order_status: str) -> str:
         if order_status == var.BITMEX_ORDER_STATUS_NEW:
