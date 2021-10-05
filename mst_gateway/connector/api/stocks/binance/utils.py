@@ -1172,6 +1172,8 @@ def load_futures_symbol_ws_data(schema: str, raw_data: dict, state_data: Optiona
 
 
 def to_date(token: Union[datetime, int, str]) -> Optional[datetime]:
+    if not token:
+        return None
     if isinstance(token, datetime):
         return token
     try:
@@ -1184,6 +1186,8 @@ def to_date(token: Union[datetime, int, str]) -> Optional[datetime]:
 
 
 def to_iso_datetime(token: Union[datetime, int, str]) -> Optional[str]:
+    if not token:
+        return None
     try:
         if isinstance(token, datetime):
             return token.strftime(api.DATETIME_FORMAT)
