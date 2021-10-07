@@ -60,6 +60,9 @@ class Client(BaseClient):
     def margin_ping(self) -> Dict:
         return self.spot_ping()
 
+    def isolated_margin_ping(self) -> Dict:
+        return self.spot_ping()
+
     def transfer_spot_to_futures(self, **params):
         """Execute transfer between spot account and futures account.
 

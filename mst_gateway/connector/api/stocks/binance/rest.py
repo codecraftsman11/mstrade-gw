@@ -27,6 +27,7 @@ class BinanceRestApi(StockRestApi):
         schema_handlers = {
             OrderSchema.exchange: self._handler.spot_ping,
             OrderSchema.margin2: self._handler.margin_ping,
+            OrderSchema.margin3: self._handler.isolated_margin_ping,
             OrderSchema.futures: self._handler.futures_ping,
             OrderSchema.futures_coin: self._handler.futures_coin_ping,
         }
