@@ -38,6 +38,7 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     if isinstance(state_data, dict):
         data.update({
             'expiration': state_data.get('expiration'),
+            'expiration_date': state_data.get('expiration_date'),
             'pair': state_data.get('pair'),
             'tick': state_data.get('tick'),
             'volume_tick': state_data.get('volume_tick'),
@@ -73,6 +74,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     if isinstance(state_data, dict):
         data.update({
             'exp': state_data.get('expiration'),
+            'expd': state_data.get('expiration_date'),
             'pa': state_data.get('pair'),
             'tck': state_data.get('tick'),
             'vt': state_data.get('volume_tick'),
@@ -136,6 +138,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                 'system_base_asset': system_base_asset,
                 'system_quote_asset': system_quote_asset,
                 'expiration': expiration,
+                'expiration_date': to_date(d.get('expiry')),
                 'pair': [base_asset.upper(), quote_asset.upper()],
                 'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
                 'schema': OrderSchema.margin1,
@@ -579,6 +582,8 @@ def to_xbt(value: int):
 
 
 def to_date(token: Union[datetime, str]) -> Optional[datetime]:
+    if not token:
+        return None
     if isinstance(token, datetime):
         return token
     try:
@@ -588,6 +593,8 @@ def to_date(token: Union[datetime, str]) -> Optional[datetime]:
 
 
 def to_iso_datetime(token: Union[datetime, str]) -> Optional[str]:
+    if not token:
+        return None
     try:
         if isinstance(token, datetime):
             return token.strftime(api.DATETIME_FORMAT)

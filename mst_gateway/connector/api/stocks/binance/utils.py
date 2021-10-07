@@ -38,6 +38,7 @@ def load_symbol_data(schema: str, raw_data: dict, state_data: Optional[dict]) ->
     if isinstance(state_data, dict):
         data.update({
             'expiration': state_data.get('expiration'),
+            'expiration_date': state_data.get('expiration_date'),
             'pair': state_data.get('pair'),
             'tick': state_data.get('tick'),
             'volume_tick': state_data.get('volume_tick'),
@@ -78,6 +79,7 @@ def load_exchange_symbol_info(raw_data: list, schema: str, valid_symbols: list =
                 'system_base_asset': system_base_asset,
                 'system_quote_asset': system_quote_asset,
                 'expiration': None,
+                'expiration_date': None,
                 'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
                 'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
                 'tick': tick,
@@ -85,6 +87,22 @@ def load_exchange_symbol_info(raw_data: list, schema: str, valid_symbols: list =
                 'max_leverage': None
             })
     return symbol_list
+
+
+def load_futures_symbol_expiration_date(expiration: Optional[str]) -> Optional[datetime]:
+    try:
+        return datetime(
+            year=int(f"{str(datetime.now().year)[:2]}{expiration[:2]}"),
+            month=int(expiration[2:4]),
+            day=int(expiration[4:]),
+            hour=8,
+            minute=0,
+            second=0,
+            microsecond=0,
+            tzinfo=timezone.utc,
+        )
+    except (ValueError, TypeError, IndexError):
+        return None
 
 
 def _load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict, schema: str, status_field: str) -> list:
@@ -121,6 +139,7 @@ def _load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict, sche
                     'system_base_asset': system_base_asset,
                     'system_quote_asset': system_quote_asset,
                     'expiration': expiration,
+                    'expiration_date': load_futures_symbol_expiration_date(expiration),
                     'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
                     'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
                     'schema': schema.lower(),
@@ -1125,6 +1144,7 @@ def load_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict])
     if isinstance(state_data, dict):
         data.update({
             'exp': state_data.get('expiration'),
+            'expd': state_data.get('expiration_date'),
             'pa': state_data.get('pair'),
             'tck': state_data.get('tick'),
             'vt': state_data.get('volume_tick'),
@@ -1143,6 +1163,8 @@ def load_futures_symbol_ws_data(schema: str, raw_data: dict, state_data: Optiona
 
 
 def to_date(token: Union[datetime, int, str]) -> Optional[datetime]:
+    if not token:
+        return None
     if isinstance(token, datetime):
         return token
     try:
@@ -1155,6 +1177,8 @@ def to_date(token: Union[datetime, int, str]) -> Optional[datetime]:
 
 
 def to_iso_datetime(token: Union[datetime, int, str]) -> Optional[str]:
+    if not token:
+        return None
     try:
         if isinstance(token, datetime):
             return token.strftime(api.DATETIME_FORMAT)
