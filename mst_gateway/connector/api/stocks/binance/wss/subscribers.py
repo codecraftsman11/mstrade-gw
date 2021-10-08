@@ -8,6 +8,7 @@ from mst_gateway.exceptions import QueryError
 from .. import utils
 from ..lib import AsyncClient
 from ....wss.subscriber import Subscriber
+from ......storage.var import StateStorageKey
 from .utils import cmd_subscribe, cmd_unsubscribe, cmd_request
 
 
@@ -99,7 +100,7 @@ class BinanceSubscriber(Subscriber):
         watcher for new symbol when `general_subscribe_available` is False
         """
         redis = await api.storage.get_client()
-        symbol_channel = (await redis.subscribe('symbol'))[0]
+        symbol_channel = (await redis.subscribe(StateStorageKey.symbol))[0]
         while api.handler and not api.handler.closed:
             while await symbol_channel.wait_message():
                 symbols = await symbol_channel.get_json()
@@ -152,15 +153,15 @@ class BinanceWalletSubscriber(BinanceSubscriber):
 
     async def subscribe_exchange_rates(self, api: BinanceWssApi):
         redis = await api.storage.get_client()
-        state_channel = (await redis.subscribe('exchange_rates'))[0]
+        state_channel = (await redis.subscribe(StateStorageKey.exchange_rates))[0]
         while await state_channel.wait_message():
             state_data = await state_channel.get_json()
             exchange_rates = state_data.get(api.name.lower(), {}).get(api.schema, {})
-            api.partial_state_data[self.subscription].update({'exchange_rates': exchange_rates})
+            api.partial_state_data[self.subscription].update({StateStorageKey.exchange_rates: exchange_rates})
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
         api.tasks.append(asyncio.create_task(self.subscribe_exchange_rates(api)))
-        exchange_rates = await api.storage.get('exchange_rates', exchange=api.name, schema=api.schema)
+        exchange_rates = await api.storage.get(StateStorageKey.exchange_rates, exchange=api.name, schema=api.schema)
         return {'exchange_rates': exchange_rates}
 
 
@@ -193,11 +194,11 @@ class BinancePositionSubscriber(BinanceSubscriber):
 
     async def subscribe_exchange_rates(self, api: BinanceWssApi):
         redis = await api.storage.get_client()
-        state_channel = (await redis.subscribe('exchange_rates'))[0]
+        state_channel = (await redis.subscribe(StateStorageKey.exchange_rates))[0]
         while await state_channel.wait_message():
             state_data = await state_channel.get_json()
             exchange_rates = state_data.get(api.name.lower(), {}).get(api.schema, {})
-            api.partial_state_data[self.subscription].update({'exchange_rates': exchange_rates})
+            api.partial_state_data[self.subscription].update({StateStorageKey.exchange_rates: exchange_rates})
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
         api.tasks.append(asyncio.create_task(self.subscribe_positions_state(api)))
@@ -205,7 +206,7 @@ class BinancePositionSubscriber(BinanceSubscriber):
         positions_state_data = await api.storage.get_pattern(
             f'{self.subscription}.{api.account_id}.{api.name}.{api.schema}.*'.lower()
         )
-        exchange_rates = await api.storage.get('exchange_rates', exchange=api.name, schema=api.schema)
+        exchange_rates = await api.storage.get(StateStorageKey.exchange_rates, exchange=api.name, schema=api.schema)
         return {
             'position_state': utils.load_positions_state(positions_state_data),
             'exchange_rates': exchange_rates,
@@ -221,7 +222,7 @@ class BinanceFuturesPositionSubscriber(BinancePositionSubscriber):
                 api_key=api.auth.get('api_key'), api_secret=api.auth.get('api_secret'), testnet=api.test
         ) as client:
             try:
-                exchange_rates = await api.storage.get('exchange_rates', exchange=api.name, schema=api.schema)
+                exchange_rates = await api.storage.get(StateStorageKey.exchange_rates, exchange=api.name, schema=api.schema)
                 account_info = await client.futures_account_v2()
                 leverage_brackets = await client.futures_leverage_bracket()
                 return {
@@ -248,9 +249,9 @@ class BinanceFuturesCoinPositionSubscriber(BinanceFuturesPositionSubscriber):
         ) as client:
             try:
                 account_info = await client.futures_coin_account()
-                state_data = await api.storage.get('symbol', api.name, api.schema)
+                state_data = await api.storage.get(StateStorageKey.symbol, api.name, api.schema)
                 leverage_brackets = await client.futures_coin_leverage_bracket()
-                exchange_rates = await api.storage.get('exchange_rates', exchange=api.name, schema=api.schema)
+                exchange_rates = await api.storage.get(StateStorageKey.exchange_rates, exchange=api.name, schema=api.schema)
                 return {
                     'position_state': utils.load_futures_coin_positions_state(account_info, state_data),
                     'leverage_brackets': utils.load_leverage_brackets_as_dict(leverage_brackets),

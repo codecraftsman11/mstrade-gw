@@ -1,13 +1,18 @@
 from abc import ABCMeta, abstractmethod
 from ..logging import init_logger
 
+from mst_gateway.storage import StateStorageKey
+
 
 class Connector(metaclass=ABCMeta):
+    state_storage_key = StateStorageKey()
 
-    def __init__(self, auth=None, logger=None):
+    def __init__(self, auth=None, logger=None, state_storage_key: StateStorageKey = None):
         self._auth = auth
         self._logger = logger or init_logger()
         self._handler = None
+        if state_storage_key:
+            self.state_storage_key = state_storage_key
 
     @property
     def auth(self):

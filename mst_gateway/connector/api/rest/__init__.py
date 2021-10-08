@@ -32,6 +32,7 @@ class StockRestApi(Connector):
         self._throttle_hash_name = throttle_hash_name
         if state_storage is not None:
             self.storage = StateStorage(storage=state_storage)
+        self.state_storage_key = Connector.state_storage_key
         super().__init__(auth, logger)
 
     @abstractmethod
