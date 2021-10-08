@@ -60,6 +60,9 @@ class Client(BaseClient):
     def margin_ping(self) -> Dict:
         return self.spot_ping()
 
+    def isolated_margin_ping(self) -> Dict:
+        return self.spot_ping()
+
     def transfer_spot_to_futures(self, **params):
         """Execute transfer between spot account and futures account.
 
@@ -116,6 +119,14 @@ class Client(BaseClient):
         :type asset: str
         """
         return self._request_margin_api('get', 'lending/project/position/list', signed=True, data=params)
+
+    def get_all_margin_symbols(self, **params):
+        """Get All Cross Margin Pairs
+
+            https://binance-docs.github.io/apidocs/spot/en/#get-all-cross-margin-pairs-market_data
+
+        """
+        return self._request_margin_api('get', 'margin/allPairs', signed=True, data=params)
 
     def get_public_interest_rate(self, **params):
         """

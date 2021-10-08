@@ -27,6 +27,7 @@ class BinanceRestApi(StockRestApi):
         schema_handlers = {
             OrderSchema.exchange: self._handler.spot_ping,
             OrderSchema.margin2: self._handler.margin_ping,
+            OrderSchema.margin3: self._handler.isolated_margin_ping,
             OrderSchema.futures: self._handler.futures_ping,
             OrderSchema.futures_coin: self._handler.futures_coin_ping,
         }
@@ -49,6 +50,7 @@ class BinanceRestApi(StockRestApi):
         schema_handlers = {
             OrderSchema.exchange: (self._handler.get_ticker,),
             OrderSchema.margin2: (self._handler.get_ticker,),
+            OrderSchema.margin3: (self._handler.get_ticker,),
             OrderSchema.futures: (
                 self._handler.futures_ticker,
                 self._handler.futures_orderbook_ticker,
@@ -65,7 +67,7 @@ class BinanceRestApi(StockRestApi):
         symbol = symbol.upper()
         data = self._binance_api(schema_handlers[schema][0], symbol=symbol)
         state_data = self.storage.get('symbol', self.name, schema).get(utils.stock2symbol(symbol), {})
-        if schema in (OrderSchema.margin2, OrderSchema.exchange):
+        if schema in (OrderSchema.margin2, OrderSchema.margin3, OrderSchema.exchange):
             return utils.load_symbol_data(schema, data, state_data)
         if isinstance(data, list):
             data = data[0]
@@ -98,6 +100,7 @@ class BinanceRestApi(StockRestApi):
         schema_handlers = {
             OrderSchema.exchange: (self._handler.get_ticker,),
             OrderSchema.margin2: (self._handler.get_ticker,),
+            OrderSchema.margin3: (self._handler.get_ticker,),
             OrderSchema.futures: (
                 self._handler.futures_ticker,
                 self._handler.futures_orderbook_ticker,
@@ -113,7 +116,7 @@ class BinanceRestApi(StockRestApi):
         schema = schema.lower()
         data = self._binance_api(schema_handlers[schema][0])
         state_data = self.storage.get('symbol', self.name, schema)
-        if schema in (OrderSchema.margin2, OrderSchema.exchange):
+        if schema in (OrderSchema.margin2, OrderSchema.margin3, OrderSchema.exchange):
             symbols = []
             for d in data:
                 symbol_state = state_data.get(d['symbol'].lower())
@@ -127,10 +130,20 @@ class BinanceRestApi(StockRestApi):
                 for d in data if state_data.get(d['symbol'].lower())]
 
     def get_exchange_symbol_info(self, schema: str) -> list:
-        if schema.lower() in (OrderSchema.exchange, OrderSchema.margin2):
+        schema = schema.lower()
+        if schema in (OrderSchema.exchange, OrderSchema.margin2, OrderSchema.margin3):
+            valid_symbols = None
             data = self._binance_api(self._handler.get_exchange_info)
-            return utils.load_exchange_symbol_info(data.get('symbols', []))
-        if schema.lower() in (OrderSchema.futures, OrderSchema.futures_coin):
+            if schema == OrderSchema.margin2:
+                valid_symbols = [
+                    symbol.get('symbol') for symbol in self._binance_api(self._handler.get_all_margin_symbols)
+                ]
+            elif schema == OrderSchema.margin3:
+                valid_symbols = [
+                    symbol.get('symbol') for symbol in self._binance_api(self._handler.get_all_isolated_margin_symbols)
+                ]
+            return utils.load_exchange_symbol_info(data.get('symbols', []), schema, valid_symbols)
+        if schema in (OrderSchema.futures, OrderSchema.futures_coin):
             schema_handlers = {
                 OrderSchema.futures: (
                     self._handler.futures_exchange_info,
@@ -143,9 +156,9 @@ class BinanceRestApi(StockRestApi):
                     utils.load_futures_coin_exchange_symbol_info,
                 ),
             }
-            data = self._binance_api(schema_handlers[schema.lower()][0])
-            leverage_data = self._binance_api(schema_handlers[schema.lower()][1])
-            return schema_handlers[schema.lower()][2](
+            data = self._binance_api(schema_handlers[schema][0])
+            leverage_data = self._binance_api(schema_handlers[schema][1])
+            return schema_handlers[schema][2](
                 data.get('symbols', []), utils.load_leverage_brackets_as_dict(leverage_data)
             )
         raise ConnectorError(f"Invalid schema {schema}.")
