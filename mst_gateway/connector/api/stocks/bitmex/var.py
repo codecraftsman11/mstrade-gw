@@ -60,3 +60,19 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
 }
 
 BITMEX_CROSS_LEVERAGE_TYPE_PARAM = 0
+
+BITMEX_VIP_LEVELS = [
+    {'taker': 0.0005, 'type': 'VIP0'},
+    {'taker': 0.0004, 'type': 'VIP1'},
+    {'taker': 0.00035, 'type': 'VIP2'},
+    {'taker': 0.0003, 'type': 'VIP3'},
+    {'taker': 0.00025, 'type': 'VIP4'},
+]
+
+BITMEX_AVERAGE_DAILY_VOLUME = {
+    'VIP0': 5_000_000,
+    'VIP1': 5_000_000,
+    'VIP2': 10_000_000,
+    'VIP3': 25_000_000,
+    'VIP4': 50_000_000
+}

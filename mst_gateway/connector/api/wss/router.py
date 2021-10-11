@@ -18,6 +18,8 @@ if TYPE_CHECKING:
 class Router:
     __metaclass__ = ABCMeta
 
+    serializer_classes = {}
+
     def __init__(self, wss_api: StockWssApi):
         self._wss_api = wss_api
         self._routed_data = None
@@ -42,6 +44,7 @@ class Router:
     def _get_serializers(self, message: dict) -> Dict[str, Serializer]:
         raise NotImplementedError
 
-    @abstractmethod
-    def _subscr_serializer(self, subscr_name: str) -> Serializer:
-        raise NotImplementedError
+    def _subscr_serializer(self, subscr_name) -> Serializer:
+        if subscr_name not in self._serializers:
+            self._serializers[subscr_name] = self.serializer_classes[subscr_name](self._wss_api)
+        return self._serializers[subscr_name]

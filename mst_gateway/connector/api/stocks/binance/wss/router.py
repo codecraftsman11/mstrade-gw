@@ -3,7 +3,6 @@ from typing import Dict, Optional
 from ....wss.router import Router
 from ....wss.serializer import Serializer
 from . import serializers
-from .serializers.base import BinanceSerializer
 
 
 class BinanceWssRouter(Router):
@@ -41,12 +40,7 @@ class BinanceWssRouter(Router):
                 _serializers[subscr_name] = serializer
         return _serializers
 
-    def _subscr_serializer(self, subscr_name) -> BinanceSerializer:
-        if subscr_name not in self._serializers:
-            self._serializers[subscr_name] = self.serializer_classes[subscr_name](self._wss_api)
-        return self._serializers[subscr_name]
-
-    def _lookup_serializer(self, subscr_name, data: dict) -> Optional[BinanceSerializer]:
+    def _lookup_serializer(self, subscr_name, data: dict) -> Optional[Serializer]:
         if subscr_name not in self._wss_api.subscriptions:
             return None
         serializer = self._subscr_serializer(subscr_name)
@@ -71,7 +65,7 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
         'bookTicker': 'symbol',
         'ACCOUNT_UPDATE': ['wallet', 'position'],
         'ORDER_TRADE_UPDATE': 'order',
-        'markPriceUpdate': 'position',
+        'markPriceUpdate': ['position', 'symbol'],
         'ACCOUNT_CONFIG_UPDATE': 'position',
     }
 
@@ -83,4 +77,28 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
         'wallet': serializers.BinanceFuturesWalletSerializer,
         'order': serializers.BinanceOrderSerializer,
         'position': serializers.BinanceFuturesPositionSerializer,
+    }
+
+
+class BinanceFuturesCoinWssRouter(BinanceWssRouter):
+    table_route_map = {
+        '24hrTicker': 'symbol',
+        'bookTicker': 'symbol',
+        'kline': 'quote_bin',
+        'trade': 'trade',
+        'depthUpdate': 'order_book',
+        'ACCOUNT_UPDATE': ['wallet', 'position'],
+        'ORDER_TRADE_UPDATE': 'order',
+        'markPriceUpdate': ['position', 'symbol'],
+        'position': 'position'
+    }
+
+    serializer_classes = {
+        'symbol': serializers.BinanceFuturesSymbolSerializer,
+        'quote_bin': serializers.BinanceQuoteBinSerializer,
+        'trade': serializers.BinanceTradeSerializer,
+        'order_book': serializers.BinanceOrderBookSerializer,
+        'wallet': serializers.BinanceFuturesWalletSerializer,
+        'order': serializers.BinanceOrderSerializer,
+        'position': serializers.BinanceFuturesCoinPositionSerializer
     }

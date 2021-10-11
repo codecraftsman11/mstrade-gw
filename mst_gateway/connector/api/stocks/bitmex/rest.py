@@ -2,12 +2,14 @@ import json
 from datetime import datetime, timedelta
 from typing import Optional, Union
 from bravado.exception import HTTPError
+from bravado_core.exception import SwaggerMappingError
 from .lib import (
     bitmex_connector, APIKeyAuthenticator, SwaggerClient
 )
 from mst_gateway.calculator import BitmexFinFactory
-from mst_gateway.connector.api.types import LeverageType, OrderSchema
+from mst_gateway.connector.api.types import OrderSchema
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
+from mst_gateway.connector.api.utils.utils import convert_to_currency
 from . import utils, var
 from .utils import binsize2timedelta
 from ...rest import StockRestApi
@@ -93,15 +95,13 @@ class BitmexRestApi(StockRestApi):
         return [utils.load_quote_bin_data(data, state_data, binsize=binsize) for data in quote_bins]
 
     def list_quote_bins(self, symbol, schema, binsize='1m', count=100, **kwargs) -> list:
-        kwargs['state_data'] = self.storage.get(
-            'symbol', self.name, schema
-        ).get(symbol.lower(), dict())
-        pages = int((count - 1) / var.BITMEX_MAX_QUOTE_BINS_COUNT) + 1
-        rest = count % var.BITMEX_MAX_QUOTE_BINS_COUNT
+        kwargs['state_data'] = self.storage.get('symbol', self.name, schema).get(symbol.lower(), {})
+        pages = count // var.BITMEX_MAX_QUOTE_BINS_COUNT + 1
+        pages_mod = count % var.BITMEX_MAX_QUOTE_BINS_COUNT or var.BITMEX_MAX_QUOTE_BINS_COUNT
         quote_bins = []
         for i in range(pages):
             if i == pages - 1:
-                items_count = rest
+                items_count = pages_mod
             else:
                 items_count = var.BITMEX_MAX_QUOTE_BINS_COUNT
             quotes = self._list_quote_bins_page(symbol=symbol,
@@ -110,6 +110,9 @@ class BitmexRestApi(StockRestApi):
                                                 offset=i * var.BITMEX_MAX_QUOTE_BINS_COUNT,
                                                 count=items_count,
                                                 **kwargs)
+            quotes_len = len(quotes)
+            if quotes_len == 1 and quotes_len != items_count:
+                break
             quote_bins += quotes
         return list(reversed(quote_bins))
 
@@ -119,11 +122,11 @@ class BitmexRestApi(StockRestApi):
 
     def get_wallet(self, **kwargs) -> dict:
         schema = kwargs.pop('schema', OrderSchema.margin1).lower()
+        assets = kwargs.pop('assets', ('btc', 'usd'))
+        fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance'))
         if schema == OrderSchema.margin1:
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
-            currencies = self.storage.get('currency', self.name, schema)
-            assets = kwargs.get('assets', ('btc', 'usd'))
-            fields = ('balance', 'unrealised_pnl', 'margin_balance')
+            currencies = self.storage.get('exchange_rates', self.name, schema)
             return utils.load_wallet_data(data, currencies, assets, fields)
         raise ConnectorError(f"Invalid schema {schema}.")
 
@@ -341,16 +344,20 @@ class BitmexRestApi(StockRestApi):
         assets = kwargs.get('assets', ('btc', 'usd'))
         fields = ('balance', 'unrealised_pnl', 'margin_balance')
 
-        total_summary = dict()
+        total_summary = {}
         for schema in schemas:
             total_balance = {schema: {}}
             if schema == OrderSchema.margin1:
-                balances = self.get_wallet(schema=schema)['balances']
-                currencies = self.storage.get('currency', self.name, schema)
+                data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
+                balances = [utils.load_wallet_detail_data(data)]
+                currencies = self.storage.get('exchange_rates', self.name, schema)
             else:
                 continue
+            wallet_summary_in_usd = utils.load_wallet_summary_in_usd(currencies, balances, fields)
             for asset in assets:
-                total_balance[schema][asset] = utils.load_wallet_summary(currencies, balances, asset, fields)
+                total_balance[OrderSchema.margin1][asset] = convert_to_currency(
+                    wallet_summary_in_usd, currencies.get(utils.to_exchange_asset(asset))
+                )
             utils.load_total_wallet_summary(total_summary, total_balance, assets, fields)
         return total_summary
 
@@ -361,7 +368,21 @@ class BitmexRestApi(StockRestApi):
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_vip_level(self, schema: str) -> str:
-        return '0'
+        if schema == OrderSchema.margin1:
+            try:
+                trading_volume, _ = self._bitmex_api(self._handler.User.User_getTradingVolume)
+                trading_volume = trading_volume[0].get('advUsd')
+            except (IndexError, AttributeError):
+                trading_volume = 0
+            # TODO: delete when Bitmex fixes the response
+            except SwaggerMappingError as e:
+                import re
+                try:
+                    trading_volume = re.findall(r'\d*\.\d+|\d+', str(e))[0]
+                except IndexError:
+                    trading_volume = '0'
+            return utils.load_vip_level(trading_volume)
+        raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_funding_rates(self, symbol: str, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
         if schema.lower() == OrderSchema.margin1:
@@ -446,33 +467,23 @@ class BitmexRestApi(StockRestApi):
         side: int,
         volume: float,
         price: float,
-        leverage: Optional[float],
-        mark_price: Optional[float],
         **kwargs,
     ) -> dict:
+        schema = schema.lower()
         if schema != OrderSchema.margin1:
             raise ConnectorError(f'Invalid schema {schema}.')
-        maint_margin = kwargs.get('wallet_detail',  {}).get(schema, {}).get('maint_margin')
-        params = {
-            'taker_fee': kwargs.get('taker_fee'),
-            'funding_rate': kwargs.get('funding_rate'),
-        }
-        if leverage_type == LeverageType.isolated:
-            params.update({
-                'leverage': leverage,
-            })
-            liquidation_price = self.fin_factory.calc_liquidation_isolated_price(
-                entry_price=price, maint_margin=maint_margin, side=side, **params,
-            )
-        else:
-            params.update({
-                'quantity': volume,
-                'margin_balance': wallet_balance,
-            })
-            liquidation_price = self.fin_factory.calc_liquidation_cross_price(
-                entry_price=price, maint_margin=maint_margin, side=side, **params,
-            )
-        return {'liquidation_price': liquidation_price}
+        return {
+            'liquidation_price': self.fin_factory.calc_liquidation_price(
+                side=side,
+                leverage_type=leverage_type,
+                entry_price=price,
+                maint_margin=kwargs.get('wallet_detail',  {}).get(schema, {}).get('maint_margin'),
+                volume=volume,
+                wallet_balance=wallet_balance,
+                taker_fee=kwargs.get('taker_fee'),
+                funding_rate=kwargs.get('funding_rate'),
+                leverage=kwargs.get('leverage'),
+            )}
 
     def _bitmex_api(self, method: callable, **kwargs):
         headers = {}
