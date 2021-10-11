@@ -477,7 +477,7 @@ class BitmexRestApi(StockRestApi):
                 side=side,
                 leverage_type=leverage_type,
                 entry_price=price,
-                maint_margin=kwargs.get('wallet_detail',  {}).get(schema, {}).get('maint_margin'),
+                maint_margin=kwargs.get('wallet_detail',  {}).get('maint_margin'),
                 volume=volume,
                 wallet_balance=wallet_balance,
                 taker_fee=kwargs.get('taker_fee'),
