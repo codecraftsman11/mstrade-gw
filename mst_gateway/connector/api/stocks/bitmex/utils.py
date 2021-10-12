@@ -726,11 +726,12 @@ def assign_custom_parameter_values(options: Optional[dict]) -> dict:
     if options.get('comments'):
         new_options['text'] = options['comments']
     if options.get('ttl'):
-        new_options['timeInForce'] = 'GoodTillCancel'
-    if options.get('is_passive'):
-        new_options['execInst'] = 'ParticipateDoNotInitiate'
+        new_options['ttl'] = var.PARAMETER_NAMES_MAP.get(options.get('ttl'))
     if options.get('is_iceberg'):
-        new_options['displayQty'] = options['iceberg_volume'] or 0
+        new_options['iceberg_volume'] = options['iceberg_volume'] or 0
+
+    if options.get('is_passive'):
+        new_options['is_passive'] = 'ParticipateDoNotInitiate'
     return new_options
 
 

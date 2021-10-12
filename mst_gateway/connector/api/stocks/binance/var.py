@@ -32,6 +32,13 @@ PARAMETER_NAMES_MAP = {
     'iceberg_volume': 'icebergQty',
     'stop_price': 'stopPrice',
     'ttl': 'timeInForce',
+    'H1': 'GTC',
+    'H4': 'GTC',
+    'D1': 'GTC',
+    'GTC': 'GTC',
+    'FOK': 'FOK',
+    'IOC': 'IOC',
+    'GTX': 'GTX'
 }
 
 

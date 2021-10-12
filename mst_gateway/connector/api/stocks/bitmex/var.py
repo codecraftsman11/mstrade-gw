@@ -27,7 +27,13 @@ PARAMETER_NAMES_MAP = {
     'display_value': 'displayQty',
     'order_type': 'ordType',
     'is_passive': 'execInst',
-    'iceberg_volume': 'displayQty'
+    'iceberg_volume': 'displayQty',
+    'H1': 'GoodTillCancel',
+    'H4': 'GoodTillCancel',
+    'D1': 'GoodTillCancel',
+    'GTC': 'GoodTillCancel',
+    'FOK': 'FillOrKill',
+    'IOC': 'ImmediateOrCancel',
 }
 
 
