@@ -1,7 +1,6 @@
 from abc import abstractmethod, ABC
 from hashlib import sha1
 from typing import Optional
-from mst_gateway.storage.var import StateStorageKey
 
 
 class BaseStorage:
@@ -51,10 +50,10 @@ class BaseStorage:
     @staticmethod
     def generate_hash_key(key: (str, list, tuple, dict)) -> str:
         if isinstance(key, (list, tuple)):
-            return f"{StateStorageKey.throttling}:{sha1('|'.join(key).encode().lower()).hexdigest()}"
+            return sha1('|'.join(key).encode().lower()).hexdigest()
         if isinstance(key, dict):
-            return f"{StateStorageKey.throttling}:{sha1('|'.join(key.values()).encode().lower()).hexdigest()}"
-        return f"{StateStorageKey.throttling}:{str(key).lower()}"
+            return sha1('|'.join(key.values()).encode().lower()).hexdigest()
+        return str(key).lower()
 
     def _set_dict(self, key: str, value) -> None:
         if isinstance(self._storage.get(key), dict) and isinstance(value, dict):
