@@ -11,6 +11,7 @@ from .....exceptions import ConnectorError
 from . import var
 from .converter import BinanceOrderTypeConverter
 from ...types.asset import to_system_asset
+from ...utils.order_book import generate_order_book_id
 
 
 def load_symbol_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
@@ -56,9 +57,11 @@ def load_futures_symbol_data(schema: str, raw_data: dict, state_data: Optional[d
     return data
 
 
-def load_exchange_symbol_info(raw_data: list) -> list:
+def load_exchange_symbol_info(raw_data: list, schema: str, valid_symbols: list = None) -> list:
     symbol_list = []
     for d in raw_data:
+        if valid_symbols and d.get('symbol') not in valid_symbols:
+            continue
         if d.get('status') == 'TRADING':
             system_base_asset = to_system_asset(d.get('baseAsset'))
             system_quote_asset = to_system_asset(d.get('quoteAsset'))
@@ -67,9 +70,11 @@ def load_exchange_symbol_info(raw_data: list) -> list:
             tick = get_tick_from_symbol_filters(d, 'PRICE_FILTER', 'tickSize')
             volume_tick = get_tick_from_symbol_filters(d, 'LOT_SIZE', 'stepSize')
 
-            _symbol_obj = {
+            symbol_list.append({
                 'symbol': d.get('symbol'),
                 'system_symbol': system_symbol.lower(),
+                'schema': schema,
+                'symbol_schema': schema,
                 'base_asset': d.get('baseAsset'),
                 'quote_asset': d.get('quoteAsset'),
                 'system_base_asset': system_base_asset,
@@ -81,20 +86,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                 'tick': tick,
                 'volume_tick': volume_tick,
                 'max_leverage': None
-            }
-
-            if d.get('isSpotTradingAllowed'):
-                _symbol_obj.update({
-                    'schema': OrderSchema.exchange,
-                    'symbol_schema': OrderSchema.exchange
-                })
-                symbol_list.append(_symbol_obj.copy())
-            if d.get('isMarginTradingAllowed'):
-                _symbol_obj.update({
-                    'schema': OrderSchema.margin2,
-                    'symbol_schema': OrderSchema.margin2
-                })
-                symbol_list.append(_symbol_obj.copy())
+            })
     return symbol_list
 
 
@@ -233,12 +225,6 @@ def load_order_book_side(order_side: str) -> int:
     return api.SELL
 
 
-def generate_order_book_id(price: float) -> int:
-    formatted_price = int(price * 10 ** 8)
-    base_value = 10 ** 16
-    return base_value - formatted_price
-
-
 def filter_order_book_data(data: dict, min_volume_buy: float = None, min_volume_sell: float = None) -> dict:
     if min_volume_buy is not None and min_volume_sell is not None:
         data['bids'] = [bid for bid in data.get('bids', []) if to_float(bid[1]) >= min_volume_buy]
@@ -273,10 +259,11 @@ def load_order_book_data(raw_data: dict, symbol: str, side, split,
         if side is not None and not side == _side:
             continue
         for item in v:
+            price = to_float(item[0])
             _i = {
-                'id': generate_order_book_id(to_float(item[0])),
+                'id': generate_order_book_id(symbol, price, state_data),
                 'symbol': symbol,
-                'price': to_float(item[0]),
+                'price': price,
                 'volume': to_float(item[1]),
                 'side': _side
             }
@@ -1088,7 +1075,7 @@ def load_order_book_ws_data(raw_data: dict, order: list, side: int, state_data: 
     price = to_float(order[0])
 
     data = {
-        'id': generate_order_book_id(price),
+        'id': generate_order_book_id(symbol, price, state_data),
         's': symbol,
         'p': price,
         'vl': to_float(order[1]),
