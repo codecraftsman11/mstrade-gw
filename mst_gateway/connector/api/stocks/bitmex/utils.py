@@ -13,6 +13,7 @@ from .var import BITMEX_ORDER_STATUS_MAP
 from .converter import BitmexOrderTypeConverter
 from ...types.asset import to_system_asset
 from ...types.binsize import BinSize
+from ...utils.order_book import generate_order_book_id
 
 
 def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
@@ -401,10 +402,13 @@ def binsize2timedelta(binsize):
 
 
 def load_order_book_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+    symbol = raw_data.get('symbol')
+    price = to_float(raw_data.get('price'))
+    _id = generate_order_book_id(symbol, price, state_data)
     data = {
-        'id': raw_data.get('id'),
-        'symbol': raw_data.get('symbol'),
-        'price': to_float(raw_data.get('price')),
+        'id': _id,
+        'symbol': symbol,
+        'price': price,
         'volume': raw_data.get('size'),
         'side': load_order_side(raw_data.get('side'))
     }
@@ -416,11 +420,15 @@ def load_order_book_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     return data
 
 
-def load_ws_order_book_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+def load_ws_order_book_data(raw_data: dict, state_data: Optional[dict], price_by_id: dict) -> dict:
+    _id = raw_data.get('id')
+    symbol = raw_data.get('symbol')
+    price = to_float(raw_data.get('price') or to_float(price_by_id[symbol].get(_id)))
+    _id = generate_order_book_id(symbol, price, state_data)
     data = {
-        'id': raw_data.get('id'),
+        'id': _id,
         's': raw_data.get('symbol'),
-        'p': to_float(raw_data.get('price')),
+        'p': price,
         'vl': raw_data.get('size'),
         'sd': load_order_side(raw_data.get('side'))
     }
