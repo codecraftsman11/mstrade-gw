@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 from typing import Union
 from bravado.exception import HTTPError
 from binance.exceptions import BinanceAPIException, BinanceRequestException
+
+from mst_gateway.storage import StateStorageKey
 from mst_gateway.calculator import BinanceFinFactory
 from mst_gateway.connector.api.types import OrderSchema, OrderType
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id, validate_schema
@@ -66,7 +68,7 @@ class BinanceRestApi(StockRestApi):
         schema = schema.lower()
         symbol = symbol.upper()
         data = self._binance_api(schema_handlers[schema][0], symbol=symbol)
-        state_data = self.storage.get(self.state_storage_key.symbol, self.name, schema).get(utils.stock2symbol(symbol), {})
+        state_data = self.storage.get(StateStorageKey.symbol, self.name, schema).get(utils.stock2symbol(symbol), {})
         if schema in (OrderSchema.margin2, OrderSchema.margin3, OrderSchema.exchange):
             return utils.load_symbol_data(schema, data, state_data)
         if isinstance(data, list):
@@ -115,7 +117,7 @@ class BinanceRestApi(StockRestApi):
         validate_schema(schema, schema_handlers)
         schema = schema.lower()
         data = self._binance_api(schema_handlers[schema][0])
-        state_data = self.storage.get(self.state_storage_key.symbol, self.name, schema)
+        state_data = self.storage.get(StateStorageKey.symbol, self.name, schema)
         if schema in (OrderSchema.margin2, OrderSchema.margin3, OrderSchema.exchange):
             symbols = []
             for d in data:
@@ -186,7 +188,7 @@ class BinanceRestApi(StockRestApi):
         pages_mod = count % var.BINANCE_MAX_QUOTE_BINS_COUNT or var.BINANCE_MAX_QUOTE_BINS_COUNT
         quote_bins = []
         kwargs = self._api_kwargs(kwargs)
-        kwargs['state_data'] = self.storage.get(self.state_storage_key.symbol, self.name, schema).get(symbol.lower(), {})
+        kwargs['state_data'] = self.storage.get(StateStorageKey.symbol, self.name, schema).get(symbol.lower(), {})
         for i in range(pages):
             if i == pages - 1:
                 items_count = pages_mod
@@ -227,7 +229,7 @@ class BinanceRestApi(StockRestApi):
         }
         params = utils.generate_parameters_by_order_type(main_params, options, schema)
         data = self._binance_api(schema_handlers[schema.lower()], **params)
-        state_data = self.storage.get(self.state_storage_key.symbol, self.name, schema).get(symbol.lower(), {})
+        state_data = self.storage.get(StateStorageKey.symbol, self.name, schema).get(symbol.lower(), {})
         return utils.load_order_data(data, state_data)
 
     def update_order(self, exchange_order_id: str, symbol: str,
@@ -263,7 +265,7 @@ class BinanceRestApi(StockRestApi):
             'symbol': utils.symbol2stock(symbol),
         })
         data = self._binance_api(schema_handlers[schema.lower()], **params)
-        state_data = self.storage.get(self.state_storage_key.symbol, self.name, schema).get(symbol.lower(), {})
+        state_data = self.storage.get(StateStorageKey.symbol, self.name, schema).get(symbol.lower(), {})
         return utils.load_order_data(data, state_data)
 
     def get_order(self, exchange_order_id: str, symbol: str, schema: str):
@@ -280,7 +282,7 @@ class BinanceRestApi(StockRestApi):
         })
         if not (data := self._binance_api(schema_handlers[schema.lower()], **params)):
             return None
-        state_data = self.storage.get(self.state_storage_key.symbol, self.name, schema).get(symbol.lower(), {})
+        state_data = self.storage.get(StateStorageKey.symbol, self.name, schema).get(symbol.lower(), {})
         return utils.load_order_data(data, state_data)
 
     def list_orders(self, schema: str,
@@ -305,7 +307,7 @@ class BinanceRestApi(StockRestApi):
             options['limit'] = count
         if symbol is not None:
             options['symbol'] = utils.symbol2stock(symbol)
-            state_data = self.storage.get(self.state_storage_key.symbol, self.name, schema).get(symbol.lower(), {})
+            state_data = self.storage.get(StateStorageKey.symbol, self.name, schema).get(symbol.lower(), {})
         schema = schema.lower()
         if active_only:
             data = self._binance_api(schema_handlers[schema][0], **options)
@@ -326,7 +328,7 @@ class BinanceRestApi(StockRestApi):
             symbol=symbol.upper(),
             **self._api_kwargs(params),
         )
-        state_data = self.storage.get(self.state_storage_key.symbol, self.name, schema).get(symbol.lower(), {})
+        state_data = self.storage.get(StateStorageKey.symbol, self.name, schema).get(symbol.lower(), {})
         return [utils.load_trade_data(d, state_data) for d in data]
 
     def close_order(self, exchange_order_id: str, symbol: str, schema: str):
@@ -366,7 +368,7 @@ class BinanceRestApi(StockRestApi):
             limit=limit,
         )
         data = utils.filter_order_book_data(data, min_volume_buy, min_volume_sell)
-        state_data = self.storage.get(self.state_storage_key.symbol, self.name, schema).get(symbol.lower(), {})
+        state_data = self.storage.get(StateStorageKey.symbol, self.name, schema).get(symbol.lower(), {})
         return utils.load_order_book_data(data, symbol, side, split, offset, depth, state_data)
 
     def get_wallet(self, **kwargs) -> dict:
@@ -385,7 +387,7 @@ class BinanceRestApi(StockRestApi):
         assets = kwargs.pop('assets', ('btc', 'usd'))
         fields = kwargs.pop('fields', ('balance',))
         data = self._binance_api(self._handler.get_account, **kwargs)
-        currencies = self.storage.get(self.state_storage_key.exchange_rates, self.name, schema)
+        currencies = self.storage.get(StateStorageKey.exchange_rates, self.name, schema)
         if is_for_ws:
             fields = ('bl',)
             return utils.load_ws_spot_wallet_data(data, currencies, assets, fields, schema)
@@ -396,7 +398,7 @@ class BinanceRestApi(StockRestApi):
         assets = kwargs.pop('assets', ('btc', 'usd'))
         fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed', 'interest'))
         data = self._binance_api(self._handler.get_margin_account, **kwargs)
-        currencies = self.storage.get(self.state_storage_key.exchange_rates, self.name, schema)
+        currencies = self.storage.get(StateStorageKey.exchange_rates, self.name, schema)
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl', 'bor', 'ist')
             return utils.load_ws_margin_wallet_data(data, currencies, assets, fields, schema)
@@ -411,7 +413,7 @@ class BinanceRestApi(StockRestApi):
             cross_collaterals = self._binance_api(self._handler.futures_loan_wallet, **kwargs)
         except ConnectorError:
             cross_collaterals = {}
-        currencies = self.storage.get(self.state_storage_key.exchange_rates, self.name, schema)
+        currencies = self.storage.get(StateStorageKey.exchange_rates, self.name, schema)
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl', 'bor', 'ist')
             return utils.load_ws_futures_wallet_data(
@@ -426,7 +428,7 @@ class BinanceRestApi(StockRestApi):
         assets = kwargs.pop('assets', ('btc', 'usd'))
         fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed', 'interest'))
         data = self._binance_api(self._handler.futures_coin_account, **kwargs)
-        currencies = self.storage.get(self.state_storage_key.exchange_rates, self.name, schema)
+        currencies = self.storage.get(StateStorageKey.exchange_rates, self.name, schema)
         cross_collaterals = []
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl', 'bor', 'ist')
@@ -604,7 +606,7 @@ class BinanceRestApi(StockRestApi):
             schema = schema.lower()
             total_balance = {schema: {}}
             try:
-                currencies = self.storage.get(self.state_storage_key.exchange_rates, self.name, schema)
+                currencies = self.storage.get(StateStorageKey.exchange_rates, self.name, schema)
                 balances = schema_handlers[schema][1](self._binance_api(schema_handlers[schema][0]))
             except (KeyError, ConnectorError):
                 continue
@@ -810,7 +812,7 @@ class BinanceRestApi(StockRestApi):
             return utils.load_futures_positions_state(account_info)
         if schema == OrderSchema.futures_coin:
             account_info = self._binance_api(self._handler.futures_coin_account)
-            state_data = self.storage.get(self.state_storage_key.symbol, self.name, schema)
+            state_data = self.storage.get(StateStorageKey.symbol, self.name, schema)
             return utils.load_futures_coin_positions_state(account_info, state_data)
         return {}
 

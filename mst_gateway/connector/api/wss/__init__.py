@@ -4,7 +4,7 @@ from logging import Logger
 from typing import Dict, Optional, Union
 import websockets
 from copy import deepcopy
-from mst_gateway.storage import AsyncStateStorage
+from mst_gateway.storage import AsyncStateStorage, StateStorageKey
 from .router import Router
 from .subscriber import Subscriber
 from .throttle import ThrottleWss
@@ -340,9 +340,9 @@ class StockWssApi(Connector):
         return self.__state_data.get(symbol.lower())
 
     async def __load_state_data(self):
-        self.__state_data = await self.storage.get(self.state_storage_key.symbol, self.name, self.schema)
+        self.__state_data = await self.storage.get(StateStorageKey.symbol, self.name, self.schema)
         redis = await self.storage.get_client()
-        symbol_channel = (await redis.subscribe(self.state_storage_key.symbol))[0]
+        symbol_channel = (await redis.subscribe(StateStorageKey.symbol))[0]
         while await symbol_channel.wait_message():
             symbols = await symbol_channel.get_json()
             self.__state_data = symbols.get(self.name, {}).get(self.schema, {})
