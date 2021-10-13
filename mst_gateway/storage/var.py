@@ -8,4 +8,4 @@ class StateStorageKey(ClassWithAttributes):
     exchange_rates = 'data:exchange_rates'
     funding_rates = 'data:funding_rates'
     throttling = 'throttling'
-    state = 'state' #For wallet and position
+    state = 'state'

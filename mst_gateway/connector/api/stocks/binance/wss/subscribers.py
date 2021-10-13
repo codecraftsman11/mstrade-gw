@@ -157,7 +157,7 @@ class BinanceWalletSubscriber(BinanceSubscriber):
         while await state_channel.wait_message():
             state_data = await state_channel.get_json()
             exchange_rates = state_data.get(api.name.lower(), {}).get(api.schema, {})
-            api.partial_state_data[self.subscription].update({StateStorageKey.exchange_rates: exchange_rates})
+            api.partial_state_data[self.subscription].update({'exchange_rates': exchange_rates})
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
         api.tasks.append(asyncio.create_task(self.subscribe_exchange_rates(api)))
@@ -178,7 +178,7 @@ class BinancePositionSubscriber(BinanceSubscriber):
     async def subscribe_positions_state(self, api: BinanceWssApi):
         redis = await api.storage.get_client()
         state_channel = (await redis.psubscribe(
-            f'{self.subscription}.{api.account_id}.{api.name}.{api.schema}.*'.lower()))[0]
+            f"{StateStorageKey.state}:{self.subscription}.{api.account_id}.{api.name}.{api.schema}.*".lower()))[0]
         api.partial_state_data[self.subscription].setdefault('position_state', {})
         while await state_channel.wait_message():
             try:
@@ -198,13 +198,13 @@ class BinancePositionSubscriber(BinanceSubscriber):
         while await state_channel.wait_message():
             state_data = await state_channel.get_json()
             exchange_rates = state_data.get(api.name.lower(), {}).get(api.schema, {})
-            api.partial_state_data[self.subscription].update({StateStorageKey.exchange_rates: exchange_rates})
+            api.partial_state_data[self.subscription].update({'exchange_rates': exchange_rates})
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
         api.tasks.append(asyncio.create_task(self.subscribe_positions_state(api)))
         api.tasks.append(asyncio.create_task(self.subscribe_exchange_rates(api)))
         positions_state_data = await api.storage.get_pattern(
-            f'{self.subscription}.{api.account_id}.{api.name}.{api.schema}.*'.lower()
+            f"{StateStorageKey.state}:{self.subscription}.{api.account_id}.{api.name}.{api.schema}.*".lower()
         )
         exchange_rates = await api.storage.get(StateStorageKey.exchange_rates, exchange=api.name, schema=api.schema)
         return {
