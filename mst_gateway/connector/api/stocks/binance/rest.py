@@ -791,7 +791,7 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(f"Binance api error. Details: {exc.message}")
 
         self.throttle.set(
-            key=f'{self.state_storage_key.throttling}:{self._throttle_hash_name}',
+            key=self._throttle_hash_name,
             **self.__get_limit_header(self.handler.response.headers)
         )
 

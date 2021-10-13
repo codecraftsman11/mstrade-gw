@@ -499,7 +499,7 @@ class BitmexRestApi(StockRestApi):
             ).response()
 
             self.throttle.set(
-                key=f'{self.state_storage_key.throttling}:{self._throttle_hash_name}',
+                key=self._throttle_hash_name,
                 limit=(int(resp.incoming_response.headers.get('X-RateLimit-Limit', 0)) -
                        int(resp.incoming_response.headers.get('X-RateLimit-Remaining', 0))),
                 reset=int(resp.incoming_response.headers.get('X-RateLimit-Reset', 0)),

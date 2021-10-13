@@ -7,9 +7,8 @@ class ThrottleWss(BaseAsyncStorage):
     _duration = 60
     _timeout = None
 
-    @staticmethod
-    def generate_hash_key(key: (str, list, tuple, dict)) -> str:
-        return f'{StateStorageKey.throttling}:{super().generate_hash_key(key)}'
+    def generate_hash_key(self, key: (str, list, tuple, dict)) -> str:
+        return f'{StateStorageKey.throttling}:{super(ThrottleWss, self).generate_hash_key(key)}'
 
     async def set(self, key, limit: int, **kwargs) -> None:
         key = self.generate_hash_key(key)
