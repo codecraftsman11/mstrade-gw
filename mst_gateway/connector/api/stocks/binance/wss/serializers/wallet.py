@@ -38,7 +38,9 @@ class BinanceWalletSerializer(BinanceSerializer):
         state_data = None
         if self._wss_api.register_state:
             if (state_data := await self._wss_api.storage.get(
-                    f'{self.subscription}.{self._wss_api.account_id}', schema=self._wss_api.schema)) is None:
+                    f"{self._wss_api.state_storage_key.state}:{self.subscription}.{self._wss_api.account_id}",
+                    schema=self._wss_api.schema
+            )) is None:
                 return None
         if "*" in self._wss_api.subscriptions.get(self.subscription, {}):
             if self._wss_api.register_state and not self.exchange_rates:
