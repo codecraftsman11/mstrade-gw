@@ -5,6 +5,7 @@ from asyncio import CancelledError
 from websockets.exceptions import ConnectionClosedError
 from .utils import cmd_subscribe, cmd_unsubscribe
 from ....wss.subscriber import Subscriber
+from ......storage.var import StateStorageKey
 
 if TYPE_CHECKING:
     from . import BitmexWssApi
@@ -70,7 +71,7 @@ class BitmexWalletSubscriber(BitmexSubscriber):
 
     async def subscribe_exchange_rates(self, api: BitmexWssApi):
         redis = await api.storage.get_client()
-        state_channel = (await redis.subscribe('exchange_rates'))[0]
+        state_channel = (await redis.subscribe(StateStorageKey.exchange_rates))[0]
         while await state_channel.wait_message():
             state_data = await state_channel.get_json()
             exchange_rates = state_data.get(api.name.lower(), {}).get(api.schema, {})
@@ -78,7 +79,7 @@ class BitmexWalletSubscriber(BitmexSubscriber):
 
     async def init_partial_state(self, api: BitmexWssApi) -> dict:
         api.tasks.append(asyncio.create_task(self.subscribe_exchange_rates(api)))
-        exchange_rates = await api.storage.get('exchange_rates', exchange=api.name, schema=api.schema)
+        exchange_rates = await api.storage.get(StateStorageKey.exchange_rates, exchange=api.name, schema=api.schema)
         return {'exchange_rates': exchange_rates}
 
 
