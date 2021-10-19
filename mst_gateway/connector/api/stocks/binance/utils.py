@@ -11,6 +11,7 @@ from .....exceptions import ConnectorError
 from . import var
 from .converter import BinanceOrderTypeConverter
 from ...types.asset import to_system_asset
+from ...utils.order_book import generate_order_book_id
 
 
 def load_symbol_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
@@ -224,12 +225,6 @@ def load_order_book_side(order_side: str) -> int:
     return api.SELL
 
 
-def generate_order_book_id(price: float) -> int:
-    formatted_price = int(price * 10 ** 8)
-    base_value = 10 ** 16
-    return base_value - formatted_price
-
-
 def filter_order_book_data(data: dict, min_volume_buy: float = None, min_volume_sell: float = None) -> dict:
     if min_volume_buy is not None and min_volume_sell is not None:
         data['bids'] = [bid for bid in data.get('bids', []) if to_float(bid[1]) >= min_volume_buy]
@@ -264,10 +259,11 @@ def load_order_book_data(raw_data: dict, symbol: str, side, split,
         if side is not None and not side == _side:
             continue
         for item in v:
+            price = to_float(item[0])
             _i = {
-                'id': generate_order_book_id(to_float(item[0])),
+                'id': generate_order_book_id(symbol, price, state_data),
                 'symbol': symbol,
-                'price': to_float(item[0]),
+                'price': price,
                 'volume': to_float(item[1]),
                 'side': _side
             }
@@ -1079,7 +1075,7 @@ def load_order_book_ws_data(raw_data: dict, order: list, side: int, state_data: 
     price = to_float(order[0])
 
     data = {
-        'id': generate_order_book_id(price),
+        'id': generate_order_book_id(symbol, price, state_data),
         's': symbol,
         'p': price,
         'vl': to_float(order[1]),

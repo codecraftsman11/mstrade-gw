@@ -1,6 +1,8 @@
 from __future__ import annotations
 from copy import deepcopy
 from typing import Optional, TYPE_CHECKING
+
+from mst_gateway.storage import StateStorageKey
 from mst_gateway.connector.api.types import OrderSchema
 from .base import BinanceSerializer
 from ... import utils
@@ -38,7 +40,9 @@ class BinanceWalletSerializer(BinanceSerializer):
         state_data = None
         if self._wss_api.register_state:
             if (state_data := await self._wss_api.storage.get(
-                    f'{self.subscription}.{self._wss_api.account_id}', schema=self._wss_api.schema)) is None:
+                    f"{StateStorageKey.state}:{self.subscription}.{self._wss_api.account_id}",
+                    schema=self._wss_api.schema
+            )) is None:
                 return None
         if "*" in self._wss_api.subscriptions.get(self.subscription, {}):
             if self._wss_api.register_state and not self.exchange_rates:

@@ -1,8 +1,11 @@
-from mst_gateway.storage import BaseSyncStorage
+from mst_gateway.storage import BaseSyncStorage, StateStorageKey
 
 
 class ThrottleRest(BaseSyncStorage):
     _timeout = 60
+
+    def generate_hash_key(self, key: (str, list, tuple, dict)) -> str:
+        return f"{StateStorageKey.throttling}:{super().generate_hash_key(key)}"
 
     def set(self, key, limit: int, reset: int, scope: str, **kwargs) -> None:
         timeout = kwargs.get("timeout", self._timeout)
