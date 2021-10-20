@@ -89,8 +89,50 @@ def load_currency_exchange_symbol(currency: list) -> list:
     return [{'symbol': c.get('symbol'), 'price': to_float(c.get('lastPrice'))} for c in currency]
 
 
-def load_symbols_currencies(currency: list) -> dict:
-    return {c.get('symbol', '').lower(): to_float(c.get('lastPrice')) for c in currency}
+# TODO: original
+# def load_symbols_currencies(currency: list, state_data: dict) -> dict:
+#     return {c.get('symbol', '').lower(): to_float(c.get('lastPrice')) for c in currency}
+
+
+# TODO: test
+# def load_symbols_currencies(currency: list, state_data: dict) -> dict:
+#     currencies = {}
+#     for c in currency:
+#         symbol = c.get('symbol', '').lower()
+#         if state_info := state_data.get(symbol):
+#             pair = state_info.get('pair')
+#             currencies.update({
+#                 symbol: {
+#                     'pair': {
+#                         'base_asset': pair[0].lower(),
+#                         'quote_asset': pair[1].lower()
+#                     },
+#                     'system_pair': {
+#                         'system_base_asset': to_system_asset(pair[0]),
+#                         'system_quote_asset': to_system_asset(pair[1])
+#                     },
+#                     'expiration': state_info.get('expiration'),
+#                     'price': to_float(c.get('lastPrice'))
+#                 }
+#             })
+#     return currencies
+
+# TODO: test 2
+def load_symbols_currencies(currency: list, state_data: dict) -> dict:
+    currencies = {}
+    for c in currency:
+        symbol = c.get('symbol', '').lower()
+        if state_info := state_data.get(symbol):
+            pair = state_info.get('pair')
+            currencies.update({
+                symbol: {
+                    'pair': [pair[0].lower(), pair[1].lower()],
+                    'system_pair': [to_system_asset(pair[0]), to_system_asset(pair[1])],
+                    'expiration': state_info.get('expiration'),
+                    'price': to_float(c.get('lastPrice'))
+                }
+            })
+    return currencies
 
 
 def load_funding_rates(funding_rates: list) -> list:
