@@ -567,19 +567,6 @@ class BinanceRestApi(StockRestApi):
         currency = self._binance_api(schema_handlers[schema.lower()], symbol=utils.symbol2stock(symbol))
         return utils.load_currency_exchange_symbol(currency)
 
-    # TODO: original
-    # def get_symbols_currencies(self, schema: str) -> dict:
-    #     schema_handlers = {
-    #         OrderSchema.exchange: self._handler.get_symbol_ticker,
-    #         OrderSchema.margin2: self._handler.get_symbol_ticker,
-    #         OrderSchema.futures: self._handler.futures_symbol_ticker,
-    #         OrderSchema.futures_coin: self._handler.futures_coin_symbol_ticker,
-    #     }
-    #     validate_schema(schema, schema_handlers)
-    #     currency = self._binance_api(schema_handlers[schema.lower()])
-    #     return utils.load_symbols_currencies(currency)
-
-    # TODO: test
     def get_symbols_currencies(self, schema: str) -> dict:
         schema_handlers = {
             OrderSchema.exchange: self._handler.get_symbol_ticker,
@@ -589,7 +576,7 @@ class BinanceRestApi(StockRestApi):
         }
         validate_schema(schema, schema_handlers)
         currency = self._binance_api(schema_handlers[schema.lower()])
-        return utils.load_symbols_currencies(currency, self.storage.get('symbol', self.name, schema))
+        return utils.load_symbols_currencies(currency, self.storage.get(StateStorageKey.symbol, self.name, schema))
 
     def get_wallet_summary(self, schemas: iter, **kwargs) -> dict:
         total_summary = {}
