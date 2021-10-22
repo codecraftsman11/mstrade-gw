@@ -332,6 +332,17 @@ def load_user_data(raw_data: dict) -> dict:
     return data
 
 
+def load_api_key_permissions(raw_data: dict) -> dict:
+    data = {
+        OrderSchema.exchange: True,
+        OrderSchema.margin2: raw_data.get('enableMargin', False),
+        OrderSchema.margin3: raw_data.get('enableMargin', False),
+        OrderSchema.futures: raw_data.get('enableFutures', False),
+        OrderSchema.futures_coin: raw_data.get('enableFutures', False),
+    }
+    return data
+
+
 def load_spot_wallet_data(raw_data: dict, currencies: dict,
                           assets: Union[list, tuple], fields: Union[list, tuple], schema: str) -> dict:
     balances = _spot_balance_data(raw_data.get('balances'))

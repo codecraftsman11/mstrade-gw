@@ -2,16 +2,19 @@ from urllib import parse
 import json
 import hmac
 import hashlib
+import logging
 from bravado.client import (
     construct_request,
     ResourceDecorator as BaseResourceDecorator,
     CallableOperation as BaseCallableOperation,
-    SwaggerClient as BaseSwaggerClient
+    SwaggerClient as BaseSwaggerClient, inject_headers_for_remote_refs
 )
 from bravado.requests_client import RequestsClient
 from bravado.warning import warn_for_deprecated_op
 from bravado.config import RequestConfig
 from BitMEXAPIKeyAuthenticator import APIKeyAuthenticator as BaseAPIKeyAuthenticator
+from bravado.swagger_model import Loader
+log = logging.getLogger(__name__)
 
 
 class APIKeyAuthenticator(BaseAPIKeyAuthenticator):
@@ -58,7 +61,88 @@ class ResourceDecorator(BaseResourceDecorator):
         return CallableOperation(getattr(self.resource, name), self.also_return_response)
 
 
+def refactor_swagger_spec(spec_dict: dict):
+    # APIKey.APIKey_get
+    """
+    # fix: Expected type to be dict for value order to unmarshal to a <class 'dict'>.Was <class 'str'> instead.
+    'APIKey': {
+        'description': 'Persistent API Keys for Developers',
+        'properties': {
+            ***
+            'permissions': {
+                'default': [
+                ],
+                'type': 'array',
+                'items': {
+                    '$ref': '#/definitions/x-any'
+                }
+            },
+            ***
+        },
+        ***
+    }
+    """
+    try:
+        spec_dict['definitions']['APIKey']['properties']['permissions']['items'] = {'type': 'string'}
+    except KeyError:
+        pass
+    # User.User_getTradingVolume
+    """
+    # fix Expected type to be dict for value [{'advUsd': 35.56772094280636}] to unmarshal to a <class 'dict'>.Was <class 'list'> instead.
+    'TradingVolume': {
+        'description': '30 days USD average trading volume',
+        'properties': {
+            'advUsd': {
+                'type': 'number',
+                'format': 'double'
+            }
+        },
+        'required': [
+            'advUsd'
+        ],
+        'type': 'object'
+    }
+    """
+    try:
+        spec_dict['definitions']['TradingVolume']['properties'].pop('advUsd', None)
+        spec_dict['definitions']['TradingVolume'].pop('required', None)
+        spec_dict['definitions']['TradingVolume']['type'] = 'array'
+        spec_dict['definitions']['TradingVolume']['items'] = {}
+    except (KeyError, AttributeError):
+        pass
+    return spec_dict
+
+
 class SwaggerClient(BaseSwaggerClient):
+
+    @classmethod
+    def from_url(cls, spec_url, http_client=None, request_headers=None, config=None):
+        """Build a :class:`SwaggerClient` from a url to the Swagger
+        specification for a RESTful API.
+        :param spec_url: url pointing at the swagger API specification
+        :type spec_url: str
+        :param http_client: an HTTP client used to perform requests
+        :type  http_client: :class:`bravado.http_client.HttpClient`
+        :param request_headers: Headers to pass with http requests
+        :type  request_headers: dict
+        :param config: Config dict for bravado and bravado_core.
+            See CONFIG_DEFAULTS in :module:`bravado_core.spec`.
+            See CONFIG_DEFAULTS in :module:`bravado.client`.
+        :rtype: :class:`SwaggerClient`
+        """
+        log.debug(u"Loading from %s", spec_url)
+        http_client = http_client or RequestsClient()
+        loader = Loader(http_client, request_headers=request_headers)
+        spec_dict = refactor_swagger_spec(loader.load_spec(spec_url))
+        # RefResolver may have to download additional json files (remote refs)
+        # via http. Wrap http_client's request() so that request headers are
+        # passed along with the request transparently. Yeah, this is not ideal,
+        # but since RefResolver has new found responsibilities, it is
+        # functional.
+        if request_headers is not None:
+            http_client.request = inject_headers_for_remote_refs(
+                http_client.request, request_headers)
+        return cls.from_spec(spec_dict, spec_url, http_client, config)
 
     def _get_resource(self, item):
         """
