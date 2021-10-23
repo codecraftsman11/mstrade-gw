@@ -576,7 +576,7 @@ class BinanceRestApi(StockRestApi):
         }
         validate_schema(schema, schema_handlers)
         currency = self._binance_api(schema_handlers[schema.lower()])
-        return utils.load_symbols_currencies(currency)
+        return utils.load_symbols_currencies(currency, self.storage.get(StateStorageKey.symbol, self.name, schema))
 
     def get_wallet_summary(self, schemas: iter, **kwargs) -> dict:
         total_summary = {}
