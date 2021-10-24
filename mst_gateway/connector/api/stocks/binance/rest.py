@@ -786,20 +786,26 @@ class BinanceRestApi(StockRestApi):
             return schema_handlers[schema](data, schema, symbols_data)
 
     def _binance_api(self, method: callable, **kwargs):
+        self.validate_throttling()
+
         try:
             resp = method(**kwargs)
-        except HTTPError as exc:
-            message = f"Binance api error. Details: {exc.status_code}, {exc.message}"
-            if int(exc.status_code) in (418, 429) or int(exc.status_code) >= 500:
-                raise RecoverableError(message)
-            raise ConnectorError(message)
-        except BinanceAPIException as exc:
-            message = f"Binance api error. Details: {exc.code}, {exc.message}"
-            if int(exc.code) == -2011:
-                raise NotFoundError(message)
-            raise ConnectorError(message)
-        except BinanceRequestException as exc:
-            raise ConnectorError(f"Binance api error. Details: {exc.message}")
+        except Exception as exc:
+            self.throttle.set(key=self._throttle_hash_name, **self.__get_limit_header(self.handler.response.headers))
+
+            if isinstance(exc, (HTTPError, BinanceAPIException)):
+                status_code = int(exc.status_code)
+                message = f"Binance api error. Details: {status_code}, {exc.message}"
+                if status_code in (418, 429) or int(exc.status_code) >= 500:
+                    raise RecoverableError(message)
+                if status_code == -1003:
+                    self.logger.critical(f"{self.__class__.__name__}: {exc}")
+                if status_code == -2011:
+                    raise NotFoundError(message)
+                raise ConnectorError(message)
+            if isinstance(exc, BinanceRequestException):
+                raise ConnectorError(f"Binance api error. Details: {exc.message}")
+            raise exc
 
         self.throttle.set(
             key=self._throttle_hash_name,
@@ -879,7 +885,17 @@ class BinanceRestApi(StockRestApi):
 
     def __get_limit_header(self, headers):
         for h in headers:
-            if str(h).upper().startswith('X-MBX-USED-WEIGHT-'):
+            if str(h).upper() == 'RETRY-AFTER':
+                retry_after = int(headers[h])
+                try:
+                    return dict(
+                        limit=self._throttle_overlimit,
+                        reset=self.__parse_reset(retry_after),
+                        scope='rest'
+                    )
+                except ValueError:
+                    pass
+            elif str(h).upper().startswith('X-MBX-USED-WEIGHT-'):
                 rate = h[len('X-MBX-USED-WEIGHT-'):]
                 try:
                     return dict(
@@ -901,8 +917,10 @@ class BinanceRestApi(StockRestApi):
                     pass
         return dict(limit=0, reset=None, scope='rest')
 
-    def __parse_reset(self, rate: str) -> int:
+    def __parse_reset(self, rate: Union[str, int]) -> int:
         now = datetime.utcnow()
+        if isinstance(rate, int):
+            return int((now + timedelta(seconds=rate)).timestamp())
         if len(rate) < 2:
             return int((now + timedelta(seconds=(60 - now.second))).timestamp())
         try:

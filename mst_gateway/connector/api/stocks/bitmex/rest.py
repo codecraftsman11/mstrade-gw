@@ -490,6 +490,8 @@ class BitmexRestApi(StockRestApi):
             )}
 
     def _bitmex_api(self, method: callable, **kwargs):
+        self.validate_throttling()
+
         headers = {}
         if self._keepalive:
             headers['Connection'] = "keep-alive"
@@ -512,12 +514,40 @@ class BitmexRestApi(StockRestApi):
 
             return resp.result, resp.metadata
         except HTTPError as exc:
+            self.throttle.set(key=self._throttle_hash_name, **self.__get_limit_header(exc.response.headers))
+
             message = exc.message
             if not message and isinstance(exc.swagger_result, dict):
                 message = exc.swagger_result.get('error', {}).get('message')
-            full_message = f"Bitmex api error. Details: {exc.status_code}, {message}"
-            if int(exc.status_code) == 429 or int(exc.status_code) >= 500:
+            status_code = int(exc.status_code)
+            full_message = f"Bitmex api error. Details: {status_code}, {message}"
+            if status_code == 429 or status_code >= 500:
                 raise RecoverableError(full_message)
-            elif int(exc.status_code) == 404:
+            elif status_code == 403:
+                self.logger.critical(f"{self.__class__.__name__}: {exc}")
+            elif status_code == 404:
                 raise NotFoundError(full_message)
             raise ConnectorError(full_message)
+
+    def __get_limit_header(self, headers):
+        limit_header = {
+            'limit': 0,
+            'reset': None,
+            'scope': 'rest',
+        }
+        retry_after = None
+        try:
+            for h in headers:
+                if str(h).upper() == 'RETRY-AFTER':
+                    if retry_after := int(headers[h]):
+                        break
+            limit_header.update({
+                'limit': self._throttle_overlimit,
+                'reset': self.__parse_reset(retry_after)
+            })
+        except ValueError:
+            pass
+        return limit_header
+
+    def __parse_reset(self, retry_after: Optional[int]) -> int:
+        return int((datetime.utcnow() + timedelta(seconds=retry_after or 60)).timestamp())
