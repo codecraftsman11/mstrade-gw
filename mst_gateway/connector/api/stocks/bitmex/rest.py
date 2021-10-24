@@ -135,8 +135,9 @@ class BitmexRestApi(StockRestApi):
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
         if schema == OrderSchema.margin1:
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
-            return {
-                OrderSchema.margin1: utils.load_wallet_detail_data(data, asset)
+            wallet_detail = utils.load_wallet_detail_data(data, asset)
+            return wallet_detail if kwargs.get('partial') else {
+                OrderSchema.margin1: wallet_detail
             }
         raise ConnectorError(f"Invalid schema {schema}.")
 

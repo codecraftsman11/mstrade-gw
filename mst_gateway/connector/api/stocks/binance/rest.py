@@ -440,12 +440,14 @@ class BinanceRestApi(StockRestApi):
         )
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
+        partial = kwargs.get('partial')
         validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin2, OrderSchema.futures,
                                  OrderSchema.futures_coin))
         schema = schema.lower()
         if schema == OrderSchema.exchange:
             _spot = self._binance_api(self._handler.get_account, **kwargs)
-            return {
+            wallet_detail = utils.load_spot_wallet_detail_data(_spot, asset)
+            return wallet_detail if partial else {
                 OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
             }
         try:
@@ -460,9 +462,10 @@ class BinanceRestApi(StockRestApi):
                 self._binance_api(self._handler.get_public_interest_rate, **kwargs),
                 _vip, asset
             )
-            return {
+            wallet_detail = utils.load_margin_wallet_detail_data(_margin, asset, _borrow, _interest_rate)
+            return wallet_detail if partial else {
                 OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
-                OrderSchema.margin2: utils.load_margin_wallet_detail_data(_margin, asset, _borrow, _interest_rate)
+                OrderSchema.margin2: wallet_detail
             }
         if schema in (OrderSchema.futures, OrderSchema.futures_coin):
             schema_handlers = {
@@ -478,11 +481,12 @@ class BinanceRestApi(StockRestApi):
                     collateral_configs = self._binance_api(self._handler.futures_loan_configs, loanCoin=asset, **kwargs)
                 except ConnectorError:
                     pass
-            return {
+            wallet_detail = utils.load_futures_wallet_detail_data(
+                _futures, asset, cross_collaterals.get('crossCollaterals', []), collateral_configs
+            )
+            return wallet_detail if partial else {
                 OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
-                schema: utils.load_futures_wallet_detail_data(
-                    _futures, asset, cross_collaterals.get('crossCollaterals', []), collateral_configs
-                )
+                schema: wallet_detail
             }
 
     def get_cross_collaterals(self, schema: str, **kwargs) -> list:
