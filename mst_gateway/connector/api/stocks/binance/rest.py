@@ -450,10 +450,12 @@ class BinanceRestApi(StockRestApi):
             return wallet_detail if partial else {
                 OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
             }
-        try:
-            _spot = self._binance_api(self._handler.get_account, **kwargs)
-        except ConnectorError:
-            _spot = {}
+        _spot = {}
+        if not partial:
+            try:
+                _spot = self._binance_api(self._handler.get_account, **kwargs)
+            except ConnectorError:
+                pass
         if schema == OrderSchema.margin2:
             _margin = self._binance_api(self._handler.get_margin_account, **kwargs)
             _borrow = self._binance_api(self._handler.get_max_margin_loan, asset=asset.upper())
