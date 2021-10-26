@@ -32,6 +32,9 @@ class Connector(metaclass=ABCMeta):
     def close(self):
         pass
 
+    def __str__(self):
+        return self.__name__
+
     def __setstate__(self, state):
         self.__dict__ = state
 

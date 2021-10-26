@@ -27,3 +27,12 @@ def _ob_middle_index(data: list) -> Optional[int]:
         if data[k]['side'] != side:
             return k
     return None
+
+
+def generate_order_book_id(symbol: str, price: float, state_data: Optional[dict]) -> int:
+    try:
+        tick = state_data.get('tick')
+        return int(price / tick)
+    except (AttributeError, TypeError):
+        raise ValueError(f'Undefined price tick for {symbol} symbol')
+

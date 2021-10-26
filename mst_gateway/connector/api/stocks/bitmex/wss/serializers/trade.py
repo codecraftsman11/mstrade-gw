@@ -25,4 +25,4 @@ class BitmexTradeSerializer(BitmexSerializer):
         if self._wss_api.register_state:
             if (state_data := self._wss_api.get_state_data(item.get('symbol'))) is None:
                 return None
-        return load_ws_quote_data(item, state_data, is_iso_datetime=True)
+        return load_ws_quote_data(item, state_data)

@@ -1,10 +1,14 @@
 from datetime import datetime
 from mst_gateway.storage import BaseAsyncStorage
+from mst_gateway.storage.var import StateStorageKey
 
 
 class ThrottleWss(BaseAsyncStorage):
     _duration = 60
     _timeout = None
+
+    def generate_hash_key(self, key: (str, list, tuple, dict)) -> str:
+        return f"{StateStorageKey.throttling}:{super().generate_hash_key(key)}"
 
     async def set(self, key, limit: int, **kwargs) -> None:
         key = self.generate_hash_key(key)
