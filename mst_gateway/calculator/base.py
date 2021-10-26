@@ -62,7 +62,9 @@ class FinFactory:
     def calc_money_management(cls, face_price: float, volume: float, balance: float,
                               commission: float) -> Tuple[float, Optional[float]]:
         try:
-            used = (face_price * volume * abs(commission))
+            used = face_price * volume
+            if commission:
+                used *= abs(commission)
             return used, used / balance
         except (TypeError, ZeroDivisionError):
             return 0, None
