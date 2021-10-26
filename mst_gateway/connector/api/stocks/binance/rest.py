@@ -440,7 +440,7 @@ class BinanceRestApi(StockRestApi):
         )
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
-        partial = kwargs.get('partial')
+        partial = kwargs.pop('partial', None)
         validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin2, OrderSchema.futures,
                                  OrderSchema.futures_coin))
         schema = schema.lower()
