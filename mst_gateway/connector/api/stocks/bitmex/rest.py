@@ -338,7 +338,7 @@ class BitmexRestApi(StockRestApi):
 
     def get_symbols_currencies(self, schema: str) -> dict:
         instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive)
-        return utils.load_symbols_currencies(instruments)
+        return utils.load_symbols_currencies(instruments, self.storage.get(StateStorageKey.symbol, self.name, schema))
 
     def get_wallet_summary(self, schemas: iter, **kwargs) -> dict:
         if not schemas:
