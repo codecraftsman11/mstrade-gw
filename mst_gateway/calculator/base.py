@@ -57,17 +57,3 @@ class FinFactory:
             return (entry_price * volume + unrealised_pnl) / volume
         except (TypeError, ZeroDivisionError):
             return None
-
-    @classmethod
-    def calc_money_management(cls, face_price: float, volume: float, balance: float,
-                              commission_percent: float) -> Tuple[float, Optional[float]]:
-        try:
-            face_volume = face_price * volume
-            used = face_volume
-            if commission_percent:
-                commission = face_volume * abs(commission_percent)
-                used = face_volume + commission
-            return used, round(used / balance, 8)
-        except (TypeError, ZeroDivisionError):
-            return 0, None
-
