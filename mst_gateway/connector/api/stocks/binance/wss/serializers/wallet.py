@@ -1,6 +1,8 @@
 from __future__ import annotations
 from copy import deepcopy
 from typing import Optional, TYPE_CHECKING
+
+from mst_gateway.storage import StateStorageKey
 from mst_gateway.connector.api.types import OrderSchema
 from .base import BinanceSerializer
 from ... import utils
@@ -17,8 +19,8 @@ class BinanceWalletSerializer(BinanceSerializer):
         self._state_data = wss_api.partial_state_data[self.subscription]
 
     @property
-    def currency_state(self):
-        return self._state_data.get('currency_state', {})
+    def exchange_rates(self):
+        return self._state_data.get('exchange_rates', {})
 
     def is_item_valid(self, message: dict, item) -> bool:
         return message['table'] == 'outboundAccountPosition'
@@ -38,12 +40,14 @@ class BinanceWalletSerializer(BinanceSerializer):
         state_data = None
         if self._wss_api.register_state:
             if (state_data := await self._wss_api.storage.get(
-                    f'{self.subscription}.{self._wss_api.account_id}', schema=self._wss_api.schema)) is None:
+                    f"{StateStorageKey.state}:{self.subscription}.{self._wss_api.account_id}",
+                    schema=self._wss_api.schema
+            )) is None:
                 return None
         if "*" in self._wss_api.subscriptions.get(self.subscription, {}):
-            if self._wss_api.register_state and not self.currency_state:
+            if self._wss_api.register_state and not self.exchange_rates:
                 return None
-            return self._wallet_list(item, state_data, self.currency_state)
+            return self._wallet_list(item, state_data, self.exchange_rates)
         else:
             item = self.filter_balances(item)
             _b = self._wallet_detail(item, state_data)

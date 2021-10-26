@@ -240,8 +240,6 @@ class StockRestApi(Connector):
         side: int,
         volume: float,
         price: float,
-        leverage: Optional[float],
-        mark_price: Optional[float],
         **kwargs,
     ) -> dict:
         raise NotImplementedError
@@ -251,6 +249,8 @@ class StockRestApi(Connector):
         self.open()
 
     def __getstate__(self):
+        self.storage.storage = {}
+        self.throttle.storage = {}
         state = self.__dict__.copy()
         state.pop('_handler', None)
         return state
