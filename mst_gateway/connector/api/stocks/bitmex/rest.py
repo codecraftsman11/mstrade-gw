@@ -230,7 +230,7 @@ class BitmexRestApi(StockRestApi):
         if isinstance(data[0], dict) and data[0].get('error'):
             error = data[0].get('error')
             status = data[0].get('ordStatus')
-            if status in ('Filled', 'Canceled'):
+            if status in ('Filled', 'Canceled', None):
                 raise NotFoundError(error)
             raise ConnectorError(error)
         return data
