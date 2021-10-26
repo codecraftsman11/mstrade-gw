@@ -67,7 +67,7 @@ class FinFactory:
             if commission_percent:
                 commission = face_volume * abs(commission_percent)
                 used = face_volume + commission
-            return used, used / balance
+            return used, round(used / balance, 8)
         except (TypeError, ZeroDivisionError):
             return 0, None
 
