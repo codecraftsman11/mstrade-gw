@@ -417,12 +417,30 @@ def load_isolated_margin_wallet_data(raw_data: dict, currencies: dict, assets: U
                                      schema: str, fields: Union[list, tuple]) -> dict:
     balances = isolated_margin_balance_data(raw_data.get('assets'))
     total_balance = dict()
+    wallet_summary_in_usd = _load_margin_isolate_wallet_summary_in_usd(currencies, balances, fields)
     for asset in assets:
-        total_balance[asset] = load_wallet_summary(currencies, balances, asset, fields, schema)
+        total_balance[asset] = convert_to_currency(
+            wallet_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
+        )
     return {
         'balances': balances,
         **_load_total_wallet_summary_list(total_balance, fields)
     }
+
+
+def _load_margin_isolate_wallet_summary_in_usd(currencies: dict, balances: list, fields: Union[list, tuple], is_for_ws=False):
+    _currency_key = 'cur' if is_for_ws else 'currency'
+    total_balance = {}
+    # init total balance structure if list of balances is empty
+    for f in fields:
+        total_balance.setdefault(f, 0)
+    for symbol_balance in balances:
+        for balance in symbol_balance.values():
+            for b in (balance.get('base_asset'), balance.get('quote_asset')):
+                _price = currencies.get(f"{b[_currency_key]}".lower()) or 0
+                for f in fields:
+                    total_balance[f] += _price * (b[f] or 0)
+    return total_balance
 
 
 def load_margin_wallet_balances(raw_data: dict) -> list:
@@ -929,52 +947,6 @@ def _load_total_wallet_summary_list(summary, fields, is_for_ws=False):
         for k, v in asset.items():
             total[f][k] = round(v, 8)
     return total
-
-
-def load_wallet_summary(currencies: dict, balances: list, asset: str,
-                        fields: Union[list, tuple], schema, is_for_ws=False):
-    _currency_key = 'cur' if is_for_ws else 'currency'
-    _usd_asset = 'usdt'
-    if schema == OrderSchema.futures_coin:
-        _usd_asset = 'usd'
-    if schema != OrderSchema.futures_coin and asset.lower() == 'usd':
-        asset = 'usdt'
-    total_balance = {}
-    for f in fields:
-        total_balance[f] = 0
-    _asset_price = (currencies.get(f"{asset}{_usd_asset}".lower()) or 1)
-    if schema != OrderSchema.margin3:
-        for b in balances:
-            if b[_currency_key].lower() == asset.lower() or b[_currency_key].lower() == _usd_asset:
-                _price = 1
-            else:
-                _price = currencies.get(f"{b[_currency_key]}{_usd_asset}".lower()) or 0
-            for f in fields:
-                total_balance[f] += _price * (b[f] or 0) / _asset_price
-    else:
-        for symbol_balance in balances:
-            for balance in symbol_balance.values():
-                for b in (balance.get('base_asset'), balance.get('quote_asset')):
-                    if b[_currency_key].lower() == asset.lower() or b[_currency_key].lower() == _usd_asset:
-                        _price = 1
-                    else:
-                        _price = currencies.get(f"{b[_currency_key]}{_usd_asset}".lower()) or 0
-                    for f in fields:
-                        total_balance[f] += _price * (b[f] or 0) / _asset_price
-    return total_balance
-
-
-def currencies_by_schema(currencies: dict, schema: str):
-    if schema == OrderSchema.futures_coin:
-        _currencies = {}
-        for symbol, price in currencies.items():
-            try:
-                _symbol, _ = symbol.split('_', 1)
-            except ValueError:
-                _symbol = symbol
-            _currencies.update({_symbol: price})
-        return _currencies
-    return currencies
 
 
 def load_leverage_brackets_as_dict(data: list) -> dict:
