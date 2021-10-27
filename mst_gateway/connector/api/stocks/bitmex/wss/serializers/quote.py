@@ -1,40 +1,63 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 from datetime import datetime
-from copy import copy
 from mst_gateway.connector import api
+from mst_gateway.connector.api.stocks.bitmex import utils
 from .base import BitmexSerializer
-from ...utils import (
-    load_ws_quote_data, load_ws_quote_bin_data,
-    quote2bin, update_quote_bin
-)
-
 
 if TYPE_CHECKING:
     from ... import BitmexWssApi
 
 
 class BitmexQuoteBinSerializer(BitmexSerializer):
-    subscription = "quote_bin"
+    subscription = 'quote_bin'
 
     def __init__(self, wss_api: BitmexWssApi):
-        self._bins = {}
-        self._initialized = False
         super().__init__(wss_api)
+        self._bins = {}
+        self._initialized = None
+
+    def prefetch(self, message: dict) -> None:
+        if message['table'] == 'tradeBin1m':
+            data = []
+            for item in message.pop('data', []):
+                if time := utils.to_date(item['timestamp']):
+                    item['timestamp'] = time.replace(minute=time.minute - 1, second=59, microsecond=999999)
+                data += [item, self.create_open_data(item)]
+            message['data'] = data
+
+    @staticmethod
+    def create_open_data(item: dict) -> dict:
+        if bin_time := utils.to_date(item.get('timestamp')):
+            bin_time = bin_time.replace(minute=bin_time.minute + 1, second=0, microsecond=000000)
+        close = item.get('close')
+        return {
+            'timestamp': utils.to_iso_datetime(bin_time),
+            'symbol': item.get('symbol'),
+            'open': close,
+            'close': close,
+            'high': close,
+            'low': close,
+            'volume': 0
+        }
 
     @classmethod
     def _get_data_action(cls, message) -> str:
-        if message.get('action') == "partial":
-            return "partial"
-        return "update"
+        if message.get('action') == 'partial':
+            return 'partial'
+        return 'update'
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
+        table = message['table']
         if not self._initialized:
-            if message['table'] != "tradeBin1m":
+            if table != 'tradeBin1m':
                 return False
-            self._initialized = True
+            self._initialized = utils.to_date(item.get('timestamp'))
             return True
-        return message['table'] in ("trade", "tradeBin1m")
+        time = utils.to_date(item.get('timestamp'))
+        if time and time < self._initialized:
+            return False
+        return table in ('trade', 'tradeBin1m')
 
     async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
@@ -43,69 +66,44 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
         if self._wss_api.register_state:
             if (state_data := self._wss_api.get_state_data(item.get('symbol'))) is None:
                 return None
-        _bin_closed = self._bin_closed(message, item, state_data)
-        if _bin_closed is None:
+        if message['table'] == 'tradeBin1m':
+            return utils.load_ws_quote_bin_data(item, state_data)
+        if (minute_updated := self._minute_updated(item)) is None:
             return None
-        elif _bin_closed:
-            return copy(self._reset_quote_bin(message, item, state_data))
-        return copy(self._update_quote_bin(item, state_data))
-
-    def _get_quote_bin(self, item: dict, state_data: dict) -> dict:
-        quote = load_ws_quote_data(item, state_data, is_iso_datetime=True)
-        quote_bin = self._bins.get(item['symbol'])
-        if not quote_bin:
-            return quote2bin(quote)
-        return update_quote_bin(quote_bin, quote)
+        if minute_updated:
+            return self._reset_quote_bin(item, state_data)
+        return self._update_quote_bin(item, state_data)
 
     def _update_quote_bin(self, item, state_data: dict) -> dict:
-        self._bins[item['symbol']] = self._get_quote_bin(item, state_data)
-        return self._get_quote_bin(item, state_data)
-
-    def _reset_quote_bin(self, message: dict, item: dict, state_data: dict) -> dict:
-        # pylint: disable=unused-argument
-        self._bins[item['symbol']] = None
-        return load_ws_quote_bin_data(item, state_data, is_iso_datetime=True)
-
-    def _update_data(self, data: list, item: dict):
-        for ditem in data:
-            if ditem['s'] == item['s']:
-                return
-        data.append(item)
-
-    def _bin_closed(self, message: dict, item: dict, state_data: dict) -> Optional[bool]:
-        # pylint:disable=no-self-use,unused-argument
-        return message['table'] == 'tradeBin1m'
-
-
-class BitmexQuoteBinFromTradeSerializer(BitmexQuoteBinSerializer):
-    @classmethod
-    def _minute_updated(cls, ts_old: str, ts_new: str) -> Optional[bool]:
-        try:
-            ts_old = datetime.strptime(ts_old, api.DATETIME_OUT_FORMAT)
-            ts_new = datetime.strptime(ts_new, api.DATETIME_OUT_FORMAT)
-        except ValueError:
-            return False
-        diff_in_sec = (ts_new - ts_old).total_seconds()
-        if diff_in_sec >= 60:
-            return True
-        elif diff_in_sec < 0:
-            return None
-        return True
-
-    def _bin_closed(self, message: dict, item: dict, state_data: dict) -> Optional[bool]:
-        if message['table'] == 'tradeBin1m':
-            return True
-        if message['table'] == 'trade':
-            new = load_ws_quote_data(item, state_data, is_iso_datetime=True)
-            old = self._bins.get(item['symbol'])
-            if not old:
-                return False
-            return self._minute_updated(old['tm'], new['tm'])
-        return False
-
-    def _reset_quote_bin(self, message: dict, item: dict, state_data: dict) -> dict:
-        if message['table'] == 'tradeBin1m':
-            self._bins[item['symbol']] = load_ws_quote_bin_data(item, state_data, is_iso_datetime=True)
+        symbol = item['symbol'].lower()
+        quote = utils.load_ws_quote_data(item, state_data)
+        if quote_bin := self._bins.get(symbol):
+            self._bins[symbol] = utils.update_quote_bin(quote_bin, quote)
         else:
-            self._bins[item['symbol']] = quote2bin(load_ws_quote_data(item, state_data, is_iso_datetime=True))
-        return self._bins[item['symbol']]
+            self._bins[symbol] = utils.quote2bin(quote)
+        return self._bins[symbol]
+
+    def _reset_quote_bin(self, item: dict, state_data: dict) -> dict:
+        symbol = item['symbol'].lower()
+        prev_bin = self._bins[symbol]
+        prev_bin_cl = prev_bin['cl']
+        new_bin = utils.quote2bin(utils.load_ws_quote_data(item, state_data))
+        new_bin.update({
+            'op': prev_bin_cl,
+            'hi': max(new_bin['hi'], prev_bin_cl),
+            'lw': min(new_bin['lw'], prev_bin_cl),
+        })
+        self._bins[symbol] = new_bin
+        return self._bins[symbol]
+
+    def _minute_updated(self, item: dict) -> Optional[bool]:
+        if old := self._bins.get(item['symbol'].lower()):
+            try:
+                ts_old = datetime.strptime(old['tm'].split('Z')[0], api.DATETIME_FORMAT)
+                ts_new = datetime.strptime(item['timestamp'].split('Z')[0], api.DATETIME_FORMAT)
+            except (ValueError, TypeError, IndexError):
+                return None
+            if ts_new < ts_old:
+                return None
+            return ts_new.minute > ts_old.minute
+        return False

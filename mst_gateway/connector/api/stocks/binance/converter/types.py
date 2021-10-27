@@ -45,6 +45,15 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
             # 'STOP_MARKET': {'type': OrderType.stop_loss, 'execution': OrderExec.market},
             # 'TAKE_PROFIT_MARKET': {'type': OrderType.take_profit, 'execution': OrderExec.market},
             # 'TRAILING_STOP_MARKET': {'type': OrderType.trailing_stop, 'execution': OrderExec.market},
+        },
+        OrderSchema.futures_coin: {
+            'LIMIT': {'type': OrderType.limit, 'execution': OrderExec.limit},
+            'MARKET': {'type': OrderType.market, 'execution': OrderExec.market},
+            'STOP': {'type': OrderType.stop_loss, 'execution': OrderExec.limit},
+            'TAKE_PROFIT': {'type': OrderType.take_profit, 'execution': OrderExec.limit},
+            # 'STOP_MARKET': {'type': OrderType.stop_loss, 'execution': OrderExec.market},
+            # 'TAKE_PROFIT_MARKET': {'type': OrderType.take_profit, 'execution': OrderExec.market},
+            # 'TRAILING_STOP_MARKET': {'type': OrderType.trailing_stop, 'execution': OrderExec.market},
         }
     }
 

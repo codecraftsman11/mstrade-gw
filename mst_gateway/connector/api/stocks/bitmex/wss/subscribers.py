@@ -5,6 +5,7 @@ from asyncio import CancelledError
 from websockets.exceptions import ConnectionClosedError
 from .utils import cmd_subscribe, cmd_unsubscribe
 from ....wss.subscriber import Subscriber
+from ......storage.var import StateStorageKey
 
 if TYPE_CHECKING:
     from . import BitmexWssApi
@@ -59,29 +60,6 @@ class BitmexTradeSubscriber(BitmexSubscriber):
     is_close_connection = False
 
 
-class BitmexOrderSubscriber(BitmexSubscriber):
-    subscription = "order"
-    subscriptions = ("execution",)
-
-
-class BitmexPositionSubscriber(BitmexSubscriber):
-    subscription = "position"
-    subscriptions = ("position",)
-
-    async def subscribe_exchange_rates(self, api: BitmexWssApi):
-        redis = await api.storage.get_client()
-        state_channel = (await redis.subscribe('exchange_rates'))[0]
-        while await state_channel.wait_message():
-            state_data = await state_channel.get_json()
-            exchange_rates = state_data.get(api.name.lower(), {}).get(api.schema, {})
-            api.partial_state_data[self.subscription].update({'exchange_rates': exchange_rates})
-
-    async def init_partial_state(self, api: BitmexWssApi) -> dict:
-        api.tasks.append(asyncio.create_task(self.subscribe_exchange_rates(api)))
-        exchange_rates = await api.storage.get('exchange_rates', exchange=api.name, schema=api.schema)
-        return {'exchange_rates': exchange_rates}
-
-
 class BitmexWalletSubscriber(BitmexSubscriber):
     subscription = "wallet"
     subscriptions = ("margin",)
@@ -91,17 +69,25 @@ class BitmexWalletSubscriber(BitmexSubscriber):
             return True
         return await super()._subscribe(api)
 
-    async def subscribe_currency_state(self, api: BitmexWssApi):
+    async def subscribe_exchange_rates(self, api: BitmexWssApi):
         redis = await api.storage.get_client()
-        state_channel = (await redis.subscribe('currency'))[0]
+        state_channel = (await redis.subscribe(StateStorageKey.exchange_rates))[0]
         while await state_channel.wait_message():
             state_data = await state_channel.get_json()
-            currency_state = state_data.get(api.name.lower(), {}).get(api.schema, {})
-            api.partial_state_data[self.subscription].update({'currency_state': currency_state})
+            exchange_rates = state_data.get(api.name.lower(), {}).get(api.schema, {})
+            api.partial_state_data[self.subscription].update({'exchange_rates': exchange_rates})
 
     async def init_partial_state(self, api: BitmexWssApi) -> dict:
-        currency_state = {}
-        if api.register_state:
-            api.tasks.append(asyncio.create_task(self.subscribe_currency_state(api)))
-            currency_state = await api.storage.get('currency', exchange=api.name, schema=api.schema)
-        return {'currency_state': currency_state}
+        api.tasks.append(asyncio.create_task(self.subscribe_exchange_rates(api)))
+        exchange_rates = await api.storage.get(StateStorageKey.exchange_rates, exchange=api.name, schema=api.schema)
+        return {'exchange_rates': exchange_rates}
+
+
+class BitmexOrderSubscriber(BitmexSubscriber):
+    subscription = "order"
+    subscriptions = ("execution",)
+
+
+class BitmexPositionSubscriber(BitmexWalletSubscriber):
+    subscription = "position"
+    subscriptions = ("position",)
