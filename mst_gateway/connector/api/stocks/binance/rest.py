@@ -170,6 +170,7 @@ class BinanceRestApi(StockRestApi):
         schema_handlers = {
             OrderSchema.exchange: self._handler.get_klines,
             OrderSchema.margin2: self._handler.get_klines,
+            OrderSchema.margin3: self._handler.get_klines,
             OrderSchema.futures: self._handler.futures_klines,
             OrderSchema.futures_coin: self._handler.futures_coin_klines,
         }
