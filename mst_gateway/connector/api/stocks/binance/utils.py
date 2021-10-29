@@ -19,7 +19,8 @@ def load_symbol_data(schema: str, raw_data: dict, state_data: Optional[dict]) ->
     symbol = raw_data.get('symbol')
     symbol_time = to_date(raw_data.get('closeTime'))
     price = to_float(raw_data.get('lastPrice'))
-    price24 = to_float(raw_data.get('weightedAvgPrice'))
+    price_change = to_float(raw_data.get('priceChange'))
+    price24 = to_float(price - price_change)
     face_price, _reversed = BinanceFinFactory.calc_face_price(symbol, price, schema=schema)
     data = {
         'time': symbol_time,
