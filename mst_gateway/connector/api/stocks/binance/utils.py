@@ -1256,13 +1256,16 @@ def load_ws_order_status(binance_order_status: Optional[str]) -> Optional[str]:
 
 
 def calculate_ws_order_leaves_volume(raw_data: dict) -> Optional[float]:
-    return to_float(raw_data['q']) - to_float(raw_data['z']) if raw_data.get('q') and raw_data.get('z') else 0.0
+    try:
+        return to_float(raw_data['q']) - to_float(raw_data['z'])
+    except (KeyError, AttributeError):
+        return 0
 
 
 def calculate_ws_order_avg_price(raw_data: dict) -> Optional[float]:
-    if raw_data.get('ap'):
+    if raw_data.get('ap'):  # Futures
         return to_float(raw_data['ap'])
-    elif raw_data.get('Z') and raw_data.get('z') and to_float(raw_data['z']):
+    elif raw_data.get('Z') and to_float(raw_data.get('z')):  # Spot
         return to_float(raw_data['Z'])/to_float(raw_data['z'])
     else:
         return 0.0
