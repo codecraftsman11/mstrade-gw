@@ -70,6 +70,8 @@ class OrderState(ClassWithAttributes):
 
 class OrderTTL(ClassWithAttributes):
     GTC = 'GTC'
+    IOC = 'IOC'
+    FOK = 'FOK'
     H1 = 'H1'
     H4 = 'H4'
     D1 = 'D1'
