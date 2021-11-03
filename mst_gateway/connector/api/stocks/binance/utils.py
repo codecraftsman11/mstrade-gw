@@ -1252,7 +1252,7 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
 
 
 def load_ws_order_status(binance_order_status: Optional[str]) -> Optional[str]:
-    return var.BINANCE_ORDER_STATUS_MAP.get(binance_order_status)
+    return var.BINANCE_ORDER_STATUS_MAP.get(binance_order_status) or api.OrderState.closed
 
 
 def calculate_ws_order_leaves_volume(raw_data: dict) -> Optional[float]:
