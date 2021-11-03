@@ -1,6 +1,6 @@
 import re
 from typing import Dict, Union, Optional
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
 from mst_gateway.connector.api.utils.time import time2timestamp
@@ -92,8 +92,19 @@ def load_currency_exchange_symbol(currency: list) -> list:
     return [{'symbol': c.get('symbol'), 'price': to_float(c.get('lastPrice'))} for c in currency]
 
 
-def load_symbols_currencies(currency: list) -> dict:
-    return {c.get('symbol', '').lower(): to_float(c.get('lastPrice')) for c in currency}
+def load_symbols_currencies(currency: list, state_data: dict) -> dict:
+    currencies = {}
+    for cur in currency:
+        symbol = cur.get('symbol', '').lower()
+        if state_info := state_data.get(symbol):
+            currencies.update({
+                symbol: {
+                    'pair': state_info['pair'],
+                    'expiration': state_info.get('expiration'),
+                    'price': to_float(cur.get('lastPrice'))
+                }
+            })
+    return currencies
 
 
 def load_funding_rates(funding_rates: list) -> list:
