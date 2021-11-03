@@ -134,9 +134,11 @@ class BitmexRestApi(StockRestApi):
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
         if schema == OrderSchema.margin1:
+            partial = kwargs.pop('partial', None)
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
-            return {
-                OrderSchema.margin1: utils.load_wallet_detail_data(data, asset)
+            wallet_detail = utils.load_wallet_detail_data(data, asset)
+            return wallet_detail if partial else {
+                OrderSchema.margin1: wallet_detail
             }
         raise ConnectorError(f"Invalid schema {schema}.")
 
@@ -230,7 +232,7 @@ class BitmexRestApi(StockRestApi):
         if isinstance(data[0], dict) and data[0].get('error'):
             error = data[0].get('error')
             status = data[0].get('ordStatus')
-            if status in ('Filled', 'Canceled'):
+            if status in ('Filled', 'Canceled', None):
                 raise NotFoundError(error)
             raise ConnectorError(error)
         return data
@@ -479,7 +481,7 @@ class BitmexRestApi(StockRestApi):
                 side=side,
                 leverage_type=leverage_type,
                 entry_price=price,
-                maint_margin=kwargs.get('wallet_detail',  {}).get(schema, {}).get('maint_margin'),
+                maint_margin=kwargs.get('wallet_detail',  {}).get('maint_margin'),
                 volume=volume,
                 wallet_balance=wallet_balance,
                 taker_fee=kwargs.get('taker_fee'),
