@@ -1258,7 +1258,7 @@ def load_ws_order_status(binance_order_status: Optional[str]) -> Optional[str]:
 def calculate_ws_order_leaves_volume(raw_data: dict) -> Optional[float]:
     try:
         return to_float(raw_data['q']) - to_float(raw_data['z'])
-    except (KeyError, AttributeError):
+    except (KeyError, TypeError):
         return 0
 
 
