@@ -123,11 +123,15 @@ class BitmexRestApi(StockRestApi):
         return utils.load_user_data(data)
 
     def get_api_key_permissions(self, schemas: list,  **kwargs) -> dict:
+        default_schemas = [
+            OrderSchema.margin1,
+        ]
+        permissions = {schema: False for schema in schemas if schema in default_schemas}
         try:
             all_api_keys, _ = self._bitmex_api(self._handler.APIKey.APIKey_get)
         except ConnectorError:
-            return {schema: False for schema in schemas}
-        return utils.load_api_key_permissions(all_api_keys, self.auth.get('api_key'), schemas)
+            return permissions
+        return utils.load_api_key_permissions(all_api_keys, self.auth.get('api_key'), permissions.keys())
 
     def get_wallet(self, **kwargs) -> dict:
         schema = kwargs.pop('schema', OrderSchema.margin1).lower()

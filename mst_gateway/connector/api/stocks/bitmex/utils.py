@@ -326,7 +326,7 @@ def load_user_data(raw_data: dict) -> dict:
     return data
 
 
-def load_api_key_permissions(raw_data: dict, api_key: str, schemas: list) -> dict:
+def load_api_key_permissions(raw_data: dict, api_key: str, schemas: iter) -> dict:
     for acc in raw_data:
         if acc.get('id') == api_key:
             if 'order' in acc.get('permissions'):

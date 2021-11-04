@@ -333,7 +333,7 @@ def load_user_data(raw_data: dict) -> dict:
     return data
 
 
-def load_api_key_permissions(raw_data: dict, schemas: list) -> dict:
+def load_api_key_permissions(raw_data: dict, schemas: iter) -> dict:
     schema_handlers = {
         OrderSchema.exchange: True,
         OrderSchema.margin2: raw_data.get('enableMargin', False),
