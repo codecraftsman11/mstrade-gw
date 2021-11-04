@@ -47,7 +47,7 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def get_api_key_permissions(self, **kwargs) -> dict:
+    def get_api_key_permissions(self, schemas: list,  **kwargs) -> dict:
         raise NotImplementedError
 
     @abstractmethod

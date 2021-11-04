@@ -326,14 +326,14 @@ def load_user_data(raw_data: dict) -> dict:
     return data
 
 
-def load_api_key_permissions(raw_data: dict, api_key: str) -> dict:
+def load_api_key_permissions(raw_data: dict, api_key: str, schemas: list) -> dict:
     for acc in raw_data:
         if acc.get('id') == api_key:
             if 'order' in acc.get('permissions'):
-                return {OrderSchema.margin1: True}
+                return {schema: (True if schema == OrderSchema.margin1 else False) for schema in schemas}
             else:
-                return {OrderSchema.margin1: False}
-    return {OrderSchema.margin1: False}
+                return {schema: False for schema in schemas}
+    return {schema: False for schema in schemas}
 
 
 def load_trade_data(raw_data: dict, state_data: Optional[dict]) -> dict:

@@ -332,15 +332,15 @@ def load_user_data(raw_data: dict) -> dict:
     return data
 
 
-def load_api_key_permissions(raw_data: dict) -> dict:
-    data = {
+def load_api_key_permissions(raw_data: dict, schemas: list) -> dict:
+    schema_handlers = {
         OrderSchema.exchange: True,
         OrderSchema.margin2: raw_data.get('enableMargin', False),
         OrderSchema.margin3: raw_data.get('enableMargin', False),
         OrderSchema.futures: raw_data.get('enableFutures', False),
         OrderSchema.futures_coin: raw_data.get('enableFutures', False),
     }
-    return data
+    return {schema: schema_handlers.get(schema, False) for schema in schemas}
 
 
 def load_spot_wallet_data(raw_data: dict, currencies: dict,

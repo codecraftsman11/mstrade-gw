@@ -48,14 +48,8 @@ class BinanceRestApi(StockRestApi):
             data = {'address': uuid4()}
         return utils.load_user_data(data)
 
-    def get_api_key_permissions(self, **kwargs) -> dict:
-        permissions = {
-            OrderSchema.exchange: False,
-            OrderSchema.margin2: False,
-            OrderSchema.margin3: False,
-            OrderSchema.futures: False,
-            OrderSchema.futures_coin: False,
-        }
+    def get_api_key_permissions(self, schemas: list, **kwargs) -> dict:
+        permissions = {schema: False for schema in schemas}
         if self.test:
             for schema in permissions:
                 try:
@@ -67,7 +61,7 @@ class BinanceRestApi(StockRestApi):
             data = self._binance_api(self._handler.get_api_key_permission)
         except ConnectorError:
             return permissions
-        return utils.load_api_key_permissions(data)
+        return utils.load_api_key_permissions(data, schemas)
 
     def get_symbol(self, symbol, schema) -> dict:
         schema_handlers = {
