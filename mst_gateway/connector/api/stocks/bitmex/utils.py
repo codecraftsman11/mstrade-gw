@@ -273,6 +273,7 @@ def load_ws_position_action(state_volume: float, volume: float) -> str:
 
 
 def load_position_ws_data(raw_data: dict, state_data: Optional[dict], exchange_rates: dict) -> dict:
+    symbol = None
     state_volume = to_float(raw_data.get('state_volume'))
     volume = to_float(raw_data.get('currentQty'))
     side = load_position_side_by_volume(volume)
@@ -288,7 +289,6 @@ def load_position_ws_data(raw_data: dict, state_data: Optional[dict], exchange_r
         'lp': to_float(raw_data.get('liquidationPrice')),
         'ep': to_float(raw_data.get('avgEntryPrice')),
         'sd': side if side is not None else raw_data.get('side'),
-        'upnl': load_ws_position_unrealised_pnl(unrealised_pnl, exchange_rates),
         'lvrp': leverage_type,
         'lvr': leverage,
         'act': load_ws_position_action(state_volume, volume),
@@ -298,23 +298,31 @@ def load_position_ws_data(raw_data: dict, state_data: Optional[dict], exchange_r
             'ss': state_data.get('system_symbol'),
             'sch': state_data.get('schema')
         })
+        if expiration := state_data.get('expiration'):
+            symbol = state_data.get('pair', [])[0].lower() + expiration.lower()
+    data.update({
+        'upnl': load_ws_position_unrealised_pnl(unrealised_pnl, exchange_rates, symbol)
+    })
     return data
 
 
-def load_ws_position_unrealised_pnl(base: Union[float, dict], exchange_rates: dict) -> dict:
+def load_ws_position_unrealised_pnl(base: Union[float, dict], exchange_rates: dict, symbol: str = None) -> dict:
     xbt_to_usd = exchange_rates.get('xbt')
     if isinstance(base, float):
-        return {
+        unrealised_pnl = {
             'base': base,
             'btc': base,
             'usd': to_usd(base, xbt_to_usd),
         }
+        if symbol:
+            unrealised_pnl.setdefault(symbol, to_usd(base, exchange_rates.get(symbol, 0)))
+        return unrealised_pnl
     return base
 
 
-def to_usd(xbt_value: float, xbt_to_usd: float) -> Optional[float]:
+def to_usd(xbt_value: float, coin_to_usd: float) -> Optional[float]:
     try:
-        return round(xbt_value * xbt_to_usd, 4)
+        return round(xbt_value * coin_to_usd, 4)
     except TypeError:
         return None
 

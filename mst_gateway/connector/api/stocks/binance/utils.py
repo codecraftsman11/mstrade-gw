@@ -1611,6 +1611,7 @@ def load_futures_coin_position_list(raw_data: list, schema: str) -> list:
 
 def load_exchange_position_ws_data(
         raw_data: dict, position_state: dict, state_data: Optional[dict], exchange_rates: dict) -> dict:
+    symbol = None
     side = position_state['side']
     volume = to_float(position_state['volume'])
     mark_price = to_float(raw_data.get('c'))
@@ -1626,7 +1627,6 @@ def load_exchange_position_ws_data(
         'vl': volume,
         'ep': entry_price,
         'mp': mark_price,
-        'upnl': load_ws_position_unrealised_pnl(unrealised_pnl, state_data, exchange_rates),
         'lvrp': position_state['leverage_type'],
         'lvr': to_float(position_state['leverage']),
         'lp': None,
@@ -1637,21 +1637,31 @@ def load_exchange_position_ws_data(
             'ss': state_data.get('system_symbol'),
             'sch': state_data.get('schema')
         })
+        if expiration := state_data.get('expiration'):
+            symbol = state_data.get('pair', [])[0].lower() + expiration.lower()
+    data.update({
+        'upnl': load_ws_position_unrealised_pnl(unrealised_pnl, state_data, exchange_rates, symbol)
+    })
     return data
 
 
-def load_ws_position_unrealised_pnl(base: float, state_data: Optional[dict], exchange_rates: dict) -> dict:
+def load_ws_position_unrealised_pnl(
+        base: float, state_data: Optional[dict], exchange_rates: dict, symbol: str = None) -> dict:
     btc_value = None
     usd_value = None
-    if isinstance(state_data, dict) and (pair := state_data.get('pair', [])):
-        quote_asset = pair[1]
-        usd_value = to_usd(base, quote_asset, exchange_rates)
-        btc_value = to_btc(usd_value, exchange_rates)
-    return {
+    unrealised_pnl = {
         'base': base,
         'usd': usd_value,
         'btc': btc_value,
     }
+    if isinstance(state_data, dict) and (pair := state_data.get('pair', [])):
+        quote_asset = pair[1]
+        usd_value = to_usd(base, quote_asset, exchange_rates)
+        unrealised_pnl['usd'] = usd_value
+        unrealised_pnl['btc'] = to_btc(usd_value, exchange_rates)
+        if symbol:
+            unrealised_pnl.setdefault(symbol, to_usd(base, symbol, exchange_rates))
+    return unrealised_pnl
 
 
 def to_usd(base: float, asset: str, exchange_rates: dict) -> Optional[float]:
