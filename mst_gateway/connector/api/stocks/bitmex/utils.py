@@ -273,7 +273,7 @@ def load_ws_position_action(state_volume: float, volume: float) -> str:
 
 
 def load_position_ws_data(raw_data: dict, state_data: Optional[dict], exchange_rates: dict) -> dict:
-    symbol = None
+    expiration = None
     state_volume = to_float(raw_data.get('state_volume'))
     volume = to_float(raw_data.get('currentQty'))
     side = load_position_side_by_volume(volume)
@@ -285,6 +285,7 @@ def load_position_ws_data(raw_data: dict, state_data: Optional[dict], exchange_r
         'ts': time2timestamp(_timestamp),
         's': raw_data.get('symbol'),
         'mp': to_float(raw_data.get('markPrice')),
+        'upnl': unrealised_pnl,
         'vl': volume,
         'lp': to_float(raw_data.get('liquidationPrice')),
         'ep': to_float(raw_data.get('avgEntryPrice')),
@@ -298,24 +299,20 @@ def load_position_ws_data(raw_data: dict, state_data: Optional[dict], exchange_r
             'ss': state_data.get('system_symbol'),
             'sch': state_data.get('schema')
         })
-        if expiration := state_data.get('expiration'):
-            symbol = state_data.get('pair', [])[0].lower() + expiration.lower()
-    data.update({
-        'upnl': load_ws_position_unrealised_pnl(unrealised_pnl, exchange_rates, symbol)
-    })
+        if exp := state_data.get('expiration', None):
+            expiration = exp
+    data['upnl'] = load_ws_position_unrealised_pnl(unrealised_pnl, exchange_rates, expiration)
     return data
 
 
-def load_ws_position_unrealised_pnl(base: Union[float, dict], exchange_rates: dict, symbol: str = None) -> dict:
-    xbt_to_usd = exchange_rates.get('xbt')
+def load_ws_position_unrealised_pnl(base: Union[float, dict], exchange_rates: dict, expiration: Optional[str]) -> dict:
+    xbt_to_usd = exchange_rates.get(f"xbt{expiration}".lower() if expiration else 'xbt')
     if isinstance(base, float):
         unrealised_pnl = {
             'base': base,
             'btc': base,
-            'usd': to_usd(base, xbt_to_usd),
+            'usd': to_usd(base, xbt_to_usd)
         }
-        if symbol:
-            unrealised_pnl.setdefault(symbol, to_usd(base, exchange_rates.get(symbol, 0)))
         return unrealised_pnl
     return base
 
