@@ -83,6 +83,13 @@ class OrderExec(ClassWithAttributes):
     limit = 'limit'
 
 
+class OrderParams(ClassWithAttributes):
+    iceberg = 'iceberg'
+    passive = 'passive'
+    post_only = 'post_only'
+    reduce_only = 'reduce_only'
+
+
 class OrderPositionPeriod(ClassWithAttributes):
     M1 = 'M1'
     M15 = 'M15'
