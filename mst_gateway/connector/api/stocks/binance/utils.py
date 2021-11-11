@@ -1462,8 +1462,13 @@ def load_ws_futures_position_unrealised_pnl(base: float, exchange_rates: dict, e
 
 def load_ws_futures_coin_position_unrealised_pnl(
         base: float, exchange_rates: dict, asset: str, expiration: Optional[str]) -> dict:
+    if expiration and (asset_to_usd := exchange_rates.get(f"{asset}{expiration}".lower())):
+        pass
+    else:
+        asset_to_usd = exchange_rates.get(asset.lower())
+
     try:
-        usd = exchange_rates.get(f"{asset}{expiration}".lower() if expiration else asset) * base
+        usd = asset_to_usd * base
     except TypeError:
         usd = None
     return {
@@ -1656,8 +1661,7 @@ def load_exchange_position_ws_data(
     return data
 
 
-def load_ws_position_unrealised_pnl(
-        base: float, state_data: Optional[dict], exchange_rates: dict) -> dict:
+def load_ws_position_unrealised_pnl(base: float, state_data: Optional[dict], exchange_rates: dict) -> dict:
     btc_value = None
     usd_value = None
     unrealised_pnl = {
@@ -1674,7 +1678,13 @@ def load_ws_position_unrealised_pnl(
 
 
 def to_usd(base: float, asset: str, exchange_rates: dict, expiration: Optional[str]) -> Optional[float]:
-    asset_to_usd = exchange_rates.get(f"{asset}{expiration}".lower() if expiration else asset.lower()) or 1
+    if expiration and (asset_to_usd := exchange_rates.get(f"{asset}{expiration}".lower())):
+        pass
+    elif asset_to_usd := exchange_rates.get(asset.lower()):
+        pass
+    else:
+        asset_to_usd = 1
+
     try:
         return base * asset_to_usd
     except TypeError:

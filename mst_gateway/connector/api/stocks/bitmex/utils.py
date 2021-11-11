@@ -306,7 +306,11 @@ def load_position_ws_data(raw_data: dict, state_data: Optional[dict], exchange_r
 
 
 def load_ws_position_unrealised_pnl(base: Union[float, dict], exchange_rates: dict, expiration: Optional[str]) -> dict:
-    xbt_to_usd = exchange_rates.get(f"xbt{expiration}".lower() if expiration else 'xbt')
+    if expiration and (xbt_to_usd := exchange_rates.get(f"xbt{expiration}".lower())):
+        pass
+    else:
+        xbt_to_usd = exchange_rates.get('xbt}')
+
     if isinstance(base, float):
         unrealised_pnl = {
             'base': base,
@@ -319,7 +323,7 @@ def load_ws_position_unrealised_pnl(base: Union[float, dict], exchange_rates: di
 
 def to_usd(xbt_value: float, coin_to_usd: float) -> Optional[float]:
     try:
-        return round(xbt_value * coin_to_usd, 4)
+        return xbt_value * coin_to_usd
     except TypeError:
         return None
 
