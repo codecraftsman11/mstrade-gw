@@ -309,8 +309,7 @@ def load_ws_position_unrealised_pnl(base: Union[float, dict], exchange_rates: di
     if expiration and (xbt_to_usd := exchange_rates.get(f"xbt{expiration}".lower())):
         pass
     else:
-        xbt_to_usd = exchange_rates.get('xbt}')
-
+        xbt_to_usd = exchange_rates.get('xbt')
     if isinstance(base, float):
         unrealised_pnl = {
             'base': base,
