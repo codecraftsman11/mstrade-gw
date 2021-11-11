@@ -70,6 +70,8 @@ class OrderState(ClassWithAttributes):
 
 class OrderTTL(ClassWithAttributes):
     GTC = 'GTC'
+    IOC = 'IOC'
+    FOK = 'FOK'
     H1 = 'H1'
     H4 = 'H4'
     D1 = 'D1'
@@ -78,6 +80,13 @@ class OrderTTL(ClassWithAttributes):
 class OrderExec(ClassWithAttributes):
     market = 'market'
     limit = 'limit'
+
+
+class OrderParams(ClassWithAttributes):
+    iceberg = 'iceberg'
+    passive = 'passive'
+    post_only = 'post_only'
+    reduce_only = 'reduce_only'
 
 
 class OrderPositionPeriod(ClassWithAttributes):
