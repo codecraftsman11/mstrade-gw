@@ -1335,7 +1335,7 @@ def generate_parameters_by_order_type(main_params: dict, options: dict, schema: 
     order_type = main_params.pop('order_type', None)
     exchange_order_type = store_order_type(order_type)
     mapping_parameters = store_order_mapping_parameters(exchange_order_type, schema)
-    options = assign_custom_parameter_values(options)
+    options = assign_custom_parameter_values(options, schema)
     all_params = map_api_parameter_names(
         {'order_type': exchange_order_type, **main_params, **options}
     )
@@ -1350,19 +1350,19 @@ def generate_parameters_by_order_type(main_params: dict, options: dict, schema: 
     return new_params
 
 
-def assign_custom_parameter_values(options: Optional[dict]) -> dict:
+def assign_custom_parameter_values(options: Optional[dict], schema: Optional[str]) -> dict:
     """
     Changes the value of certain parameters according to Binance's specification.
 
     """
     new_options = dict()
     if 'ttl' in options:
-        new_options['timeInForce'] = 'GTC'
-    if options.get('is_passive'):
-        new_options['timeInForce'] = 'GTX'
+        new_options['ttl'] = var.PARAMETER_NAMES_MAP.get(options.get('ttl'))
     if options.get('is_iceberg'):
-        new_options['icebergQty'] = options['iceberg_volume'] or 0
-        new_options['timeInForce'] = 'GTC'
+        new_options['iceberg_volume'] = options['iceberg_volume'] or 0
+
+    if options.get('is_passive') and schema in [api.OrderSchema.futures_coin, api.OrderSchema.futures]:
+        new_options['ttl'] = var.PARAMETER_NAMES_MAP.get('GTX')
     return new_options
 
 

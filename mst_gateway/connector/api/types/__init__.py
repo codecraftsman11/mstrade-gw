@@ -6,6 +6,7 @@ from .order import (
     OrderState,
     OrderTTL,
     OrderExec,
+    OrderParams,
     ORDER_OPEN_TYPES,
     ORDER_CLOSE_TYPES,
     ORDER_ALGORITHM_TYPES,
