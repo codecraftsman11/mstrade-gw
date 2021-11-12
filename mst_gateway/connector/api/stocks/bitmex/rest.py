@@ -122,6 +122,17 @@ class BitmexRestApi(StockRestApi):
         data, _ = self._bitmex_api(self._handler.User.User_get, **kwargs)
         return utils.load_user_data(data)
 
+    def get_api_key_permissions(self, schemas: list,  **kwargs) -> dict:
+        default_schemas = [
+            OrderSchema.margin1,
+        ]
+        permissions = {schema: False for schema in schemas if schema in default_schemas}
+        try:
+            all_api_keys, _ = self._bitmex_api(self._handler.APIKey.APIKey_get)
+        except ConnectorError:
+            return permissions
+        return utils.load_api_key_permissions(all_api_keys, self.auth.get('api_key'), permissions.keys())
+
     def get_wallet(self, **kwargs) -> dict:
         schema = kwargs.pop('schema', OrderSchema.margin1).lower()
         assets = kwargs.pop('assets', ('btc', 'usd'))
@@ -134,9 +145,11 @@ class BitmexRestApi(StockRestApi):
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
         if schema == OrderSchema.margin1:
+            partial = kwargs.pop('partial', None)
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
-            return {
-                OrderSchema.margin1: utils.load_wallet_detail_data(data, asset)
+            wallet_detail = utils.load_wallet_detail_data(data, asset)
+            return wallet_detail if partial else {
+                OrderSchema.margin1: wallet_detail
             }
         raise ConnectorError(f"Invalid schema {schema}.")
 
@@ -230,7 +243,7 @@ class BitmexRestApi(StockRestApi):
         if isinstance(data[0], dict) and data[0].get('error'):
             error = data[0].get('error')
             status = data[0].get('ordStatus')
-            if status in ('Filled', 'Canceled'):
+            if status in ('Filled', 'Canceled', None):
                 raise NotFoundError(error)
             raise ConnectorError(error)
         return data
@@ -376,13 +389,6 @@ class BitmexRestApi(StockRestApi):
                 trading_volume = trading_volume[0].get('advUsd')
             except (IndexError, AttributeError):
                 trading_volume = 0
-            # TODO: delete when Bitmex fixes the response
-            except SwaggerMappingError as e:
-                import re
-                try:
-                    trading_volume = re.findall(r'\d*\.\d+|\d+', str(e))[0]
-                except IndexError:
-                    trading_volume = '0'
             return utils.load_vip_level(trading_volume)
         raise ConnectorError(f"Invalid schema {schema}.")
 
@@ -479,7 +485,7 @@ class BitmexRestApi(StockRestApi):
                 side=side,
                 leverage_type=leverage_type,
                 entry_price=price,
-                maint_margin=kwargs.get('wallet_detail',  {}).get(schema, {}).get('maint_margin'),
+                maint_margin=kwargs.get('wallet_detail',  {}).get('maint_margin'),
                 volume=volume,
                 wallet_balance=wallet_balance,
                 taker_fee=kwargs.get('taker_fee'),

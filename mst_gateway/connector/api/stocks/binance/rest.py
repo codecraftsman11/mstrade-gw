@@ -48,6 +48,28 @@ class BinanceRestApi(StockRestApi):
             data = {'address': uuid4()}
         return utils.load_user_data(data)
 
+    def get_api_key_permissions(self, schemas: list, **kwargs) -> dict:
+        default_schemas = [
+            OrderSchema.exchange,
+            OrderSchema.margin2,
+            OrderSchema.margin3,
+            OrderSchema.futures,
+            OrderSchema.futures_coin,
+        ]
+        permissions = {schema: False for schema in schemas if schema in default_schemas}
+        if self.test:
+            for schema in permissions:
+                try:
+                    permissions[schema] = bool(self.get_wallet(schema=schema))
+                except ConnectorError:
+                    continue
+            return permissions
+        try:
+            data = self._binance_api(self._handler.get_api_key_permission)
+        except ConnectorError:
+            return permissions
+        return utils.load_api_key_permissions(data, permissions.keys())
+
     def get_symbol(self, symbol, schema) -> dict:
         schema_handlers = {
             OrderSchema.exchange: (self._handler.get_ticker, self._spot_get_symbols_handler),
@@ -184,6 +206,7 @@ class BinanceRestApi(StockRestApi):
         schema_handlers = {
             OrderSchema.exchange: self._handler.get_klines,
             OrderSchema.margin2: self._handler.get_klines,
+            OrderSchema.margin3: self._handler.get_klines,
             OrderSchema.futures: self._handler.futures_klines,
             OrderSchema.futures_coin: self._handler.futures_coin_klines,
         }
@@ -333,6 +356,7 @@ class BinanceRestApi(StockRestApi):
         schema_handlers = {
             OrderSchema.exchange: self._handler.get_recent_trades,
             OrderSchema.margin2: self._handler.get_recent_trades,
+            OrderSchema.margin3: self._handler.get_recent_trades,
             OrderSchema.futures: self._handler.futures_recent_trades,
             OrderSchema.futures_coin: self._handler.futures_coin_recent_trades,
         }
@@ -365,6 +389,7 @@ class BinanceRestApi(StockRestApi):
         schema_handlers = {
             OrderSchema.exchange: self._handler.get_order_book,
             OrderSchema.margin2: self._handler.get_order_book,
+            OrderSchema.margin3: self._handler.get_order_book,
             OrderSchema.futures: self._handler.futures_order_book,
             OrderSchema.futures_coin: self._handler.futures_coin_order_book,
         }
@@ -454,18 +479,22 @@ class BinanceRestApi(StockRestApi):
         )
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
+        partial = kwargs.pop('partial', None)
         validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin2, OrderSchema.futures,
                                  OrderSchema.futures_coin))
         schema = schema.lower()
         if schema == OrderSchema.exchange:
             _spot = self._binance_api(self._handler.get_account, **kwargs)
-            return {
+            wallet_detail = utils.load_spot_wallet_detail_data(_spot, asset)
+            return wallet_detail if partial else {
                 OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
             }
-        try:
-            _spot = self._binance_api(self._handler.get_account, **kwargs)
-        except ConnectorError:
-            _spot = {}
+        _spot = {}
+        if not partial:
+            try:
+                _spot = self._binance_api(self._handler.get_account, **kwargs)
+            except ConnectorError:
+                pass
         if schema == OrderSchema.margin2:
             _margin = self._binance_api(self._handler.get_margin_account, **kwargs)
             _borrow = self._binance_api(self._handler.get_max_margin_loan, asset=asset.upper())
@@ -474,9 +503,10 @@ class BinanceRestApi(StockRestApi):
                 self._binance_api(self._handler.get_public_interest_rate, **kwargs),
                 _vip, asset
             )
-            return {
+            wallet_detail = utils.load_margin_wallet_detail_data(_margin, asset, _borrow, _interest_rate)
+            return wallet_detail if partial else {
                 OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
-                OrderSchema.margin2: utils.load_margin_wallet_detail_data(_margin, asset, _borrow, _interest_rate)
+                OrderSchema.margin2: wallet_detail
             }
         if schema in (OrderSchema.futures, OrderSchema.futures_coin):
             schema_handlers = {
@@ -492,11 +522,12 @@ class BinanceRestApi(StockRestApi):
                     collateral_configs = self._binance_api(self._handler.futures_loan_configs, loanCoin=asset, **kwargs)
                 except ConnectorError:
                     pass
-            return {
+            wallet_detail = utils.load_futures_wallet_detail_data(
+                _futures, asset, cross_collaterals.get('crossCollaterals', []), collateral_configs
+            )
+            return wallet_detail if partial else {
                 OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
-                schema: utils.load_futures_wallet_detail_data(
-                    _futures, asset, cross_collaterals.get('crossCollaterals', []), collateral_configs
-                )
+                schema: wallet_detail
             }
 
     def get_cross_collaterals(self, schema: str, **kwargs) -> list:

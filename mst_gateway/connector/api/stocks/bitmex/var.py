@@ -9,11 +9,27 @@ BITMEX_SELL = "Sell"
 BITMEX_ORDER_STATUS_NEW = 'New'
 BITMEX_ORDER_DELETE_ACTION_STATUSES = ('Filled', 'Canceled', 'PendingCancel', 'Stopped', 'Rejected', 'Expired')
 
+'''
+See the FIX Spec for explanations of these fields. 
+https://www.onixs.biz/fix-dictionary/5.0.SP2/msgType_D_68.html
+https://www.onixs.biz/fix-dictionary/5.0.SP2/tagNum_39.html
+https://www.onixs.biz/fix-dictionary/5.0.SP2/msgType_8_8.html
+'''
 BITMEX_ORDER_STATUS_MAP = {
-    'PartiallyFilled': api.OrderState.active,
+    'PendingNew': api.OrderState.pending,
     'New': api.OrderState.pending,
+    'PartiallyFilled': api.OrderState.active,
+    'AcceptedForBidding': api.OrderState.pending,
+    'Suspended': api.OrderState.pending,
+    'DoneForDay': api.OrderState.pending,
+    'PendingCancel': api.OrderState.pending,
+    'PendingReplace': api.OrderState.pending,
+    'Calculated': api.OrderState.closed,
     'Filled': api.OrderState.closed,
+    'Stopped': api.OrderState.closed,
     'Canceled': api.OrderState.closed,
+    'Rejected': api.OrderState.closed,
+    'Expired': api.OrderState.expired,
 }
 
 PARAMETER_NAMES_MAP = {
@@ -27,7 +43,13 @@ PARAMETER_NAMES_MAP = {
     'display_value': 'displayQty',
     'order_type': 'ordType',
     'is_passive': 'execInst',
-    'iceberg_volume': 'displayQty'
+    'iceberg_volume': 'displayQty',
+    'H1': 'GoodTillCancel',
+    'H4': 'GoodTillCancel',
+    'D1': 'GoodTillCancel',
+    'GTC': 'GoodTillCancel',
+    'FOK': 'FillOrKill',
+    'IOC': 'ImmediateOrCancel',
 }
 
 
