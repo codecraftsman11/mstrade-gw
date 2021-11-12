@@ -228,7 +228,7 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'tp': to_float(raw_data.get('lastPx')),
         'vl': to_float(raw_data.get('orderQty')),
         'p': to_float(raw_data.get('price')),
-        'st': BITMEX_ORDER_STATUS_MAP.get(raw_data.get('ordStatus')),
+        'st': load_ws_order_status(raw_data.get('ordStatus')),
         'lv': to_float(raw_data.get('leavesQty')),
         'fv': to_float(raw_data.get('cumQty')),
         'ap': to_float(raw_data.get('avgPx')),
@@ -248,6 +248,10 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
             'exc': order_type_and_exec.get('execution')
         })
     return data
+
+
+def load_ws_order_status(bitmex_order_status: Optional[str]) -> Optional[str]:
+    return var.BITMEX_ORDER_STATUS_MAP.get(bitmex_order_status) or api.OrderState.closed
 
 
 def load_position_side_by_volume(volume: Optional[float]) -> Optional[int]:
