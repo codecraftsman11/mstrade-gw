@@ -1417,15 +1417,8 @@ def load_ws_futures_position_leverage_type(margin_type: Optional[str]) -> Option
 
 def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, state_data: Optional[dict],
                                   exchange_rates: dict, schema: str) -> dict:
+    expiration = None
     unrealised_pnl = position_state_data['unrealised_pnl']
-    if schema == OrderSchema.futures_coin:
-        try:
-            asset = state_data.get('pair')[0].lower()
-        except (TypeError, IndexError, AttributeError):
-            asset = None
-        unrealised_pnl = load_ws_futures_coin_position_unrealised_pnl(unrealised_pnl, exchange_rates, asset)
-    else:
-        unrealised_pnl = load_ws_futures_position_unrealised_pnl(unrealised_pnl, exchange_rates)
     data = {
         'tm': to_iso_datetime(raw_data.get('E')),
         'ts': raw_data.get('E'),
@@ -1445,26 +1438,43 @@ def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, sta
             'ss': state_data.get('system_symbol'),
             'sch': state_data.get('schema')
         })
+        if exp := state_data.get('expiration', None):
+            expiration = exp
+    if schema == OrderSchema.futures_coin:
+        try:
+            asset = state_data.get('pair')[0].lower()
+        except (TypeError, IndexError, AttributeError):
+            asset = None
+        unrealised_pnl = load_ws_futures_coin_position_unrealised_pnl(unrealised_pnl, exchange_rates, asset, expiration)
+    else:
+        unrealised_pnl = load_ws_futures_position_unrealised_pnl(unrealised_pnl, exchange_rates, expiration)
+    data['upnl'] = unrealised_pnl
     return data
 
 
-def load_ws_futures_position_unrealised_pnl(base: float, exchange_rates: dict) -> dict:
+def load_ws_futures_position_unrealised_pnl(base: float, exchange_rates: dict, expiration: Optional[str]) -> dict:
     return {
         'base': base,
         'usd': base,
-        'btc': to_btc(base, exchange_rates),
+        'btc': to_btc(base, exchange_rates)
     }
 
 
-def load_ws_futures_coin_position_unrealised_pnl(base: float, exchange_rates: dict, asset: str) -> dict:
+def load_ws_futures_coin_position_unrealised_pnl(
+        base: float, exchange_rates: dict, asset: str, expiration: Optional[str]) -> dict:
+    if expiration and (asset_to_usd := exchange_rates.get(f"{asset}{expiration}".lower())):
+        pass
+    else:
+        asset_to_usd = exchange_rates.get(asset.lower())
+
     try:
-        usd = exchange_rates.get(asset) * base
+        usd = asset_to_usd * base
     except TypeError:
         usd = None
     return {
         'base': base,
         'usd': usd,
-        'btc': to_btc(usd, exchange_rates),
+        'btc': to_btc(usd, exchange_rates)
     }
 
 
@@ -1654,19 +1664,27 @@ def load_exchange_position_ws_data(
 def load_ws_position_unrealised_pnl(base: float, state_data: Optional[dict], exchange_rates: dict) -> dict:
     btc_value = None
     usd_value = None
-    if isinstance(state_data, dict) and (pair := state_data.get('pair', [])):
-        quote_asset = pair[1]
-        usd_value = to_usd(base, quote_asset, exchange_rates)
-        btc_value = to_btc(usd_value, exchange_rates)
-    return {
+    unrealised_pnl = {
         'base': base,
         'usd': usd_value,
         'btc': btc_value,
     }
+    if isinstance(state_data, dict) and (pair := state_data.get('pair', [])):
+        quote_asset = pair[1]
+        usd_value = to_usd(base, quote_asset, exchange_rates, state_data.get('expiration', None))
+        unrealised_pnl['usd'] = usd_value
+        unrealised_pnl['btc'] = to_btc(usd_value, exchange_rates)
+    return unrealised_pnl
 
 
-def to_usd(base: float, asset: str, exchange_rates: dict) -> Optional[float]:
-    asset_to_usd = exchange_rates.get(asset.lower()) or 1
+def to_usd(base: float, asset: str, exchange_rates: dict, expiration: Optional[str]) -> Optional[float]:
+    if expiration and (asset_to_usd := exchange_rates.get(f"{asset}{expiration}".lower())):
+        pass
+    elif asset_to_usd := exchange_rates.get(asset.lower()):
+        pass
+    else:
+        asset_to_usd = 1
+
     try:
         return base * asset_to_usd
     except TypeError:
