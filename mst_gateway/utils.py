@@ -71,4 +71,4 @@ def delta(cur_value, prev_value, percent=True):
         if percent:
             result = round(result * 100, 2)
         return result
-    return 100
+    return 0

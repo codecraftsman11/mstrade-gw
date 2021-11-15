@@ -14,9 +14,11 @@ from ...types.asset import to_system_asset
 from ...utils.order_book import generate_order_book_id
 
 
-def load_symbol_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
+def load_symbol_data(schema: str, raw_data: Optional[dict], state_data: Optional[dict]) -> dict:
     schema = schema.lower()
-    symbol = raw_data.get('symbol')
+    raw_data = raw_data if raw_data else {}
+    state_data = state_data if state_data else {}
+    symbol = state_data.get('symbol') or raw_data.get('symbol')
     symbol_time = to_date(raw_data.get('closeTime'))
     price = to_float(raw_data.get('lastPrice'))
     price_change = to_float(raw_data.get('priceChange'))
@@ -52,7 +54,8 @@ def load_symbol_data(schema: str, raw_data: dict, state_data: Optional[dict]) ->
     return data
 
 
-def load_futures_symbol_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
+def load_futures_symbol_data(schema: str, raw_data: Optional[dict], state_data: Optional[dict]) -> dict:
+    raw_data = raw_data if raw_data else {}
     if data := load_symbol_data(schema, raw_data, state_data):
         data['mark_price'] = to_float(raw_data.get('markPrice'))
     return data

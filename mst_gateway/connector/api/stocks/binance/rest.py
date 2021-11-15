@@ -72,33 +72,41 @@ class BinanceRestApi(StockRestApi):
 
     def get_symbol(self, symbol, schema) -> dict:
         schema_handlers = {
-            OrderSchema.exchange: (self._handler.get_ticker,),
-            OrderSchema.margin2: (self._handler.get_ticker,),
-            OrderSchema.margin3: (self._handler.get_ticker,),
-            OrderSchema.futures: (
-                self._handler.futures_ticker,
-                self._handler.futures_orderbook_ticker,
-                self._handler.futures_mark_price,
-            ),
-            OrderSchema.futures_coin: (
-                self._handler.futures_coin_ticker,
-                self._handler.futures_coin_orderbook_ticker,
-                self._handler.futures_coin_mark_price,
-            ),
+            OrderSchema.exchange: (self._handler.get_ticker, self._spot_get_symbols_handler),
+            OrderSchema.margin2: (self._handler.get_ticker, self._spot_get_symbols_handler),
+            OrderSchema.margin3: (self._handler.get_ticker, self._spot_get_symbols_handler),
+            OrderSchema.futures: (self._handler.futures_ticker, self._futures_get_symbols_handler),
+            OrderSchema.futures_coin: (self._handler.futures_coin_ticker, self._futures_get_symbols_handler),
+
         }
         validate_schema(schema, schema_handlers)
         schema = schema.lower()
         symbol = symbol.upper()
         data = self._binance_api(schema_handlers[schema][0], symbol=symbol)
         state_data = self.storage.get(StateStorageKey.symbol, self.name, schema).get(utils.stock2symbol(symbol), {})
-        if schema in (OrderSchema.margin2, OrderSchema.margin3, OrderSchema.exchange):
-            return utils.load_symbol_data(schema, data, state_data)
+        return schema_handlers[schema][1](schema, symbol, data, state_data)
+
+    @staticmethod
+    def _spot_get_symbols_handler(schema, symbol, data, state_data):
+        return utils.load_symbol_data(schema, data, state_data)
+
+    def _futures_get_symbols_handler(self, schema, symbol, data, state_data):
+        schema_handlers = {
+            OrderSchema.futures: (
+                self._handler.futures_orderbook_ticker,
+                self._handler.futures_mark_price,
+            ),
+            OrderSchema.futures_coin: (
+                self._handler.futures_coin_orderbook_ticker,
+                self._handler.futures_coin_mark_price,
+            ),
+        }
         if isinstance(data, list):
             data = data[0]
-        data_bid_ask_price = self._binance_api(schema_handlers[schema][1], symbol=symbol)
+        data_bid_ask_price = self._binance_api(schema_handlers[schema][0], symbol=symbol)
         if isinstance(data_bid_ask_price, list):
             data_bid_ask_price = data_bid_ask_price[0]
-        mark_price = self._binance_api(schema_handlers[schema][2], symbol=symbol)
+        mark_price = self._binance_api(schema_handlers[schema][1], symbol=symbol)
         if isinstance(mark_price, list):
             mark_price = mark_price[0]
         data.update({
@@ -109,7 +117,8 @@ class BinanceRestApi(StockRestApi):
         return utils.load_futures_symbol_data(schema, data, state_data)
 
     @staticmethod
-    def _update_ticker_data(ticker_data: list, bid_ask_prices: dict, mark_prices: dict) -> list:
+    def _update_ticker_data(ticker_data: list, bid_ask_prices: dict, mark_prices: dict) -> dict:
+        data = {}
         for ticker in ticker_data:
             symbol = ticker['symbol'].lower()
             bid_ask_price = bid_ask_prices.get(symbol, {})
@@ -118,40 +127,45 @@ class BinanceRestApi(StockRestApi):
                 'askPrice': bid_ask_price.get('askPrice'),
                 'markPrice': mark_prices.get(symbol)
             })
-        return ticker_data
+            data[symbol] = ticker
+        return data
 
     def list_symbols(self, schema, **kwargs) -> list:
         schema_handlers = {
-            OrderSchema.exchange: (self._handler.get_ticker,),
-            OrderSchema.margin2: (self._handler.get_ticker,),
-            OrderSchema.margin3: (self._handler.get_ticker,),
-            OrderSchema.futures: (
-                self._handler.futures_ticker,
-                self._handler.futures_orderbook_ticker,
-                self._handler.futures_mark_price,
-            ),
-            OrderSchema.futures_coin: (
-                self._handler.futures_coin_ticker,
-                self._handler.futures_coin_orderbook_ticker,
-                self._handler.futures_coin_mark_price,
-            ),
+            OrderSchema.exchange: (self._handler.get_ticker, self._spot_list_symbols_handler),
+            OrderSchema.margin2: (self._handler.get_ticker, self._spot_list_symbols_handler),
+            OrderSchema.margin3: (self._handler.get_ticker, self._spot_list_symbols_handler),
+            OrderSchema.futures: (self._handler.futures_ticker, self._futures_list_symbols_handler),
+            OrderSchema.futures_coin: (self._handler.futures_coin_ticker, self._futures_list_symbols_handler),
         }
         validate_schema(schema, schema_handlers)
         schema = schema.lower()
         data = self._binance_api(schema_handlers[schema][0])
         state_data = self.storage.get(StateStorageKey.symbol, self.name, schema)
-        if schema in (OrderSchema.margin2, OrderSchema.margin3, OrderSchema.exchange):
-            symbols = []
-            for d in data:
-                symbol_state = state_data.get(d['symbol'].lower())
-                if symbol_state and utils.to_float(d.get('weightedAvgPrice')):
-                    symbols.append(utils.load_symbol_data(schema, d, symbol_state))
-            return symbols
-        bid_ask_prices = {bap['symbol'].lower(): bap for bap in self._binance_api(schema_handlers[schema][1])}
-        mark_prices = {p['symbol'].lower(): p.get('markPrice') for p in self._binance_api(schema_handlers[schema][2])}
+        return schema_handlers[schema][1](schema, data, state_data)
+
+    @staticmethod
+    def _spot_list_symbols_handler(schema, raw_data, state_data):
+        data = {data.get('symbol').lower(): data for data in raw_data}
+        return [utils.load_symbol_data(schema, data.get(symbol.lower()), st_data)
+                for symbol, st_data in state_data.items()]
+
+    def _futures_list_symbols_handler(self, schema, data, state_data):
+        schema_handlers = {
+            OrderSchema.futures: (
+                self._handler.futures_orderbook_ticker,
+                self._handler.futures_mark_price,
+            ),
+            OrderSchema.futures_coin: (
+                self._handler.futures_coin_orderbook_ticker,
+                self._handler.futures_coin_mark_price,
+            ),
+        }
+        bid_ask_prices = {bap['symbol'].lower(): bap for bap in self._binance_api(schema_handlers[schema][0])}
+        mark_prices = {p['symbol'].lower(): p.get('markPrice') for p in self._binance_api(schema_handlers[schema][1])}
         data = self._update_ticker_data(data, bid_ask_prices, mark_prices)
-        return [utils.load_futures_symbol_data(schema, d, state_data[d['symbol'].lower()])
-                for d in data if state_data.get(d['symbol'].lower())]
+        return [utils.load_futures_symbol_data(schema, data.get(symbol.lower()), st_data)
+                for symbol, st_data in state_data.items()]
 
     def get_exchange_symbol_info(self, schema: str) -> list:
         schema = schema.lower()
