@@ -14,12 +14,15 @@ from ...types.asset import to_system_asset
 from ...utils.order_book import generate_order_book_id
 
 
-def load_symbol_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
+def load_symbol_data(schema: str, raw_data: Optional[dict], state_data: Optional[dict]) -> dict:
     schema = schema.lower()
-    symbol = raw_data.get('symbol')
+    raw_data = raw_data if raw_data else {}
+    state_data = state_data if state_data else {}
+    symbol = state_data.get('symbol') or raw_data.get('symbol')
     symbol_time = to_date(raw_data.get('closeTime'))
     price = to_float(raw_data.get('lastPrice'))
-    price24 = to_float(raw_data.get('weightedAvgPrice'))
+    price_change = to_float(raw_data.get('priceChange'))
+    price24 = to_float(price - price_change)
     face_price, _reversed = BinanceFinFactory.calc_face_price(symbol, price, schema=schema)
     data = {
         'time': symbol_time,
@@ -51,7 +54,8 @@ def load_symbol_data(schema: str, raw_data: dict, state_data: Optional[dict]) ->
     return data
 
 
-def load_futures_symbol_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
+def load_futures_symbol_data(schema: str, raw_data: Optional[dict], state_data: Optional[dict]) -> dict:
+    raw_data = raw_data if raw_data else {}
     if data := load_symbol_data(schema, raw_data, state_data):
         data['mark_price'] = to_float(raw_data.get('markPrice'))
     return data
@@ -330,6 +334,17 @@ def load_user_data(raw_data: dict) -> dict:
         'id': str(raw_data.get('address')).lower()
     }
     return data
+
+
+def load_api_key_permissions(raw_data: dict, schemas: iter) -> dict:
+    schema_handlers = {
+        OrderSchema.exchange: True,
+        OrderSchema.margin2: raw_data.get('enableMargin', False),
+        OrderSchema.margin3: raw_data.get('enableMargin', False),
+        OrderSchema.futures: raw_data.get('enableFutures', False),
+        OrderSchema.futures_coin: raw_data.get('enableFutures', False),
+    }
+    return {schema: schema_handlers.get(schema, False) for schema in schemas}
 
 
 def load_spot_wallet_data(raw_data: dict, currencies: dict,
@@ -1131,7 +1146,8 @@ def load_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict])
     schema = schema.lower()
     symbol = raw_data.get('s')
     price = to_float(raw_data.get('c'))
-    price24 = to_float(raw_data.get('w'))
+    price_change = to_float(raw_data.get('p'))
+    price24 = to_float(price - price_change)
     face_price, _reversed = BinanceFinFactory.calc_face_price(symbol, price, schema=schema)
     data = {
         'tm': to_iso_datetime(raw_data.get('E')),
@@ -1252,7 +1268,7 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
 
 
 def load_ws_order_status(binance_order_status: Optional[str]) -> Optional[str]:
-    return var.BINANCE_ORDER_STATUS_MAP.get(binance_order_status)
+    return var.BINANCE_ORDER_STATUS_MAP.get(binance_order_status) or api.OrderState.closed
 
 
 def calculate_ws_order_leaves_volume(raw_data: dict) -> Optional[float]:
@@ -1322,7 +1338,7 @@ def generate_parameters_by_order_type(main_params: dict, options: dict, schema: 
     order_type = main_params.pop('order_type', None)
     exchange_order_type = store_order_type(order_type)
     mapping_parameters = store_order_mapping_parameters(exchange_order_type, schema)
-    options = assign_custom_parameter_values(options)
+    options = assign_custom_parameter_values(options, schema)
     all_params = map_api_parameter_names(
         {'order_type': exchange_order_type, **main_params, **options}
     )
@@ -1337,19 +1353,19 @@ def generate_parameters_by_order_type(main_params: dict, options: dict, schema: 
     return new_params
 
 
-def assign_custom_parameter_values(options: Optional[dict]) -> dict:
+def assign_custom_parameter_values(options: Optional[dict], schema: Optional[str]) -> dict:
     """
     Changes the value of certain parameters according to Binance's specification.
 
     """
     new_options = dict()
     if 'ttl' in options:
-        new_options['timeInForce'] = 'GTC'
-    if options.get('is_passive'):
-        new_options['timeInForce'] = 'GTX'
+        new_options['ttl'] = var.PARAMETER_NAMES_MAP.get(options.get('ttl'))
     if options.get('is_iceberg'):
-        new_options['icebergQty'] = options['iceberg_volume'] or 0
-        new_options['timeInForce'] = 'GTC'
+        new_options['iceberg_volume'] = options['iceberg_volume'] or 0
+
+    if options.get('is_passive') and schema in [api.OrderSchema.futures_coin, api.OrderSchema.futures]:
+        new_options['ttl'] = var.PARAMETER_NAMES_MAP.get('GTX')
     return new_options
 
 
@@ -1404,15 +1420,8 @@ def load_ws_futures_position_leverage_type(margin_type: Optional[str]) -> Option
 
 def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, state_data: Optional[dict],
                                   exchange_rates: dict, schema: str) -> dict:
+    expiration = None
     unrealised_pnl = position_state_data['unrealised_pnl']
-    if schema == OrderSchema.futures_coin:
-        try:
-            asset = state_data.get('pair')[0].lower()
-        except (TypeError, IndexError, AttributeError):
-            asset = None
-        unrealised_pnl = load_ws_futures_coin_position_unrealised_pnl(unrealised_pnl, exchange_rates, asset)
-    else:
-        unrealised_pnl = load_ws_futures_position_unrealised_pnl(unrealised_pnl, exchange_rates)
     data = {
         'tm': to_iso_datetime(raw_data.get('E')),
         'ts': raw_data.get('E'),
@@ -1432,26 +1441,43 @@ def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, sta
             'ss': state_data.get('system_symbol'),
             'sch': state_data.get('schema')
         })
+        if exp := state_data.get('expiration', None):
+            expiration = exp
+    if schema == OrderSchema.futures_coin:
+        try:
+            asset = state_data.get('pair')[0].lower()
+        except (TypeError, IndexError, AttributeError):
+            asset = None
+        unrealised_pnl = load_ws_futures_coin_position_unrealised_pnl(unrealised_pnl, exchange_rates, asset, expiration)
+    else:
+        unrealised_pnl = load_ws_futures_position_unrealised_pnl(unrealised_pnl, exchange_rates, expiration)
+    data['upnl'] = unrealised_pnl
     return data
 
 
-def load_ws_futures_position_unrealised_pnl(base: float, exchange_rates: dict) -> dict:
+def load_ws_futures_position_unrealised_pnl(base: float, exchange_rates: dict, expiration: Optional[str]) -> dict:
     return {
         'base': base,
         'usd': base,
-        'btc': to_btc(base, exchange_rates),
+        'btc': to_btc(base, exchange_rates)
     }
 
 
-def load_ws_futures_coin_position_unrealised_pnl(base: float, exchange_rates: dict, asset: str) -> dict:
+def load_ws_futures_coin_position_unrealised_pnl(
+        base: float, exchange_rates: dict, asset: str, expiration: Optional[str]) -> dict:
+    if expiration and (asset_to_usd := exchange_rates.get(f"{asset}{expiration}".lower())):
+        pass
+    else:
+        asset_to_usd = exchange_rates.get(asset.lower())
+
     try:
-        usd = exchange_rates.get(asset) * base
+        usd = asset_to_usd * base
     except TypeError:
         usd = None
     return {
         'base': base,
         'usd': usd,
-        'btc': to_btc(usd, exchange_rates),
+        'btc': to_btc(usd, exchange_rates)
     }
 
 
@@ -1641,19 +1667,27 @@ def load_exchange_position_ws_data(
 def load_ws_position_unrealised_pnl(base: float, state_data: Optional[dict], exchange_rates: dict) -> dict:
     btc_value = None
     usd_value = None
-    if isinstance(state_data, dict) and (pair := state_data.get('pair', [])):
-        quote_asset = pair[1]
-        usd_value = to_usd(base, quote_asset, exchange_rates)
-        btc_value = to_btc(usd_value, exchange_rates)
-    return {
+    unrealised_pnl = {
         'base': base,
         'usd': usd_value,
         'btc': btc_value,
     }
+    if isinstance(state_data, dict) and (pair := state_data.get('pair', [])):
+        quote_asset = pair[1]
+        usd_value = to_usd(base, quote_asset, exchange_rates, state_data.get('expiration', None))
+        unrealised_pnl['usd'] = usd_value
+        unrealised_pnl['btc'] = to_btc(usd_value, exchange_rates)
+    return unrealised_pnl
 
 
-def to_usd(base: float, asset: str, exchange_rates: dict) -> Optional[float]:
-    asset_to_usd = exchange_rates.get(asset.lower()) or 1
+def to_usd(base: float, asset: str, exchange_rates: dict, expiration: Optional[str]) -> Optional[float]:
+    if expiration and (asset_to_usd := exchange_rates.get(f"{asset}{expiration}".lower())):
+        pass
+    elif asset_to_usd := exchange_rates.get(asset.lower()):
+        pass
+    else:
+        asset_to_usd = 1
+
     try:
         return base * asset_to_usd
     except TypeError:
