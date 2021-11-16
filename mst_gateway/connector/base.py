@@ -1,8 +1,9 @@
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
+from hashlib import sha256
 from ..logging import init_logger
 
 
-class Connector(metaclass=ABCMeta):
+class Connector(ABC):
 
     def __init__(self, auth=None, logger=None):
         self._auth = auth
@@ -24,6 +25,9 @@ class Connector(metaclass=ABCMeta):
     @abstractmethod
     def _connect(self, **kwargs):
         pass
+
+    def throttle_hash_name(self, name=None):
+        return sha256(f"{self.__name__}.*".encode('utf-8')).hexdigest()
 
     def open(self, **kwargs):
         self._handler = self._connect(**kwargs)

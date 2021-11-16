@@ -2,9 +2,8 @@ import json
 from datetime import datetime, timedelta
 from typing import Optional, Union
 from bravado.exception import HTTPError
-from bravado_core.exception import SwaggerMappingError
+from requests.structures import CaseInsensitiveDict
 from mst_gateway.storage import StateStorageKey
-
 from .lib import (
     bitmex_connector, APIKeyAuthenticator, SwaggerClient
 )
@@ -494,7 +493,8 @@ class BitmexRestApi(StockRestApi):
             )}
 
     def _bitmex_api(self, method: callable, **kwargs):
-        self.validate_throttling()
+        _throttle_hash_name = self.throttle_hash_name()
+        self.validate_throttling(_throttle_hash_name)
 
         headers = {}
         if self._keepalive:
@@ -509,16 +509,18 @@ class BitmexRestApi(StockRestApi):
             ).response()
 
             self.throttle.set(
-                key=self._throttle_hash_name,
+                key=_throttle_hash_name,
                 limit=(int(resp.incoming_response.headers.get('X-RateLimit-Limit', 0)) -
                        int(resp.incoming_response.headers.get('X-RateLimit-Remaining', 0))),
                 reset=int(resp.incoming_response.headers.get('X-RateLimit-Reset', 0)),
                 scope='rest'
             )
-
             return resp.result, resp.metadata
         except HTTPError as exc:
-            self.throttle.set(key=self._throttle_hash_name, **self.__get_limit_header(exc.response.headers))
+            self.throttle.set(
+                key=_throttle_hash_name,
+                **self.__get_limit_header(exc.response.headers)
+            )
 
             message = exc.message
             if not message and isinstance(exc.swagger_result, dict):
@@ -532,25 +534,26 @@ class BitmexRestApi(StockRestApi):
             elif status_code == 404:
                 raise NotFoundError(full_message)
             raise ConnectorError(full_message)
+        except Exception as exc:
+            self.logger.error(f"Bitmex api error. Details: {exc}")
+            raise ConnectorError("Bitmex api error.")
 
-    def __get_limit_header(self, headers):
+    def __get_limit_header(self, headers: CaseInsensitiveDict):
         limit_header = {
             'limit': 0,
             'reset': None,
             'scope': 'rest',
         }
-        retry_after = None
-        try:
-            for h in headers:
-                if str(h).upper() == 'RETRY-AFTER':
-                    if retry_after := int(headers[h]):
-                        break
-            limit_header.update({
-                'limit': self._throttle_overlimit,
-                'reset': self.__parse_reset(retry_after)
-            })
-        except ValueError:
-            pass
+        if h := headers.get('retry-after'):
+            try:
+                retry_after = int(h)
+                limit_header.update({
+                    'limit': float('inf'),
+                    'reset': self.__parse_reset(retry_after),
+                    'timeout': retry_after
+                })
+            except (ValueError, TypeError):
+                pass
         return limit_header
 
     def __parse_reset(self, retry_after: Optional[int]) -> int:
