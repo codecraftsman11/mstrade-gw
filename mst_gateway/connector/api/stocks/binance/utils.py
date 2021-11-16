@@ -1014,8 +1014,7 @@ def load_trade_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     }
     if isinstance(state_data, dict):
         data.update({
-            'ss': state_data.get('system_symbol'),
-            'sch': state_data.get('schema')
+            'ss': state_data.get('system_symbol')
         })
     return data
 
@@ -1061,8 +1060,7 @@ def load_quote_bin_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     if isinstance(state_data, dict):
         data.update({
             's': state_data.get('symbol'),
-            'ss': state_data.get('system_symbol'),
-            'sch': state_data.get('schema')
+            'ss': state_data.get('system_symbol')
         })
     return data
 
@@ -1109,7 +1107,6 @@ def load_order_book_ws_data(raw_data: dict, order: list, side: int, state_data: 
     }
     if isinstance(state_data, dict):
         data.update({
-            'sch': state_data.get('schema'),
             'ss': state_data.get('system_symbol')
         })
     return data
@@ -1153,7 +1150,6 @@ def load_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict])
         'tm': to_iso_datetime(raw_data.get('E')),
         'ts': raw_data.get('E'),
         's': symbol,
-        'sch': schema,
         'p': price,
         'p24': price24,
         'dt': delta(price, price24),
@@ -1260,7 +1256,6 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         order_type_and_exec = load_order_type_and_exec(state_data.get('schema'), raw_data.get('o', '').upper())
         data.update({
             'ss': state_data.get('system_symbol'),
-            'sch': state_data.get('schema'),
             't': order_type_and_exec.get('type'),
             'exc':  order_type_and_exec.get('execution')
         })
@@ -1438,8 +1433,7 @@ def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, sta
     }
     if isinstance(state_data, dict):
         data.update({
-            'ss': state_data.get('system_symbol'),
-            'sch': state_data.get('schema')
+            'ss': state_data.get('system_symbol')
         })
         if exp := state_data.get('expiration', None):
             expiration = exp
@@ -1658,8 +1652,7 @@ def load_exchange_position_ws_data(
     }
     if isinstance(state_data, dict):
         data.update({
-            'ss': state_data.get('system_symbol'),
-            'sch': state_data.get('schema')
+            'ss': state_data.get('system_symbol')
         })
     return data
 
