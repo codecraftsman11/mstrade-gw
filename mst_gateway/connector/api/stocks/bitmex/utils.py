@@ -80,7 +80,6 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
             'tck': state_data.get('tick'),
             'vt': state_data.get('volume_tick'),
             'ss': state_data.get('system_symbol'),
-            'sch': state_data.get('schema'),
             'ssch': state_data.get('symbol_schema'),
             'crt': to_iso_datetime(state_data.get('created')),
             'mlvr': state_data.get('max_leverage')
@@ -243,7 +242,6 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         order_type_and_exec = load_order_type_and_exec(state_data.get('schema'), raw_data.get('ordType'))
         data.update({
             'ss': state_data.get('system_symbol'),
-            'sch': state_data.get('schema'),
             't': order_type_and_exec.get('type'),
             'exc': order_type_and_exec.get('execution')
         })
@@ -300,8 +298,7 @@ def load_position_ws_data(raw_data: dict, state_data: Optional[dict], exchange_r
     }
     if isinstance(state_data, dict):
         data.update({
-            'ss': state_data.get('system_symbol'),
-            'sch': state_data.get('schema')
+            'ss': state_data.get('system_symbol')
         })
         if exp := state_data.get('expiration', None):
             expiration = exp
@@ -382,8 +379,7 @@ def load_ws_quote_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     }
     if isinstance(state_data, dict):
         data.update({
-            'ss': state_data.get('system_symbol'),
-            'sch': state_data.get('schema')
+            'ss': state_data.get('system_symbol')
         })
     return data
 
@@ -424,8 +420,7 @@ def load_ws_quote_bin_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     }
     if isinstance(state_data, dict):
         data.update({
-            'ss': state_data.get('system_symbol'),
-            'sc': state_data.get('schema')
+            'ss': state_data.get('system_symbol')
         })
     return data
 
@@ -467,7 +462,6 @@ def load_ws_order_book_data(raw_data: dict, state_data: Optional[dict], price_by
     }
     if isinstance(state_data, dict):
         data.update({
-            'sch': state_data.get('schema'),
             'ss': state_data.get('system_symbol')
         })
     return data
@@ -483,8 +477,7 @@ def quote2bin(quote: dict) -> dict:
         'hi': quote['p'],
         'lw': quote['p'],
         'vl': quote['vl'],
-        'ss': quote.get('ss'),
-        'sch': quote.get('sch')
+        'ss': quote.get('ss')
     }
 
 
@@ -496,7 +489,6 @@ def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
     quote_bin['lw'] = min(quote_bin['lw'], quote['p'])
     quote_bin['vl'] += quote['vl']
     quote_bin['ss'] = quote.get('ss')
-    quote_bin['sch'] = quote.get('sch')
     return quote_bin
 
 
