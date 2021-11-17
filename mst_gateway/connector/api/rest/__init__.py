@@ -42,10 +42,6 @@ class StockRestApi(Connector):
             return sha256(self.auth.get('api_key', '').encode('utf-8')).hexdigest()
         return super().throttle_hash_name(name)
 
-    @property
-    def _throttle_overlimit(self):
-        return self._throttle_limit + 1 if self._throttle_limit else 1000000
-
     def validate_throttling(self, hash_name: str):
         reset_time = self.throttle.validate(hash_name, self._throttle_limit)
         if reset_time:
