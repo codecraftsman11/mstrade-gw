@@ -1006,7 +1006,6 @@ def load_trade_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     """
     data = {
         'tm': to_iso_datetime(raw_data.get('E')),
-        'ts': raw_data.get('E'),
         'p': to_float(raw_data.get('p')),
         'vl': to_float(raw_data.get('q')),
         'sd': load_order_side(raw_data.get('m')),
@@ -1050,7 +1049,6 @@ def load_quote_bin_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     _timestamp = raw_data.get('t')
     data = {
         'tm': to_iso_datetime(_timestamp),
-        'ts': _timestamp,
         'op': to_float(raw_data.get("o")),
         'cl': to_float(raw_data.get("c")),
         'hi': to_float(raw_data.get("h")),
@@ -1148,7 +1146,6 @@ def load_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict])
     face_price, _reversed = BinanceFinFactory.calc_face_price(symbol, price, schema=schema)
     data = {
         'tm': to_iso_datetime(raw_data.get('E')),
-        'ts': raw_data.get('E'),
         's': symbol,
         'p': price,
         'p24': price24,
@@ -1245,7 +1242,7 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'lv': calculate_ws_order_leaves_volume(raw_data),
         'fv': to_float(raw_data.get('z')),
         'ap': calculate_ws_order_avg_price(raw_data),
-        'ts': to_date(raw_data.get('E')),
+        'tm': to_iso_datetime(raw_data.get('E')),
         's': raw_data.get('s'),
         'stp': to_float(raw_data['P']) if raw_data.get('P') else to_float(raw_data.get('sp')),
         'crt': to_iso_datetime(raw_data['O']) if raw_data.get('O') else to_date(raw_data.get('T')),
@@ -1419,7 +1416,6 @@ def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, sta
     unrealised_pnl = position_state_data['unrealised_pnl']
     data = {
         'tm': to_iso_datetime(raw_data.get('E')),
-        'ts': raw_data.get('E'),
         's': position_state_data['symbol'].lower(),
         'sd': position_state_data['side'],
         'vl': position_state_data['volume'],
@@ -1638,7 +1634,6 @@ def load_exchange_position_ws_data(
     )
     data = {
         'tm': to_iso_datetime(raw_data.get('E')),
-        'ts': raw_data.get('E'),
         's': raw_data['s'].lower(),
         'sd': side,
         'vl': volume,

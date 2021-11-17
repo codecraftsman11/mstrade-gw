@@ -60,7 +60,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     face_price, _reversed = BitmexFinFactory.calc_face_price(symbol, price)
     data = {
         'tm': symbol_time,
-        'ts': time2timestamp(symbol_time),
+        # 'ts': time2timestamp(symbol_time), TODO: remove
         's': symbol,
         'p': price,
         'p24': price24,
@@ -231,7 +231,7 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'lv': to_float(raw_data.get('leavesQty')),
         'fv': to_float(raw_data.get('cumQty')),
         'ap': to_float(raw_data.get('avgPx')),
-        'ts': time2timestamp(raw_data.get('timestamp')),
+        # 'ts': time2timestamp(raw_data.get('timestamp')), TODO: remove
         's': raw_data.get('symbol'),
         'stp': to_float(raw_data.get('stopPx')),
         'tm': to_iso_datetime(raw_data.get('timestamp')),
@@ -284,7 +284,7 @@ def load_position_ws_data(raw_data: dict, state_data: Optional[dict], exchange_r
     _timestamp = raw_data.get('timestamp') or datetime.now()
     data = {
         'tm': to_iso_datetime(_timestamp),
-        'ts': time2timestamp(_timestamp),
+        # 'ts': time2timestamp(_timestamp), TODO: remove
         's': raw_data.get('symbol'),
         'mp': to_float(raw_data.get('markPrice')),
         'upnl': unrealised_pnl,
@@ -371,7 +371,7 @@ def load_ws_quote_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     quote_time = to_iso_datetime(raw_data.get('timestamp'))
     data = {
         'tm': quote_time,
-        'ts': time2timestamp(quote_time),
+        # 'ts': time2timestamp(quote_time), TODO: remove
         's': raw_data.get('symbol'),
         'p': to_float(raw_data.get('price')),
         'vl': raw_data.get('size'),
@@ -410,7 +410,7 @@ def load_ws_quote_bin_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     quote_bin_time = to_iso_datetime(raw_data.get('timestamp'))
     data = {
         'tm': quote_bin_time,
-        'ts': time2timestamp(quote_bin_time),
+        # 'ts': time2timestamp(quote_bin_time), TODO: remove
         's': raw_data.get('symbol'),
         'op': to_float(raw_data.get('open')),
         'cl': to_float(raw_data.get('close')),
@@ -470,7 +470,7 @@ def load_ws_order_book_data(raw_data: dict, state_data: Optional[dict], price_by
 def quote2bin(quote: dict) -> dict:
     return {
         's': quote['s'],
-        'ts': quote['ts'],
+        # 'ts': quote['ts'], TODO: remove
         'tm': quote['tm'],
         'op': quote['p'],
         'cl': quote['p'],
@@ -482,7 +482,7 @@ def quote2bin(quote: dict) -> dict:
 
 
 def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
-    quote_bin['ts'] = quote['ts']
+    # quote_bin['ts'] = quote['ts'] TODO: remove
     quote_bin['tm'] = quote['tm']
     quote_bin['cl'] = quote['p']
     quote_bin['hi'] = max(quote_bin['hi'], quote['p'])
