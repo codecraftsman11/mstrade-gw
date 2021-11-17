@@ -890,6 +890,8 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(message)
         except BinanceAPIException as exc:
             message = f"Binance api error. Details: {exc.code}, {exc.message}"
+            if int(exc.code) == 0:
+                raise ConnectorError(f"Binance api error. Details: {exc.code}, 504 Gateway Timeout")
             if int(exc.code) == -1003:
                 self.logger.critical(f"{self.__class__.__name__}: {exc}")
             if int(exc.code) == -2011:
