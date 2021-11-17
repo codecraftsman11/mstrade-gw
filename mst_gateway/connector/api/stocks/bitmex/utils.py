@@ -73,8 +73,8 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         're': _reversed,
         'v24': raw_data.get('volume24h'),
         'mp': to_float(raw_data.get('markPrice')),
-        'hi': to_float(raw_data.get("highPrice")),
-        'lw': to_float(raw_data.get('lowPrice'))
+        'hip': to_float(raw_data.get("highPrice")),
+        'lwp': to_float(raw_data.get('lowPrice'))
     }
     if isinstance(state_data, dict):
         data.update({

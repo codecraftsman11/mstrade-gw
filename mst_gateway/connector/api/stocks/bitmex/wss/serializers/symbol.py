@@ -60,8 +60,8 @@ class BitmexSymbolSerializer(BitmexSerializer):
             'bip': 'bidPrice',
             'v24': 'volume24h',
             'mp': 'markPrice',
-            'hi': 'highPrice',
-            'lw': 'lowPrice'
+            'hip': 'highPrice',
+            'lwp': 'lowPrice'
         }
         return _map.get(key)
 

@@ -1165,8 +1165,8 @@ def load_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict])
         're': _reversed,
         'v24': to_float(raw_data.get('v')),
         'mp': to_float(raw_data.get('c')),
-        'hi': to_float(raw_data.get("h")),
-        'lw': to_float(raw_data.get('l'))
+        'hip': to_float(raw_data.get("h")),
+        'lwp': to_float(raw_data.get('l'))
     }
     if isinstance(state_data, dict):
         data.update({
