@@ -1,3 +1,5 @@
+from hashlib import sha256
+from time import time
 from abc import abstractmethod
 from typing import Optional, Union
 from logging import Logger
@@ -11,6 +13,7 @@ from .. import (
     SELL
 )
 from .throttle import ThrottleRest
+from mst_gateway.exceptions import RecoverableError
 
 
 class StockRestApi(Connector):
@@ -20,7 +23,7 @@ class StockRestApi(Connector):
     name = 'Base'
 
     def __init__(self, name: str = None, auth: dict = None, test: bool = True, logger: Logger = None,
-                 throttle_storage=None, throttle_hash_name: str = '*', state_storage=None):
+                 throttle_storage=None, throttle_limit: int = None, state_storage=None):
         if name is not None:
             self.name = name.lower()
         self.test = test
@@ -29,10 +32,22 @@ class StockRestApi(Connector):
         self._error: tuple = ERROR_OK
         if throttle_storage is not None:
             self.throttle = ThrottleRest(storage=throttle_storage)
-        self._throttle_hash_name = throttle_hash_name
+        self._throttle_limit = throttle_limit
         if state_storage is not None:
             self.storage = StateStorage(storage=state_storage)
         super().__init__(auth, logger)
+
+    def throttle_hash_name(self, name=None):
+        if self.auth:
+            return sha256(self.auth.get('api_key', '').encode('utf-8')).hexdigest()
+        return super().throttle_hash_name(name)
+
+    def validate_throttling(self, hash_name: str):
+        reset_time = self.throttle.validate(hash_name, self._throttle_limit)
+        if reset_time:
+            raise RecoverableError(
+                f"Request was throttled. Expected available in {reset_time - int(time())} seconds."
+            )
 
     @abstractmethod
     def ping(self, schema: str) -> bool:
