@@ -38,6 +38,8 @@ def load_symbol_data(schema: str, raw_data: Optional[dict], state_data: Optional
         'reversed': _reversed,
         'volume24': to_float(raw_data.get('volume')),
         'mark_price': price,
+        'high': to_float(raw_data.get('highPrice')),
+        'low': to_float(raw_data.get('lowPrice'))
     }
     if isinstance(state_data, dict):
         data.update({
