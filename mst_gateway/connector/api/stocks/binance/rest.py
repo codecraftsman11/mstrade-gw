@@ -901,10 +901,11 @@ class BinanceRestApi(StockRestApi):
             self.logger.error(f"Binance api error. Detail: {exc}")
             raise ConnectorError("Binance api error.")
         finally:
-            self.throttle.set(
-                key=_throttle_hash_name,
-                **self.__get_limit_header(self.handler.response.headers)
-            )
+            if self.handler.response:
+                self.throttle.set(
+                    key=_throttle_hash_name,
+                    **self.__get_limit_header(self.handler.response.headers)
+                )
 
         if isinstance(resp, dict) and resp.get('code') != 200 and resp.get('msg'):
             try:
