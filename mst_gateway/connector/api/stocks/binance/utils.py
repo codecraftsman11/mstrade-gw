@@ -289,10 +289,10 @@ def load_quote_bin_data(raw_data: list, state_data: Optional[dict]) -> dict:
     data = {
         'time': to_date(raw_data[0]),
         'timestamp': raw_data[0],
-        'open': to_float(raw_data[1]),
-        'close': to_float(raw_data[4]),
-        'high': to_float(raw_data[2]),
-        'low': to_float(raw_data[3]),
+        'open_price': to_float(raw_data[1]),
+        'close_price': to_float(raw_data[4]),
+        'high_price': to_float(raw_data[2]),
+        'low_price': to_float(raw_data[3]),
         'volume': raw_data[5]
     }
     if isinstance(state_data, dict):
@@ -1054,10 +1054,10 @@ def load_quote_bin_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     data = {
         'tm': to_iso_datetime(_timestamp),
         'ts': _timestamp,
-        'op': to_float(raw_data.get("o")),
-        'cl': to_float(raw_data.get("c")),
-        'hi': to_float(raw_data.get("h")),
-        'lw': to_float(raw_data.get('l')),
+        'opp': to_float(raw_data.get("o")),
+        'clp': to_float(raw_data.get("c")),
+        'hip': to_float(raw_data.get("h")),
+        'lwp': to_float(raw_data.get('l')),
         'vl': to_float(raw_data.get('v'))
     }
     if isinstance(state_data, dict):

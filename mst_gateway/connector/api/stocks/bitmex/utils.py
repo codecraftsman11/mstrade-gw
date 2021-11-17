@@ -400,10 +400,10 @@ def load_quote_bin_data(raw_data: dict, state_data: Optional[dict], binsize=None
         'time': quote_bin_time,
         'timestamp': time2timestamp(quote_bin_time),
         'symbol': raw_data.get('symbol'),
-        'open': to_float(raw_data.get('open')),
-        'close': to_float(raw_data.get('close')),
-        'high': to_float(raw_data.get('high')),
-        'low': to_float(raw_data.get('low')),
+        'open_price': to_float(raw_data.get('open')),
+        'close_price': to_float(raw_data.get('close')),
+        'high_price': to_float(raw_data.get('high')),
+        'low_price': to_float(raw_data.get('low')),
         'volume': raw_data.get('volume')
     }
     if isinstance(state_data, dict):
@@ -420,10 +420,10 @@ def load_ws_quote_bin_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'tm': quote_bin_time,
         'ts': time2timestamp(quote_bin_time),
         's': raw_data.get('symbol'),
-        'op': to_float(raw_data.get('open')),
-        'cl': to_float(raw_data.get('close')),
-        'hi': to_float(raw_data.get('high')),
-        'lw': to_float(raw_data.get('low')),
+        'opp': to_float(raw_data.get('open')),
+        'clp': to_float(raw_data.get('close')),
+        'hip': to_float(raw_data.get('high')),
+        'lwp': to_float(raw_data.get('low')),
         'vl': raw_data.get('volume')
     }
     if isinstance(state_data, dict):
@@ -482,10 +482,10 @@ def quote2bin(quote: dict) -> dict:
         's': quote['s'],
         'ts': quote['ts'],
         'tm': quote['tm'],
-        'op': quote['p'],
-        'cl': quote['p'],
-        'hi': quote['p'],
-        'lw': quote['p'],
+        'opp': quote['p'],
+        'clp': quote['p'],
+        'hip': quote['p'],
+        'lwp': quote['p'],
         'vl': quote['vl'],
         'ss': quote.get('ss'),
         'sch': quote.get('sch')
@@ -495,9 +495,9 @@ def quote2bin(quote: dict) -> dict:
 def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
     quote_bin['ts'] = quote['ts']
     quote_bin['tm'] = quote['tm']
-    quote_bin['cl'] = quote['p']
-    quote_bin['hi'] = max(quote_bin['hi'], quote['p'])
-    quote_bin['lw'] = min(quote_bin['lw'], quote['p'])
+    quote_bin['clp'] = quote['p']
+    quote_bin['hip'] = max(quote_bin['hip'], quote['p'])
+    quote_bin['lwp'] = min(quote_bin['lwp'], quote['p'])
     quote_bin['vl'] += quote['vl']
     quote_bin['ss'] = quote.get('ss')
     quote_bin['sch'] = quote.get('sch')
