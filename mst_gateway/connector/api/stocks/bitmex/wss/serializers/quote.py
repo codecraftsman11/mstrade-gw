@@ -34,10 +34,10 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
         return {
             'timestamp': utils.to_iso_datetime(bin_time),
             'symbol': item.get('symbol'),
-            'open_price': close,
-            'close_price': close,
-            'high_price': close,
-            'low_price': close,
+            'open': close,
+            'close': close,
+            'high': close,
+            'low': close,
             'volume': 0
         }
 
