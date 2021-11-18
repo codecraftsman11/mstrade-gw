@@ -1051,7 +1051,6 @@ def load_quote_bin_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     _timestamp = raw_data.get('t')
     data = {
         'tm': to_iso_datetime(_timestamp),
-        'ts': _timestamp,
         'opp': to_float(raw_data.get("o")),
         'clp': to_float(raw_data.get("c")),
         'hip': to_float(raw_data.get("h")),
