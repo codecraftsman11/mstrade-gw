@@ -91,7 +91,7 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
         new_bin.update({
             'opp': prev_bin_cl,
             'hip': max(new_bin['hip'], prev_bin_cl),
-            'lwp': min(new_bin['lwp'], prev_bin_cl),
+            'lop': min(new_bin['lop'], prev_bin_cl),
         })
         self._bins[symbol] = new_bin
         return self._bins[symbol]

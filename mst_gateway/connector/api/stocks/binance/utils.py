@@ -1008,7 +1008,6 @@ def load_trade_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     """
     data = {
         'tm': to_iso_datetime(raw_data.get('E')),
-        'ts': raw_data.get('E'),
         'p': to_float(raw_data.get('p')),
         'vl': to_float(raw_data.get('q')),
         'sd': load_order_side(raw_data.get('m')),
@@ -1016,8 +1015,7 @@ def load_trade_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     }
     if isinstance(state_data, dict):
         data.update({
-            'ss': state_data.get('system_symbol'),
-            'sch': state_data.get('schema')
+            'ss': state_data.get('system_symbol')
         })
     return data
 
@@ -1057,14 +1055,13 @@ def load_quote_bin_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'opp': to_float(raw_data.get("o")),
         'clp': to_float(raw_data.get("c")),
         'hip': to_float(raw_data.get("h")),
-        'lwp': to_float(raw_data.get('l')),
+        'lop': to_float(raw_data.get('l')),
         'vl': to_float(raw_data.get('v'))
     }
     if isinstance(state_data, dict):
         data.update({
             's': state_data.get('symbol'),
-            'ss': state_data.get('system_symbol'),
-            'sch': state_data.get('schema')
+            'ss': state_data.get('system_symbol')
         })
     return data
 
@@ -1111,7 +1108,6 @@ def load_order_book_ws_data(raw_data: dict, order: list, side: int, state_data: 
     }
     if isinstance(state_data, dict):
         data.update({
-            'sch': state_data.get('schema'),
             'ss': state_data.get('system_symbol')
         })
     return data
@@ -1153,9 +1149,7 @@ def load_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict])
     face_price, _reversed = BinanceFinFactory.calc_face_price(symbol, price, schema=schema)
     data = {
         'tm': to_iso_datetime(raw_data.get('E')),
-        'ts': raw_data.get('E'),
         's': symbol,
-        'sch': schema,
         'p': price,
         'p24': price24,
         'dt': delta(price, price24),
@@ -1166,7 +1160,7 @@ def load_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict])
         'v24': to_float(raw_data.get('v')),
         'mp': to_float(raw_data.get('c')),
         'hip': to_float(raw_data.get("h")),
-        'lwp': to_float(raw_data.get('l'))
+        'lop': to_float(raw_data.get('l'))
     }
     if isinstance(state_data, dict):
         data.update({
@@ -1253,7 +1247,7 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'lv': calculate_ws_order_leaves_volume(raw_data),
         'fv': to_float(raw_data.get('z')),
         'ap': calculate_ws_order_avg_price(raw_data),
-        'ts': to_date(raw_data.get('E')),
+        'tm': to_iso_datetime(raw_data.get('E')),
         's': raw_data.get('s'),
         'stp': to_float(raw_data['P']) if raw_data.get('P') else to_float(raw_data.get('sp')),
         'crt': to_iso_datetime(raw_data['O']) if raw_data.get('O') else to_date(raw_data.get('T')),
@@ -1264,7 +1258,6 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         order_type_and_exec = load_order_type_and_exec(state_data.get('schema'), raw_data.get('o', '').upper())
         data.update({
             'ss': state_data.get('system_symbol'),
-            'sch': state_data.get('schema'),
             't': order_type_and_exec.get('type'),
             'exc':  order_type_and_exec.get('execution')
         })
@@ -1428,7 +1421,6 @@ def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, sta
     unrealised_pnl = position_state_data['unrealised_pnl']
     data = {
         'tm': to_iso_datetime(raw_data.get('E')),
-        'ts': raw_data.get('E'),
         's': position_state_data['symbol'].lower(),
         'sd': position_state_data['side'],
         'vl': position_state_data['volume'],
@@ -1442,8 +1434,7 @@ def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, sta
     }
     if isinstance(state_data, dict):
         data.update({
-            'ss': state_data.get('system_symbol'),
-            'sch': state_data.get('schema')
+            'ss': state_data.get('system_symbol')
         })
         if exp := state_data.get('expiration', None):
             expiration = exp
@@ -1648,7 +1639,6 @@ def load_exchange_position_ws_data(
     )
     data = {
         'tm': to_iso_datetime(raw_data.get('E')),
-        'ts': raw_data.get('E'),
         's': raw_data['s'].lower(),
         'sd': side,
         'vl': volume,
@@ -1662,8 +1652,7 @@ def load_exchange_position_ws_data(
     }
     if isinstance(state_data, dict):
         data.update({
-            'ss': state_data.get('system_symbol'),
-            'sch': state_data.get('schema')
+            'ss': state_data.get('system_symbol')
         })
     return data
 

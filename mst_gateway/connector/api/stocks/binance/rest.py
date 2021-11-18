@@ -1,9 +1,10 @@
+from hashlib import sha256
 from uuid import uuid4
 from datetime import datetime, timedelta
 from typing import Union
 from bravado.exception import HTTPError
 from binance.exceptions import BinanceAPIException, BinanceRequestException
-
+from requests.structures import CaseInsensitiveDict
 from mst_gateway.storage import StateStorageKey
 from mst_gateway.calculator import BinanceFinFactory
 from mst_gateway.connector.api.types import OrderSchema, OrderType
@@ -19,6 +20,9 @@ from .....exceptions import GatewayError, ConnectorError, RecoverableError, NotF
 class BinanceRestApi(StockRestApi):
     name = 'binance'
     fin_factory = BinanceFinFactory()
+
+    def throttle_hash_name(self, name=None):
+        return sha256(f"{self.name}.{self._handler.get_schema_by_method(name)}".lower().encode('utf-8')).hexdigest()
 
     def _connect(self, **kwargs):
         return Client(api_key=self._auth.get('api_key'),
@@ -750,7 +754,7 @@ class BinanceRestApi(StockRestApi):
                 self._handler.futures_change_leverage,
             ),
             OrderSchema.futures_coin: (
-                self._handler.futures_coinchange_margin_type,
+                self._handler.futures_coin_change_margin_type,
                 self._handler.futures_coin_change_leverage,
             ),
         }
@@ -821,35 +825,6 @@ class BinanceRestApi(StockRestApi):
             symbols_data = self._binance_api(self._handler.get_ticker)
             return schema_handlers[schema](data, schema, symbols_data)
 
-    def _binance_api(self, method: callable, **kwargs):
-        try:
-            resp = method(**kwargs)
-        except HTTPError as exc:
-            message = f"Binance api error. Details: {exc.status_code}, {exc.message}"
-            if int(exc.status_code) in (418, 429) or int(exc.status_code) >= 500:
-                raise RecoverableError(message)
-            raise ConnectorError(message)
-        except BinanceAPIException as exc:
-            message = f"Binance api error. Details: {exc.code}, {exc.message}"
-            if int(exc.code) == -2011:
-                raise NotFoundError(message)
-            raise ConnectorError(message)
-        except BinanceRequestException as exc:
-            raise ConnectorError(f"Binance api error. Details: {exc.message}")
-
-        self.throttle.set(
-            key=self._throttle_hash_name,
-            **self.__get_limit_header(self.handler.response.headers)
-        )
-
-        if isinstance(resp, dict) and resp.get('code') != 200 and resp.get('msg'):
-            try:
-                _, msg = resp['msg'].split('=', 1)
-            except ValueError:
-                msg = resp['msg']
-            raise ConnectorError(f"Binance api error. Details: {msg}")
-        return resp
-
     def get_positions_state(self, schema: str) -> dict:
         schema = schema.lower()
         if schema == OrderSchema.futures:
@@ -902,6 +877,46 @@ class BinanceRestApi(StockRestApi):
             )
         return {'liquidation_price': liquidation_price}
 
+    def _binance_api(self, method: callable, **kwargs):
+        _throttle_hash_name = self.throttle_hash_name(method.__name__)
+        self.validate_throttling(_throttle_hash_name)
+
+        try:
+            resp = method(**kwargs)
+        except HTTPError as exc:
+            message = f"Binance api error. Details: {exc.status_code}, {exc.message}"
+            if exc.status_code in (418, 429) or int(exc.status_code) >= 500:
+                raise RecoverableError(message)
+            raise ConnectorError(message)
+        except BinanceAPIException as exc:
+            message = f"Binance api error. Details: {exc.code}, {exc.message}"
+            if int(exc.code) == 0:
+                raise ConnectorError(f"Binance api error. Details: {exc.code}, 504 Gateway Timeout")
+            if int(exc.code) == -1003:
+                self.logger.critical(f"{self.__class__.__name__}: {exc}")
+            if int(exc.code) == -2011:
+                raise NotFoundError(message)
+            raise ConnectorError(message)
+        except BinanceRequestException as exc:
+            raise ConnectorError(f"Binance api error. Details: {exc.message}")
+        except Exception as exc:
+            self.logger.error(f"Binance api error. Detail: {exc}")
+            raise ConnectorError("Binance api error.")
+        finally:
+            if self.handler.response:
+                self.throttle.set(
+                    key=_throttle_hash_name,
+                    **self.__get_limit_header(self.handler.response.headers)
+                )
+
+        if isinstance(resp, dict) and resp.get('code') != 200 and resp.get('msg'):
+            try:
+                _, msg = resp['msg'].split('=', 1)
+            except ValueError:
+                msg = resp['msg']
+            raise ConnectorError(f"Binance api error. Details: {msg}")
+        return resp
+
     def _api_kwargs(self, kwargs):
         api_kwargs = dict()
         for _k, _v in kwargs.items():
@@ -913,7 +928,19 @@ class BinanceRestApi(StockRestApi):
                 api_kwargs['limit'] = _v
         return api_kwargs
 
-    def __get_limit_header(self, headers):
+    def __get_limit_header(self, headers: CaseInsensitiveDict):
+        if h := headers.get('retry-after'):
+            try:
+                retry_after = int(h)
+                return dict(
+                    limit=float('inf'),
+                    reset=self.__parse_reset(retry_after),
+                    scope='rest',
+                    timeout=retry_after + 10
+                )
+            except (ValueError, TypeError):
+                pass
+
         for h in headers:
             if str(h).upper().startswith('X-MBX-USED-WEIGHT-'):
                 rate = h[len('X-MBX-USED-WEIGHT-'):]
@@ -937,8 +964,10 @@ class BinanceRestApi(StockRestApi):
                     pass
         return dict(limit=0, reset=None, scope='rest')
 
-    def __parse_reset(self, rate: str) -> int:
+    def __parse_reset(self, rate: Union[str, int]) -> int:
         now = datetime.utcnow()
+        if isinstance(rate, int):
+            return int((now + timedelta(seconds=rate)).timestamp())
         if len(rate) < 2:
             return int((now + timedelta(seconds=(60 - now.second))).timestamp())
         try:
