@@ -26,7 +26,6 @@ def load_symbol_data(schema: str, raw_data: Optional[dict], state_data: Optional
     face_price, _reversed = BinanceFinFactory.calc_face_price(symbol, price, schema=schema)
     data = {
         'time': symbol_time,
-        'timestamp': raw_data.get('closeTime'),
         'symbol': symbol,
         'schema': schema,
         'price': price,
@@ -192,7 +191,6 @@ def get_tick_from_symbol_filters(symbol_data, filter_name, parameter_name):
 def load_trade_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     data = {
         'time': to_date(raw_data.get('time')),
-        'timestamp': raw_data.get('time'),
         'price': to_float(raw_data.get('price')),
         'volume': raw_data.get('qty'),
         'side': load_order_side(raw_data.get('isBuyerMaker'))
@@ -286,7 +284,6 @@ def load_order_book_data(raw_data: dict, symbol: str, side, split,
 def load_quote_bin_data(raw_data: list, state_data: Optional[dict]) -> dict:
     data = {
         'time': to_date(raw_data[0]),
-        'timestamp': raw_data[0],
         'open': to_float(raw_data[1]),
         'close': to_float(raw_data[4]),
         'high': to_float(raw_data[2]),
@@ -307,7 +304,6 @@ def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     _time = to_date(_time_field) or datetime.now()
     data = {
         'time': _time,
-        'timestamp': time2timestamp(_time),
         'exchange_order_id': raw_data.get('orderId'),
         'symbol': raw_data.get('symbol'),
         'volume': to_float(raw_data.get('origQty')),
@@ -1560,7 +1556,6 @@ def load_exchange_position(raw_data: dict, schema: str, mark_price: float) -> di
     now = datetime.now()
     data = {
         'time': now,
-        'timestamp':  time2timestamp(now),
         'schema': schema.lower(),
         'symbol': symbol,
         'side': side,
@@ -1585,7 +1580,6 @@ def load_futures_position(raw_data: dict, schema: str) -> dict:
     now = datetime.now()
     data = {
         'time': now,
-        'timestamp':  time2timestamp(now),
         'schema': schema.lower(),
         'symbol': raw_data.get('symbol'),
         'side': load_position_side_by_volume(to_float(raw_data.get('positionAmt'))),
