@@ -247,7 +247,7 @@ class BinanceRestApi(StockRestApi):
                 kwargs['startTime'] = int(time2timestamp(quotes[-1].get('time')) + 1)
                 quote_bins.extend(quotes)
             else:
-                kwargs['endTime'] = int(time2timestamp(quotes[0].get('timestamp')) - 1)
+                kwargs['endTime'] = int(time2timestamp(quotes[0].get('time')) - 1)
                 quotes.extend(quote_bins)
                 quote_bins = quotes
         return quote_bins
