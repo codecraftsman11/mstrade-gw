@@ -3,7 +3,6 @@ from typing import Dict, Union, Optional
 from datetime import datetime, timedelta
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
-from mst_gateway.connector.api.utils.time import time2timestamp
 from mst_gateway.connector.api.utils.utils import convert_to_currency, load_wallet_summary_in_usd
 from mst_gateway.exceptions import ConnectorError
 from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
@@ -24,7 +23,6 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     face_price, _reversed = BitmexFinFactory.calc_face_price(symbol, price)
     data = {
         'time': symbol_time,
-        'timestamp': time2timestamp(symbol_time),
         'symbol': symbol,
         'price': price,
         'price24': price24,
@@ -203,7 +201,6 @@ def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'side': load_order_side(raw_data.get('side')),
         'price': to_float(raw_data.get('price')),
         'time': order_time,
-        'timestamp': time2timestamp(order_time),
         'active': bool(raw_data.get('ordStatus') != "New"),
         'type': raw_data.get('ordType', '').lower(),
         'execution': raw_data.get('ordType', '').lower(),
@@ -350,7 +347,6 @@ def load_quote_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     quote_time = to_date(raw_data.get('timestamp'))
     data = {
         'time': quote_time,
-        'timestamp': time2timestamp(quote_time),
         'symbol': raw_data.get('symbol'),
         'price': to_float(raw_data.get('price')),
         'volume': raw_data.get('size'),
@@ -386,7 +382,6 @@ def load_quote_bin_data(raw_data: dict, state_data: Optional[dict], binsize=None
     quote_bin_time = to_date(raw_data.get('timestamp'))
     data = {
         'time': quote_bin_time,
-        'timestamp': time2timestamp(quote_bin_time),
         'symbol': raw_data.get('symbol'),
         'open': to_float(raw_data.get('open')),
         'close': to_float(raw_data.get('close')),
