@@ -155,7 +155,7 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
                 'timeInForce',
                 'price'
             ],
-            'additional_params': {'isIsolated': 'TRUE'}
+            'additional_params': {}
         }
     }
 }
@@ -168,4 +168,3 @@ class BinancePositionSideMode:
     BOTH = 'BOTH'
     LONG = 'LONG'
     SHORT = 'SHORT'
-
