@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from typing import Union
 from bravado.exception import HTTPError
 from binance.exceptions import BinanceAPIException, BinanceRequestException
+from mst_gateway.connector.api.utils import time2timestamp
 from requests.structures import CaseInsensitiveDict
 from mst_gateway.storage import StateStorageKey
 from mst_gateway.calculator import BinanceFinFactory
@@ -243,10 +244,10 @@ class BinanceRestApi(StockRestApi):
             if not quotes:
                 continue
             if 'startTime' in kwargs:
-                kwargs['startTime'] = int(quotes[-1].get('timestamp') + 1)
+                kwargs['startTime'] = int(time2timestamp(quotes[-1].get('time')) + 1)
                 quote_bins.extend(quotes)
             else:
-                kwargs['endTime'] = int(quotes[0].get('timestamp') - 1)
+                kwargs['endTime'] = int(time2timestamp(quotes[0].get('time')) - 1)
                 quotes.extend(quote_bins)
                 quote_bins = quotes
         return quote_bins
