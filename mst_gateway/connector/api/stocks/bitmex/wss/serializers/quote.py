@@ -34,10 +34,10 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
         return {
             'timestamp': utils.to_iso_datetime(bin_time),
             'symbol': item.get('symbol'),
-            'open': close,
-            'close': close,
-            'high': close,
-            'low': close,
+            'open_price': close,
+            'close_price': close,
+            'high_price': close,
+            'low_price': close,
             'volume': 0
         }
 
@@ -86,12 +86,12 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
     def _reset_quote_bin(self, item: dict, state_data: dict) -> dict:
         symbol = item['symbol'].lower()
         prev_bin = self._bins[symbol]
-        prev_bin_cl = prev_bin['cl']
+        prev_bin_cl = prev_bin['clp']
         new_bin = utils.quote2bin(utils.load_ws_quote_data(item, state_data))
         new_bin.update({
-            'op': prev_bin_cl,
-            'hi': max(new_bin['hi'], prev_bin_cl),
-            'lw': min(new_bin['lw'], prev_bin_cl),
+            'opp': prev_bin_cl,
+            'hip': max(new_bin['hip'], prev_bin_cl),
+            'lop': min(new_bin['lop'], prev_bin_cl),
         })
         self._bins[symbol] = new_bin
         return self._bins[symbol]

@@ -37,6 +37,8 @@ def load_symbol_data(schema: str, raw_data: Optional[dict], state_data: Optional
         'reversed': _reversed,
         'volume24': to_float(raw_data.get('volume')),
         'mark_price': price,
+        'high_price': to_float(raw_data.get('highPrice')),
+        'low_price': to_float(raw_data.get('lowPrice'))
     }
     if isinstance(state_data, dict):
         data.update({
@@ -284,10 +286,10 @@ def load_order_book_data(raw_data: dict, symbol: str, side, split,
 def load_quote_bin_data(raw_data: list, state_data: Optional[dict]) -> dict:
     data = {
         'time': to_date(raw_data[0]),
-        'open': to_float(raw_data[1]),
-        'close': to_float(raw_data[4]),
-        'high': to_float(raw_data[2]),
-        'low': to_float(raw_data[3]),
+        'open_price': to_float(raw_data[1]),
+        'close_price': to_float(raw_data[4]),
+        'high_price': to_float(raw_data[2]),
+        'low_price': to_float(raw_data[3]),
         'volume': raw_data[5]
     }
     if isinstance(state_data, dict):
@@ -1045,10 +1047,10 @@ def load_quote_bin_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     _timestamp = raw_data.get('t')
     data = {
         'tm': to_iso_datetime(_timestamp),
-        'op': to_float(raw_data.get("o")),
-        'cl': to_float(raw_data.get("c")),
-        'hi': to_float(raw_data.get("h")),
-        'lw': to_float(raw_data.get('l')),
+        'opp': to_float(raw_data.get("o")),
+        'clp': to_float(raw_data.get("c")),
+        'hip': to_float(raw_data.get("h")),
+        'lop': to_float(raw_data.get('l')),
         'vl': to_float(raw_data.get('v'))
     }
     if isinstance(state_data, dict):
@@ -1152,6 +1154,8 @@ def load_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict])
         're': _reversed,
         'v24': to_float(raw_data.get('v')),
         'mp': to_float(raw_data.get('c')),
+        'hip': to_float(raw_data.get("h")),
+        'lop': to_float(raw_data.get('l'))
     }
     if isinstance(state_data, dict):
         data.update({
