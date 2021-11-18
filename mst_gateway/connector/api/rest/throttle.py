@@ -1,3 +1,5 @@
+from time import time
+from typing import Optional
 from mst_gateway.storage import BaseSyncStorage, StateStorageKey
 
 
@@ -31,3 +33,15 @@ class ThrottleRest(BaseSyncStorage):
             return result
         return {'rest': [0, None]}
 
+    def validate(self, key, throttle_limit) -> Optional[int]:
+        if not throttle_limit:
+            return
+        throttling_data = self.get(key).get('rest', [])
+        try:
+            request_count, reset_time = throttling_data[0], throttling_data[1]
+        except IndexError:
+            request_count = 0
+            reset_time = 0
+        if request_count >= throttle_limit and reset_time > float(time()):
+            return reset_time
+        return None

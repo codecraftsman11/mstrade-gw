@@ -9,6 +9,9 @@ class Client(BaseClient):
     MARGIN_TESTNET_URL = 'https://testnet.binance.vision/sapi'  # margin api does not exist
     MARGIN_API_VERSION2 = 'v2'
 
+    def get_schema_by_method(self, func_name):
+        return _method_map(func_name) or f"binance_{int(self.testnet)}"
+
     def ping(self) -> Dict:
         # disable spot ping for other schemas
         return {}
@@ -127,6 +130,34 @@ class Client(BaseClient):
 
         """
         return self._request_margin_api('get', 'margin/allPairs', signed=True, data=params)
+
+    def get_api_key_permission(self, **params):
+        """ Get All permissions for api_key
+
+            {
+               "ipRestrict": false,
+               "createTime": 1623840271000,
+               "enableWithdrawals": false,   // This option allows you to withdraw via API. You must apply the
+                                             // IP Access Restriction filter in order to enable withdrawals
+               "enableInternalTransfer": true,  // This option authorizes this key to transfer funds between
+                                                //your master account and your sub account instantly
+               "permitsUniversalTransfer": true,  // Authorizes this key to be used for a dedicated universal transfer
+                                                  //API to transfer multiple supported currencies. Each business's own
+                                                  //transfer API rights are not affected by this authorization
+               "enableVanillaOptions": false,  //  Authorizes this key to Vanilla options trading
+               "enableReading": true,
+               "enableFutures": false,  //  API Key created before your futures account opened does not
+                                        //support futures API service
+               "enableMargin": false,   //  This option can be adjusted after the Cross Margin account transfer
+                                        //is completed
+               "enableSpotAndMarginTrading": false, // Spot and margin trading
+               "tradingAuthorityExpirationTime": 1628985600000  // Expiration time for spot and margin
+                                                                //trading permission
+            }
+
+            https://binance-docs.github.io/apidocs/spot/en/#get-api-key-permission-user_data
+        """
+        return self._request_margin_api('get', 'account/apiRestrictions', signed=True, data=params)
 
     def get_public_interest_rate(self, **params):
         """
@@ -494,6 +525,9 @@ class AsyncClient(BaseAsyncClient):
     MARGIN_TESTNET_URL = 'https://testnet.binance.vision/sapi'  # margin api does not exist
     MARGIN_API_VERSION2 = 'v2'
 
+    def get_schema_by_method(self, func_name):
+        return _method_map(func_name) or f"binance_{int(self.testnet)}"
+
     async def ping(self) -> Dict:
         # disable spot ping for other schemas
         return {}
@@ -547,3 +581,109 @@ class AsyncClient(BaseAsyncClient):
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close_connection()
+
+
+def _method_map(func_name: str):
+    hash_map = {
+        # exchange
+        'spot_ping': 'exchange',
+        'margin_ping': 'exchange',
+        'isolated_margin_ping': 'exchange',
+        'get_deposit_address': 'exchange',
+        'get_ticker': 'exchange',
+        'get_products': 'exchange',
+        'get_exchange_info': 'exchange',
+        'get_symbol_info': 'exchange',
+        'get_all_tickers': 'exchange',
+        'get_klines': 'exchange',
+        'create_order': 'exchange',
+        'cancel_order': 'exchange',
+        'get_order': 'exchange',
+        'get_open_orders': 'exchange',
+        'get_all_orders': 'exchange',
+        'get_recent_trades': 'exchange',
+        'get_order_book': 'exchange',
+        'get_account': 'exchange',
+        'get_public_interest_rate': 'exchange',
+        'get_assets_balance': 'exchange',
+        'get_symbol_ticker': 'exchange',
+        'get_trade_level': 'exchange',
+
+        # margin2
+        'get_all_margin_symbols': 'margin2',
+        'create_margin_order': 'margin2',
+        'cancel_margin_order': 'margin2',
+        'get_margin_order': 'margin2',
+        'get_open_margin_orders': 'margin2',
+        'get_all_margin_orders': 'margin2',
+        'get_margin_account': 'margin2',
+        'get_max_margin_loan': 'margin2',
+        'get_margin_assets_balance': 'margin2',
+        'transfer_spot_to_margin': 'margin2',
+        'transfer_spot_to_futures': 'margin2',
+        'transfer_spot_to_futures_coin': 'margin2',
+        'transfer_margin_to_spot': 'margin2',
+        'transfer_futures_to_spot': 'margin2',
+        'transfer_futures_coin_to_spot': 'margin2',
+        'create_margin_loan': 'margin2',
+        'create_futures_loan': 'margin2',
+        'repay_margin_loan': 'margin2',
+        'repay_futures_loan': 'margin2',
+        'get_bnb_burn_spot_margin': 'margin2',
+
+        # margin3
+        'get_all_isolated_margin_symbols': 'margin3',
+
+
+        # futures
+        'futures_ping': 'futures',
+        'futures_ticker': 'futures',
+        'futures_orderbook_ticker': 'futures',
+        'futures_mark_price': 'futures',
+        'futures_exchange_info': 'futures',
+        'futures_leverage_bracket': 'futures',
+        'futures_klines': 'futures',
+        'futures_create_order': 'futures',
+        'futures_cancel_order': 'futures',
+        'futures_get_order': 'futures',
+        'futures_get_open_orders': 'futures',
+        'futures_get_all_orders': 'futures',
+        'futures_recent_trades': 'futures',
+        'futures_order_book': 'futures',
+        'futures_account_v2': 'futures',
+        'futures_loan_wallet': 'futures',
+        'futures_loan_configs': 'futures',
+        'get_futures_assets_balance': 'futures',
+        'futures_symbol_ticker': 'futures',
+        'futures_trade_level': 'futures',
+        'futures_funding_rate': 'futures',
+        'futures_position_information': 'futures',
+        'futures_change_margin_type': 'futures',
+        'futures_change_leverage': 'futures',
+
+
+        # futures_coin
+        'futures_coin_ping': 'futures_coin',
+        'futures_coin_ticker': 'futures_coin',
+        'futures_coin_orderbook_ticker': 'futures_coin',
+        'futures_coin_mark_price': 'futures_coin',
+        'futures_coin_exchange_info': 'futures_coin',
+        'futures_coin_leverage_bracket': 'futures_coin',
+        'futures_coin_klines': 'futures_coin',
+        'futures_coin_create_order': 'futures_coin',
+        'futures_coin_cancel_order': 'futures_coin',
+        'futures_coin_get_order': 'futures_coin',
+        'futures_coin_get_open_orders': 'futures_coin',
+        'futures_coin_get_all_orders': 'futures_coin',
+        'futures_coin_recent_trades': 'futures_coin',
+        'futures_coin_order_book': 'futures_coin',
+        'futures_coin_account': 'futures_coin',
+        'get_futures_coin_assets_balance': 'futures_coin',
+        'futures_coin_symbol_ticker': 'futures_coin',
+        'futures_coin_trade_level': 'futures_coin',
+        'futures_coin_funding_rate': 'futures_coin',
+        'futures_coin_position_information': 'futures_coin',
+        'futures_coin_change_margin_type': 'futures_coin',
+        'futures_coin_change_leverage': 'futures_coin',
+    }
+    return hash_map.get(func_name)

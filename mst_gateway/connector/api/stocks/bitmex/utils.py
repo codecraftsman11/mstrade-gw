@@ -35,6 +35,8 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'reversed': _reversed,
         'volume24': raw_data.get('volume24h'),
         'mark_price': raw_data.get('markPrice'),
+        'high_price': to_float(raw_data.get('highPrice')),
+        'low_price': to_float(raw_data.get('lowPrice'))
     }
     if isinstance(state_data, dict):
         data.update({
@@ -60,7 +62,6 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     face_price, _reversed = BitmexFinFactory.calc_face_price(symbol, price)
     data = {
         'tm': symbol_time,
-        'ts': time2timestamp(symbol_time),
         's': symbol,
         'p': price,
         'p24': price24,
@@ -71,6 +72,8 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         're': _reversed,
         'v24': raw_data.get('volume24h'),
         'mp': to_float(raw_data.get('markPrice')),
+        'hip': to_float(raw_data.get("highPrice")),
+        'lop': to_float(raw_data.get('lowPrice'))
     }
     if isinstance(state_data, dict):
         data.update({
@@ -80,7 +83,6 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
             'tck': state_data.get('tick'),
             'vt': state_data.get('volume_tick'),
             'ss': state_data.get('system_symbol'),
-            'sch': state_data.get('schema'),
             'ssch': state_data.get('symbol_schema'),
             'crt': to_iso_datetime(state_data.get('created')),
             'mlvr': state_data.get('max_leverage')
@@ -228,11 +230,10 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'tp': to_float(raw_data.get('lastPx')),
         'vl': to_float(raw_data.get('orderQty')),
         'p': to_float(raw_data.get('price')),
-        'st': BITMEX_ORDER_STATUS_MAP.get(raw_data.get('ordStatus')),
+        'st': load_ws_order_status(raw_data.get('ordStatus')),
         'lv': to_float(raw_data.get('leavesQty')),
         'fv': to_float(raw_data.get('cumQty')),
         'ap': to_float(raw_data.get('avgPx')),
-        'ts': time2timestamp(raw_data.get('timestamp')),
         's': raw_data.get('symbol'),
         'stp': to_float(raw_data.get('stopPx')),
         'tm': to_iso_datetime(raw_data.get('timestamp')),
@@ -243,11 +244,14 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         order_type_and_exec = load_order_type_and_exec(state_data.get('schema'), raw_data.get('ordType'))
         data.update({
             'ss': state_data.get('system_symbol'),
-            'sch': state_data.get('schema'),
             't': order_type_and_exec.get('type'),
             'exc': order_type_and_exec.get('execution')
         })
     return data
+
+
+def load_ws_order_status(bitmex_order_status: Optional[str]) -> Optional[str]:
+    return var.BITMEX_ORDER_STATUS_MAP.get(bitmex_order_status) or api.OrderState.closed
 
 
 def load_position_side_by_volume(volume: Optional[float]) -> Optional[int]:
@@ -273,6 +277,7 @@ def load_ws_position_action(state_volume: float, volume: float) -> str:
 
 
 def load_position_ws_data(raw_data: dict, state_data: Optional[dict], exchange_rates: dict) -> dict:
+    expiration = None
     state_volume = to_float(raw_data.get('state_volume'))
     volume = to_float(raw_data.get('currentQty'))
     side = load_position_side_by_volume(volume)
@@ -281,40 +286,45 @@ def load_position_ws_data(raw_data: dict, state_data: Optional[dict], exchange_r
     _timestamp = raw_data.get('timestamp') or datetime.now()
     data = {
         'tm': to_iso_datetime(_timestamp),
-        'ts': time2timestamp(_timestamp),
         's': raw_data.get('symbol'),
         'mp': to_float(raw_data.get('markPrice')),
+        'upnl': unrealised_pnl,
         'vl': volume,
         'lp': to_float(raw_data.get('liquidationPrice')),
         'ep': to_float(raw_data.get('avgEntryPrice')),
         'sd': side if side is not None else raw_data.get('side'),
-        'upnl': load_ws_position_unrealised_pnl(unrealised_pnl, exchange_rates),
         'lvrp': leverage_type,
         'lvr': leverage,
         'act': load_ws_position_action(state_volume, volume),
     }
     if isinstance(state_data, dict):
         data.update({
-            'ss': state_data.get('system_symbol'),
-            'sch': state_data.get('schema')
+            'ss': state_data.get('system_symbol')
         })
+        if exp := state_data.get('expiration', None):
+            expiration = exp
+    data['upnl'] = load_ws_position_unrealised_pnl(unrealised_pnl, exchange_rates, expiration)
     return data
 
 
-def load_ws_position_unrealised_pnl(base: Union[float, dict], exchange_rates: dict) -> dict:
-    xbt_to_usd = exchange_rates.get('xbt')
+def load_ws_position_unrealised_pnl(base: Union[float, dict], exchange_rates: dict, expiration: Optional[str]) -> dict:
+    if expiration and (xbt_to_usd := exchange_rates.get(f"xbt{expiration}".lower())):
+        pass
+    else:
+        xbt_to_usd = exchange_rates.get('xbt')
     if isinstance(base, float):
-        return {
+        unrealised_pnl = {
             'base': base,
             'btc': base,
-            'usd': to_usd(base, xbt_to_usd),
+            'usd': to_usd(base, xbt_to_usd)
         }
+        return unrealised_pnl
     return base
 
 
-def to_usd(xbt_value: float, xbt_to_usd: float) -> Optional[float]:
+def to_usd(xbt_value: float, coin_to_usd: float) -> Optional[float]:
     try:
-        return round(xbt_value * xbt_to_usd, 4)
+        return xbt_value * coin_to_usd
     except TypeError:
         return None
 
@@ -324,6 +334,16 @@ def load_user_data(raw_data: dict) -> dict:
         'id': str(raw_data.get('id')).lower()
     }
     return data
+
+
+def load_api_key_permissions(raw_data: dict, api_key: str, schemas: iter) -> dict:
+    for acc in raw_data:
+        if acc.get('id') == api_key:
+            if 'order' in acc.get('permissions'):
+                return {schema: (True if schema == OrderSchema.margin1 else False) for schema in schemas}
+            else:
+                return {schema: False for schema in schemas}
+    return {schema: False for schema in schemas}
 
 
 def load_trade_data(raw_data: dict, state_data: Optional[dict]) -> dict:
@@ -352,7 +372,6 @@ def load_ws_quote_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     quote_time = to_iso_datetime(raw_data.get('timestamp'))
     data = {
         'tm': quote_time,
-        'ts': time2timestamp(quote_time),
         's': raw_data.get('symbol'),
         'p': to_float(raw_data.get('price')),
         'vl': raw_data.get('size'),
@@ -360,8 +379,7 @@ def load_ws_quote_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     }
     if isinstance(state_data, dict):
         data.update({
-            'ss': state_data.get('system_symbol'),
-            'sch': state_data.get('schema')
+            'ss': state_data.get('system_symbol')
         })
     return data
 
@@ -374,10 +392,10 @@ def load_quote_bin_data(raw_data: dict, state_data: Optional[dict], binsize=None
         'time': quote_bin_time,
         'timestamp': time2timestamp(quote_bin_time),
         'symbol': raw_data.get('symbol'),
-        'open': to_float(raw_data.get('open')),
-        'close': to_float(raw_data.get('close')),
-        'high': to_float(raw_data.get('high')),
-        'low': to_float(raw_data.get('low')),
+        'open_price': to_float(raw_data.get('open')),
+        'close_price': to_float(raw_data.get('close')),
+        'high_price': to_float(raw_data.get('high')),
+        'low_price': to_float(raw_data.get('low')),
         'volume': raw_data.get('volume')
     }
     if isinstance(state_data, dict):
@@ -392,18 +410,16 @@ def load_ws_quote_bin_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     quote_bin_time = to_iso_datetime(raw_data.get('timestamp'))
     data = {
         'tm': quote_bin_time,
-        'ts': time2timestamp(quote_bin_time),
         's': raw_data.get('symbol'),
-        'op': to_float(raw_data.get('open')),
-        'cl': to_float(raw_data.get('close')),
-        'hi': to_float(raw_data.get('high')),
-        'lw': to_float(raw_data.get('low')),
+        'opp': to_float(raw_data.get('open')),
+        'clp': to_float(raw_data.get('close')),
+        'hip': to_float(raw_data.get('high')),
+        'lop': to_float(raw_data.get('low')),
         'vl': raw_data.get('volume')
     }
     if isinstance(state_data, dict):
         data.update({
-            'ss': state_data.get('system_symbol'),
-            'sc': state_data.get('schema')
+            'ss': state_data.get('system_symbol')
         })
     return data
 
@@ -445,7 +461,6 @@ def load_ws_order_book_data(raw_data: dict, state_data: Optional[dict], price_by
     }
     if isinstance(state_data, dict):
         data.update({
-            'sch': state_data.get('schema'),
             'ss': state_data.get('system_symbol')
         })
     return data
@@ -454,27 +469,23 @@ def load_ws_order_book_data(raw_data: dict, state_data: Optional[dict], price_by
 def quote2bin(quote: dict) -> dict:
     return {
         's': quote['s'],
-        'ts': quote['ts'],
         'tm': quote['tm'],
-        'op': quote['p'],
-        'cl': quote['p'],
-        'hi': quote['p'],
-        'lw': quote['p'],
+        'opp': quote['p'],
+        'clp': quote['p'],
+        'hip': quote['p'],
+        'lop': quote['p'],
         'vl': quote['vl'],
-        'ss': quote.get('ss'),
-        'sch': quote.get('sch')
+        'ss': quote.get('ss')
     }
 
 
 def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
-    quote_bin['ts'] = quote['ts']
     quote_bin['tm'] = quote['tm']
-    quote_bin['cl'] = quote['p']
-    quote_bin['hi'] = max(quote_bin['hi'], quote['p'])
-    quote_bin['lw'] = min(quote_bin['lw'], quote['p'])
+    quote_bin['clp'] = quote['p']
+    quote_bin['hip'] = max(quote_bin['hip'], quote['p'])
+    quote_bin['lop'] = min(quote_bin['lop'], quote['p'])
     quote_bin['vl'] += quote['vl']
     quote_bin['ss'] = quote.get('ss')
-    quote_bin['sch'] = quote.get('sch')
     return quote_bin
 
 
@@ -745,11 +756,12 @@ def assign_custom_parameter_values(options: Optional[dict]) -> dict:
     if options.get('comments'):
         new_options['text'] = options['comments']
     if options.get('ttl'):
-        new_options['timeInForce'] = 'GoodTillCancel'
-    if options.get('is_passive'):
-        new_options['execInst'] = 'ParticipateDoNotInitiate'
+        new_options['ttl'] = var.PARAMETER_NAMES_MAP.get(options.get('ttl'))
     if options.get('is_iceberg'):
-        new_options['displayQty'] = options['iceberg_volume'] or 0
+        new_options['iceberg_volume'] = options['iceberg_volume'] or 0
+
+    if options.get('is_passive'):
+        new_options['is_passive'] = 'ParticipateDoNotInitiate'
     return new_options
 
 

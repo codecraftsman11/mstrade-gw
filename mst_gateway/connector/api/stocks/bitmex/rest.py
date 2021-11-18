@@ -2,9 +2,8 @@ import json
 from datetime import datetime, timedelta
 from typing import Optional, Union
 from bravado.exception import HTTPError
-from bravado_core.exception import SwaggerMappingError
+from requests.structures import CaseInsensitiveDict
 from mst_gateway.storage import StateStorageKey
-
 from .lib import (
     bitmex_connector, APIKeyAuthenticator, SwaggerClient
 )
@@ -122,6 +121,17 @@ class BitmexRestApi(StockRestApi):
         data, _ = self._bitmex_api(self._handler.User.User_get, **kwargs)
         return utils.load_user_data(data)
 
+    def get_api_key_permissions(self, schemas: list,  **kwargs) -> dict:
+        default_schemas = [
+            OrderSchema.margin1,
+        ]
+        permissions = {schema: False for schema in schemas if schema in default_schemas}
+        try:
+            all_api_keys, _ = self._bitmex_api(self._handler.APIKey.APIKey_get)
+        except ConnectorError:
+            return permissions
+        return utils.load_api_key_permissions(all_api_keys, self.auth.get('api_key'), permissions.keys())
+
     def get_wallet(self, **kwargs) -> dict:
         schema = kwargs.pop('schema', OrderSchema.margin1).lower()
         assets = kwargs.pop('assets', ('btc', 'usd'))
@@ -134,9 +144,11 @@ class BitmexRestApi(StockRestApi):
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
         if schema == OrderSchema.margin1:
+            partial = kwargs.pop('partial', None)
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
-            return {
-                OrderSchema.margin1: utils.load_wallet_detail_data(data, asset)
+            wallet_detail = utils.load_wallet_detail_data(data, asset)
+            return wallet_detail if partial else {
+                OrderSchema.margin1: wallet_detail
             }
         raise ConnectorError(f"Invalid schema {schema}.")
 
@@ -376,13 +388,6 @@ class BitmexRestApi(StockRestApi):
                 trading_volume = trading_volume[0].get('advUsd')
             except (IndexError, AttributeError):
                 trading_volume = 0
-            # TODO: delete when Bitmex fixes the response
-            except SwaggerMappingError as e:
-                import re
-                try:
-                    trading_volume = re.findall(r'\d*\.\d+|\d+', str(e))[0]
-                except IndexError:
-                    trading_volume = '0'
             return utils.load_vip_level(trading_volume)
         raise ConnectorError(f"Invalid schema {schema}.")
 
@@ -479,7 +484,7 @@ class BitmexRestApi(StockRestApi):
                 side=side,
                 leverage_type=leverage_type,
                 entry_price=price,
-                maint_margin=kwargs.get('wallet_detail',  {}).get(schema, {}).get('maint_margin'),
+                maint_margin=kwargs.get('wallet_detail',  {}).get('maint_margin'),
                 volume=volume,
                 wallet_balance=wallet_balance,
                 taker_fee=kwargs.get('taker_fee'),
@@ -488,6 +493,9 @@ class BitmexRestApi(StockRestApi):
             )}
 
     def _bitmex_api(self, method: callable, **kwargs):
+        _throttle_hash_name = self.throttle_hash_name()
+        self.validate_throttling(_throttle_hash_name)
+
         headers = {}
         if self._keepalive:
             headers['Connection'] = "keep-alive"
@@ -501,21 +509,52 @@ class BitmexRestApi(StockRestApi):
             ).response()
 
             self.throttle.set(
-                key=self._throttle_hash_name,
+                key=_throttle_hash_name,
                 limit=(int(resp.incoming_response.headers.get('X-RateLimit-Limit', 0)) -
                        int(resp.incoming_response.headers.get('X-RateLimit-Remaining', 0))),
                 reset=int(resp.incoming_response.headers.get('X-RateLimit-Reset', 0)),
                 scope='rest'
             )
-
             return resp.result, resp.metadata
         except HTTPError as exc:
+            self.throttle.set(
+                key=_throttle_hash_name,
+                **self.__get_limit_header(exc.response.headers)
+            )
+
             message = exc.message
             if not message and isinstance(exc.swagger_result, dict):
                 message = exc.swagger_result.get('error', {}).get('message')
-            full_message = f"Bitmex api error. Details: {exc.status_code}, {message}"
-            if int(exc.status_code) == 429 or int(exc.status_code) >= 500:
+            status_code = int(exc.status_code)
+            full_message = f"Bitmex api error. Details: {status_code}, {message}"
+            if status_code == 429 or status_code >= 500:
                 raise RecoverableError(full_message)
-            elif int(exc.status_code) == 404:
+            elif status_code == 403:
+                self.logger.critical(f"{self.__class__.__name__}: {exc}")
+            elif status_code == 404:
                 raise NotFoundError(full_message)
             raise ConnectorError(full_message)
+        except Exception as exc:
+            self.logger.error(f"Bitmex api error. Details: {exc}")
+            raise ConnectorError("Bitmex api error.")
+
+    def __get_limit_header(self, headers: CaseInsensitiveDict):
+        limit_header = {
+            'limit': 0,
+            'reset': None,
+            'scope': 'rest',
+        }
+        if h := headers.get('retry-after'):
+            try:
+                retry_after = int(h)
+                limit_header.update({
+                    'limit': float('inf'),
+                    'reset': self.__parse_reset(retry_after),
+                    'timeout': retry_after
+                })
+            except (ValueError, TypeError):
+                pass
+        return limit_header
+
+    def __parse_reset(self, retry_after: Optional[int]) -> int:
+        return int((datetime.utcnow() + timedelta(seconds=retry_after or 60)).timestamp())
