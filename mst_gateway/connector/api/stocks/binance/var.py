@@ -135,6 +135,28 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
             ],
             'additional_params': {}
         }
+    },
+
+    api.OrderSchema.margin3: {
+        'MARKET': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'isIsolated',
+                'sideEffectType'
+            ],
+            'additional_params': {}
+        },
+        'LIMIT': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'isIsolated',
+                'sideEffectType'
+                'icebergQty',
+                'timeInForce',
+                'price'
+            ],
+            'additional_params': {}
+        }
     }
 }
 
@@ -146,4 +168,3 @@ class BinancePositionSideMode:
     BOTH = 'BOTH'
     LONG = 'LONG'
     SHORT = 'SHORT'
-

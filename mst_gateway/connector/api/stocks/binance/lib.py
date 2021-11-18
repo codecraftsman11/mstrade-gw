@@ -520,6 +520,22 @@ class Client(BaseClient):
                     if position.get('symbol', '').lower() == symbol.lower()]
         return super().futures_coin_position_information(**params)
 
+    def get_isolated_margin_order(self, **params):
+        params['isIsolated'] = 'TRUE'
+        return self.get_margin_order(**params)
+
+    def create_isolated_margin_order(self, **params):
+        params['isIsolated'] = 'TRUE'
+        return self.create_margin_order(**params)
+
+    def cancel_isolated_margin_order(self, **params):
+        params['isIsolated'] = 'TRUE'
+        return self.cancel_margin_order(**params)
+
+    def get_all_isolated_margin_orders(self, **params):
+        params['isIsolated'] = 'TRUE'
+        return self.get_all_margin_orders(**params)
+
 
 class AsyncClient(BaseAsyncClient):
     MARGIN_TESTNET_URL = 'https://testnet.binance.vision/sapi'  # margin api does not exist
@@ -582,6 +598,22 @@ class AsyncClient(BaseAsyncClient):
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close_connection()
 
+    async def get_isolated_margin_order(self, **params):
+        params['isIsolated'] = 'TRUE'
+        return await self.get_margin_order(**params)
+
+    async def create_isolated_margin_order(self, **params):
+        params['isIsolated'] = 'TRUE'
+        return await self.create_margin_order(**params)
+
+    async def cancel_isolated_margin_order(self, **params):
+        params['isIsolated'] = 'TRUE'
+        return await self.cancel_margin_order(**params)
+
+    async def get_all_isolated_margin_orders(self, **params):
+        params['isIsolated'] = 'TRUE'
+        return await self.get_all_margin_orders(**params)
+
 
 def _method_map(func_name: str):
     hash_map = {
@@ -630,6 +662,11 @@ def _method_map(func_name: str):
         'repay_margin_loan': 'margin2',
         'repay_futures_loan': 'margin2',
         'get_bnb_burn_spot_margin': 'margin2',
+
+        'get_isolated_margin_order': 'margin2',
+        'create_isolated_margin_order': 'margin2',
+        'cancel_isolated_margin_order': 'margin2',
+        'get_all_isolated_margin_orders': 'margin2',
 
         # margin3
         'get_all_isolated_margin_symbols': 'margin3',
