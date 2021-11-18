@@ -19,6 +19,15 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
             # 'TAKE_PROFIT': {'type': OrderType.take_profit, 'execution': OrderExec.market},
             # 'LIMIT_MAKER': {'type': OrderType.limit, 'execution': OrderExec.limit}
         },
+        OrderSchema.margin3: {
+            'LIMIT': {'type': OrderType.limit, 'execution': OrderExec.limit},
+            'MARKET': {'type': OrderType.market, 'execution': OrderExec.market},
+            'STOP_LOSS_LIMIT': {'type': OrderType.stop_loss, 'execution': OrderExec.limit},
+            'TAKE_PROFIT_LIMIT': {'type': OrderType.take_profit, 'execution': OrderExec.limit},
+            # 'STOP_LOSS': {'type': OrderType.stop_loss, 'execution': OrderExec.market},
+            # 'TAKE_PROFIT': {'type': OrderType.take_profit, 'execution': OrderExec.market},
+            # 'LIMIT_MAKER': {'type': OrderType.limit, 'execution': OrderExec.limit}
+        },
         OrderSchema.exchange: {
             'LIMIT': {'type': OrderType.limit, 'execution': OrderExec.limit},
             'MARKET': {'type': OrderType.market, 'execution': OrderExec.market},
