@@ -60,16 +60,19 @@ class OrderState(ClassWithAttributes):
     waiting = 'waiting'         # Algorithm is waiting for start
     started = 'started'         # Algorithm is strarted
     canceled = 'canceled'       # Algorithm is canceled
+    expired = 'expired'         # Limit order is expired
     pending = 'pending'         # Limit order is waiting to activate
     deleted = 'deleted'         # Limit order is deleted
-    active = 'active'           # Limit Order is activated
-    closed = 'closed'           # Active order is closed
-    reversed = 'reversed'       # Active order is reversed
-    liquidated = 'liquidated'   # Active order is liquidated
+    active = 'active'           # Position order is active
+    closed = 'closed'           # Position order is closed
+    reversed = 'reversed'       # Position order is reversed
+    liquidated = 'liquidated'   # Position order is liquidated
 
 
 class OrderTTL(ClassWithAttributes):
     GTC = 'GTC'
+    IOC = 'IOC'
+    FOK = 'FOK'
     H1 = 'H1'
     H4 = 'H4'
     D1 = 'D1'
@@ -78,6 +81,13 @@ class OrderTTL(ClassWithAttributes):
 class OrderExec(ClassWithAttributes):
     market = 'market'
     limit = 'limit'
+
+
+class OrderParams(ClassWithAttributes):
+    iceberg = 'iceberg'
+    passive = 'passive'
+    post_only = 'post_only'
+    reduce_only = 'reduce_only'
 
 
 class OrderPositionPeriod(ClassWithAttributes):

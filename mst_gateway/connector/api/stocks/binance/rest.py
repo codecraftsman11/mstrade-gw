@@ -1,9 +1,11 @@
+from hashlib import sha256
 from uuid import uuid4
 from datetime import datetime, timedelta
 from typing import Union
 from bravado.exception import HTTPError
 from binance.exceptions import BinanceAPIException, BinanceRequestException
-
+from mst_gateway.connector.api.utils import time2timestamp
+from requests.structures import CaseInsensitiveDict
 from mst_gateway.storage import StateStorageKey
 from mst_gateway.calculator import BinanceFinFactory
 from mst_gateway.connector.api.types import OrderSchema, OrderType
@@ -19,6 +21,9 @@ from .....exceptions import GatewayError, ConnectorError, RecoverableError, NotF
 class BinanceRestApi(StockRestApi):
     name = 'binance'
     fin_factory = BinanceFinFactory()
+
+    def throttle_hash_name(self, name=None):
+        return sha256(f"{self.name}.{self._handler.get_schema_by_method(name)}".lower().encode('utf-8')).hexdigest()
 
     def _connect(self, **kwargs):
         return Client(api_key=self._auth.get('api_key'),
@@ -48,35 +53,65 @@ class BinanceRestApi(StockRestApi):
             data = {'address': uuid4()}
         return utils.load_user_data(data)
 
+    def get_api_key_permissions(self, schemas: list, **kwargs) -> dict:
+        default_schemas = [
+            OrderSchema.exchange,
+            OrderSchema.margin2,
+            OrderSchema.margin3,
+            OrderSchema.futures,
+            OrderSchema.futures_coin,
+        ]
+        permissions = {schema: False for schema in schemas if schema in default_schemas}
+        if self.test:
+            for schema in permissions:
+                try:
+                    permissions[schema] = bool(self.get_wallet(schema=schema))
+                except ConnectorError:
+                    continue
+            return permissions
+        try:
+            data = self._binance_api(self._handler.get_api_key_permission)
+        except ConnectorError:
+            return permissions
+        return utils.load_api_key_permissions(data, permissions.keys())
+
     def get_symbol(self, symbol, schema) -> dict:
         schema_handlers = {
-            OrderSchema.exchange: (self._handler.get_ticker,),
-            OrderSchema.margin2: (self._handler.get_ticker,),
-            OrderSchema.margin3: (self._handler.get_ticker,),
-            OrderSchema.futures: (
-                self._handler.futures_ticker,
-                self._handler.futures_orderbook_ticker,
-                self._handler.futures_mark_price,
-            ),
-            OrderSchema.futures_coin: (
-                self._handler.futures_coin_ticker,
-                self._handler.futures_coin_orderbook_ticker,
-                self._handler.futures_coin_mark_price,
-            ),
+            OrderSchema.exchange: (self._handler.get_ticker, self._spot_get_symbols_handler),
+            OrderSchema.margin2: (self._handler.get_ticker, self._spot_get_symbols_handler),
+            OrderSchema.margin3: (self._handler.get_ticker, self._spot_get_symbols_handler),
+            OrderSchema.futures: (self._handler.futures_ticker, self._futures_get_symbols_handler),
+            OrderSchema.futures_coin: (self._handler.futures_coin_ticker, self._futures_get_symbols_handler),
+
         }
         validate_schema(schema, schema_handlers)
         schema = schema.lower()
         symbol = symbol.upper()
         data = self._binance_api(schema_handlers[schema][0], symbol=symbol)
         state_data = self.storage.get(StateStorageKey.symbol, self.name, schema).get(utils.stock2symbol(symbol), {})
-        if schema in (OrderSchema.margin2, OrderSchema.margin3, OrderSchema.exchange):
-            return utils.load_symbol_data(schema, data, state_data)
+        return schema_handlers[schema][1](schema, symbol, data, state_data)
+
+    @staticmethod
+    def _spot_get_symbols_handler(schema, symbol, data, state_data):
+        return utils.load_symbol_data(schema, data, state_data)
+
+    def _futures_get_symbols_handler(self, schema, symbol, data, state_data):
+        schema_handlers = {
+            OrderSchema.futures: (
+                self._handler.futures_orderbook_ticker,
+                self._handler.futures_mark_price,
+            ),
+            OrderSchema.futures_coin: (
+                self._handler.futures_coin_orderbook_ticker,
+                self._handler.futures_coin_mark_price,
+            ),
+        }
         if isinstance(data, list):
             data = data[0]
-        data_bid_ask_price = self._binance_api(schema_handlers[schema][1], symbol=symbol)
+        data_bid_ask_price = self._binance_api(schema_handlers[schema][0], symbol=symbol)
         if isinstance(data_bid_ask_price, list):
             data_bid_ask_price = data_bid_ask_price[0]
-        mark_price = self._binance_api(schema_handlers[schema][2], symbol=symbol)
+        mark_price = self._binance_api(schema_handlers[schema][1], symbol=symbol)
         if isinstance(mark_price, list):
             mark_price = mark_price[0]
         data.update({
@@ -87,7 +122,8 @@ class BinanceRestApi(StockRestApi):
         return utils.load_futures_symbol_data(schema, data, state_data)
 
     @staticmethod
-    def _update_ticker_data(ticker_data: list, bid_ask_prices: dict, mark_prices: dict) -> list:
+    def _update_ticker_data(ticker_data: list, bid_ask_prices: dict, mark_prices: dict) -> dict:
+        data = {}
         for ticker in ticker_data:
             symbol = ticker['symbol'].lower()
             bid_ask_price = bid_ask_prices.get(symbol, {})
@@ -96,40 +132,45 @@ class BinanceRestApi(StockRestApi):
                 'askPrice': bid_ask_price.get('askPrice'),
                 'markPrice': mark_prices.get(symbol)
             })
-        return ticker_data
+            data[symbol] = ticker
+        return data
 
     def list_symbols(self, schema, **kwargs) -> list:
         schema_handlers = {
-            OrderSchema.exchange: (self._handler.get_ticker,),
-            OrderSchema.margin2: (self._handler.get_ticker,),
-            OrderSchema.margin3: (self._handler.get_ticker,),
-            OrderSchema.futures: (
-                self._handler.futures_ticker,
-                self._handler.futures_orderbook_ticker,
-                self._handler.futures_mark_price,
-            ),
-            OrderSchema.futures_coin: (
-                self._handler.futures_coin_ticker,
-                self._handler.futures_coin_orderbook_ticker,
-                self._handler.futures_coin_mark_price,
-            ),
+            OrderSchema.exchange: (self._handler.get_ticker, self._spot_list_symbols_handler),
+            OrderSchema.margin2: (self._handler.get_ticker, self._spot_list_symbols_handler),
+            OrderSchema.margin3: (self._handler.get_ticker, self._spot_list_symbols_handler),
+            OrderSchema.futures: (self._handler.futures_ticker, self._futures_list_symbols_handler),
+            OrderSchema.futures_coin: (self._handler.futures_coin_ticker, self._futures_list_symbols_handler),
         }
         validate_schema(schema, schema_handlers)
         schema = schema.lower()
         data = self._binance_api(schema_handlers[schema][0])
         state_data = self.storage.get(StateStorageKey.symbol, self.name, schema)
-        if schema in (OrderSchema.margin2, OrderSchema.margin3, OrderSchema.exchange):
-            symbols = []
-            for d in data:
-                symbol_state = state_data.get(d['symbol'].lower())
-                if symbol_state and utils.to_float(d.get('weightedAvgPrice')):
-                    symbols.append(utils.load_symbol_data(schema, d, symbol_state))
-            return symbols
-        bid_ask_prices = {bap['symbol'].lower(): bap for bap in self._binance_api(schema_handlers[schema][1])}
-        mark_prices = {p['symbol'].lower(): p.get('markPrice') for p in self._binance_api(schema_handlers[schema][2])}
+        return schema_handlers[schema][1](schema, data, state_data)
+
+    @staticmethod
+    def _spot_list_symbols_handler(schema, raw_data, state_data):
+        data = {data.get('symbol').lower(): data for data in raw_data}
+        return [utils.load_symbol_data(schema, data.get(symbol.lower()), st_data)
+                for symbol, st_data in state_data.items()]
+
+    def _futures_list_symbols_handler(self, schema, data, state_data):
+        schema_handlers = {
+            OrderSchema.futures: (
+                self._handler.futures_orderbook_ticker,
+                self._handler.futures_mark_price,
+            ),
+            OrderSchema.futures_coin: (
+                self._handler.futures_coin_orderbook_ticker,
+                self._handler.futures_coin_mark_price,
+            ),
+        }
+        bid_ask_prices = {bap['symbol'].lower(): bap for bap in self._binance_api(schema_handlers[schema][0])}
+        mark_prices = {p['symbol'].lower(): p.get('markPrice') for p in self._binance_api(schema_handlers[schema][1])}
         data = self._update_ticker_data(data, bid_ask_prices, mark_prices)
-        return [utils.load_futures_symbol_data(schema, d, state_data[d['symbol'].lower()])
-                for d in data if state_data.get(d['symbol'].lower())]
+        return [utils.load_futures_symbol_data(schema, data.get(symbol.lower()), st_data)
+                for symbol, st_data in state_data.items()]
 
     def get_exchange_symbol_info(self, schema: str) -> list:
         schema = schema.lower()
@@ -170,6 +211,7 @@ class BinanceRestApi(StockRestApi):
         schema_handlers = {
             OrderSchema.exchange: self._handler.get_klines,
             OrderSchema.margin2: self._handler.get_klines,
+            OrderSchema.margin3: self._handler.get_klines,
             OrderSchema.futures: self._handler.futures_klines,
             OrderSchema.futures_coin: self._handler.futures_coin_klines,
         }
@@ -202,10 +244,10 @@ class BinanceRestApi(StockRestApi):
             if not quotes:
                 continue
             if 'startTime' in kwargs:
-                kwargs['startTime'] = int(quotes[-1].get('timestamp') + 1)
+                kwargs['startTime'] = int(time2timestamp(quotes[-1].get('time')) + 1)
                 quote_bins.extend(quotes)
             else:
-                kwargs['endTime'] = int(quotes[0].get('timestamp') - 1)
+                kwargs['endTime'] = int(time2timestamp(quotes[0].get('time')) - 1)
                 quotes.extend(quote_bins)
                 quote_bins = quotes
         return quote_bins
@@ -216,6 +258,7 @@ class BinanceRestApi(StockRestApi):
         schema_handlers = {
             OrderSchema.exchange: self._handler.create_order,
             OrderSchema.margin2: self._handler.create_margin_order,
+            OrderSchema.margin3: self._handler.create_isolated_margin_order,
             OrderSchema.futures: self._handler.futures_create_order,
             OrderSchema.futures_coin: self._handler.futures_coin_create_order,
         }
@@ -256,6 +299,7 @@ class BinanceRestApi(StockRestApi):
         schema_handlers = {
             OrderSchema.exchange: self._handler.cancel_order,
             OrderSchema.margin2: self._handler.cancel_margin_order,
+            OrderSchema.margin3: self._handler.cancel_isolated_margin_order,
             OrderSchema.futures: self._handler.futures_cancel_order,
             OrderSchema.futures_coin: self._handler.futures_coin_cancel_order,
         }
@@ -272,6 +316,7 @@ class BinanceRestApi(StockRestApi):
         schema_handlers = {
             OrderSchema.exchange: self._handler.get_order,
             OrderSchema.margin2: self._handler.get_margin_order,
+            OrderSchema.margin3: self._handler.get_isolated_margin_order,
             OrderSchema.futures: self._handler.futures_get_order,
             OrderSchema.futures_coin: self._handler.futures_coin_get_order,
         }
@@ -294,6 +339,7 @@ class BinanceRestApi(StockRestApi):
         schema_handlers = {
             OrderSchema.exchange: (self._handler.get_open_orders, self._handler.get_all_orders),
             OrderSchema.margin2: (self._handler.get_open_margin_orders, self._handler.get_all_margin_orders),
+            OrderSchema.margin3: (self._handler.get_open_margin_orders, self._handler.get_all_isolated_margin_orders),
             OrderSchema.futures: (self._handler.futures_get_open_orders, self._handler.futures_get_all_orders),
             OrderSchema.futures_coin: (
                 self._handler.futures_coin_get_open_orders, self._handler.futures_coin_get_all_orders
@@ -319,6 +365,7 @@ class BinanceRestApi(StockRestApi):
         schema_handlers = {
             OrderSchema.exchange: self._handler.get_recent_trades,
             OrderSchema.margin2: self._handler.get_recent_trades,
+            OrderSchema.margin3: self._handler.get_recent_trades,
             OrderSchema.futures: self._handler.futures_recent_trades,
             OrderSchema.futures_coin: self._handler.futures_coin_recent_trades,
         }
@@ -351,6 +398,7 @@ class BinanceRestApi(StockRestApi):
         schema_handlers = {
             OrderSchema.exchange: self._handler.get_order_book,
             OrderSchema.margin2: self._handler.get_order_book,
+            OrderSchema.margin3: self._handler.get_order_book,
             OrderSchema.futures: self._handler.futures_order_book,
             OrderSchema.futures_coin: self._handler.futures_coin_order_book,
         }
@@ -452,18 +500,22 @@ class BinanceRestApi(StockRestApi):
         )
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
+        partial = kwargs.pop('partial', None)
         validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin2, OrderSchema.futures,
                                  OrderSchema.futures_coin))
         schema = schema.lower()
         if schema == OrderSchema.exchange:
             _spot = self._binance_api(self._handler.get_account, **kwargs)
-            return {
+            wallet_detail = utils.load_spot_wallet_detail_data(_spot, asset)
+            return wallet_detail if partial else {
                 OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
             }
-        try:
-            _spot = self._binance_api(self._handler.get_account, **kwargs)
-        except ConnectorError:
-            _spot = {}
+        _spot = {}
+        if not partial:
+            try:
+                _spot = self._binance_api(self._handler.get_account, **kwargs)
+            except ConnectorError:
+                pass
         if schema == OrderSchema.margin2:
             _margin = self._binance_api(self._handler.get_margin_account, **kwargs)
             _borrow = self._binance_api(self._handler.get_max_margin_loan, asset=asset.upper())
@@ -472,9 +524,10 @@ class BinanceRestApi(StockRestApi):
                 self._binance_api(self._handler.get_public_interest_rate, **kwargs),
                 _vip, asset
             )
-            return {
+            wallet_detail = utils.load_margin_wallet_detail_data(_margin, asset, _borrow, _interest_rate)
+            return wallet_detail if partial else {
                 OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
-                OrderSchema.margin2: utils.load_margin_wallet_detail_data(_margin, asset, _borrow, _interest_rate)
+                OrderSchema.margin2: wallet_detail
             }
         if schema == OrderSchema.margin3:
             _isolate = self._binance_api(self._handler.get_isolated_margin_account, symbols=asset, **kwargs)
@@ -517,11 +570,12 @@ class BinanceRestApi(StockRestApi):
                     collateral_configs = self._binance_api(self._handler.futures_loan_configs, loanCoin=asset, **kwargs)
                 except ConnectorError:
                     pass
-            return {
+            wallet_detail = utils.load_futures_wallet_detail_data(
+                _futures, asset, cross_collaterals.get('crossCollaterals', []), collateral_configs
+            )
+            return wallet_detail if partial else {
                 OrderSchema.exchange: utils.load_spot_wallet_detail_data(_spot, asset),
-                schema: utils.load_futures_wallet_detail_data(
-                    _futures, asset, cross_collaterals.get('crossCollaterals', []), collateral_configs
-                )
+                schema: wallet_detail
             }
 
     def get_cross_collaterals(self, schema: str, **kwargs) -> list:
@@ -772,7 +826,7 @@ class BinanceRestApi(StockRestApi):
                 self._handler.futures_change_leverage,
             ),
             OrderSchema.futures_coin: (
-                self._handler.futures_coinchange_margin_type,
+                self._handler.futures_coin_change_margin_type,
                 self._handler.futures_coin_change_leverage,
             ),
         }
@@ -843,35 +897,6 @@ class BinanceRestApi(StockRestApi):
             symbols_data = self._binance_api(self._handler.get_ticker)
             return schema_handlers[schema](data, schema, symbols_data)
 
-    def _binance_api(self, method: callable, **kwargs):
-        try:
-            resp = method(**kwargs)
-        except HTTPError as exc:
-            message = f"Binance api error. Details: {exc.status_code}, {exc.message}"
-            if int(exc.status_code) in (418, 429) or int(exc.status_code) >= 500:
-                raise RecoverableError(message)
-            raise ConnectorError(message)
-        except BinanceAPIException as exc:
-            message = f"Binance api error. Details: {exc.code}, {exc.message}"
-            if int(exc.code) == -2011:
-                raise NotFoundError(message)
-            raise ConnectorError(message)
-        except BinanceRequestException as exc:
-            raise ConnectorError(f"Binance api error. Details: {exc.message}")
-
-        self.throttle.set(
-            key=self._throttle_hash_name,
-            **self.__get_limit_header(self.handler.response.headers)
-        )
-
-        if isinstance(resp, dict) and resp.get('code') != 200 and resp.get('msg'):
-            try:
-                _, msg = resp['msg'].split('=', 1)
-            except ValueError:
-                msg = resp['msg']
-            raise ConnectorError(f"Binance api error. Details: {msg}")
-        return resp
-
     def get_positions_state(self, schema: str) -> dict:
         schema = schema.lower()
         if schema == OrderSchema.futures:
@@ -924,6 +949,46 @@ class BinanceRestApi(StockRestApi):
             )
         return {'liquidation_price': liquidation_price}
 
+    def _binance_api(self, method: callable, **kwargs):
+        _throttle_hash_name = self.throttle_hash_name(method.__name__)
+        self.validate_throttling(_throttle_hash_name)
+
+        try:
+            resp = method(**kwargs)
+        except HTTPError as exc:
+            message = f"Binance api error. Details: {exc.status_code}, {exc.message}"
+            if exc.status_code in (418, 429) or int(exc.status_code) >= 500:
+                raise RecoverableError(message)
+            raise ConnectorError(message)
+        except BinanceAPIException as exc:
+            message = f"Binance api error. Details: {exc.code}, {exc.message}"
+            if int(exc.code) == 0:
+                raise ConnectorError(f"Binance api error. Details: {exc.code}, 504 Gateway Timeout")
+            if int(exc.code) == -1003:
+                self.logger.critical(f"{self.__class__.__name__}: {exc}")
+            if int(exc.code) == -2011:
+                raise NotFoundError(message)
+            raise ConnectorError(message)
+        except BinanceRequestException as exc:
+            raise ConnectorError(f"Binance api error. Details: {exc.message}")
+        except Exception as exc:
+            self.logger.error(f"Binance api error. Detail: {exc}")
+            raise ConnectorError("Binance api error.")
+        finally:
+            if self.handler.response:
+                self.throttle.set(
+                    key=_throttle_hash_name,
+                    **self.__get_limit_header(self.handler.response.headers)
+                )
+
+        if isinstance(resp, dict) and resp.get('code') != 200 and resp.get('msg'):
+            try:
+                _, msg = resp['msg'].split('=', 1)
+            except ValueError:
+                msg = resp['msg']
+            raise ConnectorError(f"Binance api error. Details: {msg}")
+        return resp
+
     def _api_kwargs(self, kwargs):
         api_kwargs = dict()
         for _k, _v in kwargs.items():
@@ -935,7 +1000,19 @@ class BinanceRestApi(StockRestApi):
                 api_kwargs['limit'] = _v
         return api_kwargs
 
-    def __get_limit_header(self, headers):
+    def __get_limit_header(self, headers: CaseInsensitiveDict):
+        if h := headers.get('retry-after'):
+            try:
+                retry_after = int(h)
+                return dict(
+                    limit=float('inf'),
+                    reset=self.__parse_reset(retry_after),
+                    scope='rest',
+                    timeout=retry_after + 10
+                )
+            except (ValueError, TypeError):
+                pass
+
         for h in headers:
             if str(h).upper().startswith('X-MBX-USED-WEIGHT-'):
                 rate = h[len('X-MBX-USED-WEIGHT-'):]
@@ -959,8 +1036,10 @@ class BinanceRestApi(StockRestApi):
                     pass
         return dict(limit=0, reset=None, scope='rest')
 
-    def __parse_reset(self, rate: str) -> int:
+    def __parse_reset(self, rate: Union[str, int]) -> int:
         now = datetime.utcnow()
+        if isinstance(rate, int):
+            return int((now + timedelta(seconds=rate)).timestamp())
         if len(rate) < 2:
             return int((now + timedelta(seconds=(60 - now.second))).timestamp())
         try:
