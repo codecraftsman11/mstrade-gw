@@ -183,7 +183,7 @@ class StockRestApi(Connector):
 
     @abstractmethod
     def wallet_transfer(self, from_wallet: str, to_wallet: str, asset: str,
-                        amount: Union[float, str]) -> Optional[dict]:
+                        amount: Union[float, str], symbol: str = None) -> Optional[dict]:
         raise NotImplementedError
 
     @abstractmethod

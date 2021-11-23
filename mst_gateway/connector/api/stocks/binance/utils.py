@@ -401,7 +401,7 @@ def load_margin_wallet_data(raw_data: dict, currencies: dict,
         'trade_enabled': raw_data.get('tradeEnabled'),
         'transfer_enabled': raw_data.get('transferEnabled'),
         'borrow_enabled': raw_data.get('borrowEnabled'),
-        'margin_level': raw_data.get('marginLevel'),
+        'margin_level': to_float(raw_data.get('marginLevel')),
         'balances': balances,
         **_load_total_wallet_summary_list(total_balance, fields)
     }
@@ -426,8 +426,42 @@ def load_ws_margin_wallet_data(raw_data: dict, currencies: dict,
     }
 
 
+def load_isolated_margin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
+                                     schema: str, fields: Union[list, tuple]) -> dict:
+    balances = isolated_margin_balance_data(raw_data.get('assets'))
+    total_balance = dict()
+    wallet_summary_in_usd = _load_margin_isolate_wallet_summary_in_usd(currencies, balances, fields)
+    for asset in assets:
+        total_balance[asset] = convert_to_currency(
+            wallet_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
+        )
+    return {
+        'balances': balances,
+        **_load_total_wallet_summary_list(total_balance, fields)
+    }
+
+
+def _load_margin_isolate_wallet_summary_in_usd(currencies: dict, balances: list, fields: Union[list, tuple], is_for_ws=False):
+    _currency_key = 'cur' if is_for_ws else 'currency'
+    total_balance = {}
+    # init total balance structure if list of balances is empty
+    for f in fields:
+        total_balance.setdefault(f, 0)
+    for symbol_balance in balances:
+        for balance in symbol_balance.values():
+            for b in (balance.get('base_asset'), balance.get('quote_asset')):
+                _price = currencies.get(f"{b[_currency_key]}".lower()) or 0
+                for f in fields:
+                    total_balance[f] += _price * (b[f] or 0)
+    return total_balance
+
+
 def load_margin_wallet_balances(raw_data: dict) -> list:
     return _margin_balance_data(raw_data.get('userAssets'))
+
+
+def load_isolated_margin_wallet_balances(raw_data: dict) -> list:
+    return isolated_margin_balance_data(raw_data.get('assets'))
 
 
 def load_margin_wallet_detail_data(raw_data: dict, asset: str,
@@ -785,28 +819,58 @@ def _spot_ws_balance_data(balances: list):
 def _margin_balance_data(balances: list, max_borrow: float = None, interest_rate: float = None):
     result = list()
     for b in balances:
-        _free = to_float(b['free'])
-        _locked = to_float(b['locked'])
-        borrowed = to_float(b['borrowed'])
-        interest = to_float(b['interest'])
-        withdraw_balance = to_float(b['netAsset']) - (borrowed + interest)
-        if withdraw_balance < 0:
-            withdraw_balance = 0
-        result.append({
-            'currency': b['asset'],
-            'balance': _free,
-            'withdraw_balance': withdraw_balance,
-            'borrowed': borrowed,
-            'available_borrow': max_borrow,
-            'interest': interest,
-            'interest_rate': interest_rate,
-            'unrealised_pnl': 0,
-            'margin_balance': _free,
-            'maint_margin': _locked,
-            'init_margin': None,
-            'available_margin': round(_free - _locked, 8),
-            'type': to_wallet_state_type(_locked),
-        })
+        result.append(_get_margin_balance(b, max_borrow, interest_rate))
+    return result
+
+
+def _get_margin_balance(balance: dict, max_borrow: float = None, interest_rate: float = None):
+    _free = to_float(balance['free'])
+    _locked = to_float(balance['locked'])
+    borrowed = to_float(balance['borrowed'])
+    interest = to_float(balance['interest'])
+    withdraw_balance = to_float(balance['netAsset']) - (borrowed + interest)
+    if withdraw_balance < 0:
+        withdraw_balance = 0
+    wallet_data = {
+        'currency': balance['asset'],
+        'balance': _free,
+        'withdraw_balance': withdraw_balance,
+        'borrowed': borrowed,
+        'available_borrow': max_borrow,
+        'interest': interest,
+        'interest_rate': interest_rate,
+        'unrealised_pnl': 0,
+        'margin_balance': _free,
+        'maint_margin': _locked,
+        'init_margin': None,
+        'available_margin': round(_free - _locked, 8),
+        'type': to_wallet_state_type(_locked),
+    }
+    return wallet_data
+
+
+def isolated_margin_balance_data(balances: list, max_borrow: dict = None, interest_rate: dict = None):
+    result = list()
+    max_borrow_base_asset = _margin_max_borrow(max_borrow.get('base_asset')) if max_borrow else None
+    max_borrow_quote_asset = _margin_max_borrow(max_borrow.get('quote_asset')) if max_borrow else None
+    interest_rate_base_asset = interest_rate.get('base_asset') if max_borrow else None
+    interest_rate_quote_asset = interest_rate.get('quote_asset') if max_borrow else None
+    for b in balances:
+        try:
+            base_asset = _get_margin_balance(b['baseAsset'], max_borrow_base_asset, interest_rate_base_asset)
+            quote_asset = _get_margin_balance(b['quoteAsset'], max_borrow_quote_asset, interest_rate_quote_asset)
+            result.append({
+                b['symbol'].lower(): {
+                    'base_asset': base_asset,
+                    'quote_asset': quote_asset,
+                    'type': to_wallet_state_type('trade' in (base_asset.get('type'), quote_asset.get('type'))),
+                    'margin_level': to_float(b.get('marginLevel')),
+                    'margin_ratio': to_float(b.get('marginRatio')),
+                    'trade_enabled': b.get('tradeEnabled'),
+                }
+            })
+        except KeyError:
+            continue
     return result
 
 

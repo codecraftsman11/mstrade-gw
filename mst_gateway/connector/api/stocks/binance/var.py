@@ -6,6 +6,7 @@ BINANCE_MAX_ORDER_BOOK_LIMIT = 1000
 BINANCE_WALLET_TYPES = [
     api.OrderSchema.exchange,
     api.OrderSchema.margin2,
+    api.OrderSchema.margin3,
     api.OrderSchema.futures,
     api.OrderSchema.futures_coin,
 ]

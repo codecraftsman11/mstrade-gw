@@ -332,6 +332,48 @@ class Client(BaseClient):
             return res['userAssets']
         return []
 
+    def get_isolated_margin_assets_balance(self, **params):
+        """Get assets balance.
+
+        :returns: list
+
+        .. code-block:: python
+
+            [
+                {
+                    "asset": "BTC",
+                    "borrowed": "0.00000000",
+                    "free": "0.00499500",
+                    "interest": "0.00000000",
+                    "locked": "0.00000000",
+                    "netAsset": "0.00499500"
+                },
+            ]
+
+        :raises: BinanceRequestException, BinanceAPIException
+
+        """
+        res = self.get_isolated_margin_account(**params)
+        if wallet_data := res.get('assets'):
+            assets = {}
+            for balance in wallet_data:
+                base_asset = balance.get('baseAsset', {})
+                quote_asset = balance.get('quoteAsset', {})
+                for b in (base_asset, quote_asset):
+                    asset = b.get('asset')
+                    if asset in assets:
+                        assets[asset].update({
+                            'borrowed': float(assets[asset]['borrowed']) + float(b['borrowed']),
+                            'free': assets[asset]['free'] + float(b['free']),
+                            'interest': float(assets[asset]['interest']) + float(b['interest']),
+                            'locked': float(assets[asset]['locked']) + float(b['locked']),
+                            'netAsset': assets[asset]['netAsset'] + b['netAsset'],
+                        })
+                    else:
+                        assets[asset] = b
+            return assets.values()
+        return []
+
     def get_futures_assets_balance(self, **params):
         """Get assets balance.
 
@@ -536,6 +578,14 @@ class Client(BaseClient):
         params['isIsolated'] = 'TRUE'
         return self.get_all_margin_orders(**params)
 
+    def create_isolated_margin_loan(self, **params):
+        params['isIsolated'] = 'TRUE'
+        return self.create_margin_loan(**params)
+
+    def repay_isolated_margin_loan(self, **params):
+        params['isIsolated'] = 'TRUE'
+        return self.repay_margin_loan(**params)
+
 
 class AsyncClient(BaseAsyncClient):
     MARGIN_TESTNET_URL = 'https://testnet.binance.vision/sapi'  # margin api does not exist
@@ -614,6 +664,14 @@ class AsyncClient(BaseAsyncClient):
         params['isIsolated'] = 'TRUE'
         return await self.get_all_margin_orders(**params)
 
+    async def create_isolated_margin_loan(self, **params):
+        params['isIsolated'] = 'TRUE'
+        return await self.create_margin_loan(**params)
+
+    async def repay_isolated_margin_loan(self, **params):
+        params['isIsolated'] = 'TRUE'
+        return await self.repay_margin_loan(**params)
+
 
 def _method_map(func_name: str):
     hash_map = {
@@ -667,6 +725,11 @@ def _method_map(func_name: str):
         'create_isolated_margin_order': 'margin2',
         'cancel_isolated_margin_order': 'margin2',
         'get_all_isolated_margin_orders': 'margin2',
+        'get_isolated_margin_assets_balance': 'margin2',
+        'create_isolated_margin_loan': 'margin2',
+        'repay_isolated_margin_loan': 'margin2',
+        'transfer_spot_to_isolated_margin': 'margin2',
+        'transfer_isolated_margin_to_spot': 'margin2',
 
         # margin3
         'get_all_isolated_margin_symbols': 'margin3',
