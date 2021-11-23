@@ -364,7 +364,7 @@ class Client(BaseClient):
                     if asset in assets:
                         assets[asset].update({
                             'borrowed': float(assets[asset]['borrowed']) + float(b['borrowed']),
-                            'free': assets[asset]['free'] + b['free'],
+                            'free': assets[asset]['free'] + float(b['free']),
                             'interest': float(assets[asset]['interest']) + float(b['interest']),
                             'locked': float(assets[asset]['locked']) + float(b['locked']),
                             'netAsset': assets[asset]['netAsset'] + b['netAsset'],
@@ -578,6 +578,14 @@ class Client(BaseClient):
         params['isIsolated'] = 'TRUE'
         return self.get_all_margin_orders(**params)
 
+    def create_isolated_margin_loan(self, **params):
+        params['isIsolated'] = 'TRUE'
+        return self.create_margin_loan(**params)
+
+    def repay_isolated_margin_loan(self, **params):
+        params['isIsolated'] = 'TRUE'
+        return self.repay_margin_loan(**params)
+
 
 class AsyncClient(BaseAsyncClient):
     MARGIN_TESTNET_URL = 'https://testnet.binance.vision/sapi'  # margin api does not exist
@@ -656,6 +664,14 @@ class AsyncClient(BaseAsyncClient):
         params['isIsolated'] = 'TRUE'
         return await self.get_all_margin_orders(**params)
 
+    async def create_isolated_margin_loan(self, **params):
+        params['isIsolated'] = 'TRUE'
+        return await self.create_margin_loan(**params)
+
+    async def repay_isolated_margin_loan(self, **params):
+        params['isIsolated'] = 'TRUE'
+        return await self.repay_margin_loan(**params)
+
 
 def _method_map(func_name: str):
     hash_map = {
@@ -709,6 +725,9 @@ def _method_map(func_name: str):
         'create_isolated_margin_order': 'margin2',
         'cancel_isolated_margin_order': 'margin2',
         'get_all_isolated_margin_orders': 'margin2',
+        'get_isolated_margin_assets_balance': 'margin2',
+        'create_isolated_margin_loan': 'margin2',
+        'repay_isolated_margin_loan': 'margin2',
 
         # margin3
         'get_all_isolated_margin_symbols': 'margin3',

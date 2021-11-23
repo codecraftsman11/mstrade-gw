@@ -628,10 +628,9 @@ class BinanceRestApi(StockRestApi):
         if schema.lower() == OrderSchema.margin3:
             symbol = kwargs.get('symbol')
             data = self._binance_api(
-                self._handler.create_margin_loan,
+                self._handler.create_isolated_margin_loan,
                 asset=asset.upper(),
                 amount=str(amount),
-                isIsolated='TRUE',
                 symbol=symbol.upper()
             )
             return utils.load_transaction_id(data)
@@ -656,10 +655,9 @@ class BinanceRestApi(StockRestApi):
         elif schema.lower() == OrderSchema.margin3:
             symbol = kwargs.get('symbol')
             data = self._binance_api(
-                self._handler.repay_margin_loan,
+                self._handler.repay_isolated_margin_loan,
                 asset=asset.upper(),
                 amount=str(amount),
-                isIsolated='TRUE',
                 symbol=symbol.upper()
             )
         elif schema.lower() == OrderSchema.futures:
