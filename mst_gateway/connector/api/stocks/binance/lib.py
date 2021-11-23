@@ -728,6 +728,8 @@ def _method_map(func_name: str):
         'get_isolated_margin_assets_balance': 'margin2',
         'create_isolated_margin_loan': 'margin2',
         'repay_isolated_margin_loan': 'margin2',
+        'transfer_spot_to_isolated_margin': 'margin2',
+        'transfer_isolated_margin_to_spot': 'margin2',
 
         # margin3
         'get_all_isolated_margin_symbols': 'margin3',

@@ -401,7 +401,7 @@ def load_margin_wallet_data(raw_data: dict, currencies: dict,
         'trade_enabled': raw_data.get('tradeEnabled'),
         'transfer_enabled': raw_data.get('transferEnabled'),
         'borrow_enabled': raw_data.get('borrowEnabled'),
-        'margin_level': raw_data.get('marginLevel'),
+        'margin_level': to_float(raw_data.get('marginLevel')),
         'balances': balances,
         **_load_total_wallet_summary_list(total_balance, fields)
     }
@@ -864,8 +864,8 @@ def isolated_margin_balance_data(balances: list, max_borrow: dict = None, intere
                     'base_asset': base_asset,
                     'quote_asset': quote_asset,
                     'type': to_wallet_state_type('trade' in (base_asset.get('type'), quote_asset.get('type'))),
-                    'margin_level': b.get('marginLevel'),
-                    'margin_ratio': b.get('marginRatio'),
+                    'margin_level': to_float(b.get('marginLevel')),
+                    'margin_ratio': to_float(b.get('marginRatio')),
                     'trade_enabled': b.get('tradeEnabled'),
                 }
             })
