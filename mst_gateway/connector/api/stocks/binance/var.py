@@ -24,7 +24,9 @@ BINANCE_ORDER_STATUS_MAP = {
     'FILLED': api.OrderState.closed,
     'CANCELED': api.OrderState.closed,
     'EXPIRED': api.OrderState.expired,
-    'REJECTED': api.OrderState.closed
+    'REJECTED': api.OrderState.closed,
+    'NEW_INSURANCE': api.OrderState.liquidated,
+    'NEW_ADL': api.OrderState.liquidated
 }
 
 PARAMETER_NAMES_MAP = {
