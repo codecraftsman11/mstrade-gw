@@ -997,7 +997,7 @@ class BinanceRestApi(StockRestApi):
                 api_kwargs['startTime'] = int(_v.timestamp()*1000)
             if _k == 'date_to' and isinstance(_v, datetime):
                 api_kwargs['endTime'] = int(_v.timestamp()*1000)
-            if _k == 'count':
+            if _k == 'count' and _v is not None:
                 api_kwargs['limit'] = _v
         return api_kwargs
 

@@ -267,7 +267,7 @@ def load_order_book_data(raw_data: dict, symbol: str, side, split,
         for item in v:
             price = to_float(item[0])
             _i = {
-                'id': generate_order_book_id(symbol, price, state_data),
+                'id': generate_order_book_id(price, state_data),
                 'symbol': symbol,
                 'price': price,
                 'volume': to_float(item[1]),
@@ -551,8 +551,8 @@ def _update_futures_balances(balances: list, cross_collaterals: list) -> list:
     for balance in balances:
         for collateral in cross_collaterals:
             if balance['currency'] == collateral['loanCoin']:
-                balance['borrowed'] += to_float(collateral['loanAmount']) or 0
-                balance['interest'] += to_float(collateral['interest']) or 0
+                balance['borrowed'] += to_float(collateral['loanAmount']) or 0.0
+                balance['interest'] += to_float(collateral['interest']) or 0.0
     return balances
 
 
@@ -560,8 +560,8 @@ def _update_ws_futures_balances(balances: list, cross_collaterals: list) -> list
     for balance in balances:
         for collateral in cross_collaterals:
             if balance['cur'] == collateral['loanCoin']:
-                balance['bor'] += to_float(collateral['loanAmount']) or 0
-                balance['ist'] += to_float(collateral['interest']) or 0
+                balance['bor'] += to_float(collateral['loanAmount']) or 0.0
+                balance['ist'] += to_float(collateral['interest']) or 0.0
     return balances
 
 
@@ -757,17 +757,17 @@ def ws_futures_balance_data(balances: list, position: list, state_balances: dict
 def _mock_balance_data(asset) -> dict:
     return {
         'currency': asset.upper(),
-        'balance': 0,
-        'withdraw_balance': 0,
-        'borrowed': 0,
-        'available_borrow': 0,
-        'interest': 0,
-        'interest_rate': 0,
-        'unrealised_pnl': 0,
-        'margin_balance': 0,
-        'maint_margin': 0,
-        'init_margin': 0,
-        'available_margin': 0,
+        'balance': 0.0,
+        'withdraw_balance': 0.0,
+        'borrowed': 0.0,
+        'available_borrow': 0.0,
+        'interest': 0.0,
+        'interest_rate': 0.0,
+        'unrealised_pnl': 0.0,
+        'margin_balance': 0.0,
+        'maint_margin': 0.0,
+        'init_margin': 0.0,
+        'available_margin': 0.0,
         'type': to_wallet_state_type(0),
     }
 
@@ -778,7 +778,7 @@ def _spot_balance_data(balances: list):
             'currency': b['asset'],
             'balance': to_float(b['free']),
             'withdraw_balance': to_float(b['free']),
-            'unrealised_pnl': 0,
+            'unrealised_pnl': 0.0,
             'margin_balance': to_float(b['free']),
             'maint_margin': to_float(b['locked']),
             'init_margin': None,
@@ -893,7 +893,7 @@ def _margin_ws_balance_data(balances: list, max_borrow: float = None, interest_r
 def _margin_max_borrow(data):
     if isinstance(data, dict):
         return to_float(data.get('amount'))
-    return 0
+    return 0.0
 
 
 def _futures_balance_data(balances: list):
@@ -902,8 +902,8 @@ def _futures_balance_data(balances: list):
             'currency': b['asset'],
             'balance': to_float(b['walletBalance']),
             'withdraw_balance': to_float(b['maxWithdrawAmount']),
-            'borrowed': 0,
-            'interest': 0,
+            'borrowed': 0.0,
+            'interest': 0.0,
             'unrealised_pnl': to_float(b['unrealizedProfit']),
             'margin_balance': to_float(b['marginBalance']),
             'maint_margin': to_float(b['maintMargin']),
@@ -1147,7 +1147,7 @@ def load_order_book_ws_data(raw_data: dict, order: list, side: int, state_data: 
     price = to_float(order[0])
 
     data = {
-        'id': generate_order_book_id(symbol, price, state_data),
+        'id': generate_order_book_id(price, state_data),
         's': symbol,
         'p': price,
         'vl': to_float(order[1]),
@@ -1258,11 +1258,11 @@ def to_iso_datetime(token: Union[datetime, int, str]) -> Optional[str]:
         return None
 
 
-def to_float(token: Union[int, float, str, None]) -> Optional[float]:
+def to_float(token: Union[int, float, str, None]) -> float:
     try:
         return float(token)
     except (ValueError, TypeError):
-        return 0
+        return 0.0
 
 
 def symbol2stock(symbol):
@@ -1315,14 +1315,14 @@ def load_ws_order_status(binance_order_status: Optional[str]) -> Optional[str]:
     return var.BINANCE_ORDER_STATUS_MAP.get(binance_order_status) or api.OrderState.closed
 
 
-def calculate_ws_order_leaves_volume(raw_data: dict) -> Optional[float]:
+def calculate_ws_order_leaves_volume(raw_data: dict) -> float:
     try:
         return to_float(raw_data['q']) - to_float(raw_data['z'])
     except (KeyError, TypeError):
-        return 0
+        return 0.0
 
 
-def calculate_ws_order_avg_price(raw_data: dict) -> Optional[float]:
+def calculate_ws_order_avg_price(raw_data: dict) -> float:
     if raw_data.get('ap'):  # Futures
         return to_float(raw_data['ap'])
     elif raw_data.get('Z') and to_float(raw_data.get('z')):  # Spot

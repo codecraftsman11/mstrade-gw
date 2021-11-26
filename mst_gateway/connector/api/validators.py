@@ -55,3 +55,7 @@ def pair_valid(value: list) -> bool:
     if not isinstance(value[1], str):
         return False
     return value[0] and value[1]
+
+
+def leverage_type_valid(value):
+    return api.LeverageType.is_valid(value)
