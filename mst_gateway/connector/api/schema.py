@@ -1,4 +1,5 @@
 # pylint: disable=broad-except
+from . import OrderSchema
 from ..api.validators import (
     datetime_valid,
     iso_datetime_valid,
@@ -10,6 +11,7 @@ from ..api.validators import (
     exchange_order_id_valid
 )
 
+ASSET = "XBT"
 
 QUOTE_FIELDS = {
     'time': datetime_valid,
@@ -24,35 +26,37 @@ QUOTE_FIELDS = {
 
 QUOTE_BIN_FIELDS = {
     'time': datetime_valid,
-    'timestamp': int,
     'symbol': str,
+    'open_price': float,
+    'close_price': float,
+    'high_price': float,
+    'low_price': float,
     'volume': int,
-    'open': float,
-    'high': float,
-    'low': float,
-    'close': float,
-    'schema': schema_valid,
     'system_symbol': str,
+    'schema': schema_valid,
 }
 
 SYMBOL_FIELDS = {
     'time': datetime_valid,
-    'timestamp': int,
-    'pair': pair_valid,
     'symbol': str,
-    'expiration': str,
     'price': float,
     'price24': float,
     'delta': float,
-    'tick': float,
-    'volume_tick': float,
     'face_price': float,
     'bid_price': float,
     'ask_price': float,
     'reversed': bool,
     'volume24': int,
-    'schema': schema_valid,
+    'mark_price': float,
+    'high_price': float,
+    'low_price': float,
+    'expiration': str,
+    'expiration_date': str,
+    'pair': pair_valid,
+    'tick': float,
+    'volume_tick': float,
     'system_symbol': str,
+    'schema': schema_valid,
     'symbol_schema': schema_valid,
     'created': datetime_valid,
     'max_leverage': float,
@@ -84,17 +88,17 @@ WS_SYMBOL_FIELDS = {
 ORDER_FIELDS = {
     'exchange_order_id': exchange_order_id_valid,
     'symbol': str,
-    'volume': int,
-    'stop': float,    # trigger level for Stop and Take Profit orders
-    'type': type_valid,
+    'volume': float,
+    'filled_volume': float,
+    'stop': float,  # trigger level for Stop and Take Profit orders
     'side': side_valid,
     'price': float,
     'time': datetime_valid,
-    'timestamp': int,
     'active': bool,
-    'schema': schema_valid,
+    'type': type_valid,
     'execution': execution_valid,
     'system_symbol': str,
+    'schema': schema_valid,
 }
 
 ORDER_BOOK_FIELDS = {
@@ -109,23 +113,31 @@ ORDER_BOOK_FIELDS = {
 
 TRADE_FIELDS = {
     'time': datetime_valid,
-    'timestamp': int,
     'symbol': str,
-    'volume': int,
     'price': float,
+    'volume': int,
     'side': side_valid,
-    'schema': schema_valid,
     'system_symbol': str,
+    'schema': schema_valid,
 }
 
 WALLET_FIELDS = {
+    'balances': list,
+    'total_balance': dict,
+    'total_unrealised_pnl': dict,
+    'total_margin_balance': dict
+}
+
+WALLET_SUMMARY_FIELDS = {
+    'total_balance': dict,
+    'total_unrealised_pnl': dict,
+    'total_margin_balance': dict
+}
+
+BASE_WALLET_DETAIL_FIELDS = {
     'currency': str,
     'balance': float,
     'withdraw_balance': float,
-    'borrowed': float,
-    'available_borrow': float,
-    'interest': float,
-    'interest_rate': float,
     'unrealised_pnl': float,
     'margin_balance': float,
     'maint_margin': float,
@@ -134,18 +146,17 @@ WALLET_FIELDS = {
     'type': str
 }
 
-WALLET_MARGIN1_FIELDS = {
-    'currency': str,
-    'balance': float,
-    'withdraw_balance': float,
-    'unrealised_pnl': float,
-    'margin_balance': float,
-    'maint_margin': float,
-    'init_margin': float,
-    'available_margin': float,
-    'type': str
+WALLET_DETAIL_FIELDS = {
+    OrderSchema.margin1: {
+        **BASE_WALLET_DETAIL_FIELDS
+    },
 }
 
+ASSETS_BALANCE = {
+    OrderSchema.margin1: {
+        ASSET.lower(): float
+    }
+}
 
 SUBSCRIPTIONS = {
     'symbol': {
@@ -175,13 +186,66 @@ USER_FIELDS = {
     'id': str
 }
 
-ORDER_COMMISSION = {
-    "currency": str,
+ORDER_COMMISSION_FIELDS = {
+    "symbol": str,
     "taker": float,
     "maker": float,
     "type": str
 }
 
+EXCHANGE_SYMBOL_INFO_FIELDS = {
+    OrderSchema.margin1: {
+        'symbol': str,
+        'system_symbol': str,
+        'base_asset': str,
+        'quote_asset': str,
+        'system_base_asset': str,
+        'system_quote_asset': str,
+        'expiration': str,
+        'expiration_date': datetime_valid,
+        'pair': list,
+        'system_pair': list,
+        'schema': schema_valid,
+        'symbol_schema': schema_valid,
+        'tick': float,
+        'volume_tick': float,
+        'max_leverage': float
+    }
+}
+
+CURRENCY_EXCHANGE_SYMBOL_FIELDS = {
+    'symbol': str,
+    'price': float
+}
+
+SYMBOL_CURRENCY_FIELDS = {
+    'pair': list,
+    'expiration': str,
+    'price': float
+}
+
+FUNDING_RATE_FIELDS = {
+    'symbol': str,
+    'funding_rate': float,
+    'time': datetime_valid
+}
+
+POSITION_FIELDS = {
+    'schema': str,
+    'symbol': str,
+    'side': int,
+    'volume': float,
+    'entry_price': float,
+    'mark_price': float,
+    'unrealised_pnl': float,
+    'leverage_type': str,
+    'leverage': float,
+    'liquidation_price': float
+}
+
+LIQUIDATION_PRICE_FIELDS = {
+    'liquidation_price': float
+}
 
 def data_valid(data, rules):
     if not isinstance(data, dict):
