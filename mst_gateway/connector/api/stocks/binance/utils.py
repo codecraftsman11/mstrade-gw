@@ -578,6 +578,7 @@ def load_futures_wallet_detail_data(raw_data: dict, asset: str,
     for a in raw_data.get('assets'):
         if a.get('asset', '').upper() == asset.upper():
             balance = _futures_balance_data([a])[0]
+            _update_futures_balances([balance], cross_collaterals)
             cross_collaterals = _load_cross_collaterals_data(
                 cross_collaterals, collateral_configs, asset
             )
