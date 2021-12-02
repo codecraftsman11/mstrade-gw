@@ -1,396 +1,608 @@
 # pylint: disable=no-self-use
-import time
-from datetime import datetime
-from datetime import timedelta
-from datetime import timezone
-import logging
 import pytest
+from copy import deepcopy
+from typing import Union, Optional
+from datetime import datetime, timedelta
 from mst_gateway.connector.api.stocks.bitmex import BitmexRestApi
-from mst_gateway.exceptions import ConnectorError
-from mst_gateway.logging import init_logger
-from mst_gateway.calculator import BitmexFinFactory
-from mst_gateway.connector import api
-from mst_gateway.connector.api import schema
+from mst_gateway.exceptions import ConnectorError, RecoverableError
+from mst_gateway.connector.api import BUY, SELL, OrderType, OrderSchema, LeverageType, OrderExec
+from mst_gateway.connector.api import schema as fields
 import tests.config as cfg
-from .data.storage import STORAGE_DATA
+from .data import order as order_data
+from .data import storage as data
 
 
-TEST_FROM_DATE = datetime.now(tz=timezone.utc) - timedelta(days=2)
-TEST_RANGE_TO_DATE = TEST_FROM_DATE + timedelta(minutes=1)
-TEST_TO_DATE = datetime.now(tz=timezone.utc)
-TEST_INTERVAL = 3
+def rest_params(name):
+    name_map = {
+        'tbitmex': (True, cfg.BITMEX_TESTNET_AUTH_KEYS, [OrderSchema.margin1])
+    }
+    return name_map[name]
 
 
-@pytest.fixture
-def _bitmex(_debug) -> BitmexRestApi:
-    with BitmexRestApi(name=cfg.BITMEX_NAME,
-                       url=cfg.BITMEX_URL,
-                       auth={
-                           'api_key': cfg.BITMEX_API_KEY,
-                           'api_secret': cfg.BITMEX_API_SECRET
-                       },
-                       logger=_debug['logger'],
-                       state_storage=STORAGE_DATA) as bitmex:
-        bitmex.open()
-        yield bitmex
-        bitmex.cancel_all_orders(cfg.BITMEX_SCHEMA)
-        bitmex.close_all_orders(symbol=cfg.BITMEX_SYMBOL, schema=cfg.BITMEX_SCHEMA)
-        time.sleep(TEST_INTERVAL)
+@pytest.fixture(params=['tbitmex'])
+def rest(request) -> BitmexRestApi:
+    api_name = request.param
+    test, auth, available_schemas = rest_params(api_name)
+    with BitmexRestApi(
+            name=api_name,
+            auth=auth,
+            throttle_limit=90,
+            state_storage=deepcopy(data.STORAGE_DATA)
+    ) as api:
+        api.open()
+        for schema in available_schemas:
+            assert api.ping(schema)
+        yield api
+        api.close()
 
 
-@pytest.fixture
-def _bitmex_keepalive_compress(_debug) -> BitmexRestApi:
-    with BitmexRestApi(name=cfg.BITMEX_NAME,
-                       url=cfg.BITMEX_URL,
-                       auth={
-                           'api_key': cfg.BITMEX_API_KEY,
-                           'api_secret': cfg.BITMEX_API_SECRET
-                       },
-                       logger=_debug,
-                       state_storage=STORAGE_DATA) as bitmex:
-        bitmex.open(keepalive=True, compress=True)
-        yield bitmex
-        bitmex.cancel_all_orders(cfg.BITMEX_SCHEMA)
-        bitmex.close_all_orders(symbol=cfg.BITMEX_SYMBOL, schema=cfg.BITMEX_SCHEMA)
+@pytest.fixture(params=['tbitmex'])
+def rest_compress(request) -> BitmexRestApi:
+    api_name = request.param
+    test, auth, available_schemas = rest_params(api_name)
+    with BitmexRestApi(
+            name=api_name,
+            auth=auth,
+            throttle_limit=30,
+            state_storage=deepcopy(data.STORAGE_DATA)
+    ) as api:
+        api.open(compress=True)
+        for schema in available_schemas:
+            assert api.ping(schema)
+        yield api
+        api.close()
 
 
-@pytest.fixture
-def _bitmex_keepalive(_debug) -> BitmexRestApi:
-    with BitmexRestApi(name=cfg.BITMEX_NAME,
-                       url=cfg.BITMEX_URL,
-                       auth={
-                           'api_key': cfg.BITMEX_API_KEY,
-                           'api_secret': cfg.BITMEX_API_SECRET
-                       },
-                       logger=_debug,
-                       state_storage=STORAGE_DATA) as bitmex:
-        bitmex.open(keepalive=True)
-        yield bitmex
-        bitmex.cancel_all_orders(cfg.BITMEX_SCHEMA)
-        bitmex.close_all_orders(symbol=cfg.BITMEX_SYMBOL, schema=cfg.BITMEX_SCHEMA)
+@pytest.fixture(params=['tbitmex'])
+def rest_keepalive(request) -> BitmexRestApi:
+    api_name = request.param
+    test, auth, available_schemas = rest_params(api_name)
+    with BitmexRestApi(
+            name=api_name,
+            auth=auth,
+            throttle_limit=30,
+            state_storage=deepcopy(data.STORAGE_DATA)
+    ) as api:
+        api.open(keepalive=True)
+        for schema in available_schemas:
+            assert api.ping(schema)
+        yield api
+        api.close()
 
 
-@pytest.fixture
-def _bitmex_compress(_debug) -> BitmexRestApi:
-    with BitmexRestApi(name=cfg.BITMEX_NAME,
-                       url=cfg.BITMEX_URL,
-                       auth={
-                           'api_key': cfg.BITMEX_API_KEY,
-                           'api_secret': cfg.BITMEX_API_SECRET
-                       },
-                       logger=_debug,
-                       state_storage=STORAGE_DATA) as bitmex:
-        bitmex.open(compress=True)
-        yield bitmex
-        bitmex.cancel_all_orders(cfg.BITMEX_SCHEMA)
-        bitmex.close_all_orders(symbol=cfg.BITMEX_SYMBOL, schema=cfg.BITMEX_SCHEMA)
+@pytest.fixture(params=['tbitmex'])
+def rest_keepalive_compress(request) -> BitmexRestApi:
+    api_name = request.param
+    test, auth, available_schemas = rest_params(api_name)
+    with BitmexRestApi(
+            name=api_name,
+            auth=auth,
+            throttle_limit=30,
+            state_storage=deepcopy(data.STORAGE_DATA)
+    ) as api:
+        api.open(keepalive=True, compress=True)
+        for schema in available_schemas:
+            assert api.ping(schema)
+        yield api
+        api.close()
 
 
-@pytest.fixture
-def _bitmex_unauth(_debug) -> BitmexRestApi:
-    with BitmexRestApi(name=cfg.BITMEX_NAME,
-                       url=cfg.BITMEX_URL,
-                       auth={
-                           'api_key': None,
-                           'api_secret': None
-                       },
-                       logger=_debug,
-                       state_storage=STORAGE_DATA) as bitmex:
-        bitmex.open()
-        yield bitmex
+def get_order_price(rest: BitmexRestApi, schema: str,
+                    symbol: str, side: int, order_type: str = order_data.DEFAULT_ORDER_TYPE) -> Optional[float]:
+    price = None
+    if order_type == OrderType.market:
+        return price
+    symbol = rest.get_symbol(schema=schema, symbol=symbol)
+    if side == BUY:
+        price = symbol.get('bid_price') - 10000
+    if side == SELL:
+        price = symbol.get('ask_price') + 10000
+    return price
 
 
-@pytest.fixture
-def _debug(caplog):
-    logger = init_logger(name="test", level=logging.DEBUG)
-    caplog.set_level(logging.DEBUG, logger="test")
-    yield {'logger': logger, 'caplog': caplog}
+def get_symbol(schema: str) -> Optional[str]:
+    if schema == OrderSchema.margin1:
+        return data.SYMBOL
+    return None
+
+
+def create_default_order(rest: BitmexRestApi,
+                         schema: str, order_type: str = order_data.DEFAULT_ORDER_TYPE, options: dict = None) -> dict:
+    price = get_order_price(rest=rest, schema=schema, symbol=order_data.DEFAULT_SYMBOL,
+                            side=order_data.DEFAULT_ORDER_SIDE, order_type=order_type)
+    options = options if options else order_data.DEFAULT_ORDER_OPTIONS
+    order = rest.create_order(
+        schema=schema,
+        symbol=order_data.DEFAULT_SYMBOL,
+        side=order_data.DEFAULT_ORDER_SIDE,
+        volume=order_data.DEFAULT_ORDER_VOLUME[schema],
+        order_type=order_type,
+        price=price,
+        options=options
+    )
+    return order
+
+
+def clear_stock_order_data(order: dict):
+    order.pop('time')
+    order.pop('exchange_order_id')
+    order.pop('price')
+    order.pop('active')
 
 
 class TestBitmexRestApi:
-    # pylint: disable=too-many-public-methods
-    def test_bitmex_rest_client_single(self, _bitmex: BitmexRestApi):
-        assert True
 
-    def test_bitmex_rest_client_scope(self, _bitmex: BitmexRestApi,
-                                      _bitmex_unauth: BitmexRestApi):
-        assert True
+    @pytest.mark.parametrize(
+        'rest', ['tbitmex'],
+        indirect=True,
+    )
+    def test_get_user(self, rest: BitmexRestApi):
+        assert fields.data_valid(rest.get_user(), fields.USER_FIELDS)
 
-    def test_bitmex_rest_get_user(self, _bitmex: BitmexRestApi):
-        assert schema.data_valid(_bitmex.get_user(), schema.USER_FIELDS)
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_list_symbols(self, rest: BitmexRestApi, schema: str):
+        for symbol in rest.list_symbols(schema=schema):
+            assert fields.data_valid(symbol, fields.SYMBOL_FIELDS)
 
-    def test_bitmex_rest_list_symbols(self, _bitmex: BitmexRestApi,
-                                      _bitmex_unauth: BitmexRestApi):
-        _symbol = None
-        for symbol in _bitmex.list_symbols(schema=cfg.BITMEX_SCHEMA):
-            if symbol.get('symbol').lower() == cfg.BITMEX_SYMBOL.lower():
-                _symbol = symbol
-                break
-        assert schema.data_valid(_symbol, schema.SYMBOL_FIELDS)
-        for symbol in _bitmex_unauth.list_symbols(schema=cfg.BITMEX_SCHEMA):
-            if symbol.get('symbol').lower() == cfg.BITMEX_SYMBOL.lower():
-                _symbol = symbol
-                break
-        assert schema.data_valid(_symbol, schema.SYMBOL_FIELDS)
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_list_quote_bins(self, rest: BitmexRestApi, schema: str):
+        for quote_bin in rest.list_quote_bins(schema=schema, symbol=get_symbol(schema)):
+            assert fields.data_valid(quote_bin, fields.QUOTE_BIN_FIELDS)
 
-    def test_bitmex_rest_list_quote_bins(self, _bitmex: BitmexRestApi):
-        quote_bins = self._list_quote_bins(_bitmex)
-        assert quote_bins
-        assert isinstance(quote_bins, list)
-        assert len(quote_bins) == 1000
-        assert schema.data_valid(quote_bins[0], schema.QUOTE_BIN_FIELDS)
+    @pytest.mark.parametrize(
+        'rest_compress, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest_compress'],
+    )
+    def test_list_quote_bins_compress(self, rest_compress: BitmexRestApi, schema: str):
+        for quote_bin in rest_compress.list_quote_bins(schema=schema, symbol=get_symbol(schema)):
+            assert fields.data_valid(quote_bin, fields.QUOTE_BIN_FIELDS)
 
-    def test_bitmex_rest_list_quote_bins_range(self, _bitmex: BitmexRestApi):
-        res_data = self._list_quote_bins(_bitmex, params=dict(
-            date_from=TEST_FROM_DATE,
-            date_to=TEST_RANGE_TO_DATE
-        ))
-        assert len(res_data) < 1000
-        assert res_data[0]['time'] > TEST_FROM_DATE
-        assert res_data[-1]['time'] < TEST_RANGE_TO_DATE
+    @pytest.mark.parametrize(
+        'rest_keepalive, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest_keepalive'],
+    )
+    def test_list_quote_bins_keepalive(self, rest_keepalive: BitmexRestApi, schema: str):
+        for quote_bin in rest_keepalive.list_quote_bins(schema=schema, symbol=get_symbol(schema)):
+            assert fields.data_valid(quote_bin, fields.QUOTE_BIN_FIELDS)
 
-    def test_bitmex_rest_list_quote_bins_keepalive_compress(self, _bitmex_keepalive_compress: BitmexRestApi):
-        quote_bins = self._list_quote_bins(_bitmex_keepalive_compress)
-        assert quote_bins
-        assert isinstance(quote_bins, list)
-        assert len(quote_bins) == 1000
-        assert schema.data_valid(quote_bins[0], schema.QUOTE_BIN_FIELDS)
+    @pytest.mark.parametrize(
+        'rest_keepalive_compress, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest_keepalive_compress'],
+    )
+    def test_list_quote_bins_keepalive(self, rest_keepalive_compress: BitmexRestApi, schema: str):
+        for quote_bin in rest_keepalive_compress.list_quote_bins(schema=schema, symbol=get_symbol(schema)):
+            assert fields.data_valid(quote_bin, fields.QUOTE_BIN_FIELDS)
 
-    def test_bitmex_rest_list_quote_bins_keepalive(self, _bitmex_keepalive: BitmexRestApi):
-        quote_bins = self._list_quote_bins(_bitmex_keepalive)
-        assert quote_bins
-        assert isinstance(quote_bins, list)
-        assert len(quote_bins) == 1000
-        assert schema.data_valid(quote_bins[0], schema.QUOTE_BIN_FIELDS)
+    @pytest.mark.parametrize(
+        'rest, schema, side, order_type, expect', [
+            ('tbitmex', OrderSchema.margin1, BUY, OrderType.market, {
+                'execution': OrderExec.market,
+                'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin1],
+                'schema': OrderSchema.margin1,
+                'side': BUY,
+                'stop': None,
+                'symbol': data.SYMBOL,
+                'system_symbol': data.SYSTEM_SYMBOL,
+                'type': OrderType.market,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin1]
+            }),
+            ('tbitmex', OrderSchema.margin1, SELL, OrderType.market, {
+                'execution': OrderExec.market,
+                'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin1],
+                'schema': OrderSchema.margin1,
+                'side': SELL,
+                'stop': None,
+                'symbol': data.SYMBOL,
+                'system_symbol': data.SYSTEM_SYMBOL,
+                'type': OrderType.market,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin1]
+            }),
+            ('tbitmex', OrderSchema.margin1, BUY, OrderType.limit, {
+                'execution': OrderExec.limit,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.margin1,
+                'side': BUY,
+                'stop': None,
+                'symbol': data.SYMBOL,
+                'system_symbol': data.SYSTEM_SYMBOL,
+                'type': OrderType.limit,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin1]
+            }),
+            ('tbitmex', OrderSchema.margin1, SELL, OrderType.limit, {
+                'execution': OrderExec.limit,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.margin1,
+                'side': SELL,
+                'stop': None,
+                'symbol': data.SYMBOL,
+                'system_symbol': data.SYSTEM_SYMBOL,
+                'type': OrderType.limit,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin1]
+            }),
+        ],
+        indirect=['rest'],
+    )
+    def test_create_order(self, rest: BitmexRestApi, schema: str, side: int, order_type: str, expect: dict):
+        symbol = get_symbol(schema)
+        price = None
+        if order_type == OrderType.limit:
+            price = get_order_price(rest, schema, symbol, side)
+        order = rest.create_order(symbol, schema, side, order_data.DEFAULT_ORDER_VOLUME[schema], order_type, price,
+                                  order_data.DEFAULT_ORDER_OPTIONS)
+        assert fields.data_valid(order, fields.ORDER_FIELDS)
+        clear_stock_order_data(order)
+        assert order == expect
+        rest.cancel_all_orders(schema)
 
-    def test_bitmex_rest_list_quote_bins_compress(self, _bitmex_compress: BitmexRestApi):
-        quote_bins = self._list_quote_bins(_bitmex_compress)
-        assert quote_bins
-        assert isinstance(quote_bins, list)
-        assert len(quote_bins) == 1000
-        assert schema.data_valid(quote_bins[0], schema.QUOTE_BIN_FIELDS)
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_get_order(self, rest: BitmexRestApi, schema):
+        default_order = create_default_order(rest, schema)
+        order = rest.get_order(default_order['exchange_order_id'], default_order['symbol'], schema)
+        assert fields.data_valid(order, fields.ORDER_FIELDS)
+        clear_stock_order_data(order)
+        assert order == order_data.DEFAULT_ORDER[schema]
+        rest.cancel_all_orders(schema)
 
-    def test_bitmex_rest_create_market_order(self, _bitmex: BitmexRestApi):
-        assert self._create_market_order(_bitmex)
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_list_orders(self, rest: BitmexRestApi, schema: str):
+        default_order = create_default_order(rest, schema)
+        orders = rest.list_orders(schema, default_order['symbol'])
+        for order in orders:
+            assert fields.data_valid(order, fields.ORDER_FIELDS)
+        clear_stock_order_data(orders[0])
+        assert orders[0] == order_data.DEFAULT_ORDER[schema]
+        rest.cancel_all_orders(schema)
 
-    def test_bitmex_rest_create_limit_order(self, _bitmex: BitmexRestApi):
-        assert self._create_limit_order(_bitmex)
-        assert self._create_limit_order(_bitmex,
-                                        options=dict(
-                                            ttl='GTC', is_passive=False,
-                                            is_iceberg=True, iceberg_volume=3
-                                        ))
-        assert self._create_limit_order(_bitmex,
-                                        options=dict(
-                                            ttl='GTC', is_passive=False,
-                                            is_iceberg=False, comment="test"
-                                        ))
+    @pytest.mark.parametrize(
+        'rest, schema, expect', [
+            ('tbitmex', OrderSchema.margin1, {
+                'execution': OrderExec.market,
+                'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin1] * 2,
+                'schema': OrderSchema.margin1,
+                'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
+                'stop': None,
+                'symbol': order_data.DEFAULT_SYMBOL,
+                'system_symbol': order_data.DEFAULT_SYSTEM_SYMBOL,
+                'type': OrderType.market,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin1] * 2,
+            }),
+        ],
+        indirect=['rest'],
+    )
+    def test_bitmex_rest_update_order(self, rest: BitmexRestApi, schema: str, expect: dict):
+        default_order = create_default_order(rest, schema)
+        order = rest.update_order(default_order['exchange_order_id'], default_order['symbol'], schema,
+                                  side=order_data.DEFAULT_ORDER_OPPOSITE_SIDE, volume=default_order['volume'] * 2,
+                                  options=order_data.DEFAULT_ORDER_OPTIONS)
+        assert fields.data_valid(order, fields.ORDER_FIELDS)
+        clear_stock_order_data(order)
+        assert order == expect
+        rest.cancel_all_orders(schema)
+        # rest.close_all_orders(order['symbol'], schema) # TODO: enable when bitmex fix his EP
 
-    def test_bitmex_rest_update_order(self, _bitmex: BitmexRestApi):
-        data = self._create_limit_order(_bitmex)
-        exchange_order_id = data['exchange_order_id']
-        data = _bitmex.update_order(exchange_order_id=exchange_order_id,
-                                    symbol=cfg.BITMEX_SYMBOL,
-                                    side=api.BUY, schema=cfg.BITMEX_SCHEMA,
-                                    order_type=api.OrderType.limit,
-                                    price=1411, volume=3,
-                                    options=dict())
-        assert data
-        assert data['price'] == 1411
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_cancel_order(self, rest: BitmexRestApi, schema: str):
+        default_order = create_default_order(rest, schema)
+        order = rest.cancel_order(default_order['exchange_order_id'], default_order['symbol'], schema)
+        print(f"{order=}")
+        assert fields.data_valid(order, fields.ORDER_FIELDS)
+        clear_stock_order_data(order)
+        assert order == order_data.DEFAULT_ORDER[schema]
 
-    def test_bitmex_rest_list_orders(self, _bitmex: BitmexRestApi):
-        assert self._create_market_order(_bitmex)
-        assert self._create_market_order(_bitmex)
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_cancel_all_orders(self, rest: BitmexRestApi, schema: str):
+        create_default_order(rest, schema)
+        assert rest.cancel_all_orders(schema)
 
-        l_1 = self._list_orders(_bitmex, params=dict(active_only=False, count=1, offset=1))
-        l_2 = self._list_orders(_bitmex, params=dict(active_only=False, count=1))
-        assert len(l_1) == 1
-        assert len(l_2) == 1
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_close_order(self, rest: BitmexRestApi, schema: str):
+        with pytest.raises(RecoverableError): # TODO: remove it when bitmex fix his EP
+            default_order = create_default_order(rest, schema)
+            order = rest.close_order(default_order['exchange_order_id'], default_order['symbol'], schema)
+            assert order
 
-    def test_bitmex_rest_get_order(self, _bitmex: BitmexRestApi, _debug: logging.Logger):
-        data = self._create_market_order(_bitmex)
-        exchange_order_id = data['exchange_order_id']
-        order = self._get_order(_bitmex, exchange_order_id)
-        assert schema.data_valid(order, schema.ORDER_FIELDS)
-        assert order['symbol'] == cfg.BITMEX_SYMBOL
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_close_all_order(self, rest: BitmexRestApi, schema: str):
+        with pytest.raises(RecoverableError): # TODO: enable when bitmex fix his EP
+            default_order = create_default_order(rest, schema)
+            order = rest.close_all_orders(default_order['exchange_order_id'], default_order['symbol'])
+            assert order
 
-    def test_bitmex_rest_close_order(self, _bitmex: BitmexRestApi):
-        data = self._create_market_order(_bitmex)
-        exchange_order_id = data['exchange_order_id']
-        _bitmex.close_order(exchange_order_id=exchange_order_id,
-                            symbol=cfg.BITMEX_SYMBOL,
-                            schema=cfg.BITMEX_SCHEMA)
-        assert not self._list_orders(_bitmex)
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_list_order_book(self, rest: BitmexRestApi, schema: str):
+        ob_items = rest.list_order_book(symbol=order_data.DEFAULT_SYMBOL, schema=schema)
+        for ob_item in ob_items:
+            assert fields.data_valid(ob_item, fields.ORDER_BOOK_FIELDS)
 
-    def test_bitmex_rest_close_all_orders(self, _bitmex: BitmexRestApi):
-        data = self._create_market_order(_bitmex)
-        exchange_order_id = data['exchange_order_id']
+    @pytest.mark.parametrize(
+        'rest, schema, side', [
+            ('tbitmex', OrderSchema.margin1, BUY),
+            ('tbitmex', OrderSchema.margin1, SELL),
+        ],
+        indirect=['rest'],
+    )
+    def test_get_order_book(self, rest: BitmexRestApi, schema: str, side: int):
+        ob_items = rest.get_order_book(schema=schema, symbol=order_data.DEFAULT_SYMBOL, depth=data.DEFAULT_DEPTH,
+                                      side=side, min_volume_sell=data.DEFAULT_MIN_VOLUME_SELL,
+                                      min_volume_buy=data.DEFAULT_MIN_VOLUME_BUY)
+        for ob_item in ob_items:
+            assert fields.data_valid(ob_item, fields.ORDER_BOOK_FIELDS)
 
-        assert self._get_order(_bitmex, exchange_order_id)
-        _bitmex.close_all_orders(symbol=cfg.BITMEX_SYMBOL,
-                                 schema=cfg.BITMEX_SCHEMA)
-        assert self._list_orders(_bitmex) == []
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_list_trades(self, rest: BitmexRestApi, schema: str):
+        lt_items = rest.list_trades(schema=cfg.BITMEX_SCHEMA, symbol=cfg.BITMEX_SYMBOL)
+        for lt_item in lt_items:
+            assert fields.data_valid(lt_item, fields.TRADE_FIELDS)
 
-    def test_bitmex_rest_cancel_order(self, _bitmex: BitmexRestApi):
-        data = self._create_limit_order(_bitmex)
-        exchange_order_id = data['exchange_order_id']
-        _bitmex.cancel_order(exchange_order_id=exchange_order_id,
-                             symbol=cfg.BITMEX_SYMBOL,
-                             schema=cfg.BITMEX_SCHEMA)
-        assert not self._list_orders(_bitmex)
+    @pytest.mark.parametrize(
+        'rest', ['tbitmex'],
+        indirect=True
+    )
+    def test_get_wallet(self, rest: BitmexRestApi):
+        wallet = rest.get_wallet()
+        assert fields.data_valid(wallet, fields.WALLET_FIELDS)
 
-    def test_bitmex_rest_cancel_all_orders(self, _bitmex: BitmexRestApi):
-        data = self._create_limit_order(_bitmex)
-        exchange_order_id = data['exchange_order_id']
-        assert self._get_order(_bitmex, exchange_order_id)
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_get_wallet_summery(self, rest: BitmexRestApi, schema: str):
+        wallet_summary = rest.get_wallet_summary(schemas=[schema])
+        assert fields.data_valid(wallet_summary, fields.WALLET_SUMMARY_FIELDS)
 
-        data = self._create_limit_order(_bitmex)
-        exchange_order_id = data['exchange_order_id']
-        assert self._get_order(_bitmex, exchange_order_id)
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_get_wallet_detail(self, rest: BitmexRestApi, schema: str):
+        wallet_detail = rest.get_wallet_detail(schema=schema, asset=data.ASSET)
+        assert fields.data_valid(wallet_detail[schema], fields.WALLET_DETAIL_FIELDS[schema])
 
-        _bitmex.cancel_all_orders(schema=cfg.BITMEX_SCHEMA)
-        assert self._list_orders(_bitmex) == []
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_ping(self, rest: BitmexRestApi, schema: str):
+        assert rest.ping(schema=schema)
 
-    def test_bitmex_rest_list_order_book(self, _bitmex: BitmexRestApi):
-        ob_items = _bitmex.list_order_book(symbol=cfg.BITMEX_SYMBOL, schema=cfg.BITMEX_SCHEMA)
-        assert ob_items
-        assert isinstance(ob_items, list)
-        assert schema.data_valid(ob_items[0], schema.ORDER_BOOK_FIELDS)
+    @pytest.mark.parametrize(
+        'rest, schemas', [('tbitmex', [OrderSchema.margin1])],
+        indirect=['rest'],
+    )
+    def test_get_api_key_permission(self, rest: BitmexRestApi, schemas: list):
+        permissions = rest.get_api_key_permissions(schemas=schemas)
+        for schema in schemas:
+            assert permissions[schema]
 
-    def test_bitmex_rest_list_order_book_range(self, _bitmex: BitmexRestApi):
-        ob_items = _bitmex.list_order_book(
-            symbol=cfg.BITMEX_SYMBOL,
-            schema=cfg.BITMEX_SCHEMA,
-            depth=5
-        )
-        assert len(ob_items) == 10
-        assert ob_items[0]['side'] == api.SELL
-        assert ob_items[9]['side'] == api.BUY
-
-    def test_bitmex_rest_list_order_book_split(self, _bitmex: BitmexRestApi):
-        ob_items = _bitmex.list_order_book(
-            symbol=cfg.BITMEX_SYMBOL,
-            schema=cfg.BITMEX_SCHEMA,
-            depth=5,
-            split=True
-        )
-        assert len(ob_items[api.BUY]) == 5
-        assert len(ob_items[api.SELL]) == 5
-        assert ob_items[api.BUY][0]['side'] == api.BUY
-        assert ob_items[api.SELL][0]['side'] == api.SELL
-
-    def test_bitmex_rest_list_order_book_offset(self, _bitmex: BitmexRestApi):
-        ob_items = _bitmex.list_order_book(
-            symbol=cfg.BITMEX_SYMBOL,
-            schema=cfg.BITMEX_SCHEMA,
-            depth=1,
-            split=True,
-            offset=10
-        )
-        assert len(ob_items[api.BUY]) == 1
-        assert len(ob_items[api.SELL]) == 1
-        assert abs(ob_items[api.SELL][0]['price'] - ob_items[api.BUY][0]['price']) > 5
-
-    def test_bitmex_rest_unauth_get_user_exception(self, _bitmex_unauth: BitmexRestApi):
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_get_cross_collaterals(self, rest: BitmexRestApi, schema: str):
         with pytest.raises(ConnectorError):
-            _bitmex_unauth.get_user()
+            rest.get_cross_collaterals(schema=schema)
 
-    def test_bitmex_rest_list_trades(self, _bitmex: BitmexRestApi,
-                                     _bitmex_unauth: BitmexRestApi):
-        assert schema.data_valid(_bitmex.list_trades(symbol=cfg.BITMEX_SYMBOL, schema=cfg.BITMEX_SCHEMA).pop(),
-                                 schema.TRADE_FIELDS)
-        assert schema.data_valid(_bitmex_unauth.list_trades(symbol=cfg.BITMEX_SYMBOL, schema=cfg.BITMEX_SCHEMA).pop(),
-                                 schema.TRADE_FIELDS)
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_get_assets_balance(self, rest: BitmexRestApi, schema: str):
+        assets_balance = rest.get_assets_balance(schema=schema)
+        assert fields.data_valid(assets_balance, fields.ASSETS_BALANCE[schema])
 
-    def test_bitmex_rest_get_wallet(self, _bitmex: BitmexRestApi):
-        data = _bitmex.get_wallet()
-        assert schema.data_valid(data['balances'].pop(), schema.WALLET_MARGIN1_FIELDS)
+    @pytest.mark.parametrize(
+        'rest', ['tbitmex'],
+        indirect=True,
+    )
+    def test_wallet_transfer(self, rest: BitmexRestApi):
+        with pytest.raises(ConnectorError): # TODO: get_asset()
+            rest.wallet_transfer(from_wallet='', to_wallet='', asset=data.ASSET, amount=data.DEFAULT_AMOUNT)
 
-    def test_bitmex_calc_face_price(self):
-        price = 3
-        assert BitmexFinFactory.calc_face_price('XBTUSD', price) == (1 / price, True)
-        assert BitmexFinFactory.calc_face_price('XBTH20', price) == (1 / price, True)
-        assert BitmexFinFactory.calc_face_price('XBTM20', price) == (1 / price, True)
-        assert BitmexFinFactory.calc_face_price('XBT7D_U105', price) == (0.1 * price, False)
-        assert BitmexFinFactory.calc_face_price('XBT7D_D95', price) == (0.1 * price, False)
-        assert BitmexFinFactory.calc_face_price('ADAH20', price) == (price, False)
-        assert BitmexFinFactory.calc_face_price('BCHH20', price) == (price, False)
-        assert BitmexFinFactory.calc_face_price('EOSH20', price) == (price, False)
-        assert BitmexFinFactory.calc_face_price('ETHUSD', price) == (1e-6 * price, False)
-        assert BitmexFinFactory.calc_face_price('ETHH20', price) == (price, False)
-        assert BitmexFinFactory.calc_face_price('LTCH20', price) == (price, False)
-        assert BitmexFinFactory.calc_face_price('TRXH20', price) == (price, False)
-        assert BitmexFinFactory.calc_face_price('XRPH20', price) == (price, False)
-        assert BitmexFinFactory.calc_face_price('XBTEUR', price) == (None, None)
-        assert BitmexFinFactory.calc_face_price('XBTUSD', 0) == (None, None)
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_wallet_borrow(self, rest: BitmexRestApi, schema: str):
+        with pytest.raises(ConnectorError):
+            rest.wallet_borrow(schema=schema, asset=data.ASSET, amount=data.DEFAULT_AMOUNT)
 
-    def test_bitmex_calc_price(self):
-        price = 3
-        assert BitmexFinFactory.calc_price('XBTUSD', price) == 1 / price
-        assert BitmexFinFactory.calc_price('XBTH20', price) == 1 / price
-        assert BitmexFinFactory.calc_price('XBTM20', price) == 1 / price
-        assert BitmexFinFactory.calc_price('XBT7D_U105', price) == price * 10
-        assert BitmexFinFactory.calc_price('XBT7D_D95', price) == price * 10
-        assert BitmexFinFactory.calc_price('ADAH20', price) == price
-        assert BitmexFinFactory.calc_price('BCHH20', price) == price
-        assert BitmexFinFactory.calc_price('EOSH20', price) == price
-        assert BitmexFinFactory.calc_price('ETHUSD', price) == 1e+6 * price
-        assert BitmexFinFactory.calc_price('ETHH20', price) == price
-        assert BitmexFinFactory.calc_price('LTCH20', price) == price
-        assert BitmexFinFactory.calc_price('TRXH20', price) == price
-        assert BitmexFinFactory.calc_price('XRPH20', price) == price
-        assert BitmexFinFactory.calc_price('XBTEUR', price) is None
-        assert BitmexFinFactory.calc_price('XBTUSD', 0) is None
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_wallet_repay(self, rest: BitmexRestApi, schema: str):
+        with pytest.raises(ConnectorError):
+            rest.wallet_repay(schema=schema, asset=data.ASSET, amount=data.DEFAULT_AMOUNT)
 
-    @staticmethod
-    def _create_limit_order(_bitmex: BitmexRestApi, options: dict = None):
-        if not options:
-            options = dict(ttl='GTC', is_passive=True, is_iceberg=False)
-        return _bitmex.create_order(
-            symbol=cfg.BITMEX_SYMBOL,
-            schema=cfg.BITMEX_SCHEMA,
-            order_type=api.OrderType.limit,
-            side=api.BUY,
-            price=1414,
-            volume=3,
-            options=options
-        )
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_get_symbol(self, rest: BitmexRestApi, schema: str):
+        symbol = rest.get_symbol(schema=schema, symbol=data.SYMBOL)
+        assert fields.data_valid(symbol, fields.SYMBOL_FIELDS)
 
-    @staticmethod
-    def _create_market_order(handler: BitmexRestApi):
-        return handler.create_order(
-            symbol=cfg.BITMEX_SYMBOL,
-            schema=cfg.BITMEX_SCHEMA,
-            order_type=api.OrderType.market,
-            side=api.BUY,
-            price=1414,
-            volume=3,
-            options=dict()
-        )
+    # TODO: None in expiration_data
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_get_exchange_symbol_info(self, rest: BitmexRestApi, schema: str):
+        exchange_symbols = rest.get_exchange_symbol_info(schema=schema)
+        for exchange_symbol in exchange_symbols:
+            assert fields.data_valid(exchange_symbol, fields.EXCHANGE_SYMBOL_INFO_FIELDS[schema])
 
-    @staticmethod
-    def _get_order(handler: BitmexRestApi, exchange_order_id: str):
-        return handler.get_order(
-            exchange_order_id=exchange_order_id,
-            symbol=cfg.BITMEX_SYMBOL,
-            schema=cfg.BITMEX_SCHEMA
-        )
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_currency_exchange_symbols(self, rest: BitmexRestApi, schema: str):
+        symbols_data = rest.currency_exchange_symbols(schema=schema)
+        for symbol_data in symbols_data:
+            assert fields.data_valid(symbol_data, fields.CURRENCY_EXCHANGE_SYMBOL_FIELDS)
 
-    @staticmethod
-    def _list_orders(handler: BitmexRestApi, params: dict = None):
-        return handler.list_orders(
-            symbol=cfg.BITMEX_SYMBOL,
-            schema=cfg.BITMEX_SCHEMA,
-            **params if params else {}
-        )
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_get_symbols_currencies(self, rest: BitmexRestApi, schema: str):
+        symbols_currencies = rest.get_symbols_currencies(schema=schema)
+        for symbol in symbols_currencies.values():
+            assert fields.data_valid(symbol, fields.SYMBOL_CURRENCY_FIELDS)
 
-    @staticmethod
-    def _list_quote_bins(handler: BitmexRestApi, params: dict = None):
-        return handler.list_quote_bins(
-            symbol=cfg.BITMEX_SYMBOL,
-            schema=cfg.BITMEX_SCHEMA,
-            binsize='1m',
-            count=1000,
-            state_data=STORAGE_DATA,
-            **params if params else {}
-        )
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_list_order_commissions(self, rest: BitmexRestApi, schema: str):
+        orders_commissions = rest.list_order_commissions(schema=schema)
+        for commission in orders_commissions:
+            assert fields.data_valid(commission, fields.ORDER_COMMISSION_FIELDS)
+
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_get_vip_level(self, rest: BitmexRestApi, schema: str):
+        level = rest.get_vip_level(schema)
+        assert isinstance(level, str)
+        try:
+            int_level = int(level)
+        except (TypeError, ValueError):
+            int_level = None
+        assert isinstance(int_level, int)
+
+    @pytest.mark.parametrize(
+        'rest, schema, period_hour, period_multiplier', [
+            ('tbitmex', OrderSchema.margin1, 8, 1)
+        ],
+        indirect=['rest'],
+    )
+    def test_get_funding_rates(self, rest: BitmexRestApi,
+                                           schema: str, period_hour: int, period_multiplier: int):
+        funding_rates = rest.get_funding_rates(schema=schema, symbol=get_symbol(schema), period_hour=period_hour,
+                                               period_multiplier=period_multiplier)
+        for funding_rate in funding_rates:
+            assert fields.data_valid(funding_rate, fields.FUNDING_RATE_FIELDS)
+            assert int(funding_rate.get('time').timestamp() * 1000) > int((datetime.now() - timedelta(
+                hours=period_hour * period_multiplier, minutes=1
+            )).timestamp() * 1000)
+
+    @pytest.mark.parametrize(
+        'rest, schema, period_hour, period_multiplier', [
+            ('tbitmex', OrderSchema.margin1, 8, 1)
+        ],
+        indirect=['rest'],
+    )
+    def test_list_funding_rates(self, rest: BitmexRestApi,
+                                            schema: str, period_hour: int, period_multiplier: int):
+        funding_rates = rest.list_funding_rates(schema=schema, period_hour=period_hour,
+                                                period_multiplier=period_multiplier)
+        for rate in funding_rates:
+            assert fields.data_valid(rate, fields.FUNDING_RATE_FIELDS)
+            assert int(rate.get('time').timestamp() * 1000) > int((datetime.now() - timedelta(
+                hours=period_hour * period_multiplier, minutes=1
+            )).timestamp() * 1000)
+
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_get_leverage(self, rest: BitmexRestApi, schema: str):
+        resp = rest.get_leverage(schema=schema, symbol=get_symbol(schema))
+        assert isinstance(resp, tuple)
+        assert resp[0] in (LeverageType.cross, LeverageType.isolated)
+        assert isinstance(resp[1], float)
+
+    @pytest.mark.parametrize(
+        'rest, schema, leverage_type, leverage, expect', [
+            ('tbitmex', OrderSchema.margin1, LeverageType.isolated, 90, (LeverageType.isolated, 90)),
+            ('tbitmex', OrderSchema.margin1, LeverageType.cross, 100, (LeverageType.cross, 100)),
+        ],
+        indirect=['rest'],
+    )
+    def test_change_leverage(self, rest: BitmexRestApi, schema: str,
+                             leverage_type: str, leverage: Union[float, int], expect: tuple):
+        leverage_data = rest.change_leverage(schema=schema, symbol=get_symbol(schema), leverage_type=leverage_type,
+                                             leverage=leverage)
+        assert leverage_data == expect
+
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_get_position(self, rest: BitmexRestApi, schema: str):
+        create_default_order(rest, schema, order_type=OrderType.market)
+        position = rest.get_position(schema=schema, symbol=order_data.DEFAULT_SYMBOL)
+        assert fields.data_valid(position, fields.POSITION_FIELDS)
+        # rest.close_all_orders(schema=schema, symbol=order_data.DEFAULT_SYMBOL) # TODO: enable when bitmex fix his EP
+
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_list_position(self, rest: BitmexRestApi, schema: str):
+        create_default_order(rest, schema, order_type=OrderType.market)
+        positions = rest.list_positions(schema=schema)
+        for position in positions:
+            assert fields.data_valid(position, fields.POSITION_FIELDS)
+        # rest.close_all_orders(schema=schema, symbol=order_data.DEFAULT_SYMBOL) # TODO: enable when bitmex fix his EP
+
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_get_position_state(self, rest: BitmexRestApi, schema: str):
+        positions_state = rest.get_positions_state(schema=schema)
+        assert isinstance(positions_state, dict)
+
+    @pytest.mark.parametrize(
+        'rest, schema, side, volume, price, wallet_balance, wallet_detail, funding_rate, taker_fee, leverage_type, '
+        'leverage, expect', [
+            ('tbitmex', OrderSchema.margin1, BUY, 100.0, 57000.0, 0.0012, data.WALLET_DATA[OrderSchema.margin1],
+             0.0001, 0.05, LeverageType.cross, 100, 34060.3729073
+             ),
+            ('tbitmex', OrderSchema.margin1, BUY, 100.0, 57000.0, 0.0012, data.WALLET_DATA[OrderSchema.margin1],
+             0.0001, 0.05, LeverageType.isolated, 100, 56971.57118598),
+        ],
+        indirect=['rest'],
+    )
+    def test_get_liquidation(self, rest: BitmexRestApi, schema: str, side: int, volume: float, price: float,
+                             wallet_balance: float, wallet_detail: dict, funding_rate: float, taker_fee: float,
+                             leverage_type: str, leverage: Union[float, int], expect: float):
+        liquidation_data = rest.get_liquidation(schema=schema, symbol=get_symbol(schema), side=side, volume=volume,
+                                                price=price, wallet_balance=wallet_balance, wallet_detail=wallet_detail,
+                                                taker_fee=taker_fee, leverage_type=leverage_type, leverage=leverage,
+                                                funding_rate=funding_rate)
+        assert fields.data_valid(liquidation_data, fields.LIQUIDATION_PRICE_FIELDS)
+        assert liquidation_data['liquidation_price'] == expect
