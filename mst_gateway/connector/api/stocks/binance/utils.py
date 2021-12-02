@@ -2,7 +2,9 @@ from datetime import datetime, timezone
 from typing import Union, Optional
 from mst_gateway.connector import api
 from mst_gateway.calculator import BinanceFinFactory
-from mst_gateway.connector.api.utils.utils import convert_to_currency, load_wallet_summary_in_usd
+from mst_gateway.connector.api.utils.utils import (
+    convert_to_currency, load_wallet_summary_in_usd, load_wallet_summary_margin3_in_usd
+)
 from mst_gateway.connector.api.stocks.binance.var import BinancePositionSideMode
 from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
 from mst_gateway.utils import delta
@@ -430,7 +432,7 @@ def load_isolated_margin_wallet_data(raw_data: dict, currencies: dict, assets: U
                                      schema: str, fields: Union[list, tuple]) -> dict:
     balances = isolated_margin_balance_data(raw_data.get('assets'))
     total_balance = dict()
-    wallet_summary_in_usd = _load_margin_isolate_wallet_summary_in_usd(currencies, balances, fields)
+    wallet_summary_in_usd = load_wallet_summary_margin3_in_usd(currencies, balances, fields)
     for asset in assets:
         total_balance[asset] = convert_to_currency(
             wallet_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
@@ -439,21 +441,6 @@ def load_isolated_margin_wallet_data(raw_data: dict, currencies: dict, assets: U
         'balances': balances,
         **_load_total_wallet_summary_list(total_balance, fields)
     }
-
-
-def _load_margin_isolate_wallet_summary_in_usd(currencies: dict, balances: list, fields: Union[list, tuple], is_for_ws=False):
-    _currency_key = 'cur' if is_for_ws else 'currency'
-    total_balance = {}
-    # init total balance structure if list of balances is empty
-    for f in fields:
-        total_balance.setdefault(f, 0)
-    for symbol_balance in balances:
-        for balance in symbol_balance.values():
-            for b in (balance.get('base_asset'), balance.get('quote_asset')):
-                _price = currencies.get(f"{b[_currency_key]}".lower()) or 0
-                for f in fields:
-                    total_balance[f] += _price * (b[f] or 0)
-    return total_balance
 
 
 def load_margin_wallet_balances(raw_data: dict) -> list:

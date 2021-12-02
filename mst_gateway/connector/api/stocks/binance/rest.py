@@ -14,7 +14,7 @@ from mst_gateway.connector.api.stocks.binance.wss.serializers.position import Bi
 from .lib import Client
 from . import utils, var
 from ...rest import StockRestApi
-from ...utils import load_wallet_summary_in_usd, convert_to_currency
+from ...utils import load_wallet_summary_in_usd, load_wallet_summary_margin3_in_usd, convert_to_currency
 from .....exceptions import GatewayError, ConnectorError, RecoverableError, NotFoundError
 
 
@@ -729,7 +729,10 @@ class BinanceRestApi(StockRestApi):
                 balances = schema_handlers[schema][1](self._binance_api(schema_handlers[schema][0]))
             except (KeyError, ConnectorError):
                 continue
-            wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields)
+            if schema == OrderSchema.margin3:
+                wallet_summary_in_usd = load_wallet_summary_margin3_in_usd(currencies, balances, fields)
+            else:
+                wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields)
             for asset in assets:
                 total_balance[schema][asset] = convert_to_currency(
                     wallet_summary_in_usd, currencies.get(utils.to_exchange_asset(asset, schema))
