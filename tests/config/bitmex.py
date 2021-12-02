@@ -11,3 +11,7 @@ BITMEX_API_SECRET = getenv('BITMEX_API_SECRET')
 BITMEX_USERNAME = getenv('BITMEX_USERNAME', "belka158")
 BITMEX_EMAIL = getenv('BITMEX_EMAIL', "belka158@gmail.com")
 BITMEX_LOCALE = "en-US"
+BITMEX_TESTNET_AUTH_KEYS = {
+    'api_key': BITMEX_API_KEY,
+    'api_secret': BITMEX_API_SECRET
+}
