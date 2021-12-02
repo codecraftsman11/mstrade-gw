@@ -8,7 +8,6 @@ from mst_gateway.exceptions import ConnectorError
 from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
 from mst_gateway.utils import delta
 from . import var
-from .var import BITMEX_ORDER_STATUS_MAP
 from .converter import BitmexOrderTypeConverter
 from ...types.asset import to_system_asset
 from ...types.binsize import BinSize
@@ -131,12 +130,8 @@ def load_exchange_symbol_info(raw_data: list) -> list:
 
         quote_asset, expiration = _quote_asset(symbol, base_asset, quote_currency, symbol_schema)
         system_base_asset = to_system_asset(base_asset)
-        if expiration:
-            system_quote_asset = expiration
-            expiration = expiration[-3:]
-        else:
-            system_quote_asset = to_system_asset(quote_asset)
-        system_symbol = f"{system_base_asset}{system_quote_asset}"
+        system_quote_asset = to_system_asset(quote_asset)
+        system_symbol = f"{system_base_asset}{expiration or system_quote_asset}"
         tick = to_float(d.get('tickSize'))
         volume_tick = to_float(d.get('lotSize'))
         max_leverage = 100 if d.get('initMargin', 0) <= 0 else 1 / d['initMargin']
@@ -166,7 +161,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
 def _quote_asset(symbol, base_asset, quote_currency, symbol_schema):
     quote_asset = symbol[len(base_asset):].upper()
     if symbol_schema == OrderSchema.futures:
-        return quote_currency, quote_asset
+        return quote_currency, quote_asset[-3:]
     return quote_asset, None
 
 
