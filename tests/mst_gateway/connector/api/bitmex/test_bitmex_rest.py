@@ -106,6 +106,12 @@ def get_symbol(schema: str) -> Optional[str]:
     return None
 
 
+def get_asset(schema: str) -> Optional[str]:
+    if schema == OrderSchema.margin1:
+        return data.ASSET
+    return None
+
+
 def create_default_order(rest: BitmexRestApi,
                          schema: str, order_type: str = order_data.DEFAULT_ORDER_TYPE, options: dict = None) -> dict:
     price = get_order_price(rest=rest, schema=schema, symbol=order_data.DEFAULT_SYMBOL,
@@ -421,12 +427,12 @@ class TestBitmexRestApi:
         assert fields.data_valid(assets_balance, fields.ASSETS_BALANCE[schema])
 
     @pytest.mark.parametrize(
-        'rest', ['tbitmex'],
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
         indirect=True,
     )
-    def test_wallet_transfer(self, rest: BitmexRestApi):
-        with pytest.raises(ConnectorError): # TODO: get_asset()
-            rest.wallet_transfer(from_wallet='', to_wallet='', asset=data.ASSET, amount=data.DEFAULT_AMOUNT)
+    def test_wallet_transfer(self, rest: BitmexRestApi, schema: str):
+        with pytest.raises(ConnectorError):
+            rest.wallet_transfer(from_wallet='', to_wallet='', asset=get_asset(schema), amount=data.DEFAULT_AMOUNT)
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
@@ -460,6 +466,7 @@ class TestBitmexRestApi:
     def test_get_exchange_symbol_info(self, rest: BitmexRestApi, schema: str):
         exchange_symbols = rest.get_exchange_symbol_info(schema=schema)
         for exchange_symbol in exchange_symbols:
+            # TODO: TypeError: strptime() argument 1 must be str, not None
             assert fields.data_valid(exchange_symbol, fields.EXCHANGE_SYMBOL_INFO_FIELDS[schema])
 
     @pytest.mark.parametrize(
