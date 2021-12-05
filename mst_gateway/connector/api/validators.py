@@ -26,6 +26,8 @@ def execution_valid(value):
 
 
 def datetime_valid(value):
+    if value is None:
+        return True
     if isinstance(value, datetime):
         return True
     try:
