@@ -3,6 +3,7 @@ import pytest
 from copy import deepcopy
 from typing import Union, Optional
 from datetime import datetime, timedelta
+from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector.api.stocks.bitmex import BitmexRestApi
 from mst_gateway.exceptions import ConnectorError, RecoverableError
 from mst_gateway.connector.api import BUY, SELL, OrderType, OrderSchema, LeverageType, OrderExec
@@ -157,6 +158,15 @@ class TestBitmexRestApi:
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
         indirect=['rest'],
     )
+    def test_calc_face_price(self, rest: BitmexRestApi, schema: str):
+        for symbol in rest.list_symbols(schema=schema):
+            face_price = BitmexFinFactory.calc_face_price(symbol['symbol'], symbol['price'])
+            assert isinstance(face_price[0], float)
+
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
     def test_list_quote_bins(self, rest: BitmexRestApi, schema: str):
         for quote_bin in rest.list_quote_bins(schema=schema, symbol=get_symbol(schema)):
             assert fields.data_valid(quote_bin, fields.QUOTE_BIN_FIELDS)
@@ -305,7 +315,6 @@ class TestBitmexRestApi:
     def test_cancel_order(self, rest: BitmexRestApi, schema: str):
         default_order = create_default_order(rest, schema)
         order = rest.cancel_order(default_order['exchange_order_id'], default_order['symbol'], schema)
-        print(f"{order=}")
         assert fields.data_valid(order, fields.ORDER_FIELDS)
         clear_stock_order_data(order)
         assert order == order_data.DEFAULT_ORDER[schema]
@@ -428,7 +437,7 @@ class TestBitmexRestApi:
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
-        indirect=True,
+        indirect=['rest'],
     )
     def test_wallet_transfer(self, rest: BitmexRestApi, schema: str):
         with pytest.raises(ConnectorError):
