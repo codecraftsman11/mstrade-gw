@@ -336,6 +336,7 @@ class TestBitmexRestApi:
             default_order = create_default_order(rest, schema)
             order = rest.close_order(default_order['exchange_order_id'], default_order['symbol'], schema)
             assert order
+        rest.cancel_all_orders(schema)
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
@@ -346,6 +347,7 @@ class TestBitmexRestApi:
             default_order = create_default_order(rest, schema)
             order = rest.close_all_orders(default_order['exchange_order_id'], default_order['symbol'])
             assert order
+        rest.cancel_all_orders(schema)
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
