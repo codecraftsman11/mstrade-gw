@@ -62,29 +62,6 @@ SYMBOL_FIELDS = {
     'max_leverage': (float, None),
 }
 
-WS_SYMBOL_FIELDS = {
-    'time': iso_datetime_valid,
-    'timestamp': int,
-    'pair': pair_valid,
-    'symbol': str,
-    'expiration': str,
-    'price': float,
-    'price24': float,
-    'delta': float,
-    'tick': float,
-    'volume_tick': float,
-    'face_price': float,
-    'bid_price': float,
-    'ask_price': float,
-    'reversed': bool,
-    'volume24': int,
-    'schema': schema_valid,
-    'system_symbol': str,
-    'symbol_schema': schema_valid,
-    'created': iso_datetime_valid,
-    'max_leverage': float,
-}
-
 ORDER_FIELDS = {
     'exchange_order_id': exchange_order_id_valid,
     'symbol': str,
@@ -360,6 +337,67 @@ POSITION_STATE_FIELDS = {
 
 LIQUIDATION_FIELDS = {
     'liquidation_price': (float, None)
+}
+
+
+WS_MESSAGE_HEADER_FIELDS = {
+    'acc': str,
+    'tb': str,
+    'sch': schema_valid,
+    'act': str,
+    'd': list,
+}
+WS_MESSAGE_DATA_FIELDS = {
+    'order_book': {
+        'id': int,
+        's': str,
+        'ss': str,
+        'sd': side_valid,
+        'vl': float,
+        'p': float,
+    },
+    'quote_bin': {
+        'tm': iso_datetime_valid,
+        's': str,
+        'ss': str,
+        'vl': float,
+        'opp': float,
+        'clp': float,
+        'hip': float,
+        'lop': float,
+    },
+    'symbol': {
+        'tm': iso_datetime_valid,
+        's': str,
+        'ss': str,
+        'ssch': schema_valid,
+        'p': float,
+        'p24': float,
+        'dt': float,
+        'fp': float,
+        'bip': float,
+        'asp': float,
+        're': bool,
+        'v24': float,
+        'mp': float,
+        'hip': float,
+        'lop': float,
+        'exp': (str, None),
+        'expd': (iso_datetime_valid, None),
+        'pa': pair_valid,
+        'tck': float,
+        'vt': float,
+        'crt': iso_datetime_valid,
+        'mlvr': (float, None),
+    },
+    'trade': {
+        'tm': iso_datetime_valid,
+        's': str,
+        'ss': str,
+        'sd': side_valid,
+        'vl': float,
+        'p': float,
+    },
 }
 
 
