@@ -266,7 +266,7 @@ BASE_EXCHANGE_SYMBOL_INFO_FIELDS = {
     'volume_tick': float,
     'expiration': Or(None, str),
     'expiration_date': Or(None, Use(datetime_valid)),
-    'max_leverage': Or(None, float, int),
+    'max_leverage': Or(None, float),
 }
 EXCHANGE_SYMBOL_INFO_FIELDS = {
     OrderSchema.exchange: {
