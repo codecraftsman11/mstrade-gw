@@ -11,6 +11,7 @@ from ..api.validators import (
     leverage_type_valid,
 )
 from mst_gateway.connector.api.types import OrderSchema
+from schema import Use, Or
 
 
 QUOTE_FIELDS = {
@@ -25,21 +26,21 @@ QUOTE_FIELDS = {
 }
 
 QUOTE_BIN_FIELDS = {
-    'time': datetime_valid,
+    'time': Use(datetime_valid),
     'volume': str,
     'open_price': float,
     'close_price': float,
     'high_price': float,
     'low_price': float,
-    'schema': (schema_valid, None),
-    'symbol': (str, None),
-    'system_symbol': (str, None),
+    'schema': Or(None, Use(schema_valid)),
+    'symbol': Or(None, str),
+    'system_symbol': Or(None, str),
 }
 
 SYMBOL_FIELDS = {
-    'time': datetime_valid,
+    'time': Use(datetime_valid),
     'symbol': str,
-    'schema': schema_valid,
+    'schema': Use(schema_valid),
     'price': float,
     'price24': float,
     'delta': float,
@@ -51,15 +52,15 @@ SYMBOL_FIELDS = {
     'mark_price': float,
     'high_price': float,
     'low_price': float,
-    'expiration': (str, None),
-    'expiration_date': (datetime_valid, None),
-    'pair': (pair_valid, None),
-    'tick': (float, None),
-    'volume_tick': (float, None),
-    'system_symbol': (str, None),
-    'symbol_schema': (schema_valid, None),
-    'created': (datetime_valid, None),
-    'max_leverage': (float, None),
+    'expiration': Or(None, str),
+    'expiration_date': Or(None, Use(datetime_valid), str),
+    'pair': Or(None, Use(pair_valid)),
+    'tick': Or(None, float),
+    'volume_tick': Or(None, float),
+    'system_symbol': Or(None, str),
+    'symbol_schema': Or(None, Use(schema_valid)),
+    'created': Or(None, Use(datetime_valid)),
+    'max_leverage': Or(None, float),
 }
 
 WS_SYMBOL_FIELDS = {
@@ -86,39 +87,39 @@ WS_SYMBOL_FIELDS = {
 }
 
 ORDER_FIELDS = {
-    'exchange_order_id': exchange_order_id_valid,
+    'exchange_order_id': Use(exchange_order_id_valid),
     'symbol': str,
     'volume': float,
     'filled_volume': float,
     'stop': float,    # trigger level for Stop and Take Profit orders
-    'type': type_valid,
+    'type': Use(type_valid),
     'side': str,
     'price': float,
-    'time': datetime_valid,
+    'time': Use(datetime_valid),
     'active': bool,
-    'schema': (schema_valid, None),
-    'execution': execution_valid,
-    'system_symbol': (str, None),
+    'schema': Or(None, Use(schema_valid)),
+    'execution': Use(execution_valid),
+    'system_symbol': Or(None, str),
 }
 
 ORDER_BOOK_FIELDS = {
-    'id': (int, None),
+    'id': Or(None, int),
     'symbol': str,
     'price': float,
     'volume': float,
-    'side': side_valid,
-    'schema': (schema_valid, None),
-    'system_symbol': (str, None),
+    'side': Use(side_valid),
+    'schema': Or(None, Use(schema_valid)),
+    'system_symbol': Or(None, str),
 }
 
 TRADE_FIELDS = {
-    'time': datetime_valid,
+    'time': Use(datetime_valid),
     'volume': str,
     'price': float,
-    'side': side_valid,
-    'schema': (schema_valid, None),
-    'symbol': (str, None),
-    'system_symbol': (str, None),
+    'side': Use(side_valid),
+    'schema': Or(None, Use(schema_valid)),
+    'symbol': Or(None, str),
+    'system_symbol': Or(None, str),
 }
 
 WALLET_FIELDS = {
@@ -129,7 +130,7 @@ WALLET_FIELDS = {
         'unrealised_pnl': float,
         'margin_balance': float,
         'maint_margin': float,
-        'init_margin': float,
+        'init_margin': Or(None, float),
         'available_margin': float,
         'type': str,
     },
@@ -167,7 +168,7 @@ BASE_BALANCE_FIELDS = {
     'unrealised_pnl': float,
     'margin_balance': float,
     'maint_margin': float,
-    'init_margin': (float, None),
+    'init_margin': Or(None, float),
     'available_margin': float,
     'type': str,
 }
@@ -228,7 +229,7 @@ BASE_WALLET_DETAIL_FIELDS = {
     'unrealised_pnl': float,
     'margin_balance': float,
     'maint_margin': float,
-    'init_margin': (float, None),
+    'init_margin': Or(None, float),
     'available_margin': float,
     'type': str,
 }
@@ -253,19 +254,19 @@ WALLET_DETAIL_FIELDS = {
 BASE_EXCHANGE_SYMBOL_INFO_FIELDS = {
     'symbol': str,
     'system_symbol': str,
-    'schema': schema_valid,
-    'symbol_schema': schema_valid,
+    'schema': Use(schema_valid),
+    'symbol_schema': Use(schema_valid),
     'base_asset': str,
     'quote_asset': str,
     'system_base_asset': str,
     'system_quote_asset': str,
-    'pair': pair_valid,
-    'system_pair': pair_valid,
+    'pair': Use(pair_valid),
+    'system_pair': Use(pair_valid),
     'tick': float,
     'volume_tick': float,
-    'expiration': (str, None),
-    'expiration_date': (datetime_valid, None),
-    'max_leverage': (float, None),
+    'expiration': Or(None, str),
+    'expiration_date': Or(None, Use(datetime_valid)),
+    'max_leverage': Or(None, float, int),
 }
 EXCHANGE_SYMBOL_INFO_FIELDS = {
     OrderSchema.exchange: {
@@ -305,9 +306,9 @@ CURRENCY_EXCHANGE_SYMBOL_FIELDS = {
 }
 
 SYMBOL_CURRENCY_FIELDS = {
-    'pair': pair_valid,
+    'pair': Use(pair_valid),
     'price': float,
-    'expiration': (str, None),
+    'expiration': Or(None, str),
 }
 
 WALLET_SUMMARY_FIELDS = {
@@ -328,19 +329,19 @@ ALT_CURRENCY_COMMISSION_FIELDS = {
 FUNDING_RATE_FIELDS = {
     'symbol': str,
     'funding_rate': float,
-    'time': datetime_valid,
+    'time': Use(datetime_valid),
 }
 
 POSITION_FIELDS = {
-    'time': datetime_valid,
-    'schema': schema_valid,
+    'time': Use(datetime_valid),
+    'schema': Use(schema_valid),
     'symbol': str,
-    'side': (side_valid, None),
+    'side': Or(None, Use(side_valid)),
     'volume': float,
     'entry_price': float,
     'mark_price': float,
     'unrealised_pnl': float,
-    'leverage_type': leverage_type_valid,
+    'leverage_type': Use(leverage_type_valid),
     'leverage': float,
     'liquidation_price': float,
 }
@@ -348,18 +349,18 @@ POSITION_FIELDS = {
 POSITION_STATE_FIELDS = {
     'symbol': str,
     'volume': float,
-    'side': (side_valid, None),
+    'side': Or(None, Use(side_valid)),
     'entry_price': float,
-    'mark_price': float,
-    'leverage_type': leverage_type_valid,
+    'mark_price': Or(None, float),
+    'leverage_type': Use(leverage_type_valid),
     'leverage': float,
     'isolated_wallet_balance': float,
-    'cross_wallet_balance': float,
+    'cross_wallet_balance': Or(None, float),
     'action': str,
 }
 
 LIQUIDATION_FIELDS = {
-    'liquidation_price': (float, None)
+    'liquidation_price': Or(None, float)
 }
 
 
@@ -386,8 +387,6 @@ def data_update_valid(data, rules):
 
 
 def value_valid(value, rule):
-    if isinstance(rule, tuple) and len(rule) == 2 and rule[1] is None and value is None:
-        return True
     if isinstance(rule, type):
         try:
             return value is None or isinstance(value, rule)

@@ -12,6 +12,7 @@ from .data import symbol as symbol_data
 from .data import order_book as order_book_data
 from .data import order as order_data
 from .data import position as position_data
+from schema import Schema, Or
 
 
 def rest_params(param):
@@ -85,8 +86,9 @@ class TestBinanceRestApi:
     )
     def test_list_quote_bins(self, rest: BinanceRestApi, schema):
         quote_bins = rest.list_quote_bins(schema=schema, symbol=get_symbol(schema))
+        quote_bin_schema = Schema(fields.QUOTE_BIN_FIELDS)
         for qb in quote_bins:
-            assert fields.data_valid(qb, fields.QUOTE_BIN_FIELDS)
+            assert quote_bin_schema.validate(qb) == qb
         assert len(quote_bins) == 100
 
     @pytest.mark.parametrize(
@@ -94,7 +96,9 @@ class TestBinanceRestApi:
         indirect=True,
     )
     def test_get_user(self, rest: BinanceRestApi):
-        assert fields.data_valid(rest.get_user(), fields.USER_FIELDS)
+        user = rest.get_user()
+        user_schema = Schema(fields.USER_FIELDS)
+        assert user_schema.validate(user) == user
 
     @pytest.mark.parametrize(
         'rest, schemas, expect', [
@@ -127,13 +131,15 @@ class TestBinanceRestApi:
     )
     def test_get_wallet(self, rest: BinanceRestApi, schema):
         wallet = rest.get_wallet(schema=schema)
-        assert fields.data_valid(wallet, fields.WALLET_FIELDS[schema])
+        assert Schema(fields.WALLET_FIELDS[schema]).validate(wallet) == wallet
+        balance_schema = Schema(fields.BALANCE_FIELDS[schema])
         for balance in wallet['balances']:
-            assert fields.data_valid(balance, fields.BALANCE_FIELDS[schema])
-        assert fields.data_valid(wallet['total_balance'], fields.SUMMARY_FIELDS)
+            assert balance_schema.validate(balance) == balance
+        summary_schema = Schema(fields.SUMMARY_FIELDS)
+        assert summary_schema.validate(wallet['total_balance']) == wallet['total_balance']
         if schema in (OrderSchema.futures, OrderSchema.futures_coin):
             for key in ('total_unrealised_pnl', 'total_margin_balance', 'total_borrowed', 'total_interest'):
-                assert fields.data_valid(wallet[key], fields.SUMMARY_FIELDS)
+                assert summary_schema.validate(wallet[key]) == wallet[key]
 
     @pytest.mark.parametrize(
         'rest, schema, expect', [
@@ -146,7 +152,7 @@ class TestBinanceRestApi:
     def test_get_wallet_detail(self, rest: BinanceRestApi, schema, expect):
         wallet_detail = rest.get_wallet_detail(schema, get_asset(schema))
         assert list(wallet_detail.keys()) == expect
-        assert fields.data_valid(wallet_detail[schema], fields.WALLET_DETAIL_FIELDS[schema])
+        assert Schema(fields.WALLET_DETAIL_FIELDS[schema]).validate(wallet_detail[schema]) == wallet_detail[schema]
 
     @pytest.mark.parametrize(
         'rest, schema', [('tsbinance', OrderSchema.exchange), ('tfbinance', OrderSchema.futures),
@@ -154,8 +160,8 @@ class TestBinanceRestApi:
         indirect=['rest'],
     )
     def test_get_wallet_detail_partial(self, rest: BinanceRestApi, schema):
-        assert fields.data_valid(rest.get_wallet_detail(schema, get_asset(schema), partial=True),
-                                 fields.WALLET_DETAIL_FIELDS[schema])
+        wallet_detail = rest.get_wallet_detail(schema, get_asset(schema), partial=True)
+        assert Schema(fields.WALLET_DETAIL_FIELDS[schema]).validate(wallet_detail) == wallet_detail
 
     @pytest.mark.parametrize(
         'rest, schema', [('tsbinance', OrderSchema.exchange), ('tsbinance', OrderSchema.margin2),
@@ -182,7 +188,8 @@ class TestBinanceRestApi:
         indirect=['rest'],
     )
     def test_get_symbol(self, rest: BinanceRestApi, schema):
-        assert fields.data_valid(rest.get_symbol(schema=schema, symbol=get_symbol(schema)), fields.SYMBOL_FIELDS)
+        symbol = rest.get_symbol(schema=schema, symbol=get_symbol(schema))
+        assert Schema(fields.SYMBOL_FIELDS).validate(symbol)
 
     @pytest.mark.parametrize(
         'rest, schema', [('tsbinance', OrderSchema.exchange), ('tsbinance', OrderSchema.margin2),
@@ -191,8 +198,9 @@ class TestBinanceRestApi:
         indirect=['rest'],
     )
     def test_list_symbols(self, rest: BinanceRestApi, schema):
+        symbol_schema = Schema(fields.SYMBOL_FIELDS)
         for symbol in rest.list_symbols(schema):
-            assert fields.data_valid(symbol, fields.SYMBOL_FIELDS)
+            assert symbol_schema.validate(symbol) == symbol
 
     @pytest.mark.parametrize(
         'rest, schema', [('tsbinance', OrderSchema.exchange), ('tfbinance', OrderSchema.futures),
@@ -200,25 +208,28 @@ class TestBinanceRestApi:
         indirect=['rest'],
     )
     def test_get_exchange_symbol_info(self, rest: BinanceRestApi, schema):
+        symbol_info_schema = Schema(fields.EXCHANGE_SYMBOL_INFO_FIELDS[schema])
         for symbol_info in rest.get_exchange_symbol_info(schema):
-            assert fields.data_valid(symbol_info, fields.EXCHANGE_SYMBOL_INFO_FIELDS[schema])
+            assert symbol_info_schema.validate(symbol_info) == symbol_info
             if schema in (OrderSchema.futures, OrderSchema.futures_coin):
+                leverage_bracket_schema = Schema(fields.LEVERAGE_BRACKET_FIELDS[schema])
                 for leverage_bracket in symbol_info['leverage_brackets']:
-                    assert fields.data_valid(leverage_bracket, fields.LEVERAGE_BRACKET_FIELDS[schema])
+                    assert leverage_bracket_schema.validate(leverage_bracket) == leverage_bracket
 
     @classmethod
     def validate_order_book(cls, order_book, side, split, min_volume_buy, min_volume_sell):
+        order_book_schema = Schema(fields.ORDER_BOOK_FIELDS)
         if split:
             for s in order_book:
                 for ob in order_book[s]:
-                    assert fields.data_valid(ob, fields.ORDER_BOOK_FIELDS)
+                    assert order_book_schema.validate(ob) == ob
                     if min_volume_buy and s == BUY:
                         assert ob['volume'] >= min_volume_buy
                     if min_volume_sell and s == SELL:
                         assert ob['volume'] >= min_volume_sell
         else:
             for ob in order_book:
-                assert fields.data_valid(ob, fields.ORDER_BOOK_FIELDS)
+                assert order_book_schema.validate(ob) == ob
                 if side is not None:
                     assert ob['side'] == side
                 if min_volume_buy is not None and ob['side'] == BUY:
@@ -269,8 +280,9 @@ class TestBinanceRestApi:
     )
     def test_list_trades(self, rest: BinanceRestApi, schema: str, count: Optional[int]):
         trades = rest.list_trades(schema=schema, symbol=get_symbol(schema), count=count)
+        trade_schema = Schema(fields.TRADE_FIELDS)
         for trade in trades:
-            assert fields.data_valid(trade, fields.TRADE_FIELDS)
+            assert trade_schema.validate(trade) == trade
         if count:
             assert len(trades) == count
 
@@ -280,8 +292,9 @@ class TestBinanceRestApi:
         indirect=['rest'],
     )
     def test_currency_exchange_symbols(self, rest: BinanceRestApi, schema):
+        symbol_schema = Schema(fields.CURRENCY_EXCHANGE_SYMBOL_FIELDS)
         for symbol in rest.currency_exchange_symbols(schema):
-            assert fields.data_valid(symbol, fields.CURRENCY_EXCHANGE_SYMBOL_FIELDS)
+            assert symbol_schema.validate(symbol) == symbol
 
     @pytest.mark.parametrize(
         'rest, schema', [('tsbinance', OrderSchema.exchange), ('tsbinance', OrderSchema.margin2),
@@ -289,8 +302,9 @@ class TestBinanceRestApi:
         indirect=['rest'],
     )
     def test_get_symbols_currencies(self, rest: BinanceRestApi, schema):
+        symbol_schema = Schema(fields.SYMBOL_CURRENCY_FIELDS)
         for symbol in rest.get_symbols_currencies(schema).values():
-            assert fields.data_valid(symbol, fields.SYMBOL_CURRENCY_FIELDS)
+            assert symbol_schema.validate(symbol) == symbol
 
     @pytest.mark.parametrize(
         'rest, schemas', [('tsbinance', [OrderSchema.exchange, OrderSchema.margin2, OrderSchema.margin3,
@@ -301,9 +315,10 @@ class TestBinanceRestApi:
     )
     def test_get_wallet_summary(self, rest: BinanceRestApi, schemas):
         wallet_summary = rest.get_wallet_summary(schemas)
-        assert fields.data_valid(wallet_summary, fields.WALLET_SUMMARY_FIELDS)
+        assert Schema(fields.WALLET_SUMMARY_FIELDS).validate(wallet_summary) == wallet_summary
+        summary_schema = Schema(fields.SUMMARY_FIELDS)
         for summary in wallet_summary.values():
-            assert fields.data_valid(summary, fields.SUMMARY_FIELDS)
+            assert summary_schema.validate(summary) == summary
 
     @pytest.mark.parametrize(
         'rest, schema', [('tsbinance', OrderSchema.exchange), ('tsbinance', OrderSchema.margin2),
@@ -311,8 +326,9 @@ class TestBinanceRestApi:
         indirect=['rest'],
     )
     def test_list_order_commissions(self, rest: BinanceRestApi, schema):
+        commission_schema = Schema(fields.ORDER_COMMISSION_FIELDS)
         for commission in rest.list_order_commissions(schema):
-            assert fields.data_valid(commission, fields.ORDER_COMMISSION_FIELDS)
+            assert commission_schema.validate(commission) == commission
 
     @pytest.mark.parametrize(
         'rest, schema', [('tsbinance', OrderSchema.exchange), ('tsbinance', OrderSchema.margin2),
@@ -335,7 +351,8 @@ class TestBinanceRestApi:
         indirect=['rest'],
     )
     def test_get_alt_currency_commission(self, rest: BinanceRestApi, schema):
-        assert fields.data_valid(rest.get_alt_currency_commission(schema), fields.ALT_CURRENCY_COMMISSION_FIELDS)
+        commission = rest.get_alt_currency_commission(schema)
+        assert Schema(fields.ALT_CURRENCY_COMMISSION_FIELDS).validate(commission) == commission
 
     @pytest.mark.parametrize(
         'rest, schema, period_hour, period_multiplier, ', [('tsbinance', OrderSchema.exchange, 8, 1),
@@ -345,9 +362,10 @@ class TestBinanceRestApi:
         indirect=['rest'],
     )
     def test_get_funding_rates(self, rest: BinanceRestApi, schema, period_hour, period_multiplier):
+        rate_schema = Schema(fields.FUNDING_RATE_FIELDS)
         for rate in rest.get_funding_rates(schema=schema, symbol=get_symbol(schema),
                                            period_hour=period_hour, period_multiplier=period_multiplier):
-            assert fields.data_valid(rate, fields.FUNDING_RATE_FIELDS)
+            assert rate_schema.validate(rate) == rate
             assert int(rate.get('time').timestamp() * 1000) > int((datetime.now() - timedelta(
                 hours=period_hour * period_multiplier, minutes=1
             )).timestamp() * 1000)
@@ -362,8 +380,9 @@ class TestBinanceRestApi:
         indirect=['rest'],
     )
     def test_list_funding_rates(self, rest: BinanceRestApi, schema, period_hour, period_multiplier):
+        rate_schema = Schema(fields.FUNDING_RATE_FIELDS)
         for rate in rest.list_funding_rates(schema, period_hour=period_hour, period_multiplier=period_multiplier):
-            assert fields.data_valid(rate, fields.FUNDING_RATE_FIELDS)
+            assert rate_schema.validate(rate) == rate
             assert int(rate.get('time').timestamp() * 1000) > int((datetime.now() - timedelta(
                 hours=period_hour * period_multiplier, minutes=1
             )).timestamp() * 1000)
@@ -413,7 +432,7 @@ class TestBinanceRestApi:
     )
     def test_get_position(self, rest: BinanceRestApi, schema):
         position = rest.get_position(schema, get_symbol(schema), account_id=1)
-        assert fields.data_valid(position, fields.POSITION_FIELDS)
+        assert Schema(fields.POSITION_FIELDS).validate(position) == position
 
     @pytest.mark.parametrize(
         'rest, schema', [('tsbinance', OrderSchema.exchange), ('tsbinance', OrderSchema.margin2),
@@ -421,8 +440,9 @@ class TestBinanceRestApi:
         indirect=['rest'],
     )
     def test_list_positions(self, rest: BinanceRestApi, schema):
+        position_schema = Schema(fields.POSITION_FIELDS)
         for position in rest.list_positions(schema, account_id=1):
-            assert fields.data_valid(position, fields.POSITION_FIELDS)
+            assert position_schema.validate(position) == position
 
     @pytest.mark.parametrize(
         'rest, schema', [('tsbinance', OrderSchema.exchange), ('tsbinance', OrderSchema.margin2),
@@ -430,8 +450,9 @@ class TestBinanceRestApi:
         indirect=['rest'],
     )
     def test_get_positions_state(self, rest: BinanceRestApi, schema):
+        position_state_schema = Schema(fields.POSITION_STATE_FIELDS)
         for position_state in rest.get_positions_state(schema).values():
-            assert fields.data_valid(position_state, fields.POSITION_STATE_FIELDS)
+            assert position_state_schema.validate(position_state) == position_state
 
     @pytest.mark.parametrize(
         'rest, schema, side, volume, mark_price, price, wallet_balance, leverage_type, expect',
@@ -463,7 +484,7 @@ class TestBinanceRestApi:
         liquidation = rest.get_liquidation(get_symbol(schema), schema,
                                            leverage_type, wallet_balance, side, volume, price, mark_price=mark_price,
                                            leverage_brackets=leverage_brackets, positions_state=positions_state)
-        assert fields.data_valid(liquidation, fields.LIQUIDATION_FIELDS)
+        assert Schema(fields.LIQUIDATION_FIELDS).validate(liquidation) == liquidation
         assert liquidation['liquidation_price'] == expect
 
 
@@ -626,7 +647,7 @@ class TestBinanceRestApiOrder:
             expect['price'] = price
         order = rest.create_order(symbol, schema, side, order_data.DEFAULT_ORDER_VOLUME[schema], order_type, price,
                                   order_data.DEFAULT_ORDER_OPTIONS)
-        assert fields.data_valid(order, fields.ORDER_FIELDS)
+        assert Schema(fields.ORDER_FIELDS).validate(order) == order
         clear_stock_order_data(order)
         if order_type == OrderType.market:
             order.pop('price')
@@ -643,7 +664,7 @@ class TestBinanceRestApiOrder:
         expect = deepcopy(order_data.DEFAULT_ORDER[schema])
         expect['price'] = default_order['price']
         order = rest.get_order(default_order['exchange_order_id'], default_order['symbol'], schema)
-        assert fields.data_valid(order, fields.ORDER_FIELDS)
+        assert Schema(fields.ORDER_FIELDS).validate(order) == order
         clear_stock_order_data(order)
         assert order == expect
         rest.cancel_all_orders(schema)
@@ -656,8 +677,9 @@ class TestBinanceRestApiOrder:
     def test_list_orders(self, rest: BinanceRestApi, schema):
         default_order = create_default_order(rest, schema)
         orders = rest.list_orders(schema, default_order['symbol'])
+        order_schema = Schema(fields.ORDER_FIELDS)
         for order in orders:
-            assert fields.data_valid(order, fields.ORDER_FIELDS)
+            assert order_schema.validate(order) == order
         rest.cancel_all_orders(schema)
 
     @pytest.mark.parametrize(
@@ -710,7 +732,7 @@ class TestBinanceRestApiOrder:
                                   order_type=OrderType.limit,
                                   price=get_order_price(rest, schema, symbol, order_data.DEFAULT_ORDER_OPPOSITE_SIDE),
                                   options=order_data.DEFAULT_ORDER_OPTIONS)
-        assert fields.data_valid(order, fields.ORDER_FIELDS)
+        assert Schema(fields.ORDER_FIELDS).validate(order) == order
         clear_stock_order_data(order)
         order.pop('price')
         assert order == expect
@@ -761,7 +783,7 @@ class TestBinanceRestApiOrder:
         default_order = create_default_order(rest, schema)
         expect['price'] = default_order['price']
         order = rest.cancel_order(default_order['exchange_order_id'], default_order['symbol'], schema)
-        assert fields.data_valid(order, fields.ORDER_FIELDS)
+        assert Schema(fields.ORDER_FIELDS).validate(order) == order
         clear_stock_order_data(order)
         assert order == expect
 
