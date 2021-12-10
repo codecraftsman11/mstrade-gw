@@ -1,5 +1,6 @@
 # pylint: disable=broad-except
-from ..api.validators import (
+from schema import Use, Or
+from .validators import (
     datetime_valid,
     iso_datetime_valid,
     pair_valid,
@@ -11,7 +12,6 @@ from ..api.validators import (
     leverage_type_valid,
 )
 from mst_gateway.connector.api.types import OrderSchema
-from schema import Use, Or
 
 
 QUOTE_FIELDS = {
@@ -61,6 +61,29 @@ SYMBOL_FIELDS = {
     'symbol_schema': Or(None, Use(schema_valid)),
     'created': Or(None, Use(datetime_valid)),
     'max_leverage': Or(None, float),
+}
+
+WS_SYMBOL_FIELDS = {
+    'time': iso_datetime_valid,
+    'timestamp': int,
+    'pair': pair_valid,
+    'symbol': str,
+    'expiration': str,
+    'price': float,
+    'price24': float,
+    'delta': float,
+    'tick': float,
+    'volume_tick': float,
+    'face_price': float,
+    'bid_price': float,
+    'ask_price': float,
+    'reversed': bool,
+    'volume24': int,
+    'schema': schema_valid,
+    'system_symbol': str,
+    'symbol_schema': schema_valid,
+    'created': iso_datetime_valid,
+    'max_leverage': float,
 }
 
 ORDER_FIELDS = {
@@ -163,30 +186,6 @@ BALANCE_FIELDS = {
         'interest': float,
         **BASE_BALANCE_FIELDS,
     },
-}
-
-SUBSCRIPTIONS = {
-    'symbol': {
-        'schema': SYMBOL_FIELDS,
-    },
-    'quote': {
-        'schema': QUOTE_FIELDS
-    },
-    'quote_bin': {
-        'schema': QUOTE_BIN_FIELDS
-    },
-    'order_book': {
-        'schema': ORDER_BOOK_FIELDS
-    },
-    'trade': {
-        'schema': TRADE_FIELDS
-    },
-}
-
-AUTH_SUBSCRIPTIONS = {
-    'order': {
-        'schema': ORDER_FIELDS
-    }
 }
 
 USER_FIELDS = {
@@ -339,97 +338,3 @@ POSITION_STATE_FIELDS = {
 LIQUIDATION_FIELDS = {
     'liquidation_price': Or(None, float)
 }
-
-
-WS_MESSAGE_HEADER_FIELDS = {
-    'acc': str,
-    'tb': str,
-    'sch': Use(schema_valid),
-    'act': str,
-    'd': list,
-}
-WS_MESSAGE_DATA_FIELDS = {
-    'order_book': {
-        'id': int,
-        's': str,
-        'ss': str,
-        'sd': Use(side_valid),
-        'vl': float,
-        'p': float,
-    },
-    'quote_bin': {
-        'tm': Use(iso_datetime_valid),
-        's': str,
-        'ss': str,
-        'vl': float,
-        'opp': float,
-        'clp': float,
-        'hip': float,
-        'lop': float,
-    },
-    'symbol': {
-        'tm': Use(iso_datetime_valid),
-        's': str,
-        'ss': str,
-        'ssch': Use(schema_valid),
-        'p': float,
-        'p24': float,
-        'dt': float,
-        'fp': float,
-        'bip': float,
-        'asp': float,
-        're': bool,
-        'v24': float,
-        'mp': float,
-        'hip': float,
-        'lop': float,
-        'exp': Or(None, str),
-        'expd': Or(None, Use(iso_datetime_valid)),
-        'pa': pair_valid,
-        'tck': float,
-        'vt': float,
-        'crt': Use(iso_datetime_valid),
-        'mlvr': Or(None, float),
-    },
-    'trade': {
-        'tm': Use(iso_datetime_valid),
-        's': str,
-        'ss': str,
-        'sd': Use(side_valid),
-        'vl': float,
-        'p': float,
-    },
-}
-
-
-def data_valid(data, rules):
-    if not isinstance(data, dict):
-        raise TypeError("Data is not dictionary")
-    if not set(data.keys()) == set(rules.keys()):
-        raise ValueError("Keys differ")
-    for k in data:
-        if not value_valid(data[k], rules[k]):
-            raise ValueError("Invalid {}".format(k))
-    return True
-
-
-def data_update_valid(data, rules):
-    if not isinstance(data, dict):
-        raise TypeError("Data is not dictionary")
-    if set(data.keys()) - set(rules.keys()):
-        raise ValueError("In data present keys out of rule's range")
-    for k in data:
-        if not value_valid(data[k], rules[k]):
-            raise ValueError("Invalid {}".format(k))
-    return True
-
-
-def value_valid(value, rule):
-    if isinstance(rule, type):
-        try:
-            return value is None or isinstance(value, rule)
-        except Exception:
-            return False
-    if callable(rule):
-        return rule(value)
-    return True
