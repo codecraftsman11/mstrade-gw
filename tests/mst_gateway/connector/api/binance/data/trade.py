@@ -155,12 +155,63 @@ DEFAULT_TRADE_SPLIT_MESSAGE_RESULT = {
 }
 DEFAULT_TRADE_GET_DATA_RESULT = {
     OrderSchema.exchange: [
-        None
+        {
+            'trade': {
+                'acc': 'tbinance.tbinance_spot',
+                'tb': 'trade',
+                'sch': 'exchange',
+                'act': 'insert',
+                'd': [
+                    {
+                        'tm': '2021-12-08T10:22:08.243000',
+                        'p': 50229.54,
+                        'vl': 0.009955,
+                        'sd': 1,
+                        's': 'BTCUSDT',
+                        'ss': 'btcusd',
+                    }
+                ],
+            }
+        }
     ],
     OrderSchema.futures: [
-        None
+        {
+            'trade': {
+                'acc': 'tbinance.tbinance_futures',
+                'tb': 'trade',
+                'sch': 'futures',
+                'act': 'insert',
+                'd': [
+                    {
+                        'tm': '2021-12-08T11:46:11.897000',
+                        'p': 49145.63,
+                        'vl': 0.01,
+                        'sd': 0,
+                        's': 'BTCUSDT',
+                        'ss': 'btcusd',
+                    }
+                ],
+            }
+        }
     ],
     OrderSchema.futures_coin: [
-        None
+        {
+            'trade': {
+                'acc': 'tbinance.tbinance_futures',
+                'tb': 'trade',
+                'sch': 'futures_coin',
+                'act': 'insert',
+                'd': [
+                    {
+                        'tm': '2021-12-08T12:08:55.074000',
+                        'p': 49222.5,
+                        'vl': 1.0,
+                        'sd': 1,
+                        's': 'BTCUSD_PERP',
+                        'ss': 'btcusd',
+                    }
+                ],
+            }
+        }
     ],
 }

@@ -37,6 +37,7 @@ DEFAULT_LEVERAGE_BRACKETS = {
          'cum': 496.605}]
 }
 
+
 DEFAULT_SYMBOL_DETAIL_MESSAGE = {
     OrderSchema.exchange: {
         'e': '24hrTicker',
@@ -285,13 +286,112 @@ DEFAULT_SYMBOL_DETAIL_SPLIT_MESSAGE_RESULT = {
 }
 DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT = {
     OrderSchema.exchange: [
-        None
+        {
+            'symbol': {
+                'acc': 'tbinance.tbinance_spot',
+                'tb': 'symbol',
+                'sch': 'exchange',
+                'act': 'update',
+                'd': [
+                    {
+                        'tm': '2021-12-08T10:21:52.283000',
+                        's': 'BTCUSDT',
+                        'p': 50244.8,
+                        'p24': 51157.8,
+                        'dt': -1.78,
+                        'fp': 50244.8,
+                        'bip': 50245.94,
+                        'asp': 50245.97,
+                        're': False,
+                        'v24': 1024.217484,
+                        'mp': 50244.8,
+                        'hip': 120000.0,
+                        'lop': 9782.0,
+                        'exp': None,
+                        'expd': None,
+                        'pa': ['BTC', 'USDT'],
+                        'tck': 0.01,
+                        'vt': 1e-06,
+                        'ss': 'btcusd',
+                        'ssch': 'exchange',
+                        'crt': '2021-09-06T09:51:21.271836',
+                        'mlvr': None,
+                    }
+                ],
+            }
+        }
     ],
     OrderSchema.futures: [
-        None
+        {
+            'symbol': {
+                'acc': 'tbinance.tbinance_futures',
+                'tb': 'symbol',
+                'sch': 'futures',
+                'act': 'update',
+                'd': [
+                    {
+                        'tm': '2021-12-08T11:54:15.555000',
+                        's': 'BTCUSDT',
+                        'p': 49174.26,
+                        'p24': 51365.07,
+                        'dt': -4.27,
+                        'fp': 49174.26,
+                        'bip': 0.0,
+                        'asp': 0.0,
+                        're': False,
+                        'v24': 1941684.425,
+                        'mp': 0.0,
+                        'hip': 53900.0,
+                        'lop': 48841.07,
+                        'exp': 'None',
+                        'expd': 'None',
+                        'pa': ['BTC', 'USDT'],
+                        'tck': 0.01,
+                        'vt': 0.001,
+                        'ss': 'btcusd',
+                        'ssch': 'futures',
+                        'crt': '2021-09-06T09:51:21.272746',
+                        'mlvr': 125.0,
+                    }
+                ],
+            }
+        }
     ],
     OrderSchema.futures_coin: [
-        None
+        {
+            'symbol': {
+                'acc': 'tbinance.tbinance_futures',
+                'tb': 'symbol',
+                'sch': 'futures_coin',
+                'act': 'update',
+                'd': [
+                    {
+                        'tm': '2021-12-08T12:08:51.103000',
+                        's': 'BTCUSD_PERP',
+                        'p': 49214.9,
+                        'p24': 51335.5,
+                        'dt': -4.13,
+                        'fp': 0.0020319049718682757,
+                        'bip': 0.0,
+                        'asp': 0.0,
+                        're': True,
+                        'v24': 342444.0,
+                        'mp': 0.0,
+                        'hip': 55487.2,
+                        'lop': 47014.3,
+                        'exp': 'None',
+                        'expd': 'None',
+                        'pa': ['BTC', 'USD'],
+                        'tck': 0.1,
+                        'vt': 1.0,
+                        'ss': 'btcusd',
+                        'ssch': 'futures_coin',
+                        'crt': '2021-09-06T09:51:21.288366',
+                        'mlvr': 125.0,
+                    }
+                ],
+            }
+        }
     ],
 }
 
@@ -549,12 +649,111 @@ DEFAULT_SYMBOL_SPLIT_MESSAGE_RESULT = {
 }
 DEFAULT_SYMBOL_GET_DATA_RESULT = {
     OrderSchema.exchange: [
-        None
+        {
+            'symbol': {
+                'acc': 'tbinance.tbinance_spot',
+                'tb': 'symbol',
+                'sch': 'exchange',
+                'act': 'update',
+                'd': [
+                    {
+                        'tm': '2021-12-08T11:53:44.515000',
+                        's': 'BTCUSDT',
+                        'p': 49155.42,
+                        'p24': 51369.96,
+                        'dt': -4.31,
+                        'fp': 49155.42,
+                        'bip': 49152.96,
+                        'asp': 49152.97,
+                        're': False,
+                        'v24': 1038.524591,
+                        'mp': 49155.42,
+                        'hip': 120000.0,
+                        'lop': 9782.0,
+                        'exp': None,
+                        'expd': None,
+                        'pa': ['BTC', 'USDT'],
+                        'tck': 0.01,
+                        'vt': 1e-06,
+                        'ss': 'btcusd',
+                        'ssch': 'exchange',
+                        'crt': '2021-09-06T09:51:21.271836',
+                        'mlvr': None,
+                    }
+                ],
+            }
+        }
     ],
     OrderSchema.futures: [
-        None
+        {
+            'symbol': {
+                'acc': 'tbinance.tbinance_futures',
+                'tb': 'symbol',
+                'sch': 'futures',
+                'act': 'update',
+                'd': [
+                    {
+                        'tm': '2021-12-08T11:54:13.905000',
+                        's': 'BTCUSDT',
+                        'p': 49173.66,
+                        'p24': 51365.07000000001,
+                        'dt': -4.27,
+                        'fp': 49173.66,
+                        'bip': 0.0,
+                        'asp': 0.0,
+                        're': False,
+                        'v24': 1941684.405,
+                        'mp': 0.0,
+                        'hip': 53900.0,
+                        'lop': 48841.07,
+                        'exp': 'None',
+                        'expd': 'None',
+                        'pa': ['BTC', 'USDT'],
+                        'tck': 0.01,
+                        'vt': 0.001,
+                        'ss': 'btcusd',
+                        'ssch': 'futures',
+                        'crt': '2021-09-06T09:51:21.272746',
+                        'mlvr': 125.0,
+                    }
+                ],
+            }
+        }
     ],
     OrderSchema.futures_coin: [
-        None
+        {
+            'symbol': {
+                'acc': 'tbinance.tbinance_futures',
+                'tb': 'symbol',
+                'sch': 'futures_coin',
+                'act': 'update',
+                'd': [
+                    {
+                        'tm': '2021-12-08T12:08:49.255000',
+                        's': 'BTCUSD_PERP',
+                        'p': 49215.0,
+                        'p24': 51335.5,
+                        'dt': -4.13,
+                        'fp': 0.00203190084323885,
+                        'bip': 0.0,
+                        'asp': 0.0,
+                        're': True,
+                        'v24': 342441.0,
+                        'mp': 0.0,
+                        'hip': 55487.2,
+                        'lop': 47014.3,
+                        'exp': 'None',
+                        'expd': 'None',
+                        'pa': ['BTC', 'USD'],
+                        'tck': 0.1,
+                        'vt': 1.0,
+                        'ss': 'btcusd',
+                        'ssch': 'futures_coin',
+                        'crt': '2021-09-06T09:51:21.288366',
+                        'mlvr': 125.0,
+                    }
+                ],
+            }
+        }
     ],
 }

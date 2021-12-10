@@ -31,6 +31,7 @@ DEFAULT_POSITIONS_STATE = {
     }
 }
 
+
 DEFAULT_POSITION_MESSAGE = {
     OrderSchema.futures: {
         'e': 'ACCOUNT_UPDATE',

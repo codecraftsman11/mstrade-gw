@@ -288,7 +288,6 @@ class StockWssApi(Connector):
         message = parse_message(message)
         if not message:
             return response
-        print('MESSAGE', message)
         message = self._lookup_table(message)
         if not message:
             return response

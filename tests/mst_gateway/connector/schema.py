@@ -63,29 +63,6 @@ SYMBOL_FIELDS = {
     'max_leverage': Or(None, float),
 }
 
-WS_SYMBOL_FIELDS = {
-    'time': iso_datetime_valid,
-    'timestamp': int,
-    'pair': pair_valid,
-    'symbol': str,
-    'expiration': str,
-    'price': float,
-    'price24': float,
-    'delta': float,
-    'tick': float,
-    'volume_tick': float,
-    'face_price': float,
-    'bid_price': float,
-    'ask_price': float,
-    'reversed': bool,
-    'volume24': int,
-    'schema': schema_valid,
-    'system_symbol': str,
-    'symbol_schema': schema_valid,
-    'created': iso_datetime_valid,
-    'max_leverage': float,
-}
-
 ORDER_FIELDS = {
     'exchange_order_id': Use(exchange_order_id_valid),
     'symbol': str,
@@ -337,4 +314,64 @@ POSITION_STATE_FIELDS = {
 
 LIQUIDATION_FIELDS = {
     'liquidation_price': Or(None, float)
+}
+
+WS_MESSAGE_HEADER_FIELDS = {
+    'acc': str,
+    'tb': str,
+    'sch': Use(schema_valid),
+    'act': str,
+    'd': list,
+}
+WS_MESSAGE_DATA_FIELDS = {
+    'order_book': {
+        'id': Or(None, int),
+        's': str,
+        'ss': Or(None, str),
+        'sd': Use(side_valid),
+        'vl': float,
+        'p': float,
+    },
+    'quote_bin': {
+        'tm': Or(None, Use(iso_datetime_valid)),
+        's': Or(None, str),
+        'ss': Or(None, str),
+        'vl': float,
+        'opp': float,
+        'clp': float,
+        'hip': float,
+        'lop': float,
+    },
+    'symbol': {
+        'tm': Or(None, Use(iso_datetime_valid)),
+        's': str,
+        'ss': Or(None, str),
+        'ssch': Or(None, Use(schema_valid)),
+        'p': float,
+        'p24': float,
+        'dt': float,
+        'fp': float,
+        'bip': float,
+        'asp': float,
+        're': bool,
+        'v24': float,
+        'mp': float,
+        'hip': float,
+        'lop': float,
+        'exp': Or(None, str),
+        'expd': Or(None, Use(iso_datetime_valid)),
+        'pa': Or(None, Use(pair_valid)),
+        'tck': Or(None, float),
+        'vt': Or(None, float),
+        'crt': Or(None, Use(datetime_valid)),
+        'mlvr': Or(None, float),
+    },
+    'trade': {
+        'tm': Or(None, Use(iso_datetime_valid)),
+        's': str,
+        'ss': Or(None, str),
+        'sd': Use(side_valid),
+        'vl': float,
+        'p': float,
+    },
 }
