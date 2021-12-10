@@ -421,7 +421,7 @@ def binsize2timedelta(binsize):
 def load_order_book_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     symbol = raw_data.get('symbol')
     price = to_float(raw_data.get('price'))
-    _id = generate_order_book_id(symbol, price, state_data)
+    _id = generate_order_book_id(price, state_data)
     data = {
         'id': _id,
         'symbol': symbol,
@@ -441,7 +441,7 @@ def load_ws_order_book_data(raw_data: dict, state_data: Optional[dict], price_by
     _id = raw_data.get('id')
     symbol = raw_data.get('symbol')
     price = to_float(raw_data.get('price') or to_float(price_by_id[symbol].get(_id)))
-    _id = generate_order_book_id(symbol, price, state_data)
+    _id = generate_order_book_id(price, state_data)
     data = {
         'id': _id,
         's': raw_data.get('symbol'),
