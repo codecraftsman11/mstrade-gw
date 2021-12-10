@@ -3,10 +3,10 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import Optional
 from schema import Schema
-from mst_gateway.connector.api import schema as fields
 from mst_gateway.connector.api.stocks.binance.rest import BinanceRestApi
 from mst_gateway.connector.api.types import LeverageType, OrderExec, OrderSchema, OrderType, BUY, SELL
 from mst_gateway.exceptions import ConnectorError
+from tests.mst_gateway.connector import schema as fields
 from tests import config as cfg
 from .data import storage as state_data
 from .data import symbol as symbol_data

@@ -1,6 +1,6 @@
 from datetime import datetime
-from .. import api
 from schema import SchemaError
+from mst_gateway.connector import api
 
 
 def side_valid(value):
@@ -71,3 +71,37 @@ def leverage_type_valid(value):
     if api.LeverageType.is_valid(value):
         return value
     raise SchemaError('Invalid leverage_type')
+
+
+
+def data_valid(data, rules):
+    if not isinstance(data, dict):
+        raise TypeError("Data is not dictionary")
+    if not set(data.keys()) == set(rules.keys()):
+        raise ValueError("Keys differ")
+    for k in data:
+        if not value_valid(data[k], rules[k]):
+            raise ValueError("Invalid {}".format(k))
+    return True
+
+
+def data_update_valid(data, rules):
+    if not isinstance(data, dict):
+        raise TypeError("Data is not dictionary")
+    if set(data.keys()) - set(rules.keys()):
+        raise ValueError("In data present keys out of rule's range")
+    for k in data:
+        if not value_valid(data[k], rules[k]):
+            raise ValueError("Invalid {}".format(k))
+    return True
+
+
+def value_valid(value, rule):
+    if isinstance(rule, type):
+        try:
+            return value is None or isinstance(value, rule)
+        except Exception:
+            return False
+    if callable(rule):
+        return rule(value)
+    return True

@@ -1,5 +1,6 @@
 # pylint: disable=broad-except
-from ..api.validators import (
+from schema import Use, Or
+from .validators import (
     datetime_valid,
     iso_datetime_valid,
     pair_valid,
@@ -11,7 +12,6 @@ from ..api.validators import (
     leverage_type_valid,
 )
 from mst_gateway.connector.api.types import OrderSchema
-from schema import Use, Or
 
 
 QUOTE_FIELDS = {
@@ -188,30 +188,6 @@ BALANCE_FIELDS = {
     },
 }
 
-SUBSCRIPTIONS = {
-    'symbol': {
-        'schema': SYMBOL_FIELDS,
-    },
-    'quote': {
-        'schema': QUOTE_FIELDS
-    },
-    'quote_bin': {
-        'schema': QUOTE_BIN_FIELDS
-    },
-    'order_book': {
-        'schema': ORDER_BOOK_FIELDS
-    },
-    'trade': {
-        'schema': TRADE_FIELDS
-    },
-}
-
-AUTH_SUBSCRIPTIONS = {
-    'order': {
-        'schema': ORDER_FIELDS
-    }
-}
-
 USER_FIELDS = {
     'id': str
 }
@@ -362,36 +338,3 @@ POSITION_STATE_FIELDS = {
 LIQUIDATION_FIELDS = {
     'liquidation_price': Or(None, float)
 }
-
-
-def data_valid(data, rules):
-    if not isinstance(data, dict):
-        raise TypeError("Data is not dictionary")
-    if not set(data.keys()) == set(rules.keys()):
-        raise ValueError("Keys differ")
-    for k in data:
-        if not value_valid(data[k], rules[k]):
-            raise ValueError("Invalid {}".format(k))
-    return True
-
-
-def data_update_valid(data, rules):
-    if not isinstance(data, dict):
-        raise TypeError("Data is not dictionary")
-    if set(data.keys()) - set(rules.keys()):
-        raise ValueError("In data present keys out of rule's range")
-    for k in data:
-        if not value_valid(data[k], rules[k]):
-            raise ValueError("Invalid {}".format(k))
-    return True
-
-
-def value_valid(value, rule):
-    if isinstance(rule, type):
-        try:
-            return value is None or isinstance(value, rule)
-        except Exception:
-            return False
-    if callable(rule):
-        return rule(value)
-    return True
