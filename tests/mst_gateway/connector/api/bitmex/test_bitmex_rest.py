@@ -95,9 +95,9 @@ def get_order_price(rest: BitmexRestApi, schema: str,
         return price
     symbol = rest.get_symbol(schema=schema, symbol=symbol)
     if side == BUY:
-        price = symbol.get('bid_price') - 10000
+        price = round(symbol.get('bid_price') / 1.0, 1)
     if side == SELL:
-        price = symbol.get('ask_price') + 10000
+        price = round(symbol.get('ask_price') * 1.0, 1)
     return price
 
 
@@ -494,9 +494,7 @@ class TestOrdersBitmexRestApi:
     )
     def test_create_order(self, rest: BitmexRestApi, schema: str, side: int, order_type: str, expect: dict):
         symbol = get_symbol(schema)
-        price = None
-        if order_type == OrderType.limit:
-            price = get_order_price(rest, schema, symbol, side)
+        price = get_order_price(rest, schema, symbol, side, order_type)
         order = rest.create_order(symbol, schema, side, order_data.DEFAULT_ORDER_VOLUME[schema], order_type, price,
                                   order_data.DEFAULT_ORDER_OPTIONS)
         assert fields.data_valid(order, fields.ORDER_FIELDS)
