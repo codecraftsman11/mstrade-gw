@@ -55,12 +55,12 @@ DEFAULT_QUOTE_BIN_SPLIT_MESSAGE_RESULT = {
 }
 DEFAULT_QUOTE_BIN_GET_DATA_RESULT = {
     OrderSchema.exchange: [
-
+        None
     ],
     OrderSchema.futures: [
-
+        None
     ],
     OrderSchema.futures_coin: [
-
+        None
     ],
 }

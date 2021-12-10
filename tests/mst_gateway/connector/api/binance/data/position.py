@@ -231,6 +231,10 @@ DEFAULT_POSITION_SPLIT_MESSAGE_RESULT = {
     ],
 }
 DEFAULT_POSITION_GET_DATA_RESULT = {
-    OrderSchema.futures: [],
-    OrderSchema.futures_coin: [],
+    OrderSchema.futures: [
+        None
+    ],
+    OrderSchema.futures_coin: [
+        None
+    ],
 }

@@ -17,6 +17,7 @@ from .data import symbol as symbol_message
 from .data import trade as trade_message
 from .data import wallet as wallet_message
 from .test_binance_rest import get_symbol
+from schema import Schema
 
 
 def ws_class(name):
@@ -213,10 +214,12 @@ class TestBinanceWssApi:
         assert isinstance(wss._get_subscriber(name), expect)
 
     def validate_messages(self, subscr_name, symbol=None):
+        header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)
+        data_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name])
         for message in self.messages:
-            assert fields.data_valid(message[subscr_name], fields.WS_MESSAGE_HEADER_FIELDS)
+            assert header_schema.validate(message[subscr_name]) == message[subscr_name]
             for data in message[subscr_name]['d']:
-                assert fields.data_valid(data, fields.WS_MESSAGE_DATA_FIELDS[subscr_name])
+                assert data_schema.validate(data) == data
                 if symbol:
                     assert data['s'].lower() == symbol.lower()
 
@@ -396,54 +399,71 @@ class TestBinanceWssApi:
         indirect=['wss'],
     )
     def test__split_message(self, wss: BinanceWssApi, message, expect):
+        wss._subscriptions = {'wallet': {'*': {'1'}}}
         assert wss._split_message(deepcopy(message)) == expect
-    #
-    # def test_split_wallet(self, wss: BinanceWssApi):
-    #     assert (
-    #         wss.split_wallet(deepcopy(WALLET_LOOKUP_TABLE_RESULT))
-    #         is None
-    #     )
-    #     wss._subscriptions = {"wallet": {"btc": {"1"}}}
-    #     assert (
-    #         wss.split_wallet(deepcopy(WALLET_LOOKUP_TABLE_RESULT))
-    #         == WALLET_SPLIT_MESSAGE_RESULTS[0]
-    #     )
-    #
-    # @pytest.mark.parametrize(
-    #     "messages, results",
-    #     [
-    #         (ORDER_BOOK_SPLIT_MESSAGE_RESULTS, ORDER_BOOK_GET_DATA_RESULTS),
-    #         (ORDER_SPLIT_MESSAGE_RESULTS, ORDER_GET_DATA_RESULTS),
-    #         (QUOTE_BIN_SPLIT_MESSAGE_RESULTS, QUOTE_BIN_GET_DATA_RESULTS),
-    #         (TRADE_SPLIT_MESSAGE_RESULTS, TRADE_GET_DATA_RESULTS),
-    #         (WALLET_SPLIT_MESSAGE_RESULTS, WALLET_GET_DATA_RESULTS),
-    #     ],
-    # )
-    # def test_get_data(
-    #     self, wss: BinanceWssApi, messages, results
-    # ):
-    #     for i, message in enumerate(messages):
-    #         assert wss.get_data(message) == results[i]
-    #
-    # @pytest.mark.parametrize(
-    #     "messages, results",
-    #     [
-    #         (
-    #             SYMBOL_DETAIL_SPLIT_MESSAGE_RESULTS,
-    #             SYMBOL_DETAIL_GET_DATA_RESULTS,
-    #         ),
-    #         (SYMBOL_SPLIT_MESSAGE_RESULTS, SYMBOL_GET_DATA_RESULTS),
-    #     ],
-    # )
-    # def test_get_data_symbol(
-    #     self, wss: BinanceWssApi, messages, results
-    # ):
-    #     for i, message in enumerate(messages):
-    #         response = wss.get_data(message)
-    #         for j, data in enumerate(response["symbol"]["data"]):
-    #             data["created"] = results[i]["symbol"]["data"][j]["created"]
-    #         assert response == results[i]
-    #
+        if wss.schema == OrderSchema.exchange and message.get('table') == 'outboundAccountPosition':
+            wss._subscriptions = {'wallet': {'btc': {'1'}, 'usdt': {'1'}}}
+            assert wss._split_message(deepcopy(message)) == expect
+            wss._subscriptions = {'wallet': {'btc': {'1'}}}
+            expect[0]['data'][0]['B'].pop(1)
+            assert wss._split_message(deepcopy(message)) == expect
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        'wss, messages, expect', [
+            ('tsbinance', order_message.DEFAULT_ORDER_SPLIT_MESSAGE_RESULT[OrderSchema.exchange],
+             order_message.DEFAULT_ORDER_GET_DATA_RESULT[OrderSchema.exchange]),
+            ('tsbinance', order_book_message.DEFAULT_ORDER_BOOK_SPLIT_MESSAGE_RESULT[OrderSchema.exchange],
+             order_book_message.DEFAULT_ORDER_BOOK_GET_DATA_RESULT[OrderSchema.exchange]),
+            ('tsbinance', quote_message.DEFAULT_QUOTE_BIN_SPLIT_MESSAGE_RESULT[OrderSchema.exchange],
+             quote_message.DEFAULT_QUOTE_BIN_GET_DATA_RESULT[OrderSchema.exchange]),
+            ('tsbinance', symbol_message.DEFAULT_SYMBOL_DETAIL_SPLIT_MESSAGE_RESULT[OrderSchema.exchange],
+             symbol_message.DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT[OrderSchema.exchange]),
+            ('tsbinance', symbol_message.DEFAULT_SYMBOL_SPLIT_MESSAGE_RESULT[OrderSchema.exchange],
+             symbol_message.DEFAULT_SYMBOL_GET_DATA_RESULT[OrderSchema.exchange]),
+            ('tsbinance', trade_message.DEFAULT_TRADE_SPLIT_MESSAGE_RESULT[OrderSchema.exchange],
+             trade_message.DEFAULT_TRADE_GET_DATA_RESULT[OrderSchema.exchange]),
+            ('tsbinance', wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.exchange],
+             wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.exchange]),
+            ('tfbinance', order_message.DEFAULT_ORDER_SPLIT_MESSAGE_RESULT[OrderSchema.futures],
+             order_message.DEFAULT_ORDER_GET_DATA_RESULT[OrderSchema.futures]),
+            ('tfbinance', order_book_message.DEFAULT_ORDER_BOOK_SPLIT_MESSAGE_RESULT[OrderSchema.futures],
+             order_book_message.DEFAULT_ORDER_BOOK_GET_DATA_RESULT[OrderSchema.futures]),
+            ('tfbinance', position_message.DEFAULT_POSITION_SPLIT_MESSAGE_RESULT[OrderSchema.futures],
+             position_message.DEFAULT_POSITION_GET_DATA_RESULT[OrderSchema.futures]),
+            ('tfbinance', quote_message.DEFAULT_QUOTE_BIN_SPLIT_MESSAGE_RESULT[OrderSchema.futures],
+             quote_message.DEFAULT_QUOTE_BIN_GET_DATA_RESULT[OrderSchema.futures]),
+            ('tfbinance', symbol_message.DEFAULT_SYMBOL_DETAIL_SPLIT_MESSAGE_RESULT[OrderSchema.futures],
+             symbol_message.DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT[OrderSchema.futures]),
+            ('tfbinance', symbol_message.DEFAULT_SYMBOL_SPLIT_MESSAGE_RESULT[OrderSchema.futures],
+             symbol_message.DEFAULT_SYMBOL_GET_DATA_RESULT[OrderSchema.futures]),
+            ('tfbinance', trade_message.DEFAULT_TRADE_SPLIT_MESSAGE_RESULT[OrderSchema.futures],
+             trade_message.DEFAULT_TRADE_GET_DATA_RESULT[OrderSchema.futures]),
+            ('tfbinance', wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.futures],
+             wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.futures]),
+            ('tfcbinance', order_message.DEFAULT_ORDER_SPLIT_MESSAGE_RESULT[OrderSchema.futures_coin],
+             order_message.DEFAULT_ORDER_GET_DATA_RESULT[OrderSchema.futures_coin]),
+            ('tfcbinance', order_book_message.DEFAULT_ORDER_BOOK_SPLIT_MESSAGE_RESULT[OrderSchema.futures_coin],
+             order_book_message.DEFAULT_ORDER_BOOK_GET_DATA_RESULT[OrderSchema.futures_coin]),
+            ('tfcbinance', position_message.DEFAULT_POSITION_SPLIT_MESSAGE_RESULT[OrderSchema.futures_coin],
+             position_message.DEFAULT_POSITION_GET_DATA_RESULT[OrderSchema.futures_coin]),
+            ('tfcbinance', quote_message.DEFAULT_QUOTE_BIN_SPLIT_MESSAGE_RESULT[OrderSchema.futures_coin],
+             quote_message.DEFAULT_QUOTE_BIN_GET_DATA_RESULT[OrderSchema.futures_coin]),
+            ('tfcbinance', symbol_message.DEFAULT_SYMBOL_DETAIL_SPLIT_MESSAGE_RESULT[OrderSchema.futures_coin],
+             symbol_message.DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT[OrderSchema.futures_coin]),
+            ('tfcbinance', symbol_message.DEFAULT_SYMBOL_SPLIT_MESSAGE_RESULT[OrderSchema.futures_coin],
+             symbol_message.DEFAULT_SYMBOL_GET_DATA_RESULT[OrderSchema.futures_coin]),
+            ('tfcbinance', trade_message.DEFAULT_TRADE_SPLIT_MESSAGE_RESULT[OrderSchema.futures_coin],
+             trade_message.DEFAULT_TRADE_GET_DATA_RESULT[OrderSchema.futures_coin]),
+            ('tfcbinance', wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.futures_coin],
+             wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.futures_coin])],
+        indirect=['wss'],
+    )
+    async def test_get_data(self, wss: BinanceWssApi, messages, expect):
+        for i, message in enumerate(messages):
+            print(message)
+            assert await wss.get_data(message) == expect[0]
+
     # @pytest.mark.asyncio
     # @pytest.mark.parametrize(
     #     "message, results",

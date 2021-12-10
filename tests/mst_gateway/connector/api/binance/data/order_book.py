@@ -438,7 +438,13 @@ DEFAULT_ORDER_BOOK_SPLIT_MESSAGE_RESULT = {
     ],
 }
 DEFAULT_ORDER_BOOK_GET_DATA_RESULT = {
-    OrderSchema.exchange: [],
-    OrderSchema.futures: [],
-    OrderSchema.futures_coin: [],
+    OrderSchema.exchange: [
+        None
+    ],
+    OrderSchema.futures: [
+        None
+    ],
+    OrderSchema.futures_coin: [
+        None
+    ],
 }

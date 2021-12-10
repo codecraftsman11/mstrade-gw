@@ -284,9 +284,15 @@ DEFAULT_SYMBOL_DETAIL_SPLIT_MESSAGE_RESULT = {
     ],
 }
 DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT = {
-    OrderSchema.exchange: [],
-    OrderSchema.futures: [],
-    OrderSchema.futures_coin: [],
+    OrderSchema.exchange: [
+        None
+    ],
+    OrderSchema.futures: [
+        None
+    ],
+    OrderSchema.futures_coin: [
+        None
+    ],
 }
 
 DEFAULT_SYMBOL_MESSAGE = {
@@ -542,7 +548,13 @@ DEFAULT_SYMBOL_SPLIT_MESSAGE_RESULT = {
     ],
 }
 DEFAULT_SYMBOL_GET_DATA_RESULT = {
-    OrderSchema.exchange: [],
-    OrderSchema.futures: [],
-    OrderSchema.futures_coin: [],
+    OrderSchema.exchange: [
+        None
+    ],
+    OrderSchema.futures: [
+        None
+    ],
+    OrderSchema.futures_coin: [
+        None
+    ],
 }
