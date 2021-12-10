@@ -226,6 +226,12 @@ WALLET_DETAIL_FIELDS = {
         **BASE_WALLET_DETAIL_FIELDS,
     },
 }
+ASSET = "XBT"
+ASSETS_BALANCE = {
+    OrderSchema.margin1: {
+        ASSET.lower(): float
+    }
+}
 
 BASE_EXCHANGE_SYMBOL_INFO_FIELDS = {
     'symbol': str,
