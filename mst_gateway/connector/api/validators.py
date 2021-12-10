@@ -1,61 +1,73 @@
 from datetime import datetime
 from .. import api
+from schema import SchemaError
 
 
 def side_valid(value):
-    try:
-        return isinstance(value, int) and value in [api.SELL, api.BUY]
-    except Exception:
-        return False
+    if isinstance(value, int) and value in [api.SELL, api.BUY]:
+        return value
+    raise SchemaError('Invalid side')
 
 
 def exchange_order_id_valid(value):
-    return value and isinstance(value, (int, str))
+    if isinstance(value, (int, str)):
+        return value
+    raise SchemaError('Invalid exchange_order_id')
 
 
 def type_valid(value):
-    return api.OrderType.is_valid(value)
+    if api.OrderType.is_valid(value):
+        return value
+    raise SchemaError('Invalid type')
 
 
 def schema_valid(value):
-    return api.OrderSchema.is_valid(value)
+    if api.OrderSchema.is_valid(value):
+        return value
+    raise SchemaError('Invalid schema field')
 
 
 def execution_valid(value):
-    return api.OrderExec.is_valid(value)
+    if api.OrderExec.is_valid(value):
+        return value
+    raise SchemaError('Invalid execution')
 
 
 def datetime_valid(value):
     if isinstance(value, datetime):
-        return True
+        return value
     try:
         datetime.strptime(value, api.DATETIME_FORMAT)
     except ValueError:
-        return False
-    return True
+        raise SchemaError('Invalid datetime field')
+    return value
 
 
 def iso_datetime_valid(value):
     if not isinstance(value, str):
-        return False
+        raise SchemaError('Invalid iso datetime field')
     try:
         datetime.strptime(value, api.DATETIME_FORMAT)
     except ValueError:
-        return False
-    return True
+        raise SchemaError('Invalid iso datetime field')
+    return value
 
 
-def pair_valid(value: list) -> bool:
+def pair_valid(value: list):
     if not isinstance(value, list):
-        return False
+        raise SchemaError('Invalid pair field')
     if len(value) != 2:
-        return False
+        raise SchemaError('Invalid pair field')
     if not isinstance(value[0], str):
-        return False
+        raise SchemaError('Invalid pair field')
     if not isinstance(value[1], str):
-        return False
-    return value[0] and value[1]
+        raise SchemaError('Invalid pair field')
+    if value[0] and value[1]:
+        return value
+    raise SchemaError('Invalid pair field')
 
 
 def leverage_type_valid(value):
-    return api.LeverageType.is_valid(value)
+    if api.LeverageType.is_valid(value):
+        return value
+    raise SchemaError('Invalid leverage_type')
