@@ -9,7 +9,6 @@ from .router import Router
 from .subscriber import Subscriber
 from .throttle import ThrottleWss
 from .. import errors
-from ..schema import AUTH_SUBSCRIPTIONS, SUBSCRIPTIONS
 from ..utils import parse_message
 from ...base import Connector
 
@@ -17,10 +16,8 @@ from ...base import Connector
 class StockWssApi(Connector):
     __metaclass__ = ABCMeta
     router_class = Router
-    subscribers: Dict[str, Subscriber] = {key: None for key in
-                                          SUBSCRIPTIONS}
-    auth_subscribers: Dict[str, Subscriber] = {key: None for key in
-                                               AUTH_SUBSCRIPTIONS}
+    subscribers: Dict[str, Subscriber] = {}
+    auth_subscribers: Dict[str, Subscriber] = {}
     register_state_groups = []
     name = "Base"
     BASE_URL = None
