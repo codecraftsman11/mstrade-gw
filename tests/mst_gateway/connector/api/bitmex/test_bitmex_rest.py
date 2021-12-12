@@ -1,6 +1,7 @@
 # pylint: disable=no-self-use
 import pytest
 from copy import deepcopy
+from schema import Schema, And
 from typing import Union, Optional
 from datetime import datetime, timedelta
 from mst_gateway.calculator import BitmexFinFactory
@@ -145,7 +146,9 @@ class TestBitmexRestApi:
         indirect=True,
     )
     def test_get_user(self, rest: BitmexRestApi):
-        assert data_valid(rest.get_user(), fields.USER_FIELDS)
+        user = rest.get_user()
+        user_schema = Schema(fields.USER_FIELDS)
+        assert user_schema.validate(user) == user
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
@@ -161,41 +164,48 @@ class TestBitmexRestApi:
         indirect=['rest'],
     )
     def test_list_quote_bins(self, rest: BitmexRestApi, schema: str):
-        for quote_bin in rest.list_quote_bins(schema=schema, symbol=get_symbol(schema)):
-            assert data_valid(quote_bin, fields.QUOTE_BIN_FIELDS)
+        quote_bin_schema = Schema(fields.QUOTE_BIN_FIELDS)
+        quote_bins = rest.list_quote_bins(schema=schema, symbol=get_symbol(schema))
+        for quote_bin in quote_bins:
+            assert quote_bin_schema.validate(quote_bin) == quote_bin
+        assert len(quote_bins) == 100
 
     @pytest.mark.parametrize(
         'rest_compress, schema', [('tbitmex', OrderSchema.margin1)],
         indirect=['rest_compress'],
     )
     def test_list_quote_bins_compress(self, rest_compress: BitmexRestApi, schema: str):
+        quote_bin_schema = Schema(fields.QUOTE_BIN_FIELDS)
         for quote_bin in rest_compress.list_quote_bins(schema=schema, symbol=get_symbol(schema)):
-            assert data_valid(quote_bin, fields.QUOTE_BIN_FIELDS)
+            assert quote_bin_schema.validate(quote_bin) == quote_bin
 
     @pytest.mark.parametrize(
         'rest_keepalive, schema', [('tbitmex', OrderSchema.margin1)],
         indirect=['rest_keepalive'],
     )
     def test_list_quote_bins_keepalive(self, rest_keepalive: BitmexRestApi, schema: str):
+        quote_bin_schema = Schema(fields.QUOTE_BIN_FIELDS)
         for quote_bin in rest_keepalive.list_quote_bins(schema=schema, symbol=get_symbol(schema)):
-            assert data_valid(quote_bin, fields.QUOTE_BIN_FIELDS)
+            assert quote_bin_schema.validate(quote_bin) == quote_bin
 
     @pytest.mark.parametrize(
         'rest_keepalive_compress, schema', [('tbitmex', OrderSchema.margin1)],
         indirect=['rest_keepalive_compress'],
     )
     def test_list_quote_bins_keepalive(self, rest_keepalive_compress: BitmexRestApi, schema: str):
+        quote_bin_schema = Schema(fields.QUOTE_BIN_FIELDS)
         for quote_bin in rest_keepalive_compress.list_quote_bins(schema=schema, symbol=get_symbol(schema)):
-            assert data_valid(quote_bin, fields.QUOTE_BIN_FIELDS)
+            assert quote_bin_schema.validate(quote_bin) == quote_bin
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
         indirect=['rest'],
     )
     def test_list_order_book(self, rest: BitmexRestApi, schema: str):
+        ob_schema = Schema(fields.ORDER_BOOK_FIELDS)
         ob_items = rest.list_order_book(symbol=order_data.DEFAULT_SYMBOL, schema=schema)
         for ob_item in ob_items:
-            assert data_valid(ob_item, fields.ORDER_BOOK_FIELDS)
+            assert ob_schema.validate(ob_item) == ob_item
 
     @pytest.mark.parametrize(
         'rest, schema, side', [
@@ -205,44 +215,49 @@ class TestBitmexRestApi:
         indirect=['rest'],
     )
     def test_get_order_book(self, rest: BitmexRestApi, schema: str, side: int):
+        ob_schema = Schema(fields.ORDER_BOOK_FIELDS)
         ob_items = rest.get_order_book(schema=schema, symbol=order_data.DEFAULT_SYMBOL, depth=data.DEFAULT_DEPTH,
                                        side=side, min_volume_sell=data.DEFAULT_MIN_VOLUME_SELL,
                                        min_volume_buy=data.DEFAULT_MIN_VOLUME_BUY)
         for ob_item in ob_items:
-            assert data_valid(ob_item, fields.ORDER_BOOK_FIELDS)
+            assert ob_schema.validate(ob_item) == ob_item
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
         indirect=['rest'],
     )
     def test_list_trades(self, rest: BitmexRestApi, schema: str):
+        tl_schema = Schema(fields.TRADE_FIELDS)
         lt_items = rest.list_trades(schema=cfg.BITMEX_SCHEMA, symbol=cfg.BITMEX_SYMBOL)
         for lt_item in lt_items:
-            assert data_valid(lt_item, fields.TRADE_FIELDS)
+            assert tl_schema.validate(lt_item) == lt_item
 
     @pytest.mark.parametrize(
-        'rest', ['tbitmex'],
-        indirect=True
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest']
     )
-    def test_get_wallet(self, rest: BitmexRestApi):
+    def test_get_wallet(self, rest: BitmexRestApi, schema: str):
+        wallet_schema = Schema(fields.WALLET_FIELDS[schema])
         wallet = rest.get_wallet()
-        assert data_valid(wallet, fields.WALLET_FIELDS)
+        assert wallet_schema.validate(wallet) == wallet
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
         indirect=['rest'],
     )
     def test_get_wallet_summery(self, rest: BitmexRestApi, schema: str):
+        wallet_summary_schema = Schema(fields.WALLET_SUMMARY_FIELDS)
         wallet_summary = rest.get_wallet_summary(schemas=[schema])
-        assert data_valid(wallet_summary, fields.WALLET_SUMMARY_FIELDS)
+        assert wallet_summary_schema.validate(wallet_summary) == wallet_summary
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
         indirect=['rest'],
     )
     def test_get_wallet_detail(self, rest: BitmexRestApi, schema: str):
+        wallet_detail_schema = Schema(fields.WALLET_DETAIL_FIELDS[schema])
         wallet_detail = rest.get_wallet_detail(schema=schema, asset=data.ASSET)
-        assert data_valid(wallet_detail[schema], fields.WALLET_DETAIL_FIELDS[schema])
+        assert wallet_detail_schema.validate(wallet_detail[schema]) == wallet_detail[schema]
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
@@ -273,8 +288,9 @@ class TestBitmexRestApi:
         indirect=['rest'],
     )
     def test_get_assets_balance(self, rest: BitmexRestApi, schema: str):
+        asset_balance_schema = Schema(fields.ASSETS_BALANCE[schema])
         assets_balance = rest.get_assets_balance(schema=schema)
-        assert data_valid(assets_balance, fields.ASSETS_BALANCE[schema])
+        assert asset_balance_schema.validate(assets_balance) == assets_balance
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
@@ -305,45 +321,49 @@ class TestBitmexRestApi:
         indirect=['rest'],
     )
     def test_get_symbol(self, rest: BitmexRestApi, schema: str):
+        symbol_schema = Schema(fields.SYMBOL_FIELDS)
         symbol = rest.get_symbol(schema=schema, symbol=data.SYMBOL)
-        assert data_valid(symbol, fields.SYMBOL_FIELDS)
+        assert symbol_schema.validate(symbol) == symbol
 
-    # TODO: None in expiration_data
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
         indirect=['rest'],
     )
     def test_get_exchange_symbol_info(self, rest: BitmexRestApi, schema: str):
+        exchange_symbol_schema = Schema(fields.EXCHANGE_SYMBOL_INFO_FIELDS[schema])
         exchange_symbols = rest.get_exchange_symbol_info(schema=schema)
         for exchange_symbol in exchange_symbols:
-            assert data_valid(exchange_symbol, fields.EXCHANGE_SYMBOL_INFO_FIELDS[schema])
+            assert exchange_symbol_schema.validate(exchange_symbol) == exchange_symbol
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
         indirect=['rest'],
     )
     def test_currency_exchange_symbols(self, rest: BitmexRestApi, schema: str):
+        currency_exchange_symbol_schema = Schema(fields.CURRENCY_EXCHANGE_SYMBOL_FIELDS)
         symbols_data = rest.currency_exchange_symbols(schema=schema)
         for symbol_data in symbols_data:
-            assert data_valid(symbol_data, fields.CURRENCY_EXCHANGE_SYMBOL_FIELDS)
+            assert currency_exchange_symbol_schema.validate(symbol_data) == symbol_data
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
         indirect=['rest'],
     )
     def test_get_symbols_currencies(self, rest: BitmexRestApi, schema: str):
+        symbol_currency_schema = Schema(fields.SYMBOL_CURRENCY_FIELDS)
         symbols_currencies = rest.get_symbols_currencies(schema=schema)
         for symbol in symbols_currencies.values():
-            assert data_valid(symbol, fields.SYMBOL_CURRENCY_FIELDS)
+            assert symbol_currency_schema.validate(symbol) == symbol
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
         indirect=['rest'],
     )
     def test_list_order_commissions(self, rest: BitmexRestApi, schema: str):
+        orders_commissions_schema = Schema(fields.ORDER_COMMISSION_FIELDS)
         orders_commissions = rest.list_order_commissions(schema=schema)
         for commission in orders_commissions:
-            assert data_valid(commission, fields.ORDER_COMMISSION_FIELDS)
+            assert orders_commissions_schema.validate(commission) == commission
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
@@ -366,10 +386,11 @@ class TestBitmexRestApi:
     )
     def test_get_funding_rates(self, rest: BitmexRestApi,
                                schema: str, period_hour: int, period_multiplier: int):
+        funding_rates_schema = Schema(fields.FUNDING_RATE_FIELDS)
         funding_rates = rest.get_funding_rates(schema=schema, symbol=get_symbol(schema), period_hour=period_hour,
                                                period_multiplier=period_multiplier)
         for funding_rate in funding_rates:
-            assert data_valid(funding_rate, fields.FUNDING_RATE_FIELDS)
+            assert funding_rates_schema.validate(funding_rate) == funding_rate
             assert int(funding_rate.get('time').timestamp() * 1000) > int((datetime.now() - timedelta(
                 hours=period_hour * period_multiplier, minutes=1
             )).timestamp() * 1000)
@@ -382,10 +403,11 @@ class TestBitmexRestApi:
     )
     def test_list_funding_rates(self, rest: BitmexRestApi,
                                 schema: str, period_hour: int, period_multiplier: int):
+        funding_rates_schema = Schema(fields.FUNDING_RATE_FIELDS)
         funding_rates = rest.list_funding_rates(schema=schema, period_hour=period_hour,
                                                 period_multiplier=period_multiplier)
         for rate in funding_rates:
-            assert data_valid(rate, fields.FUNDING_RATE_FIELDS)
+            assert funding_rates_schema.validate(rate) == rate
             assert int(rate.get('time').timestamp() * 1000) > int((datetime.now() - timedelta(
                 hours=period_hour * period_multiplier, minutes=1
             )).timestamp() * 1000)
@@ -435,12 +457,22 @@ class TestBitmexRestApi:
     def test_get_liquidation(self, rest: BitmexRestApi, schema: str, side: int, volume: float, price: float,
                              wallet_balance: float, wallet_detail: dict, funding_rate: float, taker_fee: float,
                              leverage_type: str, leverage: Union[float, int], expect: float):
+        liquidation_schema = Schema(fields.LIQUIDATION_FIELDS)
         liquidation_data = rest.get_liquidation(schema=schema, symbol=get_symbol(schema), side=side, volume=volume,
                                                 price=price, wallet_balance=wallet_balance, wallet_detail=wallet_detail,
                                                 taker_fee=taker_fee, leverage_type=leverage_type, leverage=leverage,
                                                 funding_rate=funding_rate)
-        assert data_valid(liquidation_data, fields.LIQUIDATION_FIELDS)
+        assert liquidation_schema.validate(liquidation_data) == liquidation_data
         assert liquidation_data['liquidation_price'] == expect
+
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_list_symbols(self, rest: BitmexRestApi, schema: str):
+        symbol_schema = Schema(fields.SYMBOL_FIELDS)
+        for symbol in rest.list_symbols(schema=schema):
+            assert symbol_schema.validate(symbol) == symbol
 
 
 class TestOrdersBitmexRestApi:
@@ -496,9 +528,10 @@ class TestOrdersBitmexRestApi:
     def test_create_order(self, rest: BitmexRestApi, schema: str, side: int, order_type: str, expect: dict):
         symbol = get_symbol(schema)
         price = get_order_price(rest, schema, symbol, side, order_type)
+        order_schema = Schema(fields.ORDER_FIELDS)
         order = rest.create_order(symbol, schema, side, order_data.DEFAULT_ORDER_VOLUME[schema], order_type, price,
                                   order_data.DEFAULT_ORDER_OPTIONS)
-        assert data_valid(order, fields.ORDER_FIELDS)
+        assert order_schema.validate(order) == order
         clear_stock_order_data(order)
         assert order == expect
         rest.cancel_all_orders(schema)
@@ -509,8 +542,9 @@ class TestOrdersBitmexRestApi:
     )
     def test_get_order(self, rest: BitmexRestApi, schema):
         default_order = create_default_order(rest, schema)
+        order_schema = Schema(fields.ORDER_FIELDS)
         order = rest.get_order(default_order['exchange_order_id'], default_order['symbol'], schema)
-        assert data_valid(order, fields.ORDER_FIELDS)
+        assert order_schema.validate(order) == order
         clear_stock_order_data(order)
         assert order == order_data.DEFAULT_ORDER[schema]
         rest.cancel_all_orders(schema)
@@ -521,20 +555,14 @@ class TestOrdersBitmexRestApi:
     )
     def test_list_orders(self, rest: BitmexRestApi, schema: str):
         default_order = create_default_order(rest, schema)
+        order_schema = Schema(fields.ORDER_FIELDS)
         orders = rest.list_orders(schema, default_order['symbol'])
         for order in orders:
-            assert data_valid(order, fields.ORDER_FIELDS)
+            assert order_schema.validate(order) == order
         clear_stock_order_data(orders[0])
         assert orders[0] == order_data.DEFAULT_ORDER[schema]
         rest.cancel_all_orders(schema)
 
-    @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
-        indirect=['rest'],
-    )
-    def test_list_symbols(self, rest: BitmexRestApi, schema: str):
-        for symbol in rest.list_symbols(schema=schema):
-            assert data_valid(symbol, fields.SYMBOL_FIELDS)
 
     @pytest.mark.parametrize(
         'rest, schema, expect', [
@@ -554,10 +582,11 @@ class TestOrdersBitmexRestApi:
     )
     def test_bitmex_rest_update_order(self, rest: BitmexRestApi, schema: str, expect: dict):
         default_order = create_default_order(rest, schema)
+        order_schema = Schema(fields.ORDER_FIELDS)
         order = rest.update_order(default_order['exchange_order_id'], default_order['symbol'], schema,
                                   side=order_data.DEFAULT_ORDER_OPPOSITE_SIDE, volume=default_order['volume'] * 2,
                                   options=order_data.DEFAULT_ORDER_OPTIONS)
-        assert data_valid(order, fields.ORDER_FIELDS)
+        assert order_schema.validate(order) == order
         clear_stock_order_data(order)
         assert order == expect
         rest.cancel_all_orders(schema)
@@ -569,8 +598,9 @@ class TestOrdersBitmexRestApi:
     )
     def test_cancel_order(self, rest: BitmexRestApi, schema: str):
         default_order = create_default_order(rest, schema)
+        order_schema = Schema(fields.ORDER_FIELDS)
         order = rest.cancel_order(default_order['exchange_order_id'], default_order['symbol'], schema)
-        assert data_valid(order, fields.ORDER_FIELDS)
+        assert order_schema.validate(order) == order
         clear_stock_order_data(order)
         assert order == order_data.DEFAULT_ORDER[schema]
 
@@ -606,8 +636,9 @@ class TestOrdersBitmexRestApi:
     )
     def test_get_position(self, rest: BitmexRestApi, schema: str):
         create_default_order(rest, schema, order_type=OrderType.market)
+        position_schema = Schema(fields.POSITION_FIELDS)
         position = rest.get_position(schema=schema, symbol=order_data.DEFAULT_SYMBOL)
-        assert data_valid(position, fields.POSITION_FIELDS)
+        assert position_schema.validate(position) == position
         rest.cancel_all_orders(schema)
         rest.close_all_orders(schema=schema, symbol=order_data.DEFAULT_SYMBOL)
 
@@ -617,8 +648,9 @@ class TestOrdersBitmexRestApi:
     )
     def test_list_position(self, rest: BitmexRestApi, schema: str):
         create_default_order(rest, schema, order_type=OrderType.market)
+        position_schema = Schema(fields.POSITION_FIELDS)
         positions = rest.list_positions(schema=schema)
         for position in positions:
-            assert data_valid(position, fields.POSITION_FIELDS)
+            assert position_schema.validate(position) == position
         rest.cancel_all_orders(schema)
         rest.close_all_orders(schema=schema, symbol=order_data.DEFAULT_SYMBOL)
