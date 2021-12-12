@@ -475,7 +475,7 @@ class TestBitmexRestApi:
             assert symbol_schema.validate(symbol) == symbol
 
 
-class TestOrdersBitmexRestApi:
+class TestOrderBitmexRestApi:
     @pytest.mark.parametrize(
         'rest, schema, side, order_type, expect', [
             ('tbitmex', OrderSchema.margin1, BUY, OrderType.market, {
