@@ -1,7 +1,7 @@
 # pylint: disable=no-self-use
 import pytest
 from copy import deepcopy
-from schema import Schema, And
+from schema import Schema
 from typing import Union, Optional
 from datetime import datetime, timedelta
 from mst_gateway.calculator import BitmexFinFactory
@@ -9,7 +9,6 @@ from mst_gateway.connector.api.stocks.bitmex import BitmexRestApi
 from mst_gateway.exceptions import ConnectorError
 from mst_gateway.connector.api import BUY, SELL, OrderType, OrderSchema, LeverageType, OrderExec
 from tests.mst_gateway.connector import schema as fields
-from tests.mst_gateway.connector.validators import data_valid
 from tests import config as cfg
 from .data import order as order_data
 from .data import storage as data
