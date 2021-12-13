@@ -259,7 +259,7 @@ DEFAULT_WALLET_DETAIL_GET_DATA_RESULT = {
                                 'mm': 49.2,
                                 'im': None,
                                 'am': 10775.02542493,
-                                't': None,
+                                't': 'trade',
                             }
                         ]
                     }
@@ -280,7 +280,7 @@ DEFAULT_WALLET_DETAIL_GET_DATA_RESULT = {
                             {
                                 'cur': 'USDT',
                                 'bl': 9999.96949206,
-                                'wbl': 0.0,
+                                'wbl': 10000.96638768,
                                 'bor': 0.0,
                                 'ist': 0.0,
                                 'upnl': 0.005643,
@@ -309,21 +309,21 @@ DEFAULT_WALLET_DETAIL_GET_DATA_RESULT = {
                             {
                                 'cur': 'BTC',
                                 'bl': 9.99965786,
-                                'wbl': 0.0,
-                                'bor': 0.0,
-                                'ist': 0.0,
+                                'wbl': 9.99951235,
+                                'bor': 0,
+                                'ist': 0,
                                 'upnl': 3e-08,
                                 'mbl': 9.99965789,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 9.99965789,
+                                'mm': 8.25e-06,
+                                'im': 0.00010314,
+                                'am': 9.99964964,
                                 't': 'trade',
                             }
                         ]
                     }
-                ],
+                ]
             }
-        }
+        },
     ],
 }
 DEFAULT_WALLET_GET_DATA_RESULT = {

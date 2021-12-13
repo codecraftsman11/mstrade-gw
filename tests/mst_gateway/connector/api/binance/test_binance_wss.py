@@ -461,7 +461,7 @@ class TestBinanceWssApi:
                 assert data_schema.validate(d) == d
                 assert summary_schema.validate(d['tbl']) == d['tbl']
                 if schema in (OrderSchema.futures, OrderSchema.futures_coin):
-                    for key in ('tupnl', 'tmbl'):
+                    for key in ('tupnl', 'tmbl', 'tbor', 'tist'):
                         assert summary_schema.validate(d[key]) == d[key]
                 self.validate_balances(schema, d['bls'])
             assert data == expect[i]
