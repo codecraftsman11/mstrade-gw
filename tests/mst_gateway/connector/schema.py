@@ -10,6 +10,7 @@ from .validators import (
     execution_valid,
     exchange_order_id_valid,
     leverage_type_valid,
+    state_valid,
 )
 from mst_gateway.connector.api.types import OrderSchema
 
@@ -324,6 +325,25 @@ WS_MESSAGE_HEADER_FIELDS = {
     'd': list,
 }
 WS_MESSAGE_DATA_FIELDS = {
+    'order': {
+        'eoid': int,
+        'sd': Use(side_valid),
+        'tv': float,
+        'tp': float,
+        'vl': float,
+        'p': float,
+        'st': Use(state_valid),
+        'lv': float,
+        'fv': float,
+        'ap': float,
+        'tm': Or(None, iso_datetime_valid),
+        's': str,
+        'stp': float,
+        'crt': Or(None, Use(datetime_valid)),
+        't': Use(type_valid),
+        'exc': Use(execution_valid),
+        'ss': Or(None, str),
+    },
     'order_book': {
         'id': Or(None, int),
         's': str,
@@ -331,6 +351,9 @@ WS_MESSAGE_DATA_FIELDS = {
         'sd': Use(side_valid),
         'vl': float,
         'p': float,
+    },
+    'position': {
+
     },
     'quote_bin': {
         'tm': Or(None, Use(iso_datetime_valid)),
@@ -373,5 +396,61 @@ WS_MESSAGE_DATA_FIELDS = {
         'sd': Use(side_valid),
         'vl': float,
         'p': float,
+    },
+    'wallet': {
+        OrderSchema.exchange: {
+            'tbl': dict,
+            'bls': list,
+        },
+        OrderSchema.futures: {
+            'tbl': dict,
+            'tupnl': dict,
+            'tmbl': dict,
+            'bls': list,
+        },
+        OrderSchema.futures_coin: {
+            'tbl': dict,
+            'tupnl': dict,
+            'tmbl': dict,
+            'bls': list,
+        },
+    },
+    'balance': {
+        OrderSchema.exchange: {
+            'cur': str,
+            'bl': float,
+            'upnl': Or(None, float),
+            'mbl': float,
+            'mm': float,
+            'im': Or(None, float),
+            'am': float,
+            't': str,
+        },
+        OrderSchema.futures: {
+            'cur': str,
+            'bl': float,
+            'wbl': Or(None, float),
+            'bor': Or(None, float),
+            'ist': Or(None, float),
+            'upnl': Or(None, float),
+            'mbl': Or(None, float),
+            'mm': Or(None, float),
+            'im': Or(None, float),
+            'am': Or(None, float),
+            't': str,
+        },
+        OrderSchema.futures_coin: {
+            'cur': str,
+            'bl': float,
+            'wbl': Or(None, float),
+            'bor': Or(None, float),
+            'ist': Or(None, float),
+            'upnl': Or(None, float),
+            'mbl': Or(None, float),
+            'mm': Or(None, float),
+            'im': Or(None, float),
+            'am': Or(None, float),
+            't': str,
+        },
     },
 }

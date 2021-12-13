@@ -73,6 +73,11 @@ def leverage_type_valid(value):
     raise SchemaError('Invalid leverage_type')
 
 
+def state_valid(value):
+    if api.OrderState.is_valid(value):
+        return value
+    raise SchemaError('Invalid state')
+
 
 def data_valid(data, rules):
     if not isinstance(data, dict):
