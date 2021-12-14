@@ -291,8 +291,8 @@ class TestBitmexRestApi:
     )
     def test_get_assets_balance(self, rest: BitmexRestApi, schema: str):
         assets_balance = rest.get_assets_balance(schema)
+        asset_balance_schema = Schema(fields.ASSETS_BALANCE)
         for a, b in assets_balance.items():
-            asset_balance_schema = Schema(fields.ASSETS_BALANCE)
             assert asset_balance_schema.validate({a: b}) == {a: b}
 
     @pytest.mark.parametrize(
