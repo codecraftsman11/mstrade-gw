@@ -383,7 +383,7 @@ WS_MESSAGE_DATA_FIELDS = {
         'hip': float,
         'lop': float,
         'exp': Or(None, str),
-        'expd': Or(None, Use(iso_datetime_valid)),
+        'expd': Or(None, Use(iso_datetime_valid), str),
         'pa': Or(None, Use(pair_valid)),
         'tck': Or(None, float),
         'vt': Or(None, float),
