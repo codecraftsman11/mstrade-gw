@@ -328,6 +328,15 @@ class TestBitmexRestApi:
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
         indirect=['rest'],
     )
+    def test_list_symbols(self, rest: BitmexRestApi, schema: str):
+        symbol_schema = Schema(fields.SYMBOL_FIELDS)
+        for symbol in rest.list_symbols(schema=schema):
+            assert symbol_schema.validate(symbol) == symbol
+
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
     def test_get_exchange_symbol_info(self, rest: BitmexRestApi, schema: str):
         exchange_symbol_schema = Schema(fields.EXCHANGE_SYMBOL_INFO_FIELDS[schema])
         exchange_symbols = rest.get_exchange_symbol_info(schema=schema)
@@ -463,15 +472,6 @@ class TestBitmexRestApi:
                                                 funding_rate=funding_rate)
         assert liquidation_schema.validate(liquidation_data) == liquidation_data
         assert liquidation_data['liquidation_price'] == expect
-
-    @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
-        indirect=['rest'],
-    )
-    def test_list_symbols(self, rest: BitmexRestApi, schema: str):
-        symbol_schema = Schema(fields.SYMBOL_FIELDS)
-        for symbol in rest.list_symbols(schema=schema):
-            assert symbol_schema.validate(symbol) == symbol
 
 
 class TestOrderBitmexRestApi:
