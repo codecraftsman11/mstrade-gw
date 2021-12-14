@@ -79,6 +79,12 @@ def state_valid(value):
     raise SchemaError('Invalid state')
 
 
+def float_valid(value):
+    if value is None or isinstance(value, float) or isinstance(value, int):
+        return value
+    raise SchemaError('Invalid float field')
+
+
 def data_valid(data, rules):
     if not isinstance(data, dict):
         raise TypeError("Data is not dictionary")
