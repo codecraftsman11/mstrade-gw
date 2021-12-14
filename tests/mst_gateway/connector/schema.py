@@ -354,10 +354,26 @@ WS_MESSAGE_DATA_FIELDS = {
         'p': float,
     },
     'position': {
-
+        'tm': Use(iso_datetime_valid),
+        's': str,
+        'sd': Use(side_valid),
+        'vl': float,
+        'ep': float,
+        'mp': Or(None, float),
+        'upnl': dict,
+        'lvrp': Use(leverage_type_valid),
+        'lvr': Use(float_valid),
+        'lp': Or(None, float),
+        'act': str,
+        'ss': Or(None, str),
+    },
+    'position_upnl': {
+        'base': Or(None, float),
+        'usd': Or(None, float),
+        'btc': Or(None, float),
     },
     'quote_bin': {
-        'tm': Or(None, Use(iso_datetime_valid)),
+        'tm': Use(iso_datetime_valid),
         's': Or(None, str),
         'ss': Or(None, str),
         'vl': float,
@@ -367,7 +383,7 @@ WS_MESSAGE_DATA_FIELDS = {
         'lop': float,
     },
     'symbol': {
-        'tm': Or(None, Use(iso_datetime_valid)),
+        'tm': Use(iso_datetime_valid),
         's': str,
         'ss': Or(None, str),
         'ssch': Or(None, Use(schema_valid)),
@@ -391,7 +407,7 @@ WS_MESSAGE_DATA_FIELDS = {
         'mlvr': Use(float_valid),
     },
     'trade': {
-        'tm': Or(None, Use(iso_datetime_valid)),
+        'tm': Use(iso_datetime_valid),
         's': str,
         'ss': Or(None, str),
         'sd': Use(side_valid),

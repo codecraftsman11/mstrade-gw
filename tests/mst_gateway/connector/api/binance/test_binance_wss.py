@@ -410,7 +410,7 @@ class TestBinanceWssApi:
              trade_message.DEFAULT_TRADE_SPLIT_MESSAGE_RESULT[OrderSchema.futures_coin]),
             ('tbinance_futures_coin', 'wallet',
              wallet_message.DEFAULT_WALLET_LOOKUP_TABLE_RESULT[OrderSchema.futures_coin],
-             wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.futures_coin])
+             wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.futures_coin]),
         ],
         indirect=['wss'],
     )
@@ -433,28 +433,24 @@ class TestBinanceWssApi:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        'wss, messages, expect', [
-            ('tbinance_spot',
-             wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.exchange],
-             wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.exchange]),
-            ('tbinance_futures',
-             wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.futures],
-             wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.futures]),
-            ('tbinance_futures_coin',
-             wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.futures_coin],
-             wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.futures_coin])
-        ],
+        'wss, messages, expect', [('tbinance_spot',
+                                   wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.exchange],
+                                   wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.exchange]),
+                                  ('tbinance_futures',
+                                   wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.futures],
+                                   wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.futures]),
+                                  ('tbinance_futures_coin',
+                                   wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.futures_coin],
+                                   wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.futures_coin])],
         indirect=['wss'],
     )
     async def test_get_wallet_data(self, wss: BinanceWssApi, messages, expect):
         subscr_name = 'wallet'
         schema = wss.schema
         self.init_partial_state(wss, subscr_name)
-
         header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)
         data_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name][schema])
         summary_schema = Schema(fields.SUMMARY_FIELDS)
-
         for i, message in enumerate(messages):
             data = await wss.get_data(deepcopy(message))
             assert data.get(subscr_name, {}) == {}
@@ -503,29 +499,28 @@ class TestBinanceWssApi:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        'wss, messages, expect', [
-            ('tbinance_spot',
-             position_message.DEFAULT_POSITION_SPLIT_MESSAGE_RESULT[OrderSchema.exchange],
-             position_message.DEFAULT_POSITION_GET_DATA_RESULT[OrderSchema.exchange]),
-            ('tbinance_futures',
-             position_message.DEFAULT_POSITION_SPLIT_MESSAGE_RESULT[OrderSchema.futures],
-             position_message.DEFAULT_POSITION_GET_DATA_RESULT[OrderSchema.futures]),
-            ('tbinance_futures_coin',
-             position_message.DEFAULT_POSITION_SPLIT_MESSAGE_RESULT[OrderSchema.futures_coin],
-             position_message.DEFAULT_POSITION_GET_DATA_RESULT[OrderSchema.futures_coin]),
-        ],
+        'wss, messages, expect', [('tbinance_spot',
+                                   position_message.DEFAULT_POSITION_SPLIT_MESSAGE_RESULT[OrderSchema.exchange],
+                                   position_message.DEFAULT_POSITION_GET_DATA_RESULT[OrderSchema.exchange]),
+                                  ('tbinance_futures',
+                                   position_message.DEFAULT_POSITION_SPLIT_MESSAGE_RESULT[OrderSchema.futures],
+                                   position_message.DEFAULT_POSITION_GET_DATA_RESULT[OrderSchema.futures]),
+                                  ('tbinance_futures_coin',
+                                   position_message.DEFAULT_POSITION_SPLIT_MESSAGE_RESULT[OrderSchema.futures_coin],
+                                   position_message.DEFAULT_POSITION_GET_DATA_RESULT[OrderSchema.futures_coin])],
         indirect=['wss'],
     )
     async def test_get_position_data(self, wss: BinanceWssApi, messages, expect):
         subscr_name = 'position'
         self.init_partial_state(wss, subscr_name)
-
         for i, message in enumerate(messages):
             assert await wss.get_data(deepcopy(message)) == {}
 
         wss._subscriptions = {subscr_name: {'*': {'1'}}}
         for i, message in enumerate(messages):
-            assert await wss.get_data(deepcopy(message)) == expect[i]
+            data = await wss.get_data(deepcopy(message))
+            self.validate_data(data, subscr_name)
+            assert data == expect[i]
 
         self.init_partial_state(wss, subscr_name)
         schema = wss.schema
@@ -533,9 +528,9 @@ class TestBinanceWssApi:
         wss._subscriptions = {subscr_name: {symbol.lower(): {'1'}}}
         if schema in (OrderSchema.futures, OrderSchema.futures_coin):
             for i, message in enumerate(position_message.DEFAULT_POSITION_DETAIL_MESSAGES[schema]):
-                assert await wss.get_data(
-                    deepcopy(message)
-                ) == position_message.DEFAULT_POSITION_DETAIL_GET_DATA_RESULT[schema][i]
+                data = await wss.get_data(deepcopy(message))
+                self.validate_data(data, subscr_name)
+                assert data == position_message.DEFAULT_POSITION_DETAIL_GET_DATA_RESULT[schema][i]
 
     @classmethod
     def validate_data(cls, data, subscr_name):
@@ -670,12 +665,13 @@ class TestSubscriptionBinanceWssApi:
     async def test_subscription(self, wss: BinanceWssApi, subscr_name):
         subscr_channel = '1'
         self.reset()
-        await self.subscribe(wss, subscr_channel, subscr_name)
-        self.validate_messages(subscr_name)
-        self.reset()
-        assert wss._subscriptions == {subscr_name: {'*': {subscr_channel}}}
-        assert await wss.unsubscribe(subscr_channel, subscr_name)
-        assert wss._subscriptions == {}
+        if subscr_name != 'quote_bin' or wss.schema != OrderSchema.exchange:
+            await self.subscribe(wss, subscr_channel, subscr_name)
+            self.validate_messages(subscr_name)
+            self.reset()
+            assert wss._subscriptions == {subscr_name: {'*': {subscr_channel}}}
+            assert await wss.unsubscribe(subscr_channel, subscr_name)
+            assert wss._subscriptions == {}
         symbol = get_symbol(wss.schema)
         await self.subscribe(wss, subscr_channel, subscr_name, symbol)
         self.validate_messages(subscr_name, symbol)

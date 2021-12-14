@@ -13,7 +13,7 @@ DEFAULT_POSITIONS_STATE = {
             'side': 1,
             'symbol': 'btcusdt',
             'volume': 0.001,
-        }
+        },
     },
     OrderSchema.futures_coin: {
         'btcusd_perp': {
@@ -27,7 +27,7 @@ DEFAULT_POSITIONS_STATE = {
             'side': 1,
             'symbol': 'btcusd_perp',
             'volume': 0.001,
-        }
+        },
     },
 }
 
