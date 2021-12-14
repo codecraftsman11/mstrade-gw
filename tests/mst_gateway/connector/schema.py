@@ -15,17 +15,6 @@ from mst_gateway.connector.api.types import OrderSchema
 
 BITMEX_ASSET = "XBT"
 
-QUOTE_FIELDS = {
-    'time': datetime_valid,
-    'timestamp': int,
-    'symbol': str,
-    'volume': int,
-    'price': float,
-    'side': side_valid,
-    'schema': schema_valid,
-    'system_symbol': str,
-}
-
 QUOTE_BIN_FIELDS = {
     'time': Use(datetime_valid),
     'volume': Or(int, str),
@@ -161,14 +150,17 @@ BASE_BALANCE_FIELDS = {
     'currency': str,
     'balance': float,
     'withdraw_balance': float,
-    'unrealised_pnl': float,
+    'unrealised_pnl': Or(None, float),
     'margin_balance': float,
-    'maint_margin': float,
+    'maint_margin': Or(None, float),
     'init_margin': Or(None, float),
     'available_margin': float,
     'type': str,
 }
 BALANCE_FIELDS = {
+    OrderSchema.margin1: {
+        **BASE_BALANCE_FIELDS
+    },
     OrderSchema.exchange: {
         **BASE_BALANCE_FIELDS,
     },
@@ -228,9 +220,7 @@ WALLET_DETAIL_FIELDS = {
 }
 
 ASSETS_BALANCE = {
-    OrderSchema.margin1: {
-        BITMEX_ASSET.lower(): float
-    }
+    str: float
 }
 
 BASE_EXCHANGE_SYMBOL_INFO_FIELDS = {

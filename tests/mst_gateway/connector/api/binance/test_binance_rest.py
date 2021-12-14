@@ -178,8 +178,10 @@ class TestBinanceRestApi:
         indirect=['rest'],
     )
     def test_get_assets_balance(self, rest: BinanceRestApi, schema):
-        resp = rest.get_assets_balance(schema)
-        assert 'btc' in resp or 'usdt' in resp or 'bnb' in resp
+        assets_balance = rest.get_assets_balance(schema)
+        for a, b in assets_balance.items():
+            asset_balance_schema = Schema(fields.ASSETS_BALANCE)
+            assert asset_balance_schema.validate({a: b}) == {a: b}
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin2),
@@ -189,7 +191,7 @@ class TestBinanceRestApi:
     )
     def test_get_symbol(self, rest: BinanceRestApi, schema):
         symbol = rest.get_symbol(schema=schema, symbol=get_symbol(schema))
-        assert Schema(fields.SYMBOL_FIELDS).validate(symbol)
+        assert Schema(fields.SYMBOL_FIELDS).validate(symbol) == symbol
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin2),

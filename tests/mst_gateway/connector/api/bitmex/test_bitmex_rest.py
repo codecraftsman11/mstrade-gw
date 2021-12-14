@@ -239,6 +239,9 @@ class TestBitmexRestApi:
         wallet_schema = Schema(fields.WALLET_FIELDS[schema])
         wallet = rest.get_wallet()
         assert wallet_schema.validate(wallet) == wallet
+        balance_schema = Schema(fields.BALANCE_FIELDS[schema])
+        for balance in wallet['balances']:
+            assert balance_schema.validate(balance) == balance
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
@@ -287,9 +290,10 @@ class TestBitmexRestApi:
         indirect=['rest'],
     )
     def test_get_assets_balance(self, rest: BitmexRestApi, schema: str):
-        asset_balance_schema = Schema(fields.ASSETS_BALANCE[schema])
-        assets_balance = rest.get_assets_balance(schema=schema)
-        assert asset_balance_schema.validate(assets_balance) == assets_balance
+        assets_balance = rest.get_assets_balance(schema)
+        for a, b in assets_balance.items():
+            asset_balance_schema = Schema(fields.ASSETS_BALANCE)
+            assert asset_balance_schema.validate({a: b}) == {a: b}
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
