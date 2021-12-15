@@ -90,7 +90,7 @@ class TestBinanceWssApi:
         assert not wss.is_registered(subscr_name)
         assert not wss.is_registered(subscr_name, symbol=symbol)
         wss._subscriptions = {subscr_name: {symbol.lower(): {'1'}}}
-        assert wss.is_registered(subscr_name)
+        assert not wss.is_registered(subscr_name)
         assert wss.is_registered(subscr_name, symbol=symbol)
         assert not wss.is_registered(subscr_name, symbol='NOT_REGISTERED')
         wss._subscriptions = {subscr_name: {'*': {'1'}}}
@@ -152,7 +152,7 @@ class TestBinanceWssApi:
         symbol = get_symbol(wss.schema)
         assert wss.unregister('1', subscr_name) == (False, None)
         assert wss._subscriptions == {}
-        assert wss.unregister('1', subscr_name, 'NOT_REGISTERED') == (False, None)
+        assert wss.unregister('1', subscr_name, 'NOT_REGISTERED') == (False, 'NOT_REGISTERED')
         assert wss._subscriptions == {}
         wss._subscriptions = {subscr_name: {symbol.lower(): {'1', '2'}}}
         assert wss.unregister('1', subscr_name) == (False, '*')
@@ -160,9 +160,9 @@ class TestBinanceWssApi:
         assert wss.unregister('1', subscr_name, 'NOT_REGISTERED') == (False, 'not_registered')
         assert wss._subscriptions == {subscr_name: {symbol.lower(): {'1', '2'}}}
         assert wss.unregister('1', subscr_name, symbol) == (False, symbol.lower())
-        assert wss._subscriptions == {subscr_name: {symbol.lower(): {'1'}}}
+        assert wss._subscriptions == {subscr_name: {symbol.lower(): {'2'}}}
         assert wss.unregister('3', subscr_name, symbol) == (False, symbol.lower())
-        assert wss._subscriptions == {subscr_name: {symbol.lower(): {'1'}}}
+        assert wss._subscriptions == {subscr_name: {symbol.lower(): {'2'}}}
         assert wss.unregister('2', subscr_name, symbol) == (True, symbol.lower())
         assert wss._subscriptions == {}
         wss._subscriptions = {subscr_name: {'*': {'1', '2'}}}
@@ -175,12 +175,11 @@ class TestBinanceWssApi:
         'wss, subscr_name, expect', [
             ('tbinance_spot', 'order', subscribers.BinanceOrderSubscriber),
             ('tbinance_spot', 'order_book', subscribers.BinanceOrderBookSubscriber),
-            ('tbinance_spot', 'position', subscribers.BinanceQuoteBinSubscriber),
+            ('tbinance_spot', 'position', subscribers.BinancePositionSubscriber),
             ('tbinance_spot', 'quote_bin', subscribers.BinanceQuoteBinSubscriber),
             ('tbinance_spot', 'symbol', subscribers.BinanceSymbolSubscriber),
             ('tbinance_spot', 'trade', subscribers.BinanceTradeSubscriber),
             ('tbinance_spot', 'wallet', subscribers.BinanceWalletSubscriber),
-            ('tbinance_spot', 'not_exist', None),
             ('tbinance_futures', 'order', subscribers.BinanceOrderSubscriber),
             ('tbinance_futures', 'order_book', subscribers.BinanceOrderBookSubscriber),
             ('tbinance_futures', 'position', subscribers.BinanceFuturesPositionSubscriber),
@@ -188,7 +187,6 @@ class TestBinanceWssApi:
             ('tbinance_futures', 'symbol', subscribers.BinanceFuturesSymbolSubscriber),
             ('tbinance_futures', 'trade', subscribers.BinanceTradeSubscriber),
             ('tbinance_futures', 'wallet', subscribers.BinanceWalletSubscriber),
-            ('tbinance_futures', 'not_exist', None),
             ('tbinance_futures_coin', 'order', subscribers.BinanceOrderSubscriber),
             ('tbinance_futures_coin', 'order_book', subscribers.BinanceOrderBookSubscriber),
             ('tbinance_futures_coin', 'position', subscribers.BinanceFuturesCoinPositionSubscriber),
@@ -196,11 +194,11 @@ class TestBinanceWssApi:
             ('tbinance_futures_coin', 'symbol', subscribers.BinanceFuturesSymbolSubscriber),
             ('tbinance_futures_coin', 'trade', subscribers.BinanceTradeSubscriber),
             ('tbinance_futures_coin', 'wallet', subscribers.BinanceWalletSubscriber),
-            ('tbinance_futures_coin', 'not_exist', None),
         ],
         indirect=['wss']
     )
     def test__get_subscriber(self, wss: BinanceWssApi, subscr_name, expect):
+        print(wss._get_subscriber(subscr_name))
         assert isinstance(wss._get_subscriber(subscr_name), expect)
 
     @pytest.mark.parametrize('wss', ['tbinance_spot', 'tbinance_futures', 'tbinance_futures_coin'], indirect=True)
@@ -416,7 +414,7 @@ class TestBinanceWssApi:
     )
     def test__split_message(self, wss: BinanceWssApi, subscr_name, message, expect):
         if subscr_name == 'wallet' and wss.schema == OrderSchema.exchange:
-            assert wss._split_message(deepcopy(message)) == {}
+            assert wss._split_message(deepcopy(message)) == [None]
             wss._subscriptions = {subscr_name: {'*': {'1'}}}
         assert wss._split_message(deepcopy(message)) == expect
         if subscr_name == 'wallet' and wss.schema == OrderSchema.exchange:
@@ -452,8 +450,7 @@ class TestBinanceWssApi:
         data_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name][schema])
         summary_schema = Schema(fields.SUMMARY_FIELDS)
         for i, message in enumerate(messages):
-            data = await wss.get_data(deepcopy(message))
-            assert data.get(subscr_name, {}) == {}
+            assert await wss.get_data(deepcopy(message)) == {}
 
         wss._subscriptions = {subscr_name: {'*': {'1'}}}
         for i, message in enumerate(messages):
