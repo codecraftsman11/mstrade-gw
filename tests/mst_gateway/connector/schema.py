@@ -1,5 +1,5 @@
 # pylint: disable=broad-except
-from schema import Use, Or
+from schema import Use, Or, Optional
 from .validators import (
     datetime_valid,
     iso_datetime_valid,
@@ -13,21 +13,11 @@ from .validators import (
 )
 from mst_gateway.connector.api.types import OrderSchema
 
-
-QUOTE_FIELDS = {
-    'time': datetime_valid,
-    'timestamp': int,
-    'symbol': str,
-    'volume': int,
-    'price': float,
-    'side': side_valid,
-    'schema': schema_valid,
-    'system_symbol': str,
-}
+BITMEX_ASSET = "XBT"
 
 QUOTE_BIN_FIELDS = {
     'time': Use(datetime_valid),
-    'volume': str,
+    'volume': Or(int, str),
     'open_price': float,
     'close_price': float,
     'high_price': float,
@@ -48,7 +38,7 @@ SYMBOL_FIELDS = {
     'bid_price': float,
     'ask_price': float,
     'reversed': bool,
-    'volume24': float,
+    'volume24': Or(int, float),
     'mark_price': float,
     'high_price': float,
     'low_price': float,
@@ -91,9 +81,9 @@ ORDER_FIELDS = {
     'symbol': str,
     'volume': float,
     'filled_volume': float,
-    'stop': float,    # trigger level for Stop and Take Profit orders
+    'stop': Or(None, float),    # trigger level for Stop and Take Profit orders
     'type': Use(type_valid),
-    'side': str,
+    'side': Or(int, str),
     'price': float,
     'time': Use(datetime_valid),
     'active': bool,
@@ -106,7 +96,7 @@ ORDER_BOOK_FIELDS = {
     'id': Or(None, int),
     'symbol': str,
     'price': float,
-    'volume': float,
+    'volume': Or(int, float),
     'side': Use(side_valid),
     'schema': Or(None, Use(schema_valid)),
     'system_symbol': Or(None, str),
@@ -114,7 +104,7 @@ ORDER_BOOK_FIELDS = {
 
 TRADE_FIELDS = {
     'time': Use(datetime_valid),
-    'volume': str,
+    'volume': Or(int, str),
     'price': float,
     'side': Use(side_valid),
     'schema': Or(None, Use(schema_valid)),
@@ -124,15 +114,10 @@ TRADE_FIELDS = {
 
 WALLET_FIELDS = {
     OrderSchema.margin1: {
-        'currency': str,
-        'balance': float,
-        'withdraw_balance': float,
-        'unrealised_pnl': float,
-        'margin_balance': float,
-        'maint_margin': float,
-        'init_margin': Or(None, float),
-        'available_margin': float,
-        'type': str,
+        'balances': list,
+        'total_balance': dict,
+        'total_unrealised_pnl': dict,
+        'total_margin_balance': dict,
     },
     OrderSchema.exchange: {
         'balances': list,
@@ -165,14 +150,17 @@ BASE_BALANCE_FIELDS = {
     'currency': str,
     'balance': float,
     'withdraw_balance': float,
-    'unrealised_pnl': float,
+    'unrealised_pnl': Or(None, float),
     'margin_balance': float,
-    'maint_margin': float,
+    'maint_margin': Or(None, float),
     'init_margin': Or(None, float),
     'available_margin': float,
     'type': str,
 }
 BALANCE_FIELDS = {
+    OrderSchema.margin1: {
+        **BASE_BALANCE_FIELDS
+    },
     OrderSchema.exchange: {
         **BASE_BALANCE_FIELDS,
     },
@@ -193,6 +181,7 @@ USER_FIELDS = {
 }
 
 ORDER_COMMISSION_FIELDS = {
+    Optional('symbol'): str,
     'maker': float,
     'taker': float,
     'type': str,
@@ -210,6 +199,9 @@ BASE_WALLET_DETAIL_FIELDS = {
     'type': str,
 }
 WALLET_DETAIL_FIELDS = {
+    OrderSchema.margin1: {
+        **BASE_WALLET_DETAIL_FIELDS,
+    },
     OrderSchema.exchange: {
         **BASE_WALLET_DETAIL_FIELDS,
     },
@@ -225,6 +217,10 @@ WALLET_DETAIL_FIELDS = {
         'cross_collaterals': list,
         **BASE_WALLET_DETAIL_FIELDS,
     },
+}
+
+ASSETS_BALANCE = {
+    str: float
 }
 
 BASE_EXCHANGE_SYMBOL_INFO_FIELDS = {
@@ -245,6 +241,9 @@ BASE_EXCHANGE_SYMBOL_INFO_FIELDS = {
     'max_leverage': Or(None, float),
 }
 EXCHANGE_SYMBOL_INFO_FIELDS = {
+    OrderSchema.margin1: {
+        **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
+    },
     OrderSchema.exchange: {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
     },

@@ -245,7 +245,10 @@ class BitmexRestApi(StockRestApi):
             if status in ('Filled', 'Canceled', None):
                 raise NotFoundError(error)
             raise ConnectorError(error)
-        return data
+        state_data = self.storage.get(
+            StateStorageKey.symbol, self.name, OrderSchema.margin1
+        ).get(data[0]['symbol'].lower(), dict())
+        return utils.load_order_data(data[0], state_data)
 
     def get_order(self, exchange_order_id: str, symbol: str,
                   schema: str) -> Optional[dict]:

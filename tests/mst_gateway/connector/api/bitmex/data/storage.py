@@ -1,79 +1,114 @@
-from mst_gateway.connector.api.stocks.bitmex.utils import to_date
+from datetime import datetime, timezone, timedelta
 
+from mst_gateway.connector.api import OrderSchema
+from mst_gateway.storage import StateStorageKey
+
+ASSET = "XBT"
+SYMBOL = "XBTUSD"
+SYSTEM_SYMBOL = "btcusd"
+DEFAULT_AMOUNT = 1
+DEFAULT_DEPTH = 5
+DEFAULT_MIN_VOLUME_SELL = 100
+DEFAULT_MIN_VOLUME_BUY = 100
+FROM_DATE = datetime.now(tz=timezone.utc) - timedelta(days=2)
+RANGE_TO_DATE = FROM_DATE + timedelta(minutes=1)
 
 STORAGE_DATA = {
-    'symbol': {
+    StateStorageKey.symbol: {
         'bitmex': {
             'margin1': {
                 'ethusd': {
-                    'tick': 0.05,
-                    'volume_tick': 1.0,
-                    'pair': [
-                        'ETH',
-                        'USD'
+                    "tick": 0.05,
+                    "pair": [
+                        "ETH",
+                        "USD"
                     ],
-                    'expiration': None,
-                    'schema': 'margin1',
-                    'symbol_schema': 'margin1',
-                    'system_symbol': 'ethusd',
-                    'symbol': 'ethusd',
-                    'exchange': 'Bitmex',
-                    'created': to_date('2020-06-25T13:03:00.295118Z'),
-                    'max_leverage': 50.0,
+                    "volume_tick": 1.0,
+                    "max_leverage": 100.0,
+                    "schema": "margin1",
+                    "symbol_schema": "margin1",
+                    "expiration": None,
+                    "expiration_date": None,
+                    "created": "2020-06-25T13:02:57.516637",
+                    "leverage_brackets": [],
+                    "system_symbol": "ethusd",
+                    "symbol": "ethusd",
+                    "exchange": "Bitmex"
                 },
                 'xbtusd': {
-                    'tick': 0.5,
-                    'volume_tick': 1.0,
-                    'pair': [
-                        'XBT',
-                        'USD'
+                    "tick": 0.5,
+                    "pair": [
+                        "XBT",
+                        "USD"
                     ],
-                    'expiration': None,
-                    'schema': 'margin1',
-                    'symbol_schema': 'margin1',
-                    'system_symbol': 'btcusd',
-                    'symbol': 'xbtusd',
-                    'exchange': 'Bitmex',
-                    'created': to_date('2020-06-25T13:03:00.295118Z'),
-                    'max_leverage': 100.0,
-                }
+                    "volume_tick": 100.0,
+                    "max_leverage": 100.0,
+                    "schema": "margin1",
+                    "symbol_schema": "margin1",
+                    "expiration": None,
+                    "expiration_date": None,
+                    "created": "2020-07-01T15:10:14.834558",
+                    "leverage_brackets": [],
+                    "system_symbol": "btcusd",
+                    "symbol": "xbtusd",
+                    "exchange": "Bitmex"
+                },
             }
         },
         'tbitmex': {
             'margin1': {
                 'ethusd': {
-                    'tick': 0.05,
-                    'volume_tick': 1.0,
-                    'pair': [
-                        'ETH',
-                        'USD'
+                    "tick": 0.05,
+                    "pair": [
+                        "ETH",
+                        "USD"
                     ],
-                    'expiration': None,
-                    'schema': 'margin1',
-                    'symbol_schema': 'margin1',
-                    'system_symbol': 'ethusd',
-                    'symbol': 'ethusd',
-                    'exchange': 'tBitmex',
-                    'created':  to_date('2020-06-25T13:03:00.295118Z'),
-                    'max_leverage': 50.0,
+                    "volume_tick": 1.0,
+                    "max_leverage": 100.0,
+                    "schema": "margin1",
+                    "symbol_schema": "margin1",
+                    "expiration": None,
+                    "expiration_date": None,
+                    "created": "2020-06-25T13:03:00.347559",
+                    "leverage_brackets": [],
+                    "system_symbol": "ethusd",
+                    "symbol": "ethusd",
+                    "exchange": "tBitmex"
                 },
                 'xbtusd': {
-                    'tick': 0.5,
-                    'volume_tick': 1.0,
-                    'pair': [
-                        'XBT',
-                        'USD'
+                    "tick": 0.5,
+                    "pair": [
+                        "XBT",
+                        "USD"
                     ],
-                    'expiration': None,
-                    'schema': 'margin1',
-                    'symbol_schema': 'margin1',
-                    'system_symbol': 'btcusd',
-                    'symbol': 'xbtusd',
-                    'exchange': 'tBitmex',
-                    'created':  to_date('2020-06-25T13:03:00.295118Z'),
-                    'max_leverage': 100.0,
-                }
+                    "volume_tick": 100.0,
+                    "max_leverage": 100.0,
+                    "schema": "margin1",
+                    "symbol_schema": "margin1",
+                    "expiration": None,
+                    "expiration_date": None,
+                    "created": "2020-07-01T15:10:16.748936",
+                    "leverage_brackets": [],
+                    "system_symbol": "btcusd",
+                    "symbol": "xbtusd",
+                    "exchange": "tBitmex"
+                },
             }
-        }
+        },
+    }
+}
+
+WALLET_DATA = {
+    OrderSchema.margin1:
+    {
+        'currency': 'XBT',
+        'balance': 0.01221285,
+        'withdraw_balance': 0.01218895,
+        'unrealised_pnl': -5.35e-06,
+        'margin_balance': 0.0122075,
+        'maint_margin': 1,
+        'init_margin': 0.0,
+        'available_margin': 0.01218895,
+        'type': 'trade'
     }
 }
