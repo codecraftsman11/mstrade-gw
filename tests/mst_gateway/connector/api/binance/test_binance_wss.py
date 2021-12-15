@@ -466,6 +466,25 @@ class TestBinanceWssApi:
                 self.validate_balances(schema, d['bls'])
             assert data == expect[i]
 
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        'wss, messages, expect', [('tbinance_spot',
+                                   wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.exchange],
+                                   wallet_message.DEFAULT_WALLET_DETAIL_GET_DATA_RESULT[OrderSchema.exchange]),
+                                  ('tbinance_futures',
+                                   wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.futures],
+                                   wallet_message.DEFAULT_WALLET_DETAIL_GET_DATA_RESULT[OrderSchema.futures]),
+                                  ('tbinance_futures_coin',
+                                   wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.futures_coin],
+                                   wallet_message.DEFAULT_WALLET_DETAIL_GET_DATA_RESULT[OrderSchema.futures_coin])],
+        indirect=['wss'],
+    )
+    async def test_get_wallet_detail_data(self, wss: BinanceWssApi, messages, expect):
+        subscr_name = 'wallet'
+        schema = wss.schema
+        self.init_partial_state(wss, subscr_name)
+        header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)
+
         wss._subscriptions = {subscr_name: {get_asset(schema).lower(): {'1'}}}
         for i, message in enumerate(messages):
             data = await wss.get_data(deepcopy(message))
@@ -473,7 +492,7 @@ class TestBinanceWssApi:
             assert header_schema.validate(_data) == _data
             for d in _data['d']:
                 self.validate_balances(schema, d['bls'])
-            assert data == wallet_message.DEFAULT_WALLET_DETAIL_GET_DATA_RESULT[schema][i]
+            assert data == expect[i]
 
     @classmethod
     def init_partial_state(cls, wss: BinanceWssApi, subscr_name):
