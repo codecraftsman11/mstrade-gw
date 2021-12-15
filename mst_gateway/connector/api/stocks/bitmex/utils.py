@@ -784,7 +784,9 @@ def store_leverage(leverage_type: str, leverage: float) -> float:
 
 
 def load_position(raw_data: dict, schema: str) -> dict:
+    now = datetime.now()
     return {
+        'time': now,
         'schema': schema,
         'symbol': raw_data.get('symbol'),
         'side': load_position_side_by_volume(to_float(raw_data.get('currentQty'))),
