@@ -308,7 +308,7 @@ def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     _time = to_date(_time_field) or datetime.now()
     data = {
         'time': _time,
-        'exchange_order_id': raw_data.get('orderId'),
+        'exchange_order_id': str(raw_data.get('orderId')),
         'symbol': raw_data.get('symbol'),
         'volume': to_float(raw_data.get('origQty')),
         'filled_volume': to_float(raw_data.get('cumQty')),
@@ -1284,7 +1284,7 @@ def load_ws_order_side(order_side: Optional[str]) -> Optional[int]:
 
 def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     data = {
-        'eoid': raw_data.get('i'),
+        'eoid': str(raw_data.get('i')),
         'sd': load_ws_order_side(raw_data.get('S')),
         'tv': to_float(raw_data.get('l')),
         'tp': to_float(raw_data.get('L')),

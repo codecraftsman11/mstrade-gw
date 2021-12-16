@@ -1,147 +1,217 @@
-from tests import config as cfg
+from mst_gateway.connector.api.types import OrderSchema
 
-SPOT_TRADE_MESSAGE = {
-    "e": "trade",
-    "E": 1606125171321,
-    "s": "BTCUSDT",
-    "t": 48481,
-    "p": "30.83080000",
-    "q": "0.80000000",
-    "b": 3608270,
-    "a": 3608267,
-    "T": 1606125171320,
-    "m": False,
-    "M": True,
+DEFAULT_TRADE_MESSAGE = {
+    OrderSchema.exchange: {
+        'e': 'trade',
+        'E': 1638958928243,
+        's': 'BTCUSDT',
+        't': 459568,
+        'p': '50229.54000000',
+        'q': '0.00995500',
+        'b': 1906624,
+        'a': 1906608,
+        'T': 1638958928242,
+        'm': False,
+        'M': True,
+    },
+    OrderSchema.futures: {
+        'e': 'trade',
+        'E': 1638963971897,
+        'T': 1638963971895,
+        's': 'BTCUSDT',
+        't': 217093309,
+        'p': '49145.63',
+        'q': '0.010',
+        'X': 'MARKET',
+        'm': True,
+    },
+    OrderSchema.futures_coin: {
+        'e': 'trade',
+        'E': 1638965335074,
+        'T': 1638965335062,
+        's': 'BTCUSD_PERP',
+        't': 50097309,
+        'p': '49222.5',
+        'q': '1',
+        'X': 'MARKET',
+        'm': False,
+    },
 }
-SPOT_TRADE_LOOKUP_TABLE_RESULT = {
-    "action": "update",
-    "data": [
-        {
-            "e": "trade",
-            "E": 1606125171321,
-            "s": "BTCUSDT",
-            "t": 48481,
-            "p": "30.83080000",
-            "q": "0.80000000",
-            "b": 3608270,
-            "a": 3608267,
-            "T": 1606125171320,
-            "m": False,
-            "M": True,
-        }
-    ],
-    "table": "trade",
-}
-SPOT_TRADE_SPLIT_MESSAGE_RESULTS = [
-    {
-        "action": "update",
-        "data": [
+DEFAULT_TRADE_LOOKUP_TABLE_RESULT = {
+    OrderSchema.exchange: {
+        'table': 'trade',
+        'action': 'update',
+        'data': [
             {
-                "e": "trade",
-                "E": 1606125171321,
-                "s": "BTCUSDT",
-                "t": 48481,
-                "p": "30.83080000",
-                "q": "0.80000000",
-                "b": 3608270,
-                "a": 3608267,
-                "T": 1606125171320,
-                "m": False,
-                "M": True,
+                'e': 'trade',
+                'E': 1638958928243,
+                's': 'BTCUSDT',
+                't': 459568,
+                'p': '50229.54000000',
+                'q': '0.00995500',
+                'b': 1906624,
+                'a': 1906608,
+                'T': 1638958928242,
+                'm': False,
+                'M': True,
             }
         ],
-        "table": "trade",
-    }
-]
-SPOT_TRADE_GET_DATA_RESULTS = [
-    {
-        "trade": {
-            "account": cfg.BINANCE_ACCOUNT_NAME,
-            "action": "insert",
-            "data": [
-                {
-                    "price": 30.8308,
-                    "schema": cfg.BINANCE_SPOT_SCHEMA,
-                    "side": 1,
-                    "symbol": "btcusdt",
-                    "system_symbol": "btcusd",
-                    "time": "2020-11-23 09:52:51.000000Z",
-                    "timestamp": 1606125171321,
-                    "volume": 0.8,
-                }
-            ],
-            "schema": cfg.BINANCE_SPOT_SCHEMA,
-            "table": "trade",
-        }
-    }
-]
-
-FUTURES_TRADE_MESSAGE = {
-    "e": "trade",
-    "E": 1606739270522,
-    "T": 1606739270519,
-    "s": "BTCUSDT",
-    "t": 147481536,
-    "p": "22792.59",
-    "q": "1.504",
-    "X": "MARKET",
-    "m": False,
-}
-FUTURES_TRADE_LOOKUP_TABLE_RESULT = {
-    "action": "update",
-    "data": [
-        {
-            "E": 1606739270522,
-            "T": 1606739270519,
-            "X": "MARKET",
-            "e": "trade",
-            "m": False,
-            "p": "22792.59",
-            "q": "1.504",
-            "s": "BTCUSDT",
-            "t": 147481536,
-        }
-    ],
-    "table": "trade",
-}
-FUTURES_TRADE_SPLIT_MESSAGE_RESULTS = [
-    {
-        "action": "update",
-        "data": [
+    },
+    OrderSchema.futures: {
+        'table': 'trade',
+        'action': 'update',
+        'data': [
             {
-                "E": 1606739270522,
-                "T": 1606739270519,
-                "X": "MARKET",
-                "e": "trade",
-                "m": False,
-                "p": "22792.59",
-                "q": "1.504",
-                "s": "BTCUSDT",
-                "t": 147481536,
+                'e': 'trade',
+                'E': 1638963971897,
+                'T': 1638963971895,
+                's': 'BTCUSDT',
+                't': 217093309,
+                'p': '49145.63',
+                'q': '0.010',
+                'X': 'MARKET',
+                'm': True,
             }
         ],
-        "table": "trade",
-    }
-]
-FUTURES_TRADE_GET_DATA_RESULTS = [
-    {
-        "trade": {
-            "account": cfg.BINANCE_ACCOUNT_NAME,
-            "action": "insert",
-            "data": [
+    },
+    OrderSchema.futures_coin: {
+        'table': 'trade',
+        'action': 'update',
+        'data': [
+            {
+                'e': 'trade',
+                'E': 1638965335074,
+                'T': 1638965335062,
+                's': 'BTCUSD_PERP',
+                't': 50097309,
+                'p': '49222.5',
+                'q': '1',
+                'X': 'MARKET',
+                'm': False,
+            }
+        ],
+    },
+}
+DEFAULT_TRADE_SPLIT_MESSAGE_RESULT = {
+    OrderSchema.exchange: [
+        {
+            'table': 'trade',
+            'action': 'update',
+            'data': [
                 {
-                    "price": 22792.59,
-                    "schema": cfg.BINANCE_FUTURES_SCHEMA,
-                    "side": 1,
-                    "symbol": "btcusdt",
-                    "system_symbol": "btcusd",
-                    "time": "2020-11-30 12:27:50.000000Z",
-                    "timestamp": 1606739270522,
-                    "volume": 1.504,
+                    'e': 'trade',
+                    'E': 1638958928243,
+                    's': 'BTCUSDT',
+                    't': 459568,
+                    'p': '50229.54000000',
+                    'q': '0.00995500',
+                    'b': 1906624,
+                    'a': 1906608,
+                    'T': 1638958928242,
+                    'm': False,
+                    'M': True,
                 }
             ],
-            "schema": cfg.BINANCE_FUTURES_SCHEMA,
-            "table": "trade",
         }
-    }
-]
+    ],
+    OrderSchema.futures: [
+        {
+            'table': 'trade',
+            'action': 'update',
+            'data': [
+                {
+                    'e': 'trade',
+                    'E': 1638963971897,
+                    'T': 1638963971895,
+                    's': 'BTCUSDT',
+                    't': 217093309,
+                    'p': '49145.63',
+                    'q': '0.010',
+                    'X': 'MARKET',
+                    'm': True,
+                }
+            ],
+        }
+    ],
+    OrderSchema.futures_coin: [
+        {
+            'table': 'trade',
+            'action': 'update',
+            'data': [
+                {
+                    'e': 'trade',
+                    'E': 1638965335074,
+                    'T': 1638965335062,
+                    's': 'BTCUSD_PERP',
+                    't': 50097309,
+                    'p': '49222.5',
+                    'q': '1',
+                    'X': 'MARKET',
+                    'm': False,
+                }
+            ],
+        }
+    ],
+}
+DEFAULT_TRADE_GET_DATA_RESULT = {
+    OrderSchema.exchange: [
+        {
+            'trade': {
+                'acc': 'tbinance.tbinance_spot',
+                'tb': 'trade',
+                'sch': 'exchange',
+                'act': 'insert',
+                'd': [
+                    {
+                        'tm': '2021-12-08T10:22:08.243000',
+                        'p': 50229.54,
+                        'vl': 0.009955,
+                        'sd': 1,
+                        's': 'BTCUSDT',
+                        'ss': 'btcusd',
+                    }
+                ],
+            }
+        }
+    ],
+    OrderSchema.futures: [
+        {
+            'trade': {
+                'acc': 'tbinance.tbinance_futures',
+                'tb': 'trade',
+                'sch': 'futures',
+                'act': 'insert',
+                'd': [
+                    {
+                        'tm': '2021-12-08T11:46:11.897000',
+                        'p': 49145.63,
+                        'vl': 0.01,
+                        'sd': 0,
+                        's': 'BTCUSDT',
+                        'ss': 'btcusd',
+                    }
+                ],
+            }
+        }
+    ],
+    OrderSchema.futures_coin: [
+        {
+            'trade': {
+                'acc': 'tbinance.tbinance_futures',
+                'tb': 'trade',
+                'sch': 'futures_coin',
+                'act': 'insert',
+                'd': [
+                    {
+                        'tm': '2021-12-08T12:08:55.074000',
+                        'p': 49222.5,
+                        'vl': 1.0,
+                        'sd': 1,
+                        's': 'BTCUSD_PERP',
+                        'ss': 'btcusd',
+                    }
+                ],
+            }
+        }
+    ],
+}
