@@ -14,7 +14,6 @@ from .validators import (
 )
 from mst_gateway.connector.api.types import OrderSchema
 
-BITMEX_ASSET = "XBT"
 
 QUOTE_BIN_FIELDS = {
     'time': Use(datetime_valid),
