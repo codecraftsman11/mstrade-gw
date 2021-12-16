@@ -80,7 +80,7 @@ def state_valid(value):
 
 
 def float_valid(value):
-    if value is None or isinstance(value, float) or isinstance(value, int):
+    if value is None or isinstance(value, (float, int)):
         return value
     raise SchemaError('Invalid float field')
 
