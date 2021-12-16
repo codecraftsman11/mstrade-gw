@@ -432,7 +432,7 @@ DEFAULT_ORDER_GET_DATA_RESULT = {
                 'act': 'insert',
                 'd': [
                     {
-                        'eoid': 2352852,
+                        'eoid': '2352852',
                         'sd': 0,
                         'tv': 0.0,
                         'tp': 0.0,
@@ -463,7 +463,7 @@ DEFAULT_ORDER_GET_DATA_RESULT = {
                 'act': 'insert',
                 'd': [
                     {
-                        'eoid': 2939862341,
+                        'eoid': '2939862341',
                         'sd': 0,
                         'tv': 0.0,
                         'tp': 0.0,
@@ -494,7 +494,7 @@ DEFAULT_ORDER_GET_DATA_RESULT = {
                 'act': 'insert',
                 'd': [
                     {
-                        'eoid': 229157580,
+                        'eoid': '229157580',
                         'sd': 0,
                         'tv': 0.0,
                         'tp': 0.0,

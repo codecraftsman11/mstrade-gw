@@ -8,7 +8,6 @@ from .validators import (
     type_valid,
     schema_valid,
     execution_valid,
-    exchange_order_id_valid,
     leverage_type_valid,
     state_valid,
     float_valid,
@@ -56,7 +55,7 @@ SYMBOL_FIELDS = {
 }
 
 ORDER_FIELDS = {
-    'exchange_order_id': Use(exchange_order_id_valid),
+    'exchange_order_id': str,
     'symbol': str,
     'volume': float,
     'filled_volume': float,
@@ -326,7 +325,7 @@ WS_MESSAGE_HEADER_FIELDS = {
 }
 WS_MESSAGE_DATA_FIELDS = {
     'order': {
-        'eoid': int,
+        'eoid': str,
         'sd': Use(side_valid),
         'tv': float,
         'tp': float,

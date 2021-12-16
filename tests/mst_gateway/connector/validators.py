@@ -9,12 +9,6 @@ def side_valid(value):
     raise SchemaError('Invalid side')
 
 
-def exchange_order_id_valid(value):
-    if isinstance(value, (int, str)):
-        return value
-    raise SchemaError('Invalid exchange_order_id')
-
-
 def type_valid(value):
     if api.OrderType.is_valid(value):
         return value
