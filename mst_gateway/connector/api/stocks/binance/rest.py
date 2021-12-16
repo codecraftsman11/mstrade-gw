@@ -445,11 +445,11 @@ class BinanceRestApi(StockRestApi):
     def _margin_wallet(self, schema: str, **kwargs):
         is_for_ws = kwargs.pop('is_for_ws', False)
         assets = kwargs.pop('assets', ('btc', 'usd'))
-        fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance', 'borrowed', 'interest'))
+        fields = kwargs.pop('fields', ('balance', 'margin_balance', 'borrowed', 'interest'))
         data = self._binance_api(self._handler.get_margin_account, **kwargs)
         currencies = self.storage.get(StateStorageKey.exchange_rates, self.name, schema)
         if is_for_ws:
-            fields = ('bl', 'upnl', 'mbl', 'bor', 'ist')
+            fields = ('bl', 'mbl', 'bor', 'ist')
             return utils.load_ws_margin_wallet_data(data, currencies, assets, fields, schema)
         return utils.load_margin_wallet_data(data, currencies, assets, fields, schema)
 

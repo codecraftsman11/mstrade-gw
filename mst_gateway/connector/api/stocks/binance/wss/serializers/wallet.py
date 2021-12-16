@@ -28,10 +28,10 @@ class BinanceWalletSerializer(BinanceSerializer):
     def filter_balances(self, item) -> dict:
         filtered = deepcopy(item)
         _balances = []
-        for b in item['a'].get('B', []):
+        for b in item.get('B', []):
             if b['a'].lower() in self._wss_api.subscriptions[self.subscription]:
                 _balances.append(b)
-        filtered['a']['B'] = _balances
+        filtered['B'] = _balances
         return filtered
 
     async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
@@ -59,13 +59,13 @@ class BinanceWalletSerializer(BinanceSerializer):
             fields = ('bl',)
             return utils.ws_spot_wallet(item, state_data, currencies, assets, fields, self._wss_api.schema)
         elif self._wss_api.schema == OrderSchema.margin2:
-            fields = ('bl', 'upnl', 'mbl', 'bor')
+            fields = ('bl', 'mbl', 'bor')
             return utils.ws_margin_wallet(item, state_data, currencies, assets, fields, self._wss_api.schema)
 
     def _wallet_detail(self, item, state_data):
         _state_balances = state_data.pop('bls', {})
         if self._wss_api.schema == OrderSchema.exchange:
-            return dict(bls=utils.ws_spot_balance_data(item.get('B'), _state_balances))
+            return dict(bls=utils.spot_ws_balance_data(item.get('B')))
         elif self._wss_api.schema == OrderSchema.margin2:
             return dict(bls=utils.ws_margin_balance_data(item.get('B'), _state_balances))
 
@@ -77,6 +77,15 @@ class BinanceWalletSerializer(BinanceSerializer):
 
 
 class BinanceFuturesWalletSerializer(BinanceWalletSerializer):
+
+    def filter_balances(self, item) -> dict:
+        filtered = deepcopy(item)
+        _balances = []
+        for b in item['a'].get('B', []):
+            if b['a'].lower() in self._wss_api.subscriptions[self.subscription]:
+                _balances.append(b)
+        filtered['a']['B'] = _balances
+        return filtered
 
     def is_item_valid(self, message: dict, item) -> bool:
         return message['table'] == 'ACCOUNT_UPDATE' and self.subscription in self._wss_api.subscriptions

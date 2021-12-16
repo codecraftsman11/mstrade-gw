@@ -364,7 +364,7 @@ def load_spot_wallet_data(raw_data: dict, currencies: dict,
 
 def load_ws_spot_wallet_data(raw_data: dict, currencies: dict,
                              assets: Union[list, tuple], fields: Union[list, tuple], schema: str) -> dict:
-    balances = _spot_ws_balance_data(raw_data.get('balances'))
+    balances = spot_ws_balance_data(raw_data.get('balances'))
     total_balance = {}
     wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields, is_for_ws=True)
     for asset in assets:
@@ -667,26 +667,8 @@ def ws_spot_wallet(raw_data: dict, state_data: dict, currencies: dict,
                    assets: Union[list, tuple], fields: Union[list, tuple], schema: str):
     state_data.pop('*', None)
     _state_balances = state_data.pop('bls', {})
-    _balances = ws_spot_balance_data(raw_data.get('B'), _state_balances)
+    _balances = spot_ws_balance_data(raw_data.get('B'))
     return _ws_wallet(_balances, _state_balances, state_data, currencies, assets, fields, schema)
-
-
-def ws_spot_balance_data(balances: list, state_balances: dict):
-    result = list()
-    for b in balances:
-        _currency = b['a'].lower()
-        _currency_state = state_balances.pop(_currency, {})
-        result.append({
-            'cur': b['a'],
-            'bl': to_float(b['f']),
-            'upnl': _currency_state.get('upnl', 0),
-            'mbl': to_float(b['f']),
-            'mm': to_float(b['l']),
-            'im': _currency_state.get('im'),
-            'am': round(to_float(b['f']) - to_float(b['l']), 8),
-            't': _currency_state.get('t'),
-        })
-    return result
 
 
 def ws_margin_wallet(raw_data: dict, state_data: dict, currencies: dict,
@@ -702,17 +684,21 @@ def ws_margin_balance_data(balances: list, state_balances: dict):
     for b in balances:
         _currency = b['a'].lower()
         _currency_state = state_balances.pop(_currency, {})
+        _free = to_float(b['f'])
+        _locked = to_float(b['l'])
+        _balance = round(_free + _locked, 8)
         result.append({
             'cur': b['a'],
-            'bl': to_float(b['f']),
-            'upnl': _currency_state.get('upnl', 0),
-            'mbl': _currency_state.get('mbl', 0),
-            'mm': _currency_state.get('mm', 0),
-            'im': _currency_state.get('im'),
-            'am': round(to_float(b['f']) - to_float(b['l']), 8),
+            'bl': _balance,
+            'wbl': _currency_state.get('wbl', 0),
             'bor': _currency_state.get('bor', 0),
+            'abor': _currency_state.get('abor', 0),
             'ist': _currency_state.get('ist', 0),
-            't': to_wallet_state_type(to_float(b['l'])),
+            'istr': _currency_state.get('istr', 0),
+            'mbl': _balance,
+            'im': _locked,
+            'am': _free,
+            't': 'hold',
         })
     return result
 
@@ -784,35 +770,31 @@ def _spot_balance_data(balances: list):
                 'currency': asset,
                 'balance': balance,
                 'withdraw_balance': free,
-                'unrealised_pnl': 0.0,
                 'margin_balance': balance,
-                'maint_margin': 0.0,
                 'init_margin': locked,
                 'available_margin': free,
-                'type': to_wallet_state_type(locked),
+                'type': 'hold',
             }
         )
     return result
 
 
-def _spot_ws_balance_data(balances: list):
+def spot_ws_balance_data(balances: list):
     result = []
     for b in balances:
-        asset = b['asset']
-        free = to_float(b['free'])
-        locked = to_float(b['locked'])
+        asset = b['asset'] if 'asset' in b else b['a']
+        free = to_float(b['free'] if 'free' in b else b['f'])
+        locked = to_float(b['locked'] if 'locked' in b else b['l'])
         balance = round(free + locked, 8)
         result.append(
             {
                 'cur': asset,
                 'bl': balance,
                 'wbl': free,
-                'upnl': 0,
                 'mbl': balance,
-                'mm': 0,
                 'im': locked,
                 'am': free,
-                't': to_wallet_state_type(locked),
+                't': 'hold',
             }
         )
     return result
@@ -842,12 +824,10 @@ def _get_margin_balance(balance: dict, max_borrow: float = None, interest_rate: 
         'available_borrow': max_borrow,
         'interest': interest,
         'interest_rate': interest_rate,
-        'unrealised_pnl': 0,
         'margin_balance': _balance,
-        'maint_margin': 0,
         'init_margin': _locked,
         'available_margin': _free,
-        'type': to_wallet_state_type(_locked),
+        'type': 'hold',
     }
     return wallet_data
 
@@ -896,12 +876,10 @@ def _margin_ws_balance_data(balances: list, max_borrow: float = None, interest_r
             'abor': max_borrow,
             'ist': interest,
             'istr': interest_rate,
-            'upnl': 0,
             'mbl': _balance,
-            'mm': 0,
             'im': _locked,
             'am': _free,
-            't': to_wallet_state_type(_locked),
+            't': 'hold',
         })
     return result
 
