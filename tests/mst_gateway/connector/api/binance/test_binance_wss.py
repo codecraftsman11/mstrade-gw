@@ -198,7 +198,9 @@ class TestBinanceWssApi:
         indirect=['wss']
     )
     def test__get_subscriber(self, wss: BinanceWssApi, subscr_name, expect):
-        assert isinstance(wss._get_subscriber(subscr_name), expect)
+        subscriber = wss._get_subscriber(subscr_name)
+        assert isinstance(subscriber, expect)
+        assert subscriber.subscription == subscr_name
 
     @pytest.mark.parametrize('wss', ['tbinance_spot', 'tbinance_futures', 'tbinance_futures_coin'], indirect=True)
     def test_get_state(self, wss: BinanceWssApi):
