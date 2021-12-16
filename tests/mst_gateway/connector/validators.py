@@ -9,12 +9,6 @@ def side_valid(value):
     raise SchemaError('Invalid side')
 
 
-def exchange_order_id_valid(value):
-    if isinstance(value, (int, str)):
-        return value
-    raise SchemaError('Invalid exchange_order_id')
-
-
 def type_valid(value):
     if api.OrderType.is_valid(value):
         return value
@@ -72,6 +66,17 @@ def leverage_type_valid(value):
         return value
     raise SchemaError('Invalid leverage_type')
 
+
+def state_valid(value):
+    if api.OrderState.is_valid(value):
+        return value
+    raise SchemaError('Invalid state')
+
+
+def float_valid(value):
+    if value is None or isinstance(value, (float, int)):
+        return value
+    raise SchemaError('Invalid float field')
 
 
 def data_valid(data, rules):

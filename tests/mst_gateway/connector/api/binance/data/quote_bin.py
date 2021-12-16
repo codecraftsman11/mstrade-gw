@@ -1,223 +1,334 @@
-from tests import config as cfg
+from mst_gateway.connector.api.types import OrderSchema
 
-SPOT_QUOTE_BIN_MESSAGE = {
-    "e": "kline",
-    "E": 1606125552342,
-    "s": "BTCUSDT",
-    "k": {
-        "t": 1606125540000,
-        "T": 1606125599999,
-        "s": "BTCUSDT",
-        "i": "1m",
-        "f": 48569,
-        "L": 48574,
-        "o": "31.05520000",
-        "c": "31.07250000",
-        "h": "31.07250000",
-        "l": "31.05520000",
-        "v": "8.32000000",
-        "n": 6,
-        "x": False,
-        "q": "258.41617500",
-        "V": "8.32000000",
-        "Q": "258.41617500",
-        "B": "0",
+DEFAULT_QUOTE_BIN_MESSAGE = {
+    OrderSchema.exchange: {
+        'e': 'kline',
+        'E': 1638966077539,
+        's': 'BTCUSDT',
+        'k': {
+            't': 1638966060000,
+            'T': 1638966119999,
+            's': 'BTCUSDT',
+            'i': '1m',
+            'f': 468151,
+            'L': 468160,
+            'o': '49071.80000000',
+            'c': '49063.85000000',
+            'h': '49071.80000000',
+            'l': '49056.95000000',
+            'v': '0.06514700',
+            'n': 10,
+            'x': False,
+            'q': '3196.33704025',
+            'V': '0.06314700',
+            'Q': '3098.20176025',
+            'B': '0',
+        },
+    },
+    OrderSchema.futures: {
+        'e': 'kline',
+        'E': 1638966178990,
+        's': 'BTCUSDT',
+        'k': {
+            't': 1638966120000,
+            'T': 1638966179999,
+            's': 'BTCUSDT',
+            'i': '1m',
+            'f': 217098550,
+            'L': 217098713,
+            'o': '49066.29',
+            'c': '48946.70',
+            'h': '49068.26',
+            'l': '48929.80',
+            'v': '3113.884',
+            'n': 164,
+            'x': False,
+            'q': '152555614.92275',
+            'V': '457.601',
+            'Q': '22407682.81888',
+            'B': '0',
+        },
+    },
+    OrderSchema.futures_coin: {
+        'e': 'kline',
+        'E': 1638966273261,
+        's': 'BTCUSD_PERP',
+        'k': {
+            't': 1638966240000,
+            'T': 1638966299999,
+            's': 'BTCUSD_PERP',
+            'i': '1m',
+            'f': 50099279,
+            'L': 50099378,
+            'o': '48946.7',
+            'c': '48857.5',
+            'h': '48960.8',
+            'l': '48857.5',
+            'v': '489',
+            'n': 100,
+            'x': False,
+            'q': '0.99949540',
+            'V': '71',
+            'Q': '0.14504390',
+            'B': '0',
+        },
     },
 }
-SPOT_QUOTE_BIN_LOOKUP_TABLE_RESULT = {
-    "action": "update",
-    "data": [
-        {
-            "e": "kline",
-            "E": 1606125552342,
-            "s": "BTCUSDT",
-            "k": {
-                "t": 1606125540000,
-                "T": 1606125599999,
-                "s": "BTCUSDT",
-                "i": "1m",
-                "f": 48569,
-                "L": 48574,
-                "o": "31.05520000",
-                "c": "31.07250000",
-                "h": "31.07250000",
-                "l": "31.05520000",
-                "v": "8.32000000",
-                "n": 6,
-                "x": False,
-                "q": "258.41617500",
-                "V": "8.32000000",
-                "Q": "258.41617500",
-                "B": "0",
-            },
-        }
-    ],
-    "table": "kline",
-}
-SPOT_QUOTE_BIN_SPLIT_MESSAGE_RESULTS = [
-    {
-        "action": "update",
-        "data": [
+DEFAULT_QUOTE_BIN_LOOKUP_TABLE_RESULT = {
+    OrderSchema.exchange: {
+        'table': 'kline',
+        'action': 'update',
+        'data': [
             {
-                "e": "kline",
-                "E": 1606125552342,
-                "s": "BTCUSDT",
-                "k": {
-                    "t": 1606125540000,
-                    "T": 1606125599999,
-                    "s": "BTCUSDT",
-                    "i": "1m",
-                    "f": 48569,
-                    "L": 48574,
-                    "o": "31.05520000",
-                    "c": "31.07250000",
-                    "h": "31.07250000",
-                    "l": "31.05520000",
-                    "v": "8.32000000",
-                    "n": 6,
-                    "x": False,
-                    "q": "258.41617500",
-                    "V": "8.32000000",
-                    "Q": "258.41617500",
-                    "B": "0",
+                'e': 'kline',
+                'E': 1638966077539,
+                's': 'BTCUSDT',
+                'k': {
+                    't': 1638966060000,
+                    'T': 1638966119999,
+                    's': 'BTCUSDT',
+                    'i': '1m',
+                    'f': 468151,
+                    'L': 468160,
+                    'o': '49071.80000000',
+                    'c': '49063.85000000',
+                    'h': '49071.80000000',
+                    'l': '49056.95000000',
+                    'v': '0.06514700',
+                    'n': 10,
+                    'x': False,
+                    'q': '3196.33704025',
+                    'V': '0.06314700',
+                    'Q': '3098.20176025',
+                    'B': '0',
                 },
             }
         ],
-        "table": "kline",
-    }
-]
-SPOT_QUOTE_BIN_GET_DATA_RESULTS = [
-    {
-        "quote_bin": {
-            "account": cfg.BINANCE_ACCOUNT_NAME,
-            "action": "update",
-            "data": [
-                {
-                    "close": 31.0725,
-                    "high": 31.0725,
-                    "low": 31.0552,
-                    "open": 31.0552,
-                    "schema": cfg.BINANCE_SPOT_SCHEMA,
-                    "symbol": "btcusdt",
-                    "system_symbol": "btcusd",
-                    "time": "2020-11-23 09:59:00.000000Z",
-                    "timestamp": 1606125540000,
-                    "volume": 8.32,
-                }
-            ],
-            "schema": cfg.BINANCE_SPOT_SCHEMA,
-            "table": "quote_bin",
-        }
-    }
-]
-
-FUTURES_QUOTE_BIN_MESSAGE = {
-    "e": "kline",
-    "E": 1606739342001,
-    "s": "BTCUSDT",
-    "k": {
-        "t": 1606739280000,
-        "T": 1606739339999,
-        "s": "BTCUSDT",
-        "i": "1m",
-        "f": -1,
-        "L": -1,
-        "o": "22792.59",
-        "c": "22792.59",
-        "h": "22792.59",
-        "l": "22792.59",
-        "v": "0.000",
-        "n": 0,
-        "x": True,
-        "q": "0.00000",
-        "V": "0.000",
-        "Q": "0.00000",
-        "B": "0",
     },
-}
-FUTURES_QUOTE_BIN_LOOKUP_TABLE_RESULT = {
-    "action": "update",
-    "data": [
-        {
-            "E": 1606739342001,
-            "e": "kline",
-            "k": {
-                "B": "0",
-                "L": -1,
-                "Q": "0.00000",
-                "T": 1606739339999,
-                "V": "0.000",
-                "c": "22792.59",
-                "f": -1,
-                "h": "22792.59",
-                "i": "1m",
-                "l": "22792.59",
-                "n": 0,
-                "o": "22792.59",
-                "q": "0.00000",
-                "s": "BTCUSDT",
-                "t": 1606739280000,
-                "v": "0.000",
-                "x": True,
-            },
-            "s": "BTCUSDT",
-        }
-    ],
-    "table": "kline",
-}
-FUTURES_QUOTE_BIN_SPLIT_MESSAGE_RESULTS = [
-    {
-        "action": "update",
-        "data": [
+    OrderSchema.futures: {
+        'table': 'kline',
+        'action': 'update',
+        'data': [
             {
-                "E": 1606739342001,
-                "e": "kline",
-                "k": {
-                    "B": "0",
-                    "L": -1,
-                    "Q": "0.00000",
-                    "T": 1606739339999,
-                    "V": "0.000",
-                    "c": "22792.59",
-                    "f": -1,
-                    "h": "22792.59",
-                    "i": "1m",
-                    "l": "22792.59",
-                    "n": 0,
-                    "o": "22792.59",
-                    "q": "0.00000",
-                    "s": "BTCUSDT",
-                    "t": 1606739280000,
-                    "v": "0.000",
-                    "x": True,
+                'e': 'kline',
+                'E': 1638966178990,
+                's': 'BTCUSDT',
+                'k': {
+                    't': 1638966120000,
+                    'T': 1638966179999,
+                    's': 'BTCUSDT',
+                    'i': '1m',
+                    'f': 217098550,
+                    'L': 217098713,
+                    'o': '49066.29',
+                    'c': '48946.70',
+                    'h': '49068.26',
+                    'l': '48929.80',
+                    'v': '3113.884',
+                    'n': 164,
+                    'x': False,
+                    'q': '152555614.92275',
+                    'V': '457.601',
+                    'Q': '22407682.81888',
+                    'B': '0',
                 },
-                "s": "BTCUSDT",
             }
         ],
-        "table": "kline",
-    }
-]
-FUTURES_QUOTE_BIN_GET_DATA_RESULTS = [
-    {
-        "quote_bin": {
-            "account": cfg.BINANCE_ACCOUNT_NAME,
-            "action": "update",
-            "data": [
+    },
+    OrderSchema.futures_coin: {
+        'table': 'kline',
+        'action': 'update',
+        'data': [
+            {
+                'e': 'kline',
+                'E': 1638966273261,
+                's': 'BTCUSD_PERP',
+                'k': {
+                    't': 1638966240000,
+                    'T': 1638966299999,
+                    's': 'BTCUSD_PERP',
+                    'i': '1m',
+                    'f': 50099279,
+                    'L': 50099378,
+                    'o': '48946.7',
+                    'c': '48857.5',
+                    'h': '48960.8',
+                    'l': '48857.5',
+                    'v': '489',
+                    'n': 100,
+                    'x': False,
+                    'q': '0.99949540',
+                    'V': '71',
+                    'Q': '0.14504390',
+                    'B': '0',
+                },
+            }
+        ],
+    },
+}
+DEFAULT_QUOTE_BIN_SPLIT_MESSAGE_RESULT = {
+    OrderSchema.exchange: [
+        {
+            'table': 'kline',
+            'action': 'update',
+            'data': [
                 {
-                    "close": 22792.59,
-                    "high": 22792.59,
-                    "low": 22792.59,
-                    "open": 22792.59,
-                    "schema": cfg.BINANCE_FUTURES_SCHEMA,
-                    "symbol": "btcusdt",
-                    "system_symbol": "btcusd",
-                    "time": "2020-11-30 12:28:00.000000Z",
-                    "timestamp": 1606739280000,
-                    "volume": 0.0,
+                    'e': 'kline',
+                    'E': 1638966077539,
+                    's': 'BTCUSDT',
+                    'k': {
+                        't': 1638966060000,
+                        'T': 1638966119999,
+                        's': 'BTCUSDT',
+                        'i': '1m',
+                        'f': 468151,
+                        'L': 468160,
+                        'o': '49071.80000000',
+                        'c': '49063.85000000',
+                        'h': '49071.80000000',
+                        'l': '49056.95000000',
+                        'v': '0.06514700',
+                        'n': 10,
+                        'x': False,
+                        'q': '3196.33704025',
+                        'V': '0.06314700',
+                        'Q': '3098.20176025',
+                        'B': '0',
+                    },
                 }
             ],
-            "schema": cfg.BINANCE_FUTURES_SCHEMA,
-            "table": "quote_bin",
         }
-    }
-]
+    ],
+    OrderSchema.futures: [
+        {
+            'table': 'kline',
+            'action': 'update',
+            'data': [
+                {
+                    'e': 'kline',
+                    'E': 1638966178990,
+                    's': 'BTCUSDT',
+                    'k': {
+                        't': 1638966120000,
+                        'T': 1638966179999,
+                        's': 'BTCUSDT',
+                        'i': '1m',
+                        'f': 217098550,
+                        'L': 217098713,
+                        'o': '49066.29',
+                        'c': '48946.70',
+                        'h': '49068.26',
+                        'l': '48929.80',
+                        'v': '3113.884',
+                        'n': 164,
+                        'x': False,
+                        'q': '152555614.92275',
+                        'V': '457.601',
+                        'Q': '22407682.81888',
+                        'B': '0',
+                    },
+                }
+            ],
+        }
+    ],
+    OrderSchema.futures_coin: [
+        {
+            'table': 'kline',
+            'action': 'update',
+            'data': [
+                {
+                    'e': 'kline',
+                    'E': 1638966273261,
+                    's': 'BTCUSD_PERP',
+                    'k': {
+                        't': 1638966240000,
+                        'T': 1638966299999,
+                        's': 'BTCUSD_PERP',
+                        'i': '1m',
+                        'f': 50099279,
+                        'L': 50099378,
+                        'o': '48946.7',
+                        'c': '48857.5',
+                        'h': '48960.8',
+                        'l': '48857.5',
+                        'v': '489',
+                        'n': 100,
+                        'x': False,
+                        'q': '0.99949540',
+                        'V': '71',
+                        'Q': '0.14504390',
+                        'B': '0',
+                    },
+                }
+            ],
+        }
+    ],
+}
+DEFAULT_QUOTE_BIN_GET_DATA_RESULT = {
+    OrderSchema.exchange: [
+        {
+            'quote_bin': {
+                'acc': 'tbinance.tbinance_spot',
+                'tb': 'quote_bin',
+                'sch': 'exchange',
+                'act': 'update',
+                'd': [
+                    {
+                        'tm': '2021-12-08T12:21:00.000000',
+                        'opp': 49071.8,
+                        'clp': 49063.85,
+                        'hip': 49071.8,
+                        'lop': 49056.95,
+                        'vl': 0.065147,
+                        's': 'btcusdt',
+                        'ss': 'btcusd',
+                    }
+                ],
+            }
+        }
+    ],
+    OrderSchema.futures: [
+        {
+            'quote_bin': {
+                'acc': 'tbinance.tbinance_futures',
+                'tb': 'quote_bin',
+                'sch': 'futures',
+                'act': 'update',
+                'd': [
+                    {
+                        'tm': '2021-12-08T12:22:00.000000',
+                        'opp': 49066.29,
+                        'clp': 48946.7,
+                        'hip': 49068.26,
+                        'lop': 48929.8,
+                        'vl': 3113.884,
+                        's': 'btcusdt',
+                        'ss': 'btcusd',
+                    }
+                ],
+            }
+        }
+    ],
+    OrderSchema.futures_coin: [
+        {
+            'quote_bin': {
+                'acc': 'tbinance.tbinance_futures',
+                'tb': 'quote_bin',
+                'sch': 'futures_coin',
+                'act': 'update',
+                'd': [
+                    {
+                        'tm': '2021-12-08T12:24:00.000000',
+                        'opp': 48946.7,
+                        'clp': 48857.5,
+                        'hip': 48960.8,
+                        'lop': 48857.5,
+                        'vl': 489.0,
+                        's': 'btcusd_perp',
+                        'ss': 'btcusd',
+                    }
+                ],
+            }
+        }
+    ],
+}

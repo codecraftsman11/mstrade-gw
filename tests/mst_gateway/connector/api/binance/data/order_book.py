@@ -1,5 +1,4 @@
 from mst_gateway.connector.api.types import OrderSchema, BUY, SELL
-from tests import config as cfg
 
 ORDER_BOOK_PARAMS = [
     ('tbinance_spot', OrderSchema.exchange, None, False, None, None),
@@ -120,272 +119,526 @@ ORDER_BOOK_PARAMS = [
     ('tbinance_futures', OrderSchema.futures_coin, SELL, True, 1.0, 1.0),
 ]
 
-SPOT_ORDER_BOOK_MESSAGE = {
-    "e": "depthUpdate",
-    "E": 1606136814064,
-    "s": "BTCUSDT",
-    "U": 7208749,
-    "u": 7208752,
-    "b": [["30.70000000", "0.00000000"], ["30.69330000", "0.42000000"]],
-    "a": [["30.70010000", "7.10000000"], ["30.70510000", "0.00000000"]],
-}
-SPOT_ORDER_BOOK_LOOKUP_TABLE_RESULT = {
-    "action": "update",
-    "data": [
-        {
-            "e": "depthUpdate",
-            "E": 1606136814064,
-            "s": "BTCUSDT",
-            "U": 7208749,
-            "u": 7208752,
-            "b": [["30.70000000", "0.00000000"], ["30.69330000", "0.42000000"]],
-            "a": [["30.70010000", "7.10000000"], ["30.70510000", "0.00000000"]],
-        }
-    ],
-    "table": "depthUpdate",
-}
-SPOT_ORDER_BOOK_SPLIT_MESSAGE_RESULTS = [
-    {
-        "action": "delete",
-        "data": [
-            {
-                "E": 1606136814064,
-                "U": 7208749,
-                "b": ["30.70000000", "0.00000000"],
-                "e": "depthUpdate",
-                "s": "BTCUSDT",
-                "u": 7208752,
-            },
-            {
-                "E": 1606136814064,
-                "U": 7208749,
-                "a": ["30.70510000", "0.00000000"],
-                "e": "depthUpdate",
-                "s": "BTCUSDT",
-                "u": 7208752,
-            },
-        ],
-        "table": "depthUpdate",
-    },
-    {
-        "action": "update",
-        "data": [
-            {
-                "E": 1606136814064,
-                "U": 7208749,
-                "b": ["30.69330000", "0.42000000"],
-                "e": "depthUpdate",
-                "s": "BTCUSDT",
-                "u": 7208752,
-            },
-            {
-                "E": 1606136814064,
-                "U": 7208749,
-                "a": ["30.70010000", "7.10000000"],
-                "e": "depthUpdate",
-                "s": "BTCUSDT",
-                "u": 7208752,
-            },
-        ],
-        "table": "depthUpdate",
-    },
-]
-SPOT_ORDER_BOOK_GET_DATA_RESULTS = [
-    {
-        "order_book": {
-            "account": cfg.BINANCE_ACCOUNT_NAME,
-            "action": "delete",
-            "data": [
-                {
-                    "id": 390711080702756,
-                    "price": 30.7,
-                    "schema": cfg.BINANCE_SPOT_SCHEMA,
-                    "side": 0,
-                    "symbol": "btcusdt",
-                    "system_symbol": "btcusd",
-                    "volume": 0.0,
-                },
-                {
-                    "id": 390711080192756,
-                    "price": 30.7051,
-                    "schema": cfg.BINANCE_SPOT_SCHEMA,
-                    "side": 1,
-                    "symbol": "btcusdt",
-                    "system_symbol": "btcusd",
-                    "volume": 0.0,
-                },
-            ],
-            "schema": cfg.BINANCE_SPOT_SCHEMA,
-            "table": "order_book",
-        }
-    },
-    {
-        "order_book": {
-            "account": cfg.BINANCE_ACCOUNT_NAME,
-            "action": "update",
-            "data": [
-                {
-                    "id": 390711081372756,
-                    "price": 30.6933,
-                    "schema": cfg.BINANCE_SPOT_SCHEMA,
-                    "side": 0,
-                    "symbol": "btcusdt",
-                    "system_symbol": "btcusd",
-                    "volume": 0.42,
-                },
-                {
-                    "id": 390711080692756,
-                    "price": 30.7001,
-                    "schema": cfg.BINANCE_SPOT_SCHEMA,
-                    "side": 1,
-                    "symbol": "btcusdt",
-                    "system_symbol": "btcusd",
-                    "volume": 7.1,
-                },
-            ],
-            "schema": cfg.BINANCE_SPOT_SCHEMA,
-            "table": "order_book",
-        }
-    },
-]
 
-FUTURES_ORDER_BOOK_MESSAGE = {
-    "e": "depthUpdate",
-    "E": 1606739434740,
-    "T": 1606739434627,
-    "s": "BTCUSDT",
-    "U": 19468199747,
-    "u": 19468199754,
-    "pu": 19468199746,
-    "b": [["8278.13", "1.000"]],
-    "a": [["22774.93", "0.000"], ["22775.39", "0.000"], ["22776.77", "0.000"]],
-}
-FUTURES_ORDER_BOOK_LOOKUP_TABLE_RESULT = {
-    "action": "update",
-    "data": [
-        {
-            "E": 1606739434740,
-            "T": 1606739434627,
-            "U": 19468199747,
-            "a": [["22774.93", "0.000"], ["22775.39", "0.000"], ["22776.77", "0.000"]],
-            "b": [["8278.13", "1.000"]],
-            "e": "depthUpdate",
-            "pu": 19468199746,
-            "s": "BTCUSDT",
-            "u": 19468199754,
-        }
-    ],
-    "table": "depthUpdate",
-}
-FUTURES_ORDER_BOOK_SPLIT_MESSAGE_RESULTS = [
-    {
-        "action": "delete",
-        "data": [
-            {
-                "E": 1606739434740,
-                "T": 1606739434627,
-                "U": 19468199747,
-                "a": ["22774.93", "0.000"],
-                "e": "depthUpdate",
-                "pu": 19468199746,
-                "s": "BTCUSDT",
-                "u": 19468199754,
-            },
-            {
-                "E": 1606739434740,
-                "T": 1606739434627,
-                "U": 19468199747,
-                "a": ["22775.39", "0.000"],
-                "e": "depthUpdate",
-                "pu": 19468199746,
-                "s": "BTCUSDT",
-                "u": 19468199754,
-            },
-            {
-                "E": 1606739434740,
-                "T": 1606739434627,
-                "U": 19468199747,
-                "a": ["22776.77", "0.000"],
-                "e": "depthUpdate",
-                "pu": 19468199746,
-                "s": "BTCUSDT",
-                "u": 19468199754,
-            },
+DEFAULT_ORDER_BOOK_MESSAGE = {
+    OrderSchema.exchange: {
+        'e': 'depthUpdate',
+        'E': 1638958726119,
+        's': 'BTCUSDT',
+        'U': 3288887,
+        'u': 3288893,
+        'b': [
+            ['50238.41000000', '0.00000000'],
+            ['50235.76000000', '0.00995400'],
+            ['50230.59000000', '0.00995500'],
         ],
-        "table": "depthUpdate",
+        'a': [
+            ['50245.03000000', '0.00995200'],
+            ['50249.10000000', '0.00000000'],
+            ['50252.50000000', '0.00995000'],
+            ['50266.42000000', '0.00000000'],
+        ],
     },
-    {
-        "action": "update",
-        "data": [
+    OrderSchema.futures: {
+        'e': 'depthUpdate',
+        'E': 1638963965447,
+        'T': 1638963965439,
+        's': 'BTCUSDT',
+        'U': 23138568456,
+        'u': 23138568515,
+        'pu': 23138568440,
+        'b': [
+            ['48982.80', '0.000'],
+            ['49033.90', '0.000'],
+            ['49058.78', '0.020'],
+            ['49087.77', '0.010'],
+        ],
+        'a': [['49329.52', '0.010'], ['49353.42', '0.040']],
+    },
+    OrderSchema.futures_coin: {
+        'e': 'depthUpdate',
+        'E': 1638963974916,
+        'T': 1638963974726,
+        's': 'BTCUSD_PERP',
+        'ps': 'BTCUSD',
+        'U': 2091967181,
+        'u': 2091967184,
+        'pu': 2091967180,
+        'b': [['49219.7', '0.020']],
+        'a': [['49242.9', '0'], ['49244.9', '0'], ['49245.9', '0.010']],
+    },
+}
+DEFAULT_ORDER_BOOK_LOOKUP_TABLE_RESULT = {
+    OrderSchema.exchange: {
+        'table': 'depthUpdate',
+        'action': 'update',
+        'data': [
             {
-                "E": 1606739434740,
-                "T": 1606739434627,
-                "U": 19468199747,
-                "b": ["8278.13", "1.000"],
-                "e": "depthUpdate",
-                "pu": 19468199746,
-                "s": "BTCUSDT",
-                "u": 19468199754,
+                'e': 'depthUpdate',
+                'E': 1638958726119,
+                's': 'BTCUSDT',
+                'U': 3288887,
+                'u': 3288893,
+                'b': [
+                    ['50238.41000000', '0.00000000'],
+                    ['50235.76000000', '0.00995400'],
+                    ['50230.59000000', '0.00995500'],
+                ],
+                'a': [
+                    ['50245.03000000', '0.00995200'],
+                    ['50249.10000000', '0.00000000'],
+                    ['50252.50000000', '0.00995000'],
+                    ['50266.42000000', '0.00000000'],
+                ],
             }
         ],
-        "table": "depthUpdate",
     },
-]
-FUTURES_ORDER_BOOK_GET_DATA_RESULTS = [
-    {
-        "order_book": {
-            "account": cfg.BINANCE_ACCOUNT_NAME,
-            "action": "delete",
-            "data": [
+    OrderSchema.futures: {
+        'table': 'depthUpdate',
+        'action': 'update',
+        'data': [
+            {
+                'e': 'depthUpdate',
+                'E': 1638963965447,
+                'T': 1638963965439,
+                's': 'BTCUSDT',
+                'U': 23138568456,
+                'u': 23138568515,
+                'pu': 23138568440,
+                'b': [
+                    ['48982.80', '0.000'],
+                    ['49033.90', '0.000'],
+                    ['49058.78', '0.020'],
+                    ['49087.77', '0.010'],
+                ],
+                'a': [['49329.52', '0.010'], ['49353.42', '0.040']],
+            }
+        ],
+    },
+    OrderSchema.futures_coin: {
+        'table': 'depthUpdate',
+        'action': 'update',
+        'data': [
+            {
+                'e': 'depthUpdate',
+                'E': 1638963974916,
+                'T': 1638963974726,
+                's': 'BTCUSD_PERP',
+                'ps': 'BTCUSD',
+                'U': 2091967181,
+                'u': 2091967184,
+                'pu': 2091967180,
+                'b': [['49219.7', '0.020']],
+                'a': [['49242.9', '0'], ['49244.9', '0'], ['49245.9', '0.010']],
+            }
+        ],
+    },
+}
+DEFAULT_ORDER_BOOK_SPLIT_MESSAGE_RESULT = {
+    OrderSchema.exchange: [
+        {
+            'table': 'depthUpdate',
+            'action': 'delete',
+            'data': [
                 {
-                    "id": 97722507000000,
-                    "price": 22774.93,
-                    "schema": cfg.BINANCE_FUTURES_SCHEMA,
-                    "side": 1,
-                    "symbol": "btcusdt",
-                    "system_symbol": "btcusd",
-                    "volume": 0.0,
+                    'b': ['50238.41000000', '0.00000000'],
+                    'e': 'depthUpdate',
+                    'E': 1638958726119,
+                    's': 'BTCUSDT',
+                    'U': 3288887,
+                    'u': 3288893,
                 },
                 {
-                    "id": 97722461000000,
-                    "price": 22775.39,
-                    "schema": cfg.BINANCE_FUTURES_SCHEMA,
-                    "side": 1,
-                    "symbol": "btcusdt",
-                    "system_symbol": "btcusd",
-                    "volume": 0.0,
+                    'a': ['50249.10000000', '0.00000000'],
+                    'e': 'depthUpdate',
+                    'E': 1638958726119,
+                    's': 'BTCUSDT',
+                    'U': 3288887,
+                    'u': 3288893,
                 },
                 {
-                    "id": 97722323000000,
-                    "price": 22776.77,
-                    "schema": cfg.BINANCE_FUTURES_SCHEMA,
-                    "side": 1,
-                    "symbol": "btcusdt",
-                    "system_symbol": "btcusd",
-                    "volume": 0.0,
+                    'a': ['50266.42000000', '0.00000000'],
+                    'e': 'depthUpdate',
+                    'E': 1638958726119,
+                    's': 'BTCUSDT',
+                    'U': 3288887,
+                    'u': 3288893,
                 },
             ],
-            "schema": cfg.BINANCE_FUTURES_SCHEMA,
-            "table": "order_book",
         },
-    },
-    {
-        "order_book": {
-            "account": cfg.BINANCE_ACCOUNT_NAME,
-            "action": "update",
-            "data": [
+        {
+            'table': 'depthUpdate',
+            'action': 'update',
+            'data': [
                 {
-                    "id": 9172187000000,
-                    "price": 8278.13,
-                    "schema": "futures",
-                    "side": 0,
-                    "symbol": "btcusdt",
-                    "system_symbol": "btcusd",
-                    "volume": 1.0,
-                }
+                    'b': ['50235.76000000', '0.00995400'],
+                    'e': 'depthUpdate',
+                    'E': 1638958726119,
+                    's': 'BTCUSDT',
+                    'U': 3288887,
+                    'u': 3288893,
+                },
+                {
+                    'b': ['50230.59000000', '0.00995500'],
+                    'e': 'depthUpdate',
+                    'E': 1638958726119,
+                    's': 'BTCUSDT',
+                    'U': 3288887,
+                    'u': 3288893,
+                },
+                {
+                    'a': ['50245.03000000', '0.00995200'],
+                    'e': 'depthUpdate',
+                    'E': 1638958726119,
+                    's': 'BTCUSDT',
+                    'U': 3288887,
+                    'u': 3288893,
+                },
+                {
+                    'a': ['50252.50000000', '0.00995000'],
+                    'e': 'depthUpdate',
+                    'E': 1638958726119,
+                    's': 'BTCUSDT',
+                    'U': 3288887,
+                    'u': 3288893,
+                },
             ],
-            "schema": "futures",
-            "table": "order_book",
-        }
-    },
-]
+        },
+    ],
+    OrderSchema.futures: [
+        {
+            'table': 'depthUpdate',
+            'action': 'delete',
+            'data': [
+                {
+                    'b': ['48982.80', '0.000'],
+                    'e': 'depthUpdate',
+                    'E': 1638963965447,
+                    'T': 1638963965439,
+                    's': 'BTCUSDT',
+                    'U': 23138568456,
+                    'u': 23138568515,
+                    'pu': 23138568440,
+                },
+                {
+                    'b': ['49033.90', '0.000'],
+                    'e': 'depthUpdate',
+                    'E': 1638963965447,
+                    'T': 1638963965439,
+                    's': 'BTCUSDT',
+                    'U': 23138568456,
+                    'u': 23138568515,
+                    'pu': 23138568440,
+                },
+            ],
+        },
+        {
+            'table': 'depthUpdate',
+            'action': 'update',
+            'data': [
+                {
+                    'b': ['49058.78', '0.020'],
+                    'e': 'depthUpdate',
+                    'E': 1638963965447,
+                    'T': 1638963965439,
+                    's': 'BTCUSDT',
+                    'U': 23138568456,
+                    'u': 23138568515,
+                    'pu': 23138568440,
+                },
+                {
+                    'b': ['49087.77', '0.010'],
+                    'e': 'depthUpdate',
+                    'E': 1638963965447,
+                    'T': 1638963965439,
+                    's': 'BTCUSDT',
+                    'U': 23138568456,
+                    'u': 23138568515,
+                    'pu': 23138568440,
+                },
+                {
+                    'a': ['49329.52', '0.010'],
+                    'e': 'depthUpdate',
+                    'E': 1638963965447,
+                    'T': 1638963965439,
+                    's': 'BTCUSDT',
+                    'U': 23138568456,
+                    'u': 23138568515,
+                    'pu': 23138568440,
+                },
+                {
+                    'a': ['49353.42', '0.040'],
+                    'e': 'depthUpdate',
+                    'E': 1638963965447,
+                    'T': 1638963965439,
+                    's': 'BTCUSDT',
+                    'U': 23138568456,
+                    'u': 23138568515,
+                    'pu': 23138568440,
+                },
+            ],
+        },
+    ],
+    OrderSchema.futures_coin: [
+        {
+            'table': 'depthUpdate',
+            'action': 'delete',
+            'data': [
+                {
+                    'a': ['49242.9', '0'],
+                    'e': 'depthUpdate',
+                    'E': 1638963974916,
+                    'T': 1638963974726,
+                    's': 'BTCUSD_PERP',
+                    'ps': 'BTCUSD',
+                    'U': 2091967181,
+                    'u': 2091967184,
+                    'pu': 2091967180,
+                },
+                {
+                    'a': ['49244.9', '0'],
+                    'e': 'depthUpdate',
+                    'E': 1638963974916,
+                    'T': 1638963974726,
+                    's': 'BTCUSD_PERP',
+                    'ps': 'BTCUSD',
+                    'U': 2091967181,
+                    'u': 2091967184,
+                    'pu': 2091967180,
+                },
+            ],
+        },
+        {
+            'table': 'depthUpdate',
+            'action': 'update',
+            'data': [
+                {
+                    'b': ['49219.7', '0.020'],
+                    'e': 'depthUpdate',
+                    'E': 1638963974916,
+                    'T': 1638963974726,
+                    's': 'BTCUSD_PERP',
+                    'ps': 'BTCUSD',
+                    'U': 2091967181,
+                    'u': 2091967184,
+                    'pu': 2091967180,
+                },
+                {
+                    'a': ['49245.9', '0.010'],
+                    'e': 'depthUpdate',
+                    'E': 1638963974916,
+                    'T': 1638963974726,
+                    's': 'BTCUSD_PERP',
+                    'ps': 'BTCUSD',
+                    'U': 2091967181,
+                    'u': 2091967184,
+                    'pu': 2091967180,
+                },
+            ],
+        },
+    ],
+}
+DEFAULT_ORDER_BOOK_GET_DATA_RESULT = {
+    OrderSchema.exchange: [
+        {
+            'order_book': {
+                'acc': 'tbinance.tbinance_spot',
+                'tb': 'order_book',
+                'sch': 'exchange',
+                'act': 'delete',
+                'd': [
+                    {
+                        'id': 5023841,
+                        's': 'btcusdt',
+                        'p': 50238.41,
+                        'vl': 0.0,
+                        'sd': 0,
+                        'ss': 'btcusd',
+                    },
+                    {
+                        'id': 5024910,
+                        's': 'btcusdt',
+                        'p': 50249.1,
+                        'vl': 0.0,
+                        'sd': 1,
+                        'ss': 'btcusd',
+                    },
+                    {
+                        'id': 5026642,
+                        's': 'btcusdt',
+                        'p': 50266.42,
+                        'vl': 0.0,
+                        'sd': 1,
+                        'ss': 'btcusd',
+                    },
+                ],
+            }
+        },
+        {
+            'order_book': {
+                'acc': 'tbinance.tbinance_spot',
+                'tb': 'order_book',
+                'sch': 'exchange',
+                'act': 'update',
+                'd': [
+                    {
+                        'id': 5023576,
+                        's': 'btcusdt',
+                        'p': 50235.76,
+                        'vl': 0.009954,
+                        'sd': 0,
+                        'ss': 'btcusd',
+                    },
+                    {
+                        'id': 5023059,
+                        's': 'btcusdt',
+                        'p': 50230.59,
+                        'vl': 0.009955,
+                        'sd': 0,
+                        'ss': 'btcusd',
+                    },
+                    {
+                        'id': 5024503,
+                        's': 'btcusdt',
+                        'p': 50245.03,
+                        'vl': 0.009952,
+                        'sd': 1,
+                        'ss': 'btcusd',
+                    },
+                    {
+                        'id': 5025250,
+                        's': 'btcusdt',
+                        'p': 50252.5,
+                        'vl': 0.00995,
+                        'sd': 1,
+                        'ss': 'btcusd',
+                    },
+                ],
+            }
+        },
+    ],
+    OrderSchema.futures: [
+        {
+            'order_book': {
+                'acc': 'tbinance.tbinance_futures',
+                'tb': 'order_book',
+                'sch': 'futures',
+                'act': 'delete',
+                'd': [
+                    {
+                        'id': 4898280,
+                        's': 'btcusdt',
+                        'p': 48982.8,
+                        'vl': 0.0,
+                        'sd': 0,
+                        'ss': 'btcusd',
+                    },
+                    {
+                        'id': 4903390,
+                        's': 'btcusdt',
+                        'p': 49033.9,
+                        'vl': 0.0,
+                        'sd': 0,
+                        'ss': 'btcusd',
+                    },
+                ],
+            }
+        },
+        {
+            'order_book': {
+                'acc': 'tbinance.tbinance_futures',
+                'tb': 'order_book',
+                'sch': 'futures',
+                'act': 'update',
+                'd': [
+                    {
+                        'id': 4905878,
+                        's': 'btcusdt',
+                        'p': 49058.78,
+                        'vl': 0.02,
+                        'sd': 0,
+                        'ss': 'btcusd',
+                    },
+                    {
+                        'id': 4908777,
+                        's': 'btcusdt',
+                        'p': 49087.77,
+                        'vl': 0.01,
+                        'sd': 0,
+                        'ss': 'btcusd',
+                    },
+                    {
+                        'id': 4932952,
+                        's': 'btcusdt',
+                        'p': 49329.52,
+                        'vl': 0.01,
+                        'sd': 1,
+                        'ss': 'btcusd',
+                    },
+                    {
+                        'id': 4935342,
+                        's': 'btcusdt',
+                        'p': 49353.42,
+                        'vl': 0.04,
+                        'sd': 1,
+                        'ss': 'btcusd',
+                    },
+                ],
+            }
+        },
+    ],
+    OrderSchema.futures_coin: [
+        {
+            'order_book': {
+                'acc': 'tbinance.tbinance_futures',
+                'tb': 'order_book',
+                'sch': 'futures_coin',
+                'act': 'delete',
+                'd': [
+                    {
+                        'id': 492429,
+                        's': 'btcusd_perp',
+                        'p': 49242.9,
+                        'vl': 0.0,
+                        'sd': 1,
+                        'ss': 'btcusd',
+                    },
+                    {
+                        'id': 492449,
+                        's': 'btcusd_perp',
+                        'p': 49244.9,
+                        'vl': 0.0,
+                        'sd': 1,
+                        'ss': 'btcusd',
+                    },
+                ],
+            }
+        },
+        {
+            'order_book': {
+                'acc': 'tbinance.tbinance_futures',
+                'tb': 'order_book',
+                'sch': 'futures_coin',
+                'act': 'update',
+                'd': [
+                    {
+                        'id': 492196,
+                        's': 'btcusd_perp',
+                        'p': 49219.7,
+                        'vl': 0.02,
+                        'sd': 0,
+                        'ss': 'btcusd',
+                    },
+                    {
+                        'id': 492459,
+                        's': 'btcusd_perp',
+                        'p': 49245.9,
+                        'vl': 0.01,
+                        'sd': 1,
+                        'ss': 'btcusd',
+                    },
+                ],
+            }
+        },
+    ],
+}
