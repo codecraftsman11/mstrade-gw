@@ -667,7 +667,7 @@ def ws_spot_wallet(raw_data: dict, state_data: dict, currencies: dict,
                    assets: Union[list, tuple], fields: Union[list, tuple], schema: str):
     state_data.pop('*', None)
     _state_balances = state_data.pop('bls', {})
-    _balances = spot_ws_balance_data(raw_data.get('B'))
+    _balances = spot_ws_balance_data(raw_data.get('B'), _state_balances)
     return _ws_wallet(_balances, _state_balances, state_data, currencies, assets, fields, schema)
 
 
@@ -779,10 +779,12 @@ def _spot_balance_data(balances: list):
     return result
 
 
-def spot_ws_balance_data(balances: list):
+def spot_ws_balance_data(balances: list, state_balances: dict = None):
     result = []
     for b in balances:
         asset = b['asset'] if 'asset' in b else b['a']
+        if state_balances:
+            state_balances.pop(asset.lower(), {})
         free = to_float(b['free'] if 'free' in b else b['f'])
         locked = to_float(b['locked'] if 'locked' in b else b['l'])
         balance = round(free + locked, 8)

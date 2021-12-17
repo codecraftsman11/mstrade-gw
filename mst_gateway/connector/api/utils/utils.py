@@ -20,7 +20,7 @@ def load_wallet_summary_in_usd(currencies: dict, balances: list, fields: Union[l
     for b in balances:
         _price = currencies.get(f"{b[_currency_key]}".lower()) or 0.0
         for f in fields:
-            total_balance[f] += _price * (b[f] or 0.0)
+            total_balance[f] += _price * (b.get(f) or 0.0)
     return total_balance
 
 
@@ -35,6 +35,6 @@ def load_wallet_summary_margin3_in_usd(currencies: dict, balances: list, fields:
             _price_base = currencies.get(f"{assets['base_asset'][_currency_key]}".lower()) or 0.0
             _price_quote = currencies.get(f"{assets['quote_asset'][_currency_key]}".lower()) or 0.0
             for f in fields:
-                total_balance[f] += _price_base * (assets['base_asset'][f] or 0.0)
-                total_balance[f] += _price_quote * (assets['quote_asset'][f] or 0.0)
+                total_balance[f] += _price_base * (assets['base_asset'].get(f) or 0.0)
+                total_balance[f] += _price_quote * (assets['quote_asset'].get(f) or 0.0)
     return total_balance
