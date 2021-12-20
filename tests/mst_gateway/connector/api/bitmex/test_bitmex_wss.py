@@ -1,397 +1,343 @@
-# pylint: disable=invalid-name,no-self-use
 import json
-import logging
-import asyncio
 import pytest
-from websockets.client import WebSocketClientProtocol
-from websockets.exceptions import ConnectionClosed
-from mst_gateway.logging import init_logger
-from mst_gateway.connector.api import schema, utils
+from copy import deepcopy
+from typing import Optional
+from schema import Schema
+from mst_gateway.connector.api.stocks.bitmex.var import BITMEX_ORDER_STATUS_NEW, BITMEX_ORDER_DELETE_ACTION_STATUSES
+from mst_gateway.storage import StateStorageKey
+from tests.mst_gateway.connector import schema as fields
+from mst_gateway.connector.api import OrderSchema
 from mst_gateway.connector.api.stocks.bitmex import BitmexWssApi
-from mst_gateway.connector.api.stocks.bitmex import BitmexRestApi
-from mst_gateway.connector.api.stocks.bitmex.wss import serializers
-from mst_gateway.connector.api.stocks.bitmex.wss.router import BitmexWssRouter
 import tests.config as cfg
-from .data import TEST_QUOTE_BIN_MESSAGES, TEST_QUOTE_BIN_STATE
-from .data import TEST_TRADE_MESSAGES, TEST_TRADE_STATE
-from .data import TEST_ORDER_BOOK_MESSAGES
-from .data import TEST_SYMBOL_MESSAGES, RESULT_SYMBOL_STATE
 from .data.storage import STORAGE_DATA
+from .data import DEFAULT_TRADE_DATA, DEFAULT_QUOTE_BIN_DATA, DEFAULT_SYMBOL_DATA, DEFAULT_ORDER_BOOK_DATA, \
+    DEFAULT_ORDER_DATA, DEFAULT_ORDER_SPLIT_DATA, DEFAULT_TRADE_SPLIT_DATA, DEFAULT_POSITION_DATA, DEFAULT_WALLET_DATA
 
 
-@pytest.fixture
-def _rest(_debug) -> BitmexRestApi:
-    with BitmexRestApi(name=cfg.BITMEX_NAME,
-                       url=cfg.BITMEX_URL,
-                       auth={
-                           'api_key': cfg.BITMEX_API_KEY,
-                           'api_secret': cfg.BITMEX_API_SECRET
-                       },
-                       logger=_debug['logger'],
-                       state_storage=STORAGE_DATA) as rest:
-        rest.open()
-        yield rest
-        rest.cancel_all_orders(schema=cfg.BITMEX_SCHEMA)
-        rest.close_all_orders(symbol=cfg.BITMEX_SYMBOL, schema=cfg.BITMEX_SCHEMA)
+def rest_params(name):
+    name_map = {
+        'tbitmex': (True, cfg.BITMEX_TESTNET_AUTH_KEYS, [OrderSchema.margin1])
+    }
+    return name_map[name]
 
 
-@pytest.fixture
-def _wss_api(_debug) -> BitmexWssApi:
-    with BitmexWssApi(name=cfg.BITMEX_NAME,
-                      account_name='bitmex.test',
-                      url=cfg.BITMEX_WSS_URL,
-                      auth={
-                          'api_key': cfg.BITMEX_API_KEY,
-                          'api_secret': cfg.BITMEX_API_SECRET
-                      },
-                      logger=_debug['logger'],
-                      schema=cfg.BITMEX_SCHEMA,
-                      state_storage=STORAGE_DATA) as wss:
+def wss_params(name):
+    name_map = {
+        'tbitmex': (True, cfg.BITMEX_TESTNET_AUTH_KEYS, OrderSchema.margin1)
+    }
+    return name_map[name]
+
+
+@pytest.fixture(params=['tbitmex'])
+async def wss(request) -> BitmexWssApi:
+    param = request.param
+    test, auth, schema = wss_params(param)
+    with BitmexWssApi(
+            test=test,
+            name=param,
+            auth=auth,
+            schema=schema,
+            url='wss://ws.testnet.bitmex.com/realtime',
+            state_storage=deepcopy(STORAGE_DATA)
+    ) as wss:
+        await wss.open()
         yield wss
-
-
-@pytest.fixture
-def _wss_trade_api(_debug) -> BitmexWssApi:
-    with BitmexWssApi(name=cfg.BITMEX_NAME,
-                      account_name='bitmex.test',
-                      url=cfg.BITMEX_WSS_URL,
-                      auth={
-                          'api_key': cfg.BITMEX_API_KEY,
-                          'api_secret': cfg.BITMEX_API_SECRET
-                      },
-                      logger=_debug['logger'],
-                      options={'use_trade_bin': False},
-                      schema=cfg.BITMEX_SCHEMA,
-                      state_storage=STORAGE_DATA) as wss:
-        yield wss
-
-
-@pytest.fixture
-def _debug(caplog):
-    logger = init_logger(name="test", level=logging.DEBUG)
-    caplog.set_level(logging.DEBUG, logger="test")
-    yield {'logger': logger, 'caplog': caplog}
-
-
-async def consume(_wss_api: BitmexWssApi, wss: WebSocketClientProtocol,
-                  on_message: callable):
-    while True:
-        try:
-            message = await wss.recv()
-        except ConnectionClosed:
-            message = None
-            wss = await _wss_api.open(restore=True)
-        if message and await _wss_api.process_message(message, on_message):
-            return
+        await wss.close()
 
 
 class TestBitmexWssApi:
-    # pylint: disable=too-many-public-methods
-
-    def test_bitmex_wss_parse_message(self):
-        for test in TEST_SYMBOL_MESSAGES:
-            assert utils.parse_message(test['message']) == json.loads(test['message'])
-
-    def test_bitmex_wss_register_all(self, _wss_api: BitmexWssApi):
-        assert not _wss_api.is_registered("symbol")
-        assert not _wss_api.is_registered("symbol", "XBTUSD")
-        _wss_api.register("test_channel", "symbol")
-        assert _wss_api.is_registered("symbol")
-        assert _wss_api.is_registered("symbol", "XBTUSD")
-        _wss_api.unregister("test_channel", "symbol")
-        assert not _wss_api.is_registered("symbol")
-        assert not _wss_api.is_registered("symbol", "XBTUSD")
-
-    def test_bitmex_wss_register_symbol(self, _wss_api: BitmexWssApi):
-        assert not _wss_api.is_registered("symbol")
-        assert not _wss_api.is_registered("symbol", "XBTUSD")
-        _wss_api.register("test_channel", "symbol")
-        assert _wss_api.is_registered("symbol")
-        assert _wss_api.is_registered("symbol", "XBTUSD")
-        _wss_api.unregister("test_channel", "symbol")
-        assert not _wss_api.is_registered("symbol")
-        assert not _wss_api.is_registered("symbol", "XBTUSD")
-        _wss_api.register("test_channel", "symbol", "XBTUSD")
-        assert not _wss_api.is_registered("symbol")
-        assert _wss_api.is_registered("symbol", "XBTUSD")
-        _wss_api.unregister("test_channel", "symbol", "XBTUSD")
-        assert not _wss_api.is_registered("symbol")
-        assert not _wss_api.is_registered("symbol", "XBTUSD")
-        _wss_api.register("test_channel", "symbol", "XBTUSD")
-        _wss_api.register("test_channel", "symbol")
-        assert _wss_api.is_registered("symbol", "XBTUSD")
-        assert _wss_api.is_registered("symbol")
-        _wss_api.unregister("symbol", "XBTUSD")
-        assert _wss_api.is_registered("symbol")
-        assert _wss_api.is_registered("symbol", "XBTUSD")
-        _wss_api.unregister("test_channel", "symbol")
-        assert not _wss_api.is_registered("symbol")
-        assert not _wss_api.is_registered("symbol", "XBTUSD")
-        _wss_api.register("test_channel", "SYMBOL")
-        assert _wss_api.is_registered("SYMBOL")
-        assert _wss_api.is_registered("symbol")
-        assert _wss_api.is_registered("SyMbOl")
-        _wss_api.unregister("test_channel", "symbol")
-        assert not _wss_api.is_registered("SYMBOL")
-        assert not _wss_api.is_registered("symbol")
-        assert not _wss_api.is_registered("SyMbOl")
-        _wss_api.register("test_channel", "SyMbol")
-        assert _wss_api.is_registered("SyMbol", "XBTusd")
-        assert _wss_api.is_registered("SyMbol", "XBTUSD")
-        assert _wss_api.is_registered("symbol", "xbtusd")
-        _wss_api.unregister("test_channel", "symbol", "xbtusd")
-        assert not _wss_api.is_registered("SyMbOl", "XBTusd")
-        assert not _wss_api.is_registered("SyMbOl", "XBTUSD")
-        assert not _wss_api.is_registered("symbol", "xbtusd")
-
-    def test_bitmex_wss_router(self, _wss_api: BitmexWssApi):
-        assert isinstance(_wss_api.router, BitmexWssRouter)
-
-    def test_bitmex_wss_router_get_symbol_serializer(self, _wss_api: BitmexWssApi):
-        # pylint: disable=protected-access
-        _wss_api.register("test_channel", "symbol")
-        router = _wss_api.router
-        srlz1 = router._get_serializers(self.process_message(_wss_api, TEST_SYMBOL_MESSAGES[0]['message'])[0])
-        srlz2 = router._get_serializers(self.process_message(_wss_api, TEST_SYMBOL_MESSAGES[1]['message'])[0])
-        srlz3 = router._get_serializers(self.process_message(_wss_api, TEST_SYMBOL_MESSAGES[2]['message'])[0])
-        assert isinstance(srlz1['symbol'], serializers.BitmexSymbolSerializer)
-        assert isinstance(srlz2['symbol'], serializers.BitmexSymbolSerializer)
-        assert isinstance(srlz3['symbol'], serializers.BitmexSymbolSerializer)
-        assert srlz1['symbol'] == srlz2['symbol'] == srlz3['symbol']
-
-    def test_bitmex_wss_router_get_quote_bin_serializer(self, _wss_api: BitmexWssApi):
-        # pylint: disable=protected-access
-        _wss_api.register("test_channel", "quote_bin")
-        router = _wss_api.router
-        messages = self.process_message(_wss_api, TEST_QUOTE_BIN_MESSAGES[0]['message'])
-        for message in messages:
-            assert not router._get_serializers(message)
-        messages = self.process_message(_wss_api, TEST_QUOTE_BIN_MESSAGES[1]['message'])
-        for message in messages:
-            assert router._get_serializers(message)
-        for test in TEST_QUOTE_BIN_MESSAGES[2:]:
-            messages = self.process_message(_wss_api, test['message'])
-            for message in messages:
-                assert isinstance(
-                    router._get_serializers(message)['quote_bin'],
-                    serializers.BitmexQuoteBinSerializer)
-
-    def test_bitmex_wss_get_symbol_data(self, _wss_api: BitmexWssApi):
-        _wss_api.register("test_channel", "symbol")
-        for test in TEST_SYMBOL_MESSAGES:
-            messages = self.process_message(_wss_api, test['message'])
-            for message in messages:
-                data = _wss_api.get_data(message)
-                assert test['data'] == data.get('symbol')
-
-    def test_bitmex_wss_get_symbol_state(self, _wss_api: BitmexWssApi):
-        _wss_api.register("test_channel", "symbol")
-        for test in TEST_SYMBOL_MESSAGES:
-            messages = self.process_message(_wss_api, test['message'])
-            for message in messages:
-                _wss_api.get_data(message)
-        assert _wss_api.get_state("symbol") == RESULT_SYMBOL_STATE
-
-    def test_bitmex_wss_get_quote_bin_data(self, _wss_api: BitmexWssApi):
-        _wss_api.register("test_channel", "quote_bin")
-        for test in TEST_QUOTE_BIN_MESSAGES:
-            messages = self.process_message(_wss_api, test['message'])
-            for message in messages:
-                data = _wss_api.get_data(message)
-                assert test['data'] == data.get('quote_bin')
-
-    def test_bitmex_wss_get_quote_bin_traded_data(self, _wss_trade_api: BitmexWssApi):
-        _wss_trade_api.register("test_channel", "quote_bin")
-        for test in TEST_QUOTE_BIN_MESSAGES:
-            messages = self.process_message(_wss_trade_api, test['message'])
-            for message in messages:
-                data = _wss_trade_api.get_data(message)
-                assert test['data_trade'] == data.get('quote_bin')
-
-    def test_bitmex_wss_get_quote_bin_state(self, _wss_api: BitmexWssApi):
-        _wss_api.register("test_channel", "quote_bin")
-        for test in TEST_QUOTE_BIN_MESSAGES:
-            messages = self.process_message(_wss_api, test['message'])
-            for message in messages:
-                _wss_api.get_data(message)
-        assert _wss_api.get_state("quote_bin") == TEST_QUOTE_BIN_STATE
-
-    def test_bitmex_wss_router_get_order_book_serializer(self, _wss_api: BitmexWssApi):
-        # pylint: disable=protected-access
-        _wss_api.register("test_channel", "order_book", "XBTUSD")
-        router = _wss_api.router
-        messages = self.process_message(_wss_api, TEST_ORDER_BOOK_MESSAGES[0]['message'])
-        for message in messages:
-            assert not router._get_serializers(message).get('order_book')
-        for test in TEST_ORDER_BOOK_MESSAGES[1:]:
-            messages = self.process_message(_wss_api, test['message'])
-            for message in messages:
-                assert isinstance(
-                    router._get_serializers(message)['order_book'],
-                    serializers.BitmexOrderBookSerializer)
-
-    def test_bitmex_wss_get_order_book_data(self, _wss_api: BitmexWssApi):
-        _wss_api.register("test_channel", "order_book", "XBTUSD")
-        for test in TEST_ORDER_BOOK_MESSAGES:
-            messages = self.process_message(_wss_api, test['message'])
-            for message in messages:
-                data = _wss_api.get_data(message)
-                assert test['data'] == data.get('order_book')
-
-    def test_bitmex_wss_router_get_trade_serializer(self, _wss_api: BitmexWssApi):
-        # pylint: disable=protected-access
-        _wss_api.register("test_channel", "trade")
-        router = _wss_api.router
-        for test in TEST_TRADE_MESSAGES:
-            messages = self.process_message(_wss_api, test['message'])
-            for message in messages:
-                if test['data']:
-                    assert isinstance(
-                        router._get_serializers(message)['trade'],
-                        serializers.BitmexTradeSerializer)
-                else:
-                    assert not router._get_serializers(message).get('trade')
-
-    def test_bitmex_wss_get_trade_data(self, _wss_api: BitmexWssApi):
-        _wss_api.register("test_channel", "trade", "XBTUSD")
-        for test in TEST_TRADE_MESSAGES:
-            messages = self.process_message(_wss_api, test['message'])
-            for message in messages:
-                data = _wss_api.get_data(message)
-                assert test['data'] == data.get('trade')
-
-    def test_bitmex_wss_get_trade_state(self, _wss_api: BitmexWssApi):
-        _wss_api.register("test_channel", "trade")
-        for test in TEST_TRADE_MESSAGES:
-            messages = self.process_message(_wss_api, test['message'])
-            for message in messages:
-                _wss_api.get_data(message)
-        assert _wss_api.get_state("trade") == TEST_TRADE_STATE
-
-    def test_bitmex_wss_router_get_mixed_serializers(self, _wss_api: BitmexWssApi):
-        # pylint: disable=protected-access
-        _wss_api.register("test_channel", "trade")
-        _wss_api.register("test_channel", "quote_bin")
-        router = _wss_api.router
-        for test in TEST_TRADE_MESSAGES:
-            messages = self.process_message(_wss_api, test['message'])
-            for message in messages:
-                _serializers = router._get_serializers(message)
-                if test['data']:
-                    assert isinstance(
-                        _serializers['trade'],
-                        serializers.BitmexTradeSerializer)
-                if test['data_quote']:
-                    assert isinstance(
-                        _serializers['quote_bin'],
-                        serializers.BitmexQuoteBinSerializer)
-
-    def test_bitmex_wss_get_mixed_data(self, _wss_api: BitmexWssApi):
-        _wss_api.register("test_channel", "trade", "XBTUSD")
-        _wss_api.register("test_channel", "quote_bin", "XBTUSD")
-        for test in TEST_TRADE_MESSAGES:
-            data = _wss_api.get_data(utils.parse_message(test['message']))
-            assert test['data'] == data.get('trade')
-            assert test['data_quote'] == data.get('quote_bin')
+    @classmethod
+    def init_partial_state(cls, wss: BitmexWssApi, subscr_name: str):
+        exchange = wss.name
+        schema = wss.schema
+        wss.partial_state_data[subscr_name]['exchange_rates'] = deepcopy(
+            STORAGE_DATA[StateStorageKey.exchange_rates][exchange][schema]
+        )
 
     @pytest.mark.asyncio
-    async def test_bitmex_wss_auth_client(self, _wss_api: BitmexWssApi):
-        async def authenticate():
-            try:
-                await _wss_api.open()
-                return await _wss_api.authenticate()
-            finally:
-                await _wss_api.close()
+    @pytest.mark.parametrize(
+        'wss', ['tbitmex'],
+        indirect=True,
+    )
+    async def test_authenticate(self, wss: BitmexWssApi):
+        assert not wss.auth_connect
+        await wss.authenticate()
+        assert wss.auth_connect
+        await wss.close()
 
-        assert await authenticate()
+    @pytest.mark.parametrize(
+        'wss, subscr_name, subscriptions, expect', [
+            (
+                'tbitmex',
+                'symbol',
+                {"symbol": {cfg.BITMEX_SYMBOL.lower(): {"1"}, "*": {"1"}}},
+                {"symbol": {"*": {"1"}}},
+            ),
+            (
+                'tbitmex',
+                'symbol',
+                {"symbol": {cfg.BITMEX_SYMBOL.lower(): {"1"}, "*": {"2"}}},
+                {"symbol": {"*": {"1", "2"}}},
+            ),
+        ],
+        indirect=['wss'],
+    )
+    def test_remap_subscriptions(self, wss: BitmexWssApi,
+                                 subscr_name: str, subscriptions: dict, expect: dict):
+        wss._subscriptions = subscriptions
+        assert wss.remap_subscriptions(subscr_name) is None
+        assert wss.subscriptions == expect
+
+    @pytest.mark.parametrize(
+        'wss, subscr_channel, subscr_name, symbol, expect', [
+            ('tbitmex', 'order', 'order', cfg.BITMEX_SYMBOL, (True, cfg.BITMEX_SYMBOL.lower())),
+            ('tbitmex', None, '', cfg.BITMEX_SYMBOL, (True, cfg.BITMEX_SYMBOL.lower())),
+            ('tbitmex', 'trade', '', None, (True, '*')),
+        ],
+        indirect=['wss'],
+    )
+    def test_register(self, wss: BitmexWssApi, subscr_channel: Optional[str],
+                         subscr_name: str, symbol: Optional[str], expect: bool):
+        assert wss.register(subscr_channel, subscr_name, symbol) == expect
+
+    @pytest.mark.parametrize(
+        'wss, subscr_channel, subscr_name, symbol, register, expect', [
+            ('tbitmex', 'order', '*', None, False, False),
+            ('tbitmex', 'order', 'order', cfg.BITMEX_SYMBOL, True, True),
+            ('tbitmex', 'order', 'order', None, True, True),
+        ],
+        indirect=['wss'],
+    )
+    def test_is_registered(self, wss: BitmexWssApi, subscr_channel: Optional[str], subscr_name: str, register: bool,
+                           symbol: Optional[str], expect: bool):
+        if register:
+            wss.register(subscr_channel, subscr_name, symbol)
+        assert wss.is_registered(subscr_name, symbol) == expect
+        wss.unregister(subscr_channel, subscr_name, symbol)
+
+    @pytest.mark.parametrize(
+        'wss, subscr_channel, subscr_name, symbol, register, expect', [
+            ('tbitmex', 'order', 'order', cfg.BITMEX_SYMBOL, True, (True, cfg.BITMEX_SYMBOL.lower())),
+            ('tbitmex', None, '', cfg.BITMEX_SYMBOL, True, (True, cfg.BITMEX_SYMBOL.lower())),
+            ('tbitmex', 'trade', '', None, True, (True, '*')),
+            ('tbitmex', 'trade', 'trad3', '*', False, (False, '*')),
+            ('tbitmex', 'trade', '', None, False, (False, None)),
+        ],
+        indirect=['wss'],
+    )
+    def test_unregister(self, wss: BitmexWssApi, subscr_channel: Optional[str], subscr_name: str, register: bool,
+                        symbol: Optional[str], expect: bool):
+        if register:
+            wss.register(subscr_channel, subscr_name, symbol)
+        assert wss.unregister(subscr_channel, subscr_name, symbol) == expect
+
+    @pytest.mark.parametrize(
+        'wss, subscr_channel, subscr_name, symbol, register, expect', [
+            ('tbitmex', 'order', '*', None, False, True),
+            ('tbitmex', 'order', 'order', cfg.BITMEX_SYMBOL, True, False),
+            ('tbitmex', 'order', 'order', cfg.BITMEX_SYMBOL, False, True),
+            ('tbitmex', 'order', 'order', None, True, False),
+        ],
+        indirect=['wss'],
+    )
+    def test_is_unregistered(self, wss: BitmexWssApi, subscr_channel: Optional[str], subscr_name: str, register: bool,
+                         symbol: Optional[str], expect: bool):
+        if register:
+            wss.register(subscr_channel, subscr_name, symbol)
+        assert wss.is_unregistered(subscr_name, symbol) == expect
+        wss.unregister(subscr_channel, subscr_name, symbol)
 
     @pytest.mark.asyncio
-    async def test_bitmex_wss_symbol(self, _wss_api: BitmexWssApi):
-        async def subscribe():
-            try:
-                _wss = await _wss_api.open()
-                await _wss_api.subscribe('test_channel', 'symbol')
-                await asyncio.wait_for(
-                    consume(_wss_api, _wss, self.on_message),
-                    timeout=5
-                )
-            except asyncio.TimeoutError:
-                pass
-            finally:
-                await _wss_api.close()
+    @pytest.mark.parametrize(
+        'wss, subscr_name, default_data', [
+            ('tbitmex', 'trade', DEFAULT_TRADE_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'quote_bin', DEFAULT_QUOTE_BIN_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'symbol', DEFAULT_SYMBOL_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'order_book', DEFAULT_ORDER_BOOK_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'order', DEFAULT_ORDER_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'position', DEFAULT_POSITION_DATA[OrderSchema.margin1]),
+        ],
+        indirect=['wss']
+    )
+    async def test_get_data(self, wss: BitmexWssApi, subscr_name: str, default_data: dict):
+        self.init_partial_state(wss, subscr_name)
+        wss._subscriptions = {subscr_name: {'*': {'1'}}}
+        message_header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)
+        d_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name])
+        for data in default_data:
+            message = json.loads(data['message'])
+            wss_data = await wss.get_data(deepcopy(message))
+            _data = wss_data[subscr_name]
+            assert message_header_schema.validate(_data) == _data
+            for d in _data['d']:
+                assert d_schema.validate(d) == d
+            assert _data == data['expect'][subscr_name]
 
-        self.reset()
-        await subscribe()
-        assert self.data
-        symbol_message = None
-        for d in self.data[-1]['symbol']['data']:
-            if d.get('symbol').lower() == cfg.BITMEX_SYMBOL.lower():
-                symbol_message = d
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        'wss, subscr_name, default_data', [
+            ('tbitmex', 'trade', DEFAULT_TRADE_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'quote_bin', DEFAULT_QUOTE_BIN_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'symbol', DEFAULT_SYMBOL_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'order_book', DEFAULT_ORDER_BOOK_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'order', DEFAULT_ORDER_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'position', DEFAULT_POSITION_DATA[OrderSchema.margin1]),
+        ],
+        indirect=['wss']
+    )
+    async def test_get_state(self, wss: BitmexWssApi, subscr_name: str, default_data: dict):
+        self.init_partial_state(wss, subscr_name)
+        wss._subscriptions = {subscr_name: {'*': {'1'}}}
+        message_header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)
+        d_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name])
+        for data in default_data:
+            message = json.loads(data['message'])
+            await wss.get_data(deepcopy(message))
+            _data = wss.get_state(subscr_name)
+            if subscr_name == 'order_book':
+                assert _data is None
                 break
-        assert symbol_message
-        assert schema.data_update_valid(symbol_message, schema.WS_SYMBOL_FIELDS)
+            assert message_header_schema.validate(_data) == _data
+            for d in _data['d']:
+                assert d_schema.validate(d) == d
+
+    @pytest.mark.parametrize(
+        'wss, symbol', [
+            ('tbitmex', cfg.BITMEX_SYMBOL),
+            ('tbitmex', None),
+            ('tbitmex', 'NOOT_IN_STORAGE'),
+        ],
+        indirect=['wss']
+    )
+    def test_get_state_data(self, wss: BitmexWssApi, symbol: Optional[str]):
+        state = wss.get_state_data(symbol)
+        assert state == STORAGE_DATA[StateStorageKey.symbol][wss.name][wss.schema].get((symbol or '').lower())
 
     @pytest.mark.asyncio
-    async def test_bitmex_wss_order_book(self, _wss_api: BitmexWssApi):
-        async def subscribe():
-            try:
-                _wss = await _wss_api.open()
-                await _wss_api.subscribe('test_channel', 'order_book', 'XBTUSD')
-                await asyncio.wait_for(
-                    consume(_wss_api, _wss, self.on_message),
-                    timeout=5
-                )
-            except asyncio.TimeoutError:
-                pass
-            finally:
-                await _wss_api.close()
+    @pytest.mark.parametrize(
+        'wss, subscr_name, default_data', [
+            ('tbitmex', 'wallet', DEFAULT_WALLET_DATA[OrderSchema.margin1])
+        ],
+        indirect=['wss']
+    )
+    async def test_get_wallet_data(self, wss: BitmexWssApi, subscr_name: str, default_data: dict):
+        schema = wss.schema
+        self.init_partial_state(wss, subscr_name)
+        wss._subscriptions = {subscr_name: {'*': {'1'}}}
+        header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)
+        data_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name][schema])
+        summary_schema = Schema(fields.SUMMARY_FIELDS)
+        balance_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS['balance'][schema])
+        for data in default_data:
+            message = json.loads(data['message'])
+            wss_data = await wss.get_data(deepcopy(message))
+            _data = wss_data[subscr_name]
+            assert header_schema.validate(_data) == _data
+            for d in _data['d']:
+                assert data_schema.validate(d) == d
+                for key in ('tbl', 'tupnl', 'tmbl'):
+                    assert summary_schema.validate(d[key]) == d[key]
+                for balance in d['bls']:
+                    assert balance_schema.validate(balance) == balance
+            assert _data == data['expect'][subscr_name]
 
-        self.reset()
-        await subscribe()
-        assert self.data
-        assert schema.data_update_valid(self.data[-1]['order_book']['data'][0],
-                                        schema.ORDER_BOOK_FIELDS)
 
-    @pytest.mark.asyncio
-    async def test_bitmex_wss_restore_connection(self, _wss_api: BitmexWssApi):
-        async def subscribe():
-            try:
-                _wss = await _wss_api.open()
-                await _wss_api.subscribe('test_channel', 'symbol')
-                await _wss.close()
-                await asyncio.wait_for(
-                    consume(_wss_api, _wss, self.on_message),
-                    timeout=5
-                )
-            except asyncio.TimeoutError:
-                pass
-            finally:
-                await _wss_api.close()
+    @pytest.mark.parametrize(
+        'wss, default_data, expect', [
+            ('tbitmex', DEFAULT_ORDER_DATA[OrderSchema.margin1], DEFAULT_ORDER_SPLIT_DATA[OrderSchema.margin1])
+        ],
+        indirect=['wss']
+    )
+    def test_split_order(self, wss: BitmexWssApi, default_data: dict,  expect: list):
+        for i, data in enumerate(default_data):
+            message = json.loads(data['message'])
+            wss_data = wss.split_order(deepcopy(message))
+            assert wss_data == expect[i]
 
-        self.reset()
-        await subscribe()
-        assert self.data
-        symbol_message = None
-        for d in self.data[-1]['symbol']['data']:
-            if d.get('symbol').lower() == cfg.BITMEX_SYMBOL.lower():
-                symbol_message = d
-                break
-        assert symbol_message
-        assert schema.data_update_valid(symbol_message, schema.WS_SYMBOL_FIELDS)
+    @pytest.mark.parametrize(
+        'wss, default_data, expect', [
+            ('tbitmex', DEFAULT_TRADE_DATA[OrderSchema.margin1], DEFAULT_TRADE_SPLIT_DATA[OrderSchema.margin1])
+        ],
+        indirect=['wss']
+    )
+    def test_split_trade(self, wss: BitmexWssApi, default_data: dict, expect: list):
+        for i, data in enumerate(default_data):
+            message = json.loads(data['message'])
+            wss_data = wss.split_trade(deepcopy(message))
+            assert wss_data == expect[i]
 
-    def on_message(self, data):
-        self.data.append(data)
+    @pytest.mark.parametrize(
+        'wss, order_status, expect', [
+            ('tbitmex', BITMEX_ORDER_STATUS_NEW, 'insert'),
+            ('tbitmex', BITMEX_ORDER_DELETE_ACTION_STATUSES, 'delete'),
+            ('tbitmex', ('PendingNew', 'PendingReplace', 'DoneForDay'), 'update'),
+        ],
+        indirect=['wss']
+    )
+    def test_define_action_by_order_status(self, wss: BitmexWssApi, order_status, expect: str):
+        if isinstance(order_status, str):
+            assert wss.define_action_by_order_status(order_status) == expect
+        else:
+            for os in order_status:
+                assert wss.define_action_by_order_status(os) == expect
+
+
+class TestSubscriptionBitmexWssApi:
 
     def reset(self):
-        # pylint: disable=attribute-defined-outside-init
-        self.data = []
+        self.messages = []
 
-    def process_message(self, _wss: BitmexWssApi, message):
-        _message = utils.parse_message(message)
-        if not _message:
-            return []
-        _message = _wss._lookup_table(_message)
-        if not _message:
-            return []
-        messages = _wss._split_message(_message)
-        return messages
+    def on_message(self, data):
+        self.messages.append(data)
+
+    async def consume(self, wss, handler, on_message: callable):
+        from websockets.exceptions import ConnectionClosed
+        while True:
+            try:
+                message = await handler.recv()
+                if await wss.process_message(message, on_message):
+                    break
+            except ConnectionClosed:
+                handler = await wss.open(restore=True)
+
+    async def subscribe(self, wss: BitmexWssApi, subscr_channel, subscribe_name, symbol=None):
+        assert await wss.subscribe(subscr_channel, subscribe_name, symbol)
+        await self.consume(wss, wss.handler, self.on_message)
+
+    def validate_messages(self, subscr_name, symbol=None):
+        header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)
+        data_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name])
+        for message in self.messages:
+            assert header_schema.validate(message[subscr_name]) == message[subscr_name]
+            for data in message[subscr_name]['d']:
+                assert data_schema.validate(data) == data
+                if symbol:
+                    assert data['s'].lower() == symbol.lower()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        'wss, subscr_name', [
+            ('tbitmex', 'order_book'),
+            ('tbitmex', 'quote_bin'),
+            ('tbitmex', 'symbol'),
+            ('tbitmex', 'trade')
+        ],
+        indirect=['wss'],
+    )
+    async def test_subscription(self, wss: BitmexWssApi, subscr_name: str):
+        subscr_channel = '1'
+        symbol = cfg.BITMEX_SYMBOL
+        self.reset()
+        if subscr_name == 'quote_bin':
+            await self.subscribe(wss, subscr_channel, subscr_name, symbol)
+            self.validate_messages(subscr_name, symbol)
+            self.reset()
+            assert wss._subscriptions == {subscr_name: {symbol.lower(): {subscr_channel}}}
+            assert await wss.unsubscribe(subscr_channel, subscr_name, symbol)
+            assert wss._subscriptions == {}
+        await self.subscribe(wss, subscr_channel, subscr_name)
+        self.validate_messages(subscr_name)
+        self.reset()
+        assert wss._subscriptions == {subscr_name: {'*': {subscr_channel}}}
+        assert await wss.unsubscribe(subscr_channel, subscr_name)
+        assert wss._subscriptions == {}
