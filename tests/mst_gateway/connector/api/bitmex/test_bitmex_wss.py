@@ -3,15 +3,16 @@ import pytest
 from copy import deepcopy
 from typing import Optional
 from schema import Schema
-from mst_gateway.connector.api.stocks.bitmex.var import BITMEX_ORDER_STATUS_NEW, BITMEX_ORDER_DELETE_ACTION_STATUSES
+from mst_gateway.connector.api.stocks.bitmex.wss import subscribers as subscr_class
+from mst_gateway.connector.api.stocks.bitmex import var
+from mst_gateway.connector.api.wss import Subscriber
 from mst_gateway.storage import StateStorageKey
 from tests.mst_gateway.connector import schema as fields
 from mst_gateway.connector.api import OrderSchema
 from mst_gateway.connector.api.stocks.bitmex import BitmexWssApi
 import tests.config as cfg
-from .data.storage import STORAGE_DATA
-from .data import DEFAULT_TRADE_DATA, DEFAULT_QUOTE_BIN_DATA, DEFAULT_SYMBOL_DATA, DEFAULT_ORDER_BOOK_DATA, \
-    DEFAULT_ORDER_DATA, DEFAULT_ORDER_SPLIT_DATA, DEFAULT_TRADE_SPLIT_DATA, DEFAULT_POSITION_DATA, DEFAULT_WALLET_DATA
+from .data import storage
+from . import data as test_data
 
 
 def rest_params(name):
@@ -38,7 +39,7 @@ async def wss(request) -> BitmexWssApi:
             auth=auth,
             schema=schema,
             url='wss://ws.testnet.bitmex.com/realtime',
-            state_storage=deepcopy(STORAGE_DATA)
+            state_storage=deepcopy(storage.STORAGE_DATA)
     ) as wss:
         await wss.open()
         yield wss
@@ -51,7 +52,7 @@ class TestBitmexWssApi:
         exchange = wss.name
         schema = wss.schema
         wss.partial_state_data[subscr_name]['exchange_rates'] = deepcopy(
-            STORAGE_DATA[StateStorageKey.exchange_rates][exchange][schema]
+            storage.STORAGE_DATA[StateStorageKey.exchange_rates][exchange][schema]
         )
 
     @pytest.mark.asyncio
@@ -64,6 +65,22 @@ class TestBitmexWssApi:
         await wss.authenticate()
         assert wss.auth_connect
         await wss.close()
+
+    @pytest.mark.parametrize(
+        'wss, subscr_name, expect', [
+            ('tbitmex', 'symbol', subscr_class.BitmexSymbolSubscriber),
+            ('tbitmex', 'quote_bin', subscr_class.BitmexQuoteBinSubscriber),
+            ('tbitmex', 'order_book', subscr_class.BitmexOrderBookSubscriber),
+            ('tbitmex', 'trade', subscr_class.BitmexTradeSubscriber),
+            ('tbitmex', 'order', subscr_class.BitmexOrderSubscriber),
+            ('tbitmex', 'position', subscr_class.BitmexPositionSubscriber),
+            ('tbitmex', 'wallet', subscr_class.BitmexWalletSubscriber),
+        ],
+        indirect=['wss'],
+    )
+    def test__get_subscriber(self, wss: BitmexWssApi, subscr_name: str, expect: Optional[Subscriber]):
+        subscriber = wss._get_subscriber(subscr_name)
+        assert isinstance(subscriber, expect)
 
     @pytest.mark.parametrize(
         'wss, subscr_name, subscriptions, expect', [
@@ -150,12 +167,12 @@ class TestBitmexWssApi:
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
         'wss, subscr_name, default_data', [
-            ('tbitmex', 'trade', DEFAULT_TRADE_DATA[OrderSchema.margin1]),
-            ('tbitmex', 'quote_bin', DEFAULT_QUOTE_BIN_DATA[OrderSchema.margin1]),
-            ('tbitmex', 'symbol', DEFAULT_SYMBOL_DATA[OrderSchema.margin1]),
-            ('tbitmex', 'order_book', DEFAULT_ORDER_BOOK_DATA[OrderSchema.margin1]),
-            ('tbitmex', 'order', DEFAULT_ORDER_DATA[OrderSchema.margin1]),
-            ('tbitmex', 'position', DEFAULT_POSITION_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'trade', test_data.DEFAULT_TRADE_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'quote_bin', test_data.DEFAULT_QUOTE_BIN_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'symbol', test_data.DEFAULT_SYMBOL_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'order_book', test_data.DEFAULT_ORDER_BOOK_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'order', test_data.DEFAULT_ORDER_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'position', test_data.DEFAULT_POSITION_DATA[OrderSchema.margin1]),
         ],
         indirect=['wss']
     )
@@ -176,12 +193,12 @@ class TestBitmexWssApi:
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
         'wss, subscr_name, default_data', [
-            ('tbitmex', 'trade', DEFAULT_TRADE_DATA[OrderSchema.margin1]),
-            ('tbitmex', 'quote_bin', DEFAULT_QUOTE_BIN_DATA[OrderSchema.margin1]),
-            ('tbitmex', 'symbol', DEFAULT_SYMBOL_DATA[OrderSchema.margin1]),
-            ('tbitmex', 'order_book', DEFAULT_ORDER_BOOK_DATA[OrderSchema.margin1]),
-            ('tbitmex', 'order', DEFAULT_ORDER_DATA[OrderSchema.margin1]),
-            ('tbitmex', 'position', DEFAULT_POSITION_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'trade', test_data.DEFAULT_TRADE_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'quote_bin', test_data.DEFAULT_QUOTE_BIN_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'symbol', test_data.DEFAULT_SYMBOL_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'order_book', test_data.DEFAULT_ORDER_BOOK_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'order', test_data.DEFAULT_ORDER_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'position', test_data.DEFAULT_POSITION_DATA[OrderSchema.margin1]),
         ],
         indirect=['wss']
     )
@@ -211,12 +228,12 @@ class TestBitmexWssApi:
     )
     def test_get_state_data(self, wss: BitmexWssApi, symbol: Optional[str]):
         state = wss.get_state_data(symbol)
-        assert state == STORAGE_DATA[StateStorageKey.symbol][wss.name][wss.schema].get((symbol or '').lower())
+        assert state == storage.STORAGE_DATA[StateStorageKey.symbol][wss.name][wss.schema].get((symbol or '').lower())
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
         'wss, subscr_name, default_data', [
-            ('tbitmex', 'wallet', DEFAULT_WALLET_DATA[OrderSchema.margin1])
+            ('tbitmex', 'wallet', test_data.DEFAULT_WALLET_DATA[OrderSchema.margin1])
         ],
         indirect=['wss']
     )
@@ -244,7 +261,8 @@ class TestBitmexWssApi:
 
     @pytest.mark.parametrize(
         'wss, default_data, expect', [
-            ('tbitmex', DEFAULT_ORDER_DATA[OrderSchema.margin1], DEFAULT_ORDER_SPLIT_DATA[OrderSchema.margin1])
+            ('tbitmex', test_data.DEFAULT_ORDER_DATA[OrderSchema.margin1],
+             test_data.DEFAULT_ORDER_SPLIT_DATA[OrderSchema.margin1])
         ],
         indirect=['wss']
     )
@@ -256,7 +274,8 @@ class TestBitmexWssApi:
 
     @pytest.mark.parametrize(
         'wss, default_data, expect', [
-            ('tbitmex', DEFAULT_TRADE_DATA[OrderSchema.margin1], DEFAULT_TRADE_SPLIT_DATA[OrderSchema.margin1])
+            ('tbitmex', test_data.DEFAULT_TRADE_DATA[OrderSchema.margin1],
+             test_data.DEFAULT_TRADE_SPLIT_DATA[OrderSchema.margin1])
         ],
         indirect=['wss']
     )
@@ -267,9 +286,26 @@ class TestBitmexWssApi:
             assert wss_data == expect[i]
 
     @pytest.mark.parametrize(
+        'wss, message, expect', [
+            ('tbitmex', [{'message': '{"table": null}'}], [[{'table': None}]]),
+            ('tbitmex', test_data.DEFAULT_TRADE_DATA[OrderSchema.margin1],
+             test_data.DEFAULT_TRADE_SPLIT_DATA[OrderSchema.margin1]),
+            ('tbitmex', test_data.DEFAULT_ORDER_DATA[OrderSchema.margin1],
+             test_data.DEFAULT_ORDER_SPLIT_DATA[OrderSchema.margin1])
+        ],
+        indirect=['wss']
+    )
+    def test__split_message(self, wss: BitmexWssApi, message: dict, expect: list):
+        for i, data in enumerate(message):
+            message = json.loads(data['message'])
+            wss_data = wss._split_message(deepcopy(message))
+            assert wss_data == expect[i]
+
+
+    @pytest.mark.parametrize(
         'wss, order_status, expect', [
-            ('tbitmex', BITMEX_ORDER_STATUS_NEW, 'insert'),
-            ('tbitmex', BITMEX_ORDER_DELETE_ACTION_STATUSES, 'delete'),
+            ('tbitmex', var.BITMEX_ORDER_STATUS_NEW, 'insert'),
+            ('tbitmex', var.BITMEX_ORDER_DELETE_ACTION_STATUSES, 'delete'),
             ('tbitmex', ('PendingNew', 'PendingReplace', 'DoneForDay'), 'update'),
         ],
         indirect=['wss']
@@ -328,13 +364,12 @@ class TestSubscriptionBitmexWssApi:
         subscr_channel = '1'
         symbol = cfg.BITMEX_SYMBOL
         self.reset()
-        if subscr_name == 'quote_bin':
-            await self.subscribe(wss, subscr_channel, subscr_name, symbol)
-            self.validate_messages(subscr_name, symbol)
-            self.reset()
-            assert wss._subscriptions == {subscr_name: {symbol.lower(): {subscr_channel}}}
-            assert await wss.unsubscribe(subscr_channel, subscr_name, symbol)
-            assert wss._subscriptions == {}
+        await self.subscribe(wss, subscr_channel, subscr_name, symbol)
+        self.validate_messages(subscr_name, symbol)
+        self.reset()
+        assert wss._subscriptions == {subscr_name: {symbol.lower(): {subscr_channel}}}
+        assert await wss.unsubscribe(subscr_channel, subscr_name, symbol)
+        assert wss._subscriptions == {}
         await self.subscribe(wss, subscr_channel, subscr_name)
         self.validate_messages(subscr_name)
         self.reset()
