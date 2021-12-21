@@ -108,10 +108,6 @@ WALLET_FIELDS = {
         'total_margin_balance': dict,
         'total_borrowed': dict,
         'total_interest': dict,
-        'total_initial_margin': float,
-        'total_maint_margin': float,
-        'total_open_order_initial_margin': float,
-        'total_position_initial_margin': float,
     },
     OrderSchema.futures_coin: {
         'trade_enabled': bool,
@@ -427,10 +423,6 @@ WS_MESSAGE_DATA_FIELDS = {
             'tmbl': dict,
             'tbor': dict,
             'tist': dict,
-            'tim': float,
-            'tmm': float,
-            'toip': float,
-            'tpim': float,
             'bls': list,
         },
         OrderSchema.futures_coin: {

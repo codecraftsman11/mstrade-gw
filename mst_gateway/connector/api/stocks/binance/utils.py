@@ -516,24 +516,12 @@ def _load_ws_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union
 def load_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
                              fields: Union[list, tuple], cross_collaterals: list, schema: str) -> dict:
     data = _load_futures_wallet_data(raw_data, currencies, assets, fields, cross_collaterals, schema)
-    data.update({
-        'total_initial_margin': to_float(raw_data.get('totalInitialMargin')),
-        'total_maint_margin': to_float(raw_data.get('totalMaintMargin')),
-        'total_open_order_initial_margin': to_float(raw_data.get('totalOpenOrderInitialMargin')),
-        'total_position_initial_margin': to_float(raw_data.get('totalPositionInitialMargin')),
-    })
     return data
 
 
 def load_ws_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
                                 fields: Union[list, tuple], cross_collaterals: list, schema: str) -> dict:
     data = _load_ws_futures_wallet_data(raw_data, currencies, assets, fields, cross_collaterals, schema)
-    data.update({
-        'tim': to_float(raw_data.get('totalInitialMargin')),
-        'tmm': to_float(raw_data.get('totalMaintMargin')),
-        'toip': to_float(raw_data.get('totalOpenOrderInitialMargin')),
-        'tpim': to_float(raw_data.get('totalPositionInitialMargin')),
-    })
     return data
 
 

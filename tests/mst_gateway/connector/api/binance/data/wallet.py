@@ -430,10 +430,6 @@ DEFAULT_WALLET_GET_DATA_RESULT = {
                         'tmbl': {'btc': 0.20512913, 'usd': 9999.97513506},
                         'tbor': {'btc': 0.0, 'usd': 0.0},
                         'tist': {'btc': 0.0, 'usd': 0.0},
-                        'tim': 0.0,
-                        'tmm': 0.0,
-                        'toip': 0.0,
-                        'tpim': 0.0,
                         'bls': [
                             {
                                 'cur': 'USDT',

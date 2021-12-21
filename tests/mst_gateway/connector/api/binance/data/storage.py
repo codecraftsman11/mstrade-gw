@@ -211,8 +211,7 @@ STORAGE_DATA = {
     f"{StateStorageKey.state}:wallet.2": {
         OrderSchema.futures: {'tre': True, 'tbl': {'btc': 0.20648184, 'usd': 10000.96638768},
                               'tupnl': {'btc': 0.0, 'usd': 0.0}, 'tmbl': {'btc': 0.20648184, 'usd': 10000.96638768},
-                              'tbor': {'btc': 0.0, 'usd': 0.0}, 'tist': {'btc': 0.0, 'usd': 0.0}, 'tim': 0.0,
-                              'tmm': 0.0, 'toip': 0.0, 'tpim': 0.0, 'bls': {
+                              'tbor': {'btc': 0.0, 'usd': 0.0}, 'tist': {'btc': 0.0, 'usd': 0.0}, 'bls': {
                 'bnb': {'cur': 'BNB', 'bl': 0.0, 'wbl': 0.0, 'bor': 0.0, 'ist': 0.0, 'upnl': 0.0, 'mbl': 0.0, 'mm': 0.0,
                         'im': 0.0, 'am': 0.0, 't': 'trade'},
                 'usdt': {'cur': 'USDT', 'bl': 10000.96638768, 'wbl': 10000.96638768, 'bor': 0.0, 'ist': 0.0,
