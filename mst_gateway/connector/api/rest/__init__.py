@@ -39,7 +39,7 @@ class StockRestApi(Connector):
 
     def throttle_hash_name(self, name=None):
         if self.auth:
-            return sha256(self.auth.get('api_key', '').encode('utf-8')).hexdigest()
+            return sha256(str(self.auth.get('api_key', '')).encode('utf-8')).hexdigest()
         return super().throttle_hash_name(name)
 
     def validate_throttling(self, hash_name: str):
