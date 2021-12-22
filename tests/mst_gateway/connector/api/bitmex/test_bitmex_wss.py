@@ -5,6 +5,7 @@ import logging
 from copy import deepcopy
 from typing import Optional
 from schema import Schema
+from websockets.exceptions import ConnectionClosed
 from mst_gateway.logging import init_logger
 from mst_gateway.connector.api.stocks.bitmex.wss import subscribers as subscr_class
 from mst_gateway.connector.api.stocks.bitmex import var
@@ -75,10 +76,8 @@ class TestBitmexWssApi:
     )
     async def test_authenticate(self, wss: BitmexWssApi):
         assert not wss.auth_connect
-        await wss.open()
         await wss.authenticate()
         assert wss.auth_connect
-        await wss.close()
 
     @pytest.mark.parametrize(
         'wss, subscr_name, expect', [
@@ -340,7 +339,6 @@ class TestSubscriptionBitmexWssApi:
         self.messages.append(data)
 
     async def consume(self, wss, handler, on_message: callable):
-        from websockets.exceptions import ConnectionClosed
         while True:
             try:
                 message = await handler.recv()
