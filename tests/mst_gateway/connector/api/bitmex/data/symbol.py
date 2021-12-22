@@ -283,7 +283,7 @@ DEFAULT_SYMBOL_MESSAGES = {
 RESULT_SYMBOL_STATE = {
     'account': "bitmex.test",
     'table': "symbol",
-    'schema': cfg.BITMEX_SCHEMA,
+    'schema': OrderSchema.margin1,
     'action': "partial",
     'data': [
         {

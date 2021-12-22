@@ -14,6 +14,9 @@ from .data import order as order_data
 from .data import storage as data
 
 
+BITMEX_SYMBOL = 'XBTUSD'
+
+
 def rest_params(name):
     name_map = {
         'tbitmex': (True, cfg.BITMEX_TESTNET_AUTH_KEYS, [OrderSchema.margin1])
@@ -227,7 +230,7 @@ class TestBitmexRestApi:
     )
     def test_list_trades(self, rest: BitmexRestApi, schema: str):
         tl_schema = Schema(fields.TRADE_FIELDS)
-        lt_items = rest.list_trades(schema=cfg.BITMEX_SCHEMA, symbol=cfg.BITMEX_SYMBOL)
+        lt_items = rest.list_trades(schema=OrderSchema.margin1, symbol=BITMEX_SYMBOL)
         for lt_item in lt_items:
             assert tl_schema.validate(lt_item) == lt_item
 

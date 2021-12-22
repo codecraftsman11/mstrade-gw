@@ -1,7 +1,7 @@
 from mst_gateway.connector.api import OrderSchema
 from mst_gateway.connector.api.stocks.bitmex.utils import to_iso_datetime
 from mst_gateway.connector.api.utils import time2timestamp
-import tests.config as cfg
+
 
 DEFAULT_QUOTE_BIN_DATA = {
     OrderSchema.margin1: [
@@ -173,7 +173,7 @@ TEST_QUOTE_BIN_MESSAGES = [
         'data': {
             'account': "bitmex.test",
             'table': "quote_bin",
-            'schema': cfg.BITMEX_SCHEMA,
+            'schema': OrderSchema.margin1,
             'action': "partial",
             'data': [
                 {
@@ -193,7 +193,7 @@ TEST_QUOTE_BIN_MESSAGES = [
         'data_trade': {
             'account': "bitmex.test",
             'table': "quote_bin",
-            'schema': cfg.BITMEX_SCHEMA,
+            'schema': OrderSchema.margin1,
             'action': "partial",
             'data': [
                 {
@@ -216,7 +216,7 @@ TEST_QUOTE_BIN_MESSAGES = [
         'data': {
             'account': "bitmex.test",
             'table': "quote_bin",
-            'schema': cfg.BITMEX_SCHEMA,
+            'schema': OrderSchema.margin1,
             'action': "update",
             'data': [
                 {
@@ -236,7 +236,7 @@ TEST_QUOTE_BIN_MESSAGES = [
         'data_trade': {
             'account': "bitmex.test",
             'table': "quote_bin",
-            'schema': cfg.BITMEX_SCHEMA,
+            'schema': OrderSchema.margin1,
             'action': "update",
             'data': [
                 {
@@ -259,7 +259,7 @@ TEST_QUOTE_BIN_MESSAGES = [
         'data': {
             'account': "bitmex.test",
             'table': "quote_bin",
-            'schema': cfg.BITMEX_SCHEMA,
+            'schema': OrderSchema.margin1,
             'action': "update",
             'data': [
                 {
@@ -283,7 +283,7 @@ TEST_QUOTE_BIN_MESSAGES = [
         'data': {
             'account': "bitmex.test",
             'table': "quote_bin",
-            'schema': cfg.BITMEX_SCHEMA,
+            'schema': OrderSchema.margin1,
             'action': "update",
             'data': [
                 {
@@ -303,7 +303,7 @@ TEST_QUOTE_BIN_MESSAGES = [
         'data_trade': {
             'account': "bitmex.test",
             'table': "quote_bin",
-            'schema': cfg.BITMEX_SCHEMA,
+            'schema': OrderSchema.margin1,
             'action': "update",
             'data': [
                 {
@@ -326,7 +326,7 @@ TEST_QUOTE_BIN_MESSAGES = [
         'data': {
             'account': "bitmex.test",
             'table': "quote_bin",
-            'schema': cfg.BITMEX_SCHEMA,
+            'schema': OrderSchema.margin1,
             'action': "update",
             'data': [
                 {
@@ -346,7 +346,7 @@ TEST_QUOTE_BIN_MESSAGES = [
         'data_trade': {
             'account': "bitmex.test",
             'table': "quote_bin",
-            'schema': cfg.BITMEX_SCHEMA,
+            'schema': OrderSchema.margin1,
             'action': "update",
             'data': [
                 {
@@ -369,7 +369,7 @@ TEST_QUOTE_BIN_MESSAGES = [
 TEST_QUOTE_BIN_STATE = {
     'account': "bitmex.test",
     'table': "quote_bin",
-    'schema': cfg.BITMEX_SCHEMA,
+    'schema': OrderSchema.margin1,
     'action': "partial",
     'data': [
         {
