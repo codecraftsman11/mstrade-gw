@@ -13,8 +13,8 @@ BITMEX_WSS_DEFAULT_TIMEOUT = 5
 
 
 class BitmexWssApi(StockWssApi):
-    BASE_URL = "wss://www.bitmex.com/realtime"
-    TEST_URL = "wss://testnet.bitmex.com/realtime"
+    BASE_URL = "wss://ws.bitmex.com/realtime"
+    TEST_URL = "wss://ws.testnet.bitmex.com/realtime"
     name = "bitmex"
     subscribers = {
         'symbol': subscr_class.BitmexSymbolSubscriber(),
