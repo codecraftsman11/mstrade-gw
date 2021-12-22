@@ -380,7 +380,6 @@ class TestSubscriptionBitmexWssApi:
             ('tbitmex', 'symbol', None),
             ('tbitmex', 'trade', BITMEX_SYMBOL),
             ('tbitmex', 'trade', None),
-            ('tbitmex', 'wallet', BITMEX_SYMBOL),
             ('tbitmex', 'wallet', None),
             ('tbitmex', 'order', BITMEX_SYMBOL),
             ('tbitmex', 'order', None),
