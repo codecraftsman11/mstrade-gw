@@ -567,7 +567,8 @@ class BinanceRestApi(StockRestApi):
             if schema == OrderSchema.futures:
                 try:
                     cross_collaterals = self._binance_api(self._handler.futures_loan_wallet, **kwargs)
-                    collateral_configs = self._binance_api(self._handler.futures_loan_configs, loanCoin=asset, **kwargs)
+                    collateral_configs = self._binance_api(self._handler.futures_loan_configs,
+                                                           loanCoin=asset.upper(), **kwargs)
                 except ConnectorError:
                     pass
             wallet_detail = utils.load_futures_wallet_detail_data(

@@ -609,7 +609,7 @@ def load_futures_cross_collaterals_data(cross_collaterals: list) -> list:
         'borrowed_currency': cross.get('loanCoin'),
         'locked': to_float(cross.get('locked')),
         'borrowed': to_float(cross.get('loanAmount')),
-    } for cross in cross_collaterals if to_float(cross.get('loanAmount'))]
+    } for cross in cross_collaterals]
     return data
 
 
