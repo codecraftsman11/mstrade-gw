@@ -346,7 +346,7 @@ WS_MESSAGE_DATA_FIELDS = {
         's': str,
         'ss': Or(None, str),
         'sd': Use(side_valid),
-        'vl': Or(None, float_valid),
+        'vl': Or(None, Use(float_valid)),
         'p': Or(None, float),
     },
     'position': {
