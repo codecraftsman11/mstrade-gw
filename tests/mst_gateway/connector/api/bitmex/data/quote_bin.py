@@ -1,13 +1,10 @@
 from mst_gateway.connector.api import OrderSchema
-from mst_gateway.connector.api.stocks.bitmex.utils import to_iso_datetime
-from mst_gateway.connector.api.utils import time2timestamp
-
 
 DEFAULT_QUOTE_BIN_DATA = {
     OrderSchema.margin1: [
         {
-            'message': '{"table":"tradeBin1m","action":"partial","data":[{"timestamp":"2021-12-16T08:35:00.000Z","symbol":"XBTUSD","open":48745,"high":48745,"low":48745,"close":48745,"trades":0,"volume":0,"vwap":null,"lastSize":null,"turnover":0,"homeNotional":0,"foreignNotional":0},{"timestamp":"2021-12-16T08:35:00.000Z","symbol":"XBTUSD","open":48393,"high":48393,"low":48393,"close":48393,"trades":2,"volume":2000,"vwap":48393,"lastSize":1000,"turnover":96786000,"homeNotional":0.002,"foreignNotional":96.786}]}',
-            'expect': {
+            "message": '{"table":"tradeBin1m","action":"partial","data":[{"timestamp":"2021-12-28T13:04:59.000Z","symbol":"XBTUSD","open":49120.5,"high":49120.5,"low":49120.5,"close":49120.5,"trades":2,"volume":200,"vwap":49120.5,"lastSize":100,"turnover":407162,"homeNotional":0.00407162,"foreignNotional":200}]}',
+            "expect": {
                 "quote_bin": {
                     "acc": "tbitmex",
                     "tb": "quote_bin",
@@ -15,42 +12,22 @@ DEFAULT_QUOTE_BIN_DATA = {
                     "act": "partial",
                     "d": [
                         {
-                            "tm": "2021-12-16T08:34:59.999999",
+                            "tm": "2021-12-28T13:03:59.999999",
                             "s": "XBTUSD",
-                            "opp": 48745.0,
-                            "clp": 48745.0,
-                            "hip": 48745.0,
-                            "lop": 48745.0,
-                            "vl": 0,
+                            "opp": 49120.5,
+                            "clp": 49120.5,
+                            "hip": 49120.5,
+                            "lop": 49120.5,
+                            "vl": 200,
                             "ss": "btcusd",
                         },
                         {
-                            "tm": "2021-12-16T08:35:00.000000",
+                            "tm": "2021-12-28T13:04:00.000000",
                             "s": "XBTUSD",
-                            "opp": 48745.0,
-                            "clp": 48745.0,
-                            "hip": 48745.0,
-                            "lop": 48745.0,
-                            "vl": 0,
-                            "ss": "btcusd",
-                        },
-                        {
-                            "tm": "2021-12-16T08:34:59.999999",
-                            "s": "XBTUSD",
-                            "opp": 48393.0,
-                            "clp": 48393.0,
-                            "hip": 48393.0,
-                            "lop": 48393.0,
-                            "vl": 2000,
-                            "ss": "btcusd",
-                        },
-                        {
-                            "tm": "2021-12-16T08:35:00.000000",
-                            "s": "XBTUSD",
-                            "opp": 48393.0,
-                            "clp": 48393.0,
-                            "hip": 48393.0,
-                            "lop": 48393.0,
+                            "opp": 49120.5,
+                            "clp": 49120.5,
+                            "hip": 49120.5,
+                            "lop": 49120.5,
                             "vl": 0,
                             "ss": "btcusd",
                         },
@@ -59,8 +36,31 @@ DEFAULT_QUOTE_BIN_DATA = {
             }
         },
         {
-            'message': '{"table":"tradeBin1m","action":"insert","data":[{"timestamp":"2021-12-16T08:37:00.000Z","symbol":"XBTUSD","open":48766.5,"high":48777,"low":48770,"close":48770,"trades":2,"volume":200,"vwap":48773.5881,"lastSize":100,"turnover":410059,"homeNotional":0.00410059,"foreignNotional":200}]}',
-            'expect': {
+            "message": '{"table":"trade","action":"partial","data":[{"timestamp":"2021-12-28T13:06:16.632Z","symbol":"XBTUSD","side":"Buy","size":100,"price":48938.5,"tickDirection":"ZeroMinusTick","trdMatchID":"5fc73cf3-7651-d392-a2ef-c071ff4493fa","grossValue":204338,"homeNotional":0.00204338,"foreignNotional":100}]}',
+            "expect": {
+                "quote_bin": {
+                    "acc": "tbitmex",
+                    "tb": "quote_bin",
+                    "sch": "margin1",
+                    "act": "partial",
+                    "d": [
+                        {
+                            "s": "XBTUSD",
+                            "tm": "2021-12-28T13:06:16.632000",
+                            "opp": 48938.5,
+                            "clp": 48938.5,
+                            "hip": 48938.5,
+                            "lop": 48938.5,
+                            "vl": 100,
+                            "ss": "btcusd",
+                        }
+                    ],
+                }
+            }
+        },
+        {
+            "message": '{"table":"trade","action":"insert","data":[{"timestamp":"2021-12-28T13:06:57.099Z","symbol":"XBTUSD","side":"Sell","size":400,"price":48938,"tickDirection":"MinusTick","trdMatchID":"150667c3-5bc7-e45f-1b30-be0231a10636","grossValue":817360,"homeNotional":0.0081736,"foreignNotional":400}]}',
+            "expect": {
                 "quote_bin": {
                     "acc": "tbitmex",
                     "tb": "quote_bin",
@@ -68,321 +68,176 @@ DEFAULT_QUOTE_BIN_DATA = {
                     "act": "update",
                     "d": [
                         {
-                            "tm": "2021-12-16T08:36:59.999999",
                             "s": "XBTUSD",
-                            "opp": 48766.5,
-                            "clp": 48770.0,
-                            "hip": 48777.0,
-                            "lop": 48770.0,
-                            "vl": 200,
+                            "tm": "2021-12-28T13:06:57.099000",
+                            "opp": 48938.5,
+                            "clp": 48938.0,
+                            "hip": 48938.5,
+                            "lop": 48938.0,
+                            "vl": 500,
+                            "ss": "btcusd",
+                        }
+                    ],
+                }
+            }
+        },
+        {
+            "message": '{"table":"trade","action":"insert","data":[{"timestamp":"2021-12-28T13:06:57.099Z","symbol":"XBTUSD","side":"Sell","size":100,"price":48938,"tickDirection":"ZeroMinusTick","trdMatchID":"86d2028a-259a-4bd9-6283-9c9df6048fdf","grossValue":204340,"homeNotional":0.0020434,"foreignNotional":100}]}',
+            "expect": {
+                "quote_bin": {
+                    "acc": "tbitmex",
+                    "tb": "quote_bin",
+                    "sch": "margin1",
+                    "act": "update",
+                    "d": [
+                        {
+                            "s": "XBTUSD",
+                            "tm": "2021-12-28T13:06:57.099000",
+                            "opp": 48938.5,
+                            "clp": 48938.0,
+                            "hip": 48938.5,
+                            "lop": 48938.0,
+                            "vl": 600,
+                            "ss": "btcusd",
+                        }
+                    ],
+                }
+            }
+        },
+        {
+            "message": '{"table":"trade","action":"insert","data":[{"timestamp":"2021-12-28T13:06:57.099Z","symbol":"XBTUSD","side":"Sell","size":500,"price":48895.5,"tickDirection":"MinusTick","trdMatchID":"f6f48f7a-3cd2-c332-075e-1ec7ee85f0a7","grossValue":1022590,"homeNotional":0.0102259,"foreignNotional":500}]}',
+            "expect": {
+                "quote_bin": {
+                    "acc": "tbitmex",
+                    "tb": "quote_bin",
+                    "sch": "margin1",
+                    "act": "update",
+                    "d": [
+                        {
+                            "s": "XBTUSD",
+                            "tm": "2021-12-28T13:06:57.099000",
+                            "opp": 48938.5,
+                            "clp": 48895.5,
+                            "hip": 48938.5,
+                            "lop": 48895.5,
+                            "vl": 1100,
+                            "ss": "btcusd",
+                        }
+                    ],
+                }
+            }
+        },
+        {
+            "message": '{"table":"tradeBin1m","action":"insert","data":[{"timestamp":"2021-12-28T13:05:59.000Z","symbol":"XBTUSD","open":49120.5,"high":49120,"low":48895.5,"close":48895.5,"trades":13,"volume":4300,"vwap":49020.8,"lastSize":500,"turnover":8771785,"homeNotional":0.08771785,"foreignNotional":4300}]}',
+            "expect": {
+                "quote_bin": {
+                    "acc": "tbitmex",
+                    "tb": "quote_bin",
+                    "sch": "margin1",
+                    "act": "update",
+                    "d": [
+                        {
+                            "tm": "2021-12-28T13:04:59.999999",
+                            "s": "XBTUSD",
+                            "opp": 49120.5,
+                            "clp": 48895.5,
+                            "hip": 49120.0,
+                            "lop": 48895.5,
+                            "vl": 4300,
                             "ss": "btcusd",
                         },
                         {
-                            "tm": "2021-12-16T08:37:00.000000",
+                            "tm": "2021-12-28T13:05:00.000000",
                             "s": "XBTUSD",
-                            "opp": 48770.0,
-                            "clp": 48770.0,
-                            "hip": 48770.0,
-                            "lop": 48770.0,
+                            "opp": 48895.5,
+                            "clp": 48895.5,
+                            "hip": 48895.5,
+                            "lop": 48895.5,
                             "vl": 0,
                             "ss": "btcusd",
                         },
                     ],
                 }
             }
-
-        }
-    ]
-}
-
-DEFAULT_QUOTE_BIN_MESSAGES = {
-    OrderSchema.margin1: [
-        {
-            "table": "tradeBin1m",
-            "action": "partial",
-            "data": [
-                {
-                    "timestamp": "2021-12-16T08:35:00.000Z",
-                    "symbol": "XBTUSD",
-                    "open": 48745,
-                    "high": 48745,
-                    "low": 48745,
-                    "close": 48745,
-                    "trades": 0,
-                    "volume": 0,
-                    "vwap": None,
-                    "lastSize": None,
-                    "turnover": 0,
-                    "homeNotional": 0,
-                    "foreignNotional": 0
-                },
-                {
-                    "timestamp": "2021-12-16T08:35:00.000Z",
-                    "symbol": "XBTUSD",
-                    "open": 48393,
-                    "high": 48393,
-                    "low": 48393,
-                    "close": 48393,
-                    "trades": 2,
-                    "volume": 2000,
-                    "vwap": 48393,
-                    "lastSize": 1000,
-                    "turnover": 96786000,
-                    "homeNotional": 0.002,
-                    "foreignNotional": 96.786
-                },
-            ]
         },
         {
-            "table": "tradeBin1m",
-            "action": "insert",
-            "data": [
-                {
-                    "timestamp": "2021-12-16T08:37:00.000Z",
-                    "symbol": "XBTUSD",
-                    "open": 48766.5,
-                    "high": 48777,
-                    "low": 48770,
-                    "close": 48770,
-                    "trades": 2,
-                    "volume": 200,
-                    "vwap": 48773.5881,
-                    "lastSize": 100,
-                    "turnover": 410059,
-                    "homeNotional": 0.00410059,
-                    "foreignNotional": 200
+            "message": '{"table":"trade","action":"insert","data":[{"timestamp":"2021-12-28T13:07:16.714Z","symbol":"XBTUSD","side":"Buy","size":100,"price":48949.5,"tickDirection":"PlusTick","trdMatchID":"1c744c95-4927-d019-b45c-88ea0a3b57c0","grossValue":204292,"homeNotional":0.00204292,"foreignNotional":100}]}',
+            "expect": {
+                "quote_bin": {
+                    "acc": "tbitmex",
+                    "tb": "quote_bin",
+                    "sch": "margin1",
+                    "act": "update",
+                    "d": [
+                        {
+                            "s": "XBTUSD",
+                            "tm": "2021-12-28T13:07:16.714000",
+                            "opp": 48895.5,
+                            "clp": 48949.5,
+                            "hip": 48949.5,
+                            "lop": 48895.5,
+                            "vl": 100,
+                            "ss": "btcusd",
+                        }
+                    ],
                 }
-            ]
-        }
-    ]
-}
-
-TEST_QUOTE_BIN_MESSAGES = [
-    {
-        'message': '{"table": "trade", "action": "invalid"}',
-        'data': None,
-        'data_trade': None
-    },
-    {
-        'message': '{"table":"trade","action":"partial","data":[{"timestamp":"2019-07-01T10:29:04.589Z","symbol":"XBTUSD","side":"Buy","size":10,"price":11397.5,"tickDirection":"ZeroPlusTick","trdMatchID":"c05d0c8d-d4fc-97d1-ff13-7f36213f5240","grossValue":87740,"homeNotional":0.0008774,"foreignNotional":10}]}',
-        'data': None,
-        'data_trade': None
-    },
-    {
-        'message': '{"table":"tradeBin1m","action":"partial","data":[{"timestamp":"2019-07-01T10:30:00.000Z","symbol":"XBTUSD","open":11322.5,"high":11331,"low":11319.5,"close":11321,"trades":66,"volume":7187,"vwap":11326.311,"lastSize":5,"turnover":63458685,"homeNotional":0.6345868499999999,"foreignNotional":7187}]}',
-        'data': {
-            'account': "bitmex.test",
-            'table': "quote_bin",
-            'schema': OrderSchema.margin1,
-            'action': "partial",
-            'data': [
-                {
-                    'time': to_iso_datetime("2019-07-01T10:30:00.000Z"),
-                    'timestamp': time2timestamp("2019-07-01T10:30:00.000Z"),
-                    'symbol': "XBTUSD",
-                    'volume': 7187,
-                    'open': 11322.5,
-                    'close': 11321,
-                    'low': 11319.5,
-                    'high': 11331,
-                    'system_symbol': 'btcusd',
-                    'schema': 'margin1'
-                }
-            ]
+            }
         },
-        'data_trade': {
-            'account': "bitmex.test",
-            'table': "quote_bin",
-            'schema': OrderSchema.margin1,
-            'action': "partial",
-            'data': [
-                {
-                    'time': to_iso_datetime("2019-07-01T10:30:00.000Z"),
-                    'timestamp': time2timestamp("2019-07-01T10:30:00.000Z"),
-                    'symbol': "XBTUSD",
-                    'volume': 7187,
-                    'open': 11322.5,
-                    'close': 11321,
-                    'low': 11319.5,
-                    'high': 11331,
-                    'system_symbol': 'btcusd',
-                    'schema': 'margin1'
-                }
-            ]
-        },
-    },
-    {
-        'message': '{"table":"trade","action":"insert","data":[{"timestamp":"2019-07-01T11:58:09.589Z","symbol":"XBTUSD","side":"Buy","size":10,"price":11397.5,"tickDirection":"ZeroPlusTick","trdMatchID":"c05d0c8d-d4fc-97d1-ff13-7f36213f5240","grossValue":87740,"homeNotional":0.0008774,"foreignNotional":10}]}',
-        'data': {
-            'account': "bitmex.test",
-            'table': "quote_bin",
-            'schema': OrderSchema.margin1,
-            'action': "update",
-            'data': [
-                {
-                    'time': to_iso_datetime("2019-07-01T11:58:09.589Z"),
-                    'timestamp': time2timestamp("2019-07-01T11:58:09.589Z"),
-                    'symbol': "XBTUSD",
-                    'volume': 20,
-                    'open': 11397.5,
-                    'close': 11397.5,
-                    'low': 11397.5,
-                    'high': 11397.5,
-                    'system_symbol': 'btcusd',
-                    'schema': 'margin1'
-                }
-            ]
-        },
-        'data_trade': {
-            'account': "bitmex.test",
-            'table': "quote_bin",
-            'schema': OrderSchema.margin1,
-            'action': "update",
-            'data': [
-                {
-                    'time': to_iso_datetime("2019-07-01T11:58:09.589Z"),
-                    'timestamp': time2timestamp("2019-07-01T11:58:09.589Z"),
-                    'symbol': "XBTUSD",
-                    'volume': 10,
-                    'open': 11397.5,
-                    'close': 11397.5,
-                    'low': 11397.5,
-                    'high': 11397.5,
-                    'system_symbol': 'btcusd',
-                    'schema': 'margin1'
-                }
-            ]
-        },
-    },
-    {
-        'message': '{"table":"tradeBin1m","action":"insert","data":[{"timestamp":"2019-07-01T11:59:00.000Z","symbol":"XBTUSD","open":11322.5,"high":11331,"low":11319.5,"close":11321,"trades":66,"volume":7187,"vwap":11326.311,"lastSize":5,"turnover":63458685,"homeNotional":0.6345868499999999,"foreignNotional":7187}]}',
-        'data': {
-            'account': "bitmex.test",
-            'table': "quote_bin",
-            'schema': OrderSchema.margin1,
-            'action': "update",
-            'data': [
-                {
-                    'time': to_iso_datetime("2019-07-01T11:59:00.000Z"),
-                    'timestamp': time2timestamp("2019-07-01T11:59:00.000Z"),
-                    'symbol': "XBTUSD",
-                    'volume': 7187,
-                    'open': 11322.5,
-                    'close': 11321,
-                    'low': 11319.5,
-                    'high': 11331,
-                    'system_symbol': 'btcusd',
-                    'schema': 'margin1'
-                }
-            ]
-        },
-        'data_trade': None
-    },
-    {
-        'message': '{"table":"trade","action":"insert","data":[{"timestamp":"2019-07-01T11:59:36.307Z","symbol":"XBTUSD","side":"Sell","size":100,"price":11329,"tickDirection":"MinusTick","trdMatchID":"4e2522dc-c411-46dc-7f2f-e33491965ddd","grossValue":882700,"homeNotional":0.008827,"foreignNotional":100}]}',
-        'data': {
-            'account': "bitmex.test",
-            'table': "quote_bin",
-            'schema': OrderSchema.margin1,
-            'action': "update",
-            'data': [
-                {
-                    'time': to_iso_datetime("2019-07-01T11:59:36.307Z"),
-                    'timestamp': time2timestamp("2019-07-01T11:59:36.307Z"),
-                    'symbol': "XBTUSD",
-                    'volume': 200,
-                    'open': 11329,
-                    'close': 11329,
-                    'low': 11329,
-                    'high': 11329,
-                    'system_symbol': 'btcusd',
-                    'schema': 'margin1'
-                }
-            ]
-        },
-        'data_trade': {
-            'account': "bitmex.test",
-            'table': "quote_bin",
-            'schema': OrderSchema.margin1,
-            'action': "update",
-            'data': [
-                {
-                    'time': to_iso_datetime("2019-07-01T11:59:36.307Z"),
-                    'timestamp': time2timestamp("2019-07-01T11:59:36.307Z"),
-                    'symbol': "XBTUSD",
-                    'volume': 100,
-                    'open': 11329,
-                    'close': 11329,
-                    'low': 11329,
-                    'high': 11329,
-                    'system_symbol': 'btcusd',
-                    'schema': 'margin1'
-                }
-            ]
-        }
-    },
-    {
-        'message': '{"table":"trade","action":"insert","data":[{"timestamp":"2019-07-01T11:59:38.326Z","symbol":"XBTUSD","side":"Sell","size":5,"price":11339,"tickDirection":"ZeroMinusTick","trdMatchID":"1084f572-05d1-c16d-d5d3-02d5f8a9bbbb","grossValue":44135,"homeNotional":0.00044135,"foreignNotional":5}]}',
-        'data': {
-            'account': "bitmex.test",
-            'table': "quote_bin",
-            'schema': OrderSchema.margin1,
-            'action': "update",
-            'data': [
-                {
-                    'time': to_iso_datetime("2019-07-01T11:59:38.326Z"),
-                    'timestamp': time2timestamp("2019-07-01T11:59:38.326Z"),
-                    'symbol': "XBTUSD",
-                    'volume': 210,
-                    'open': 11329,
-                    'close': 11339,
-                    'low': 11329,
-                    'high': 11339,
-                    'system_symbol': 'btcusd',
-                    'schema': 'margin1'
-                }
-            ]
-        },
-        'data_trade': {
-            'account': "bitmex.test",
-            'table': "quote_bin",
-            'schema': OrderSchema.margin1,
-            'action': "update",
-            'data': [
-                {
-                    'time': to_iso_datetime("2019-07-01T11:59:38.326Z"),
-                    'timestamp': time2timestamp("2019-07-01T11:59:38.326Z"),
-                    'symbol': "XBTUSD",
-                    'volume': 110,
-                    'open': 11329,
-                    'close': 11339,
-                    'low': 11329,
-                    'high': 11339,
-                    'system_symbol': 'btcusd',
-                    'schema': 'margin1'
-                }
-            ]
-        }
-    }
-]
-
-TEST_QUOTE_BIN_STATE = {
-    'account': "bitmex.test",
-    'table': "quote_bin",
-    'schema': OrderSchema.margin1,
-    'action': "partial",
-    'data': [
         {
-            'time': to_iso_datetime("2019-07-01T11:59:38.326Z"),
-            'timestamp': time2timestamp("2019-07-01T11:59:38.326Z"),
-            'symbol': "XBTUSD",
-            'volume': 210,
-            'open': 11329,
-            'close': 11339,
-            'low': 11329,
-            'high': 11339,
-            'system_symbol': 'btcusd',
-            'schema': 'margin1'
+            "message": '{"table":"trade","action":"insert","data":[{"timestamp":"2021-12-28T13:07:16.721Z","symbol":"XBTUSD","side":"Buy","size":200,"price":48949.5,"tickDirection":"ZeroPlusTick","trdMatchID":"3565bf42-4d4d-63e6-dc51-4154fbd19fa0","grossValue":408584,"homeNotional":0.00408584,"foreignNotional":200}]}',
+            "expect": {
+                "quote_bin": {
+                    "acc": "tbitmex",
+                    "tb": "quote_bin",
+                    "sch": "margin1",
+                    "act": "update",
+                    "d": [
+                        {
+                            "s": "XBTUSD",
+                            "tm": "2021-12-28T13:07:16.721000",
+                            "opp": 48895.5,
+                            "clp": 48949.5,
+                            "hip": 48949.5,
+                            "lop": 48895.5,
+                            "vl": 300,
+                            "ss": "btcusd",
+                        }
+                    ],
+                }
+            }
+        },
+        {
+            "message": '{"table":"tradeBin1m","action":"insert","data":[{"timestamp":"2021-12-28T13:06:59.000Z","symbol":"XBTUSD","open":48895.5,"high":48949.5,"low":48949.5,"close":48949.5,"trades":2,"volume":300,"vwap":48949.5,"lastSize":200,"turnover":612876,"homeNotional":0.0061287600000000005,"foreignNotional":300}]}',
+            "expect": {
+                "quote_bin": {
+                    "acc": "tbitmex",
+                    "tb": "quote_bin",
+                    "sch": "margin1",
+                    "act": "update",
+                    "d": [
+                        {
+                            "tm": "2021-12-28T13:05:59.999999",
+                            "s": "XBTUSD",
+                            "opp": 48895.5,
+                            "clp": 48949.5,
+                            "hip": 48949.5,
+                            "lop": 48949.5,
+                            "vl": 300,
+                            "ss": "btcusd",
+                        },
+                        {
+                            "tm": "2021-12-28T13:06:00.000000",
+                            "s": "XBTUSD",
+                            "opp": 48949.5,
+                            "clp": 48949.5,
+                            "hip": 48949.5,
+                            "lop": 48949.5,
+                            "vl": 0,
+                            "ss": "btcusd",
+                        },
+                    ],
+                }
+            }
         }
     ]
 }
