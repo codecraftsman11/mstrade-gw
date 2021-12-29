@@ -182,7 +182,6 @@ class TestBitmexWssApi:
     @pytest.mark.parametrize(
         'wss, subscr_name, default_data', [
             ('tbitmex', 'trade', test_data.DEFAULT_TRADE_DATA[OrderSchema.margin1]),
-            ('tbitmex', 'quote_bin', test_data.DEFAULT_QUOTE_BIN_DATA[OrderSchema.margin1]),
             ('tbitmex', 'symbol', test_data.DEFAULT_SYMBOL_DATA[OrderSchema.margin1]),
             ('tbitmex', 'order_book', test_data.DEFAULT_ORDER_BOOK_DATA[OrderSchema.margin1]),
             ('tbitmex', 'order', test_data.DEFAULT_ORDER_DATA[OrderSchema.margin1]),
@@ -190,7 +189,7 @@ class TestBitmexWssApi:
         ],
         indirect=['wss']
     )
-    async def test_get_data(self, wss: BitmexWssApi, subscr_name: str, default_data: dict):
+    async def test_get_data(self, wss: BitmexWssApi, subscr_name: str, default_data: list):
         self.init_partial_state(wss, subscr_name)
         wss._subscriptions = {subscr_name: {'*': {'1'}}}
         message_header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)
@@ -206,6 +205,32 @@ class TestBitmexWssApi:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
+        'wss, default_data', [('tbitmex', test_data.DEFAULT_QUOTE_BIN_DATA[OrderSchema.margin1])],
+        indirect=['wss']
+    )
+    async def test_get_quote_bin_data(self, wss: BitmexWssApi, default_data: list):
+        subscr_name = 'quote_bin'
+        previous_quote_bin_clp = None
+        self.init_partial_state(wss, subscr_name)
+        wss._subscriptions = {subscr_name: {'*': {'1'}}}
+        message_header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)
+        d_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name])
+        for data in default_data:
+            message = json.loads(data['message'])
+            wss_data = await wss.get_data(message)
+            _data = wss_data[subscr_name]
+            assert message_header_schema.validate(_data) == _data
+            for d in _data['d']:
+                assert d_schema.validate(d) == d
+            if message['table'] == 'tradeBin1m':
+                if previous_quote_bin_clp:
+                    assert _data['d'][0]['opp'] == previous_quote_bin_clp
+                previous_quote_bin_clp = _data['d'][-1]['clp']
+            assert _data == data['expect'][subscr_name]
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
         'wss, subscr_name, default_data', [
             ('tbitmex', 'trade', test_data.DEFAULT_TRADE_DATA[OrderSchema.margin1]),
             ('tbitmex', 'quote_bin', test_data.DEFAULT_QUOTE_BIN_DATA[OrderSchema.margin1]),
@@ -216,7 +241,7 @@ class TestBitmexWssApi:
         ],
         indirect=['wss']
     )
-    async def test_get_state(self, wss: BitmexWssApi, subscr_name: str, default_data: dict):
+    async def test_get_state(self, wss: BitmexWssApi, subscr_name: str, default_data: list):
         self.init_partial_state(wss, subscr_name)
         wss._subscriptions = {subscr_name: {'*': {'1'}}}
         message_header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)
