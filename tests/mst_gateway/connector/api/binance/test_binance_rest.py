@@ -1,8 +1,10 @@
+import logging
 import pytest
 from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import Optional
 from schema import Schema
+from mst_gateway.logging import init_logger
 from mst_gateway.connector.api.stocks.binance.rest import BinanceRestApi
 from mst_gateway.connector.api.types import LeverageType, OrderExec, OrderSchema, OrderType, BUY, SELL
 from mst_gateway.exceptions import ConnectorError
@@ -25,12 +27,20 @@ def rest_params(param):
     return param_map[param]
 
 
+@pytest.fixture
+def _debug(caplog):
+    logger = init_logger(name="test", level=logging.DEBUG)
+    caplog.set_level(logging.DEBUG, logger="test")
+    yield {'logger': logger, 'caplog': caplog}
+
+
 @pytest.fixture(params=['tbinance_spot', 'tbinance_futures'])
-def rest(request) -> BinanceRestApi:
+def rest(request, _debug) -> BinanceRestApi:
     param = request.param
     auth, available_schemas = rest_params(param)
     with BinanceRestApi(test=True, name='tbinance', auth=auth, throttle_limit=30,
-                        state_storage=deepcopy(state_data.STORAGE_DATA)) as api:
+                        state_storage=deepcopy(state_data.STORAGE_DATA),
+                        logger=_debug['logger']) as api:
         api.open()
         for schema in available_schemas:
             assert api.ping(schema)

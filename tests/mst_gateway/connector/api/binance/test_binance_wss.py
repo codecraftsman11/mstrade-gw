@@ -1,6 +1,12 @@
+import asyncio
+import logging
 import json
 import pytest
 from copy import deepcopy
+from schema import Schema
+from typing import Optional
+from websockets.exceptions import ConnectionClosed
+from mst_gateway.logging import init_logger
 from mst_gateway.storage.var import StateStorageKey
 from mst_gateway.connector.api.stocks.binance import BinanceWssApi, BinanceFuturesWssApi, BinanceFuturesCoinWssApi
 from mst_gateway.connector.api.stocks.binance.wss import subscribers
@@ -17,7 +23,6 @@ from .data import symbol as symbol_message
 from .data import trade as trade_message
 from .data import wallet as wallet_message
 from .test_binance_rest import get_symbol, get_asset, get_liquidation_kwargs
-from schema import Schema
 
 
 def ws_class(name):
@@ -41,14 +46,35 @@ def wss_params(param):
     return param_map[param]
 
 
+@pytest.fixture
+def _debug(caplog):
+    logger = init_logger(name="test", level=logging.DEBUG)
+    caplog.set_level(logging.DEBUG, logger="test")
+    yield {'logger': logger, 'caplog': caplog}
+
+
 @pytest.fixture(params=['tbinance_spot', 'tbinance_futures', 'tbinance_futures_coin'])
-async def wss(request) -> BinanceWssApi:
+async def wss(request, _debug) -> BinanceWssApi:
     param = request.param
     api_class = ws_class(param)
     schema, account_name, url, auth = wss_params(param)
     with api_class(test=True, schema=schema, name='tbinance', account_name=account_name, url=url, auth=auth,
-                   state_storage=deepcopy(state_data.STORAGE_DATA)) as api:
+                   state_storage=deepcopy(state_data.STORAGE_DATA),
+                   logger=_debug['logger']) as api:
         await api.open()
+        yield api
+        await api.close()
+
+
+@pytest.fixture(params=['tbinance_spot', 'tbinance_futures', 'tbinance_futures_coin'])
+async def wss_auth(request, _debug) -> BinanceWssApi:
+    param = request.param
+    api_class = ws_class(param)
+    schema, account_name, url, auth = wss_params(param)
+    with api_class(test=True, schema=schema, name='tbinance', account_name=account_name, url=url, auth=auth,
+                   state_storage=deepcopy(state_data.STORAGE_DATA),
+                   logger=_debug['logger']) as api:
+        await api.open(is_auth=True)
         yield api
         await api.close()
 
@@ -646,53 +672,70 @@ class TestSubscriptionBinanceWssApi:
         self.messages.append(data)
 
     async def consume(self, wss, handler, on_message: callable):
-        from websockets.exceptions import ConnectionClosed
         while True:
             try:
                 message = await handler.recv()
                 if await wss.process_message(message, on_message):
-                    break
+                    return
             except ConnectionClosed:
                 handler = await wss.open(restore=True)
 
     async def subscribe(self, wss, subscr_channel, subscr_name, symbol=None):
         assert await wss.subscribe(subscr_channel, subscr_name, symbol)
-        await self.consume(wss, wss.handler, self.on_message)
+        try:
+            await asyncio.wait_for(
+                self.consume(wss, wss.handler, self.on_message),
+                timeout=5
+            )
+        except asyncio.TimeoutError:
+            wss.logger.warning('No messages.')
 
-    def validate_messages(self, subscr_name, symbol=None):
+    def validate_messages(self, subscr_name, schema):
         header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)
-        data_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name])
+        if subscr_name == 'wallet':
+            subscr_schema = fields.WS_MESSAGE_DATA_FIELDS[subscr_name][schema]
+        else:
+            subscr_schema = fields.WS_MESSAGE_DATA_FIELDS[subscr_name]
+        data_schema = Schema(subscr_schema)
         for message in self.messages:
             assert header_schema.validate(message[subscr_name]) == message[subscr_name]
             for data in message[subscr_name]['d']:
                 assert data_schema.validate(data) == data
-                if symbol:
-                    assert data['s'].lower() == symbol.lower()
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        'wss, subscr_name', [('tbinance_spot', 'order_book'), ('tbinance_spot', 'quote_bin'),
-                             ('tbinance_spot', 'symbol'), ('tbinance_spot', 'trade'),
-                             ('tbinance_futures', 'order_book'), ('tbinance_futures', 'quote_bin'),
-                             ('tbinance_futures', 'symbol'), ('tbinance_futures', 'trade'),
-                             ('tbinance_futures_coin', 'order_book'), ('tbinance_futures_coin', 'quote_bin'),
-                             ('tbinance_futures_coin', 'symbol'), ('tbinance_futures_coin', 'trade')],
-        indirect=['wss'],
+        'wss_auth, subscr_name, symbol', [
+            ('tbinance_spot', 'order_book', 'BTCUSDT'), ('tbinance_spot', 'order_book', None),
+            ('tbinance_spot', 'quote_bin', 'BTCUSDT'), ('tbinance_spot', 'quote_bin', None),
+            ('tbinance_spot', 'symbol', 'BTCUSDT'), ('tbinance_spot', 'symbol', None),
+            ('tbinance_spot', 'trade', 'BTCUSDT'), ('tbinance_spot', 'trade', None),
+            ('tbinance_spot', 'wallet', None),
+            ('tbinance_spot', 'order', 'BTCUSDT'), ('tbinance_spot', 'order', None),
+            ('tbinance_spot', 'position', 'BTCUSDT'), ('tbinance_spot', 'position', None),
+            ('tbinance_futures', 'order_book', 'BTCUSDT'), ('tbinance_futures', 'order_book', None),
+            ('tbinance_futures', 'quote_bin', 'BTCUSDT'), ('tbinance_futures', 'quote_bin', None),
+            ('tbinance_futures', 'symbol', 'BTCUSDT'), ('tbinance_futures', 'symbol', None),
+            ('tbinance_futures', 'trade', 'BTCUSDT'), ('tbinance_futures', 'trade', None),
+            ('tbinance_futures', 'wallet', None),
+            ('tbinance_futures', 'order', 'BTCUSDT'), ('tbinance_futures', 'order', None),
+            ('tbinance_futures', 'position', 'BTCUSDT'), ('tbinance_futures', 'position', None),
+            ('tbinance_futures_coin', 'order_book', 'BTCUSD_PERP'), ('tbinance_futures_coin', 'order_book', None),
+            ('tbinance_futures_coin', 'quote_bin', 'BTCUSD_PERP'), ('tbinance_futures_coin', 'quote_bin', None),
+            ('tbinance_futures_coin', 'symbol', 'BTCUSD_PERP'), ('tbinance_futures_coin', 'symbol', None),
+            ('tbinance_futures_coin', 'trade', 'BTCUSD_PERP'), ('tbinance_futures_coin', 'trade', None),
+            ('tbinance_futures_coin', 'wallet', None),
+            ('tbinance_futures_coin', 'order', 'BTCUSD_PERP'), ('tbinance_futures_coin', 'order', None),
+            ('tbinance_futures_coin', 'position', 'BTCUSD_PERP'), ('tbinance_futures_coin', 'position', None)
+        ], indirect=['wss_auth'],
     )
-    async def test_subscription(self, wss: BinanceWssApi, subscr_name):
+    async def test_subscription(self, wss_auth: BinanceWssApi, subscr_name, symbol: Optional[str]):
         subscr_channel = '1'
         self.reset()
-        if subscr_name != 'quote_bin' or wss.schema != OrderSchema.exchange:
-            await self.subscribe(wss, subscr_channel, subscr_name)
-            self.validate_messages(subscr_name)
-            self.reset()
-            assert wss._subscriptions == {subscr_name: {'*': {subscr_channel}}}
-            assert await wss.unsubscribe(subscr_channel, subscr_name)
-            assert wss._subscriptions == {}
-        symbol = get_symbol(wss.schema)
-        await self.subscribe(wss, subscr_channel, subscr_name, symbol)
-        self.validate_messages(subscr_name, symbol)
+        if subscr_name == 'wallet':
+            symbol = None
+        await self.subscribe(wss_auth, subscr_channel, subscr_name, symbol)
+        self.validate_messages(subscr_name, wss_auth.schema)
         self.reset()
-        assert wss._subscriptions == {subscr_name: {symbol.lower(): {subscr_channel}}}
-        assert await wss.unsubscribe(subscr_channel, subscr_name, symbol)
-        assert wss._subscriptions == {}
+        assert wss_auth._subscriptions == {subscr_name: {f"{symbol or '*'}".lower(): {subscr_channel}}}
+        assert await wss_auth.unsubscribe(subscr_channel, subscr_name, symbol)
+        assert wss_auth._subscriptions == {}

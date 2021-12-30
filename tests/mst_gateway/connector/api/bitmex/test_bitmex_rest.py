@@ -1,9 +1,11 @@
 # pylint: disable=no-self-use
+import logging
 import pytest
 from copy import deepcopy
 from schema import Schema
 from typing import Union, Optional
 from datetime import datetime, timedelta
+from mst_gateway.logging import init_logger
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector.api.stocks.bitmex import BitmexRestApi
 from mst_gateway.exceptions import ConnectorError
@@ -14,6 +16,9 @@ from .data import order as order_data
 from .data import storage as data
 
 
+BITMEX_SYMBOL = 'XBTUSD'
+
+
 def rest_params(name):
     name_map = {
         'tbitmex': (True, cfg.BITMEX_TESTNET_AUTH_KEYS, [OrderSchema.margin1])
@@ -21,15 +26,23 @@ def rest_params(name):
     return name_map[name]
 
 
+@pytest.fixture
+def _debug(caplog):
+    logger = init_logger(name="test", level=logging.DEBUG)
+    caplog.set_level(logging.DEBUG, logger="test")
+    yield {'logger': logger, 'caplog': caplog}
+
+
 @pytest.fixture(params=['tbitmex'])
-def rest(request) -> BitmexRestApi:
+def rest(request, _debug) -> BitmexRestApi:
     api_name = request.param
     test, auth, available_schemas = rest_params(api_name)
     with BitmexRestApi(
             name=api_name,
             auth=auth,
             throttle_limit=90,
-            state_storage=deepcopy(data.STORAGE_DATA)
+            state_storage=deepcopy(data.STORAGE_DATA),
+            logger=_debug['logger']
     ) as api:
         api.open()
         for schema in available_schemas:
@@ -39,14 +52,15 @@ def rest(request) -> BitmexRestApi:
 
 
 @pytest.fixture(params=['tbitmex'])
-def rest_compress(request) -> BitmexRestApi:
+def rest_compress(request, _debug) -> BitmexRestApi:
     api_name = request.param
     test, auth, available_schemas = rest_params(api_name)
     with BitmexRestApi(
             name=api_name,
             auth=auth,
             throttle_limit=30,
-            state_storage=deepcopy(data.STORAGE_DATA)
+            state_storage=deepcopy(data.STORAGE_DATA),
+            logger=_debug['logger']
     ) as api:
         api.open(compress=True)
         for schema in available_schemas:
@@ -56,14 +70,15 @@ def rest_compress(request) -> BitmexRestApi:
 
 
 @pytest.fixture(params=['tbitmex'])
-def rest_keepalive(request) -> BitmexRestApi:
+def rest_keepalive(request, _debug) -> BitmexRestApi:
     api_name = request.param
     test, auth, available_schemas = rest_params(api_name)
     with BitmexRestApi(
             name=api_name,
             auth=auth,
             throttle_limit=30,
-            state_storage=deepcopy(data.STORAGE_DATA)
+            state_storage=deepcopy(data.STORAGE_DATA),
+            logger=_debug['logger']
     ) as api:
         api.open(keepalive=True)
         for schema in available_schemas:
@@ -227,7 +242,7 @@ class TestBitmexRestApi:
     )
     def test_list_trades(self, rest: BitmexRestApi, schema: str):
         tl_schema = Schema(fields.TRADE_FIELDS)
-        lt_items = rest.list_trades(schema=cfg.BITMEX_SCHEMA, symbol=cfg.BITMEX_SYMBOL)
+        lt_items = rest.list_trades(schema=OrderSchema.margin1, symbol=BITMEX_SYMBOL)
         for lt_item in lt_items:
             assert tl_schema.validate(lt_item) == lt_item
 

@@ -99,7 +99,8 @@ class BinanceWssApi(StockWssApi):
             'write_limit': 2 ** 18,
         }
         _ws: client.WebSocketClientProtocol = await super()._connect(**kwargs)
-        self._logger.info('Binance ws connected successful.')
+        self._logger.info(f"{self.__class__.__name__} - schema: {self.schema}, "
+                          f"test: {self.test} - connected successful.")
         return _ws
 
     async def authenticate(self, auth: dict = None) -> bool:
