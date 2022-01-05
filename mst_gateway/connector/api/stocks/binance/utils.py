@@ -349,7 +349,7 @@ def load_api_key_permissions(raw_data: dict, schemas: iter) -> dict:
 
 def load_spot_wallet_data(raw_data: dict, currencies: dict,
                           assets: Union[list, tuple], fields: Union[list, tuple], schema: str) -> dict:
-    balances = _spot_balance_data(raw_data.get('balances'))
+    balances, extra_balances = _spot_balance_data(raw_data.get('balances'))
     total_balance = {}
     wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields)
     for asset in assets:
@@ -358,13 +358,14 @@ def load_spot_wallet_data(raw_data: dict, currencies: dict,
         )
     return {
         'balances': balances,
+        'extra_data': None,
         **_load_total_wallet_summary_list(total_balance, fields)
     }
 
 
 def load_ws_spot_wallet_data(raw_data: dict, currencies: dict,
                              assets: Union[list, tuple], fields: Union[list, tuple], schema: str) -> dict:
-    balances = spot_ws_balance_data(raw_data.get('balances'))
+    balances, extra_balances = _spot_ws_balance_data(raw_data.get('balances'))
     total_balance = {}
     wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields, is_for_ws=True)
     for asset in assets:
@@ -373,12 +374,13 @@ def load_ws_spot_wallet_data(raw_data: dict, currencies: dict,
         )
     return {
         'bls': balances,
+        'ex': None,
         **_load_total_wallet_summary_list(total_balance, fields, is_for_ws=True)
     }
 
 
 def load_spot_wallet_balances(raw_data: dict) -> list:
-    return _spot_balance_data(raw_data.get('balances'))
+    return _spot_balance_data(raw_data.get('balances'))[0]
 
 
 def load_spot_wallet_detail_data(raw_data: dict, asset: str) -> dict:
@@ -386,50 +388,71 @@ def load_spot_wallet_detail_data(raw_data: dict, asset: str) -> dict:
         return _mock_balance_data(asset)
     for a in raw_data.get('balances'):
         if a.get('asset', '').upper() == asset.upper():
-            return _spot_balance_data([a])[0]
+            return _spot_balance_data([a])[0][0]
     raise ConnectorError(f"Invalid asset {asset}.")
 
 
 def load_margin_wallet_data(raw_data: dict, currencies: dict,
-                            assets: Union[list, tuple], fields: Union[list, tuple], schema: str) -> dict:
-    balances = _margin_balance_data(raw_data.get('userAssets'))
+                            assets: Union[list, tuple], fields: Union[list, tuple],
+                            extra_fields: Union[list, tuple], schema: str) -> dict:
+    balances, extra_balances = _margin_balance_data(raw_data.get('userAssets'))
     total_balance = {}
+    total_extra_balance = {}
     wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields)
+    wallet_extra_summary_in_usd = load_wallet_summary_in_usd(currencies, extra_balances, extra_fields)
     for asset in assets:
         total_balance[asset] = convert_to_currency(
             wallet_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
         )
+        total_extra_balance[asset] = convert_to_currency(
+            wallet_extra_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
+        )
     return {
-        'trade_enabled': raw_data.get('tradeEnabled'),
-        'transfer_enabled': raw_data.get('transferEnabled'),
-        'borrow_enabled': raw_data.get('borrowEnabled'),
-        'margin_level': to_float(raw_data.get('marginLevel')),
         'balances': balances,
+        'extra_data': {
+            'trade_enabled': raw_data.get('tradeEnabled'),
+            'transfer_enabled': raw_data.get('transferEnabled'),
+            'borrow_enabled': raw_data.get('borrowEnabled'),
+            'margin_level': to_float(raw_data.get('marginLevel')),
+            'balances': extra_balances,
+            **_load_total_wallet_summary_list(total_extra_balance, extra_fields)
+        },
         **_load_total_wallet_summary_list(total_balance, fields)
     }
 
 
 def load_ws_margin_wallet_data(raw_data: dict, currencies: dict,
-                               assets: Union[list, tuple], fields: Union[list, tuple], schema: str) -> dict:
-    balances = _margin_ws_balance_data(raw_data.get('userAssets'))
+                               assets: Union[list, tuple], fields: Union[list, tuple],
+                               extra_fields: Union[list, tuple], schema: str) -> dict:
+    balances, extra_balances = _margin_ws_balance_data(raw_data.get('userAssets'))
     total_balance = {}
+    total_extra_balance = {}
     wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields, is_for_ws=True)
+    wallet_extra_summary_in_usd = load_wallet_summary_in_usd(currencies, extra_balances, extra_fields, is_for_ws=True)
     for asset in assets:
         total_balance[asset] = convert_to_currency(
             wallet_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
         )
+        total_extra_balance[asset] = convert_to_currency(
+            wallet_extra_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
+        )
     return {
-        'tre': raw_data.get('tradeEnabled'),
-        'trse': raw_data.get('transferEnabled'),
-        'bore': raw_data.get('borrowEnabled'),
-        'mlvl': raw_data.get('marginLevel'),
         'bls': balances,
+        'ex': {
+            'tre': raw_data.get('tradeEnabled'),
+            'trse': raw_data.get('transferEnabled'),
+            'bore': raw_data.get('borrowEnabled'),
+            'mlvl': raw_data.get('marginLevel'),
+            'bls': extra_balances,
+            **_load_total_wallet_summary_list(total_extra_balance, extra_fields, is_for_ws=True)
+        },
         **_load_total_wallet_summary_list(total_balance, fields, is_for_ws=True)
     }
 
 
-def load_isolated_margin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
-                                     schema: str, fields: Union[list, tuple]) -> dict:
+def load_isolated_margin_wallet_data(raw_data: dict, currencies: dict,
+                                     assets: Union[list, tuple], fields: Union[list, tuple],
+                                     extra_fields: Union[list, tuple], schema: str) -> dict:
     balances = isolated_margin_balance_data(raw_data.get('assets'))
     total_balance = dict()
     wallet_summary_in_usd = load_wallet_summary_margin3_in_usd(currencies, balances, fields)
@@ -467,6 +490,7 @@ def get_vip(data: dict) -> str:
     return str(data.get('feeTier', 0))
 
 
+# TODO: remove
 def get_interest_rate(asset_rates: list, vip_level: str, asset: str):
     _h1_rate = None
     for rate in asset_rates:
@@ -479,63 +503,95 @@ def get_interest_rate(asset_rates: list, vip_level: str, asset: str):
     return _h1_rate
 
 
+def get_interest_rates(asset_rates: list):
+    _h1_rate = {}
+    for rate in asset_rates:
+        asset = rate.get('assetName', '').lower()
+        _h1_rate.setdefault(asset, {})
+        for spec in rate['specs']:
+            _r = to_float(spec.get('dailyInterestRate')) or 0
+            _h1_rate[asset].setdefault(str(spec.get('vipLevel')), round(_r * 100 / 24, 8))
+    return _h1_rate
+
+
 def _load_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
-                              fields: Union[list, tuple], cross_collaterals: list, schema: str) -> dict:
-    balances = _futures_balance_data(raw_data.get('assets'))
-    _update_futures_balances(balances, cross_collaterals)
+                              fields: Union[list, tuple], extra_fields: Union[list, tuple],
+                              cross_collaterals: list, schema: str) -> dict:
+    balances, extra_balances = _futures_balance_data(raw_data.get('assets'))
+    _update_futures_extra_balances(extra_balances, cross_collaterals)
     total_balance = {}
+    total_extra_balance = {}
     wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields)
+    wallet_extra_summary_in_usd = load_wallet_summary_in_usd(currencies, extra_balances, extra_fields)
     for asset in assets:
         total_balance[asset] = convert_to_currency(
             wallet_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
         )
+        total_extra_balance[asset] = convert_to_currency(
+            wallet_extra_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
+        )
     return {
-        'trade_enabled': raw_data.get('canTrade'),
         'balances': balances,
+        'extra_data': {
+            'trade_enabled': raw_data.get('canTrade'),
+            'balances': extra_balances,
+            **_load_total_wallet_summary_list(total_extra_balance, extra_fields)
+        },
         **_load_total_wallet_summary_list(total_balance, fields)
     }
 
 
 def _load_ws_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
-                                 fields: Union[list, tuple], cross_collaterals: list, schema: str) -> dict:
-    balances = _ws_futures_balance_data(raw_data.get('assets'))
+                                 fields: Union[list, tuple], extra_fields: Union[list, tuple],
+                                 cross_collaterals: list, schema: str) -> dict:
+    balances, extra_balances = _ws_futures_balance_data(raw_data.get('assets'))
     _update_ws_futures_balances(balances, cross_collaterals)
     total_balance = {}
+    total_extra_balance = {}
     wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields, is_for_ws=True)
+    wallet_extra_summary_in_usd = load_wallet_summary_in_usd(currencies, extra_balances, extra_fields, is_for_ws=True)
     for asset in assets:
         total_balance[asset] = convert_to_currency(
             wallet_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
         )
+        total_extra_balance[asset] = convert_to_currency(
+            wallet_extra_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
+        )
     return {
-        'tre': raw_data.get('canTrade'),
         'bls': balances,
+        'ex': {
+            'tre': raw_data.get('canTrade'),
+            **_load_total_wallet_summary_list(total_extra_balance, extra_fields, is_for_ws=True)
+        },
         **_load_total_wallet_summary_list(total_balance, fields, is_for_ws=True)
     }
 
 
 def load_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
-                             fields: Union[list, tuple], cross_collaterals: list, schema: str) -> dict:
-    data = _load_futures_wallet_data(raw_data, currencies, assets, fields, cross_collaterals, schema)
-    return data
+                             fields: Union[list, tuple], extra_fields: Union[list, tuple],
+                             cross_collaterals: list, schema: str) -> dict:
+    return _load_futures_wallet_data(raw_data, currencies, assets, fields, extra_fields, cross_collaterals, schema)
 
 
 def load_ws_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
-                                fields: Union[list, tuple], cross_collaterals: list, schema: str) -> dict:
-    data = _load_ws_futures_wallet_data(raw_data, currencies, assets, fields, cross_collaterals, schema)
-    return data
+                                fields: Union[list, tuple], extra_fields: Union[list, tuple],
+                                cross_collaterals: list, schema: str) -> dict:
+    return _load_ws_futures_wallet_data(raw_data, currencies, assets, fields, extra_fields, cross_collaterals, schema)
 
 
 def load_futures_coin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
-                                  fields: Union[list, tuple], cross_collaterals: list, schema: str) -> dict:
-    return _load_futures_wallet_data(raw_data, currencies, assets, fields, cross_collaterals, schema)
+                                  fields: Union[list, tuple], extra_fields: Union[list, tuple],
+                                  cross_collaterals: list, schema: str) -> dict:
+    return load_futures_wallet_data(raw_data, currencies, assets, fields, extra_fields, cross_collaterals, schema)
 
 
 def load_ws_futures_coin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
-                                     fields: Union[list, tuple], cross_collaterals: list, schema: str) -> dict:
-    return _load_ws_futures_wallet_data(raw_data, currencies, assets, fields, cross_collaterals, schema)
+                                     fields: Union[list, tuple], extra_fields: Union[list, tuple],
+                                     cross_collaterals: list, schema: str) -> dict:
+    return load_ws_futures_wallet_data(raw_data, currencies, assets, fields, extra_fields, cross_collaterals, schema)
 
 
-def _update_futures_balances(balances: list, cross_collaterals: list) -> list:
+def _update_futures_extra_balances(balances: list, cross_collaterals: list) -> list:
     for balance in balances:
         for collateral in cross_collaterals:
             if balance['currency'] == collateral['loanCoin']:
@@ -566,7 +622,7 @@ def load_futures_wallet_detail_data(raw_data: dict, asset: str,
     for a in raw_data.get('assets'):
         if a.get('asset', '').upper() == asset.upper():
             balance = _futures_balance_data([a])[0]
-            _update_futures_balances([balance], cross_collaterals)
+            _update_futures_extra_balances([balance], cross_collaterals)
             cross_collaterals = _load_cross_collaterals_data(
                 cross_collaterals, collateral_configs, asset
             )
@@ -655,7 +711,7 @@ def ws_spot_wallet(raw_data: dict, state_data: dict, currencies: dict,
                    assets: Union[list, tuple], fields: Union[list, tuple], schema: str):
     state_data.pop('*', None)
     _state_balances = state_data.pop('bls', {})
-    _balances = spot_ws_balance_data(raw_data.get('B'), _state_balances)
+    _balances, _extra_balances = _spot_ws_balance_data(raw_data.get('B'), _state_balances)
     return _ws_wallet(_balances, _state_balances, state_data, currencies, assets, fields, schema)
 
 
@@ -758,16 +814,18 @@ def _spot_balance_data(balances: list):
                 'currency': asset,
                 'balance': balance,
                 'withdraw_balance': free,
+                'unrealised_pnl': 0,
                 'margin_balance': balance,
+                'maint_margin': 0,
                 'init_margin': locked,
                 'available_margin': free,
                 'type': 'hold',
             }
         )
-    return result
+    return result, None
 
 
-def spot_ws_balance_data(balances: list, state_balances: dict = None):
+def _spot_ws_balance_data(balances: list, state_balances: dict = None):
     result = []
     for b in balances:
         asset = b['asset'] if 'asset' in b else b['a']
@@ -781,23 +839,29 @@ def spot_ws_balance_data(balances: list, state_balances: dict = None):
                 'cur': asset,
                 'bl': balance,
                 'wbl': free,
+                'upnl': 0,
                 'mbl': balance,
+                'mm': 0,
                 'im': locked,
                 'am': free,
                 't': 'hold',
             }
         )
-    return result
+    return result, None
 
 
-def _margin_balance_data(balances: list, max_borrow: float = None, interest_rate: float = None):
-    result = list()
+def _margin_balance_data(balances: list):
+    result = []
+    extra_result = []
     for b in balances:
-        result.append(_get_margin_balance(b, max_borrow, interest_rate))
-    return result
+        wd, ex_wd = _get_margin_balance(b)
+        result.append(wd)
+        extra_result.append(ex_wd)
+    return result, extra_result
 
 
-def _get_margin_balance(balance: dict, max_borrow: float = None, interest_rate: float = None):
+def _get_margin_balance(balance: dict):
+    currency = balance['asset']
     _free = to_float(balance['free'])
     _locked = to_float(balance['locked'])
     borrowed = to_float(balance['borrowed'])
@@ -807,19 +871,56 @@ def _get_margin_balance(balance: dict, max_borrow: float = None, interest_rate: 
     if withdraw_balance < 0:
         withdraw_balance = 0
     wallet_data = {
-        'currency': balance['asset'],
+        'currency': currency,
         'balance': _balance,
         'withdraw_balance': withdraw_balance,
-        'borrowed': borrowed,
-        'available_borrow': max_borrow,
-        'interest': interest,
-        'interest_rate': interest_rate,
+        'unrealised_pnl': 0,
         'margin_balance': _balance,
+        'maint_margin': 0,
         'init_margin': _locked,
         'available_margin': _free,
         'type': 'hold',
     }
-    return wallet_data
+    extra_wallet_data = {
+        'currency': currency,
+        'borrowed': borrowed,
+        'interest': interest,
+    }
+    return wallet_data, extra_wallet_data
+
+
+def _margin_ws_balance_data(balances: list, max_borrow: float = None, interest_rate: float = None):
+    result = []
+    extra_result = []
+    for b in balances:
+        currency = b['asset']
+        _free = to_float(b['free'])
+        _locked = to_float(b['locked'])
+        borrowed = to_float(b['borrowed'])
+        interest = to_float(b['interest'])
+        _balance = round(_free + _locked, 8)
+        withdraw_balance = to_float(b['netAsset']) - (borrowed + interest)
+        if withdraw_balance < 0:
+            withdraw_balance = 0
+        result.append({
+            'cur': currency,
+            'bl': _balance,
+            'wbl': withdraw_balance,
+            'upnl': 0,
+            'mbl': _balance,
+            'mm': 0,
+            'im': _locked,
+            'am': _free,
+            't': 'hold',
+        })
+        extra_result.append({
+            'cur': currency,
+            'bor': borrowed,
+            'abor': max_borrow,
+            'ist': interest,
+            'istr': interest_rate,
+        })
+    return result, extra_result
 
 
 def isolated_margin_balance_data(balances: list, max_borrow: dict = None, interest_rate: dict = None):
@@ -830,8 +931,8 @@ def isolated_margin_balance_data(balances: list, max_borrow: dict = None, intere
     interest_rate_quote_asset = interest_rate.get('quote_asset') if max_borrow else None
     for b in balances:
         try:
-            base_asset = _get_margin_balance(b['baseAsset'], max_borrow_base_asset, interest_rate_base_asset)
-            quote_asset = _get_margin_balance(b['quoteAsset'], max_borrow_quote_asset, interest_rate_quote_asset)
+            base_asset, _ = _get_margin_balance(b['baseAsset'], max_borrow_base_asset, interest_rate_base_asset)
+            quote_asset, _ = _get_margin_balance(b['quoteAsset'], max_borrow_quote_asset, interest_rate_quote_asset)
             result.append({
                 b['symbol'].lower(): {
                     'base_asset': base_asset,
@@ -847,33 +948,6 @@ def isolated_margin_balance_data(balances: list, max_borrow: dict = None, intere
     return result
 
 
-def _margin_ws_balance_data(balances: list, max_borrow: float = None, interest_rate: float = None):
-    result = list()
-    for b in balances:
-        _free = to_float(b['free'])
-        _locked = to_float(b['locked'])
-        borrowed = to_float(b['borrowed'])
-        interest = to_float(b['interest'])
-        _balance = round(_free + _locked, 8)
-        withdraw_balance = to_float(b['netAsset']) - (borrowed + interest)
-        if withdraw_balance < 0:
-            withdraw_balance = 0
-        result.append({
-            'cur': b['asset'],
-            'bl': _balance,
-            'wbl': withdraw_balance,
-            'bor': borrowed,
-            'abor': max_borrow,
-            'ist': interest,
-            'istr': interest_rate,
-            'mbl': _balance,
-            'im': _locked,
-            'am': _free,
-            't': 'hold',
-        })
-    return result
-
-
 def _margin_max_borrow(data):
     if isinstance(data, dict):
         return to_float(data.get('amount'))
@@ -881,39 +955,51 @@ def _margin_max_borrow(data):
 
 
 def _futures_balance_data(balances: list):
-    return [
-        {
-            'currency': b['asset'],
+    result = []
+    extra_result = []
+    for b in balances:
+        currency = b['asset']
+        result.append({
+            'currency': currency,
             'balance': to_float(b['walletBalance']),
             'withdraw_balance': to_float(b['maxWithdrawAmount']),
-            'borrowed': 0.0,
-            'interest': 0.0,
             'unrealised_pnl': to_float(b['unrealizedProfit']),
             'margin_balance': to_float(b['marginBalance']),
             'maint_margin': to_float(b['maintMargin']),
             'init_margin': to_float(b['initialMargin']),
             'available_margin': to_float(b['maxWithdrawAmount']),
             'type': to_wallet_state_type(to_float(b['maintMargin'])),
-        } for b in balances
-    ]
+        })
+        extra_result.append({
+            'currency': currency,
+            'borrowed': 0.0,
+            'interest': 0.0,
+        })
+    return result, extra_result
 
 
 def _ws_futures_balance_data(balances: list):
-    return [
-        {
-            'cur': b['asset'],
+    result = []
+    extra_result = []
+    for b in balances:
+        currency = b['asset']
+        result.append({
+            'cur': currency,
             'bl': to_float(b['walletBalance']),
             'wbl': to_float(b['maxWithdrawAmount']),
-            'bor': 0,
-            'ist': 0,
             'upnl': to_float(b['unrealizedProfit']),
             'mbl': to_float(b['marginBalance']),
             'mm': to_float(b['maintMargin']),
             'im': to_float(b['initialMargin']),
             'am': to_float(b['maxWithdrawAmount']),
             't': to_wallet_state_type(to_float(b['maintMargin'])),
-        } for b in balances
-    ]
+        })
+        extra_result.append({
+            'cur': currency,
+            'bor': 0,
+            'ist': 0,
+        })
+    return result, extra_result
 
 
 def _load_total_wallet_summary_list(summary, fields, is_for_ws=False):

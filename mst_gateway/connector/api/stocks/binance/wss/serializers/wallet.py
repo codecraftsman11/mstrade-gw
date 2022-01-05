@@ -65,7 +65,7 @@ class BinanceWalletSerializer(BinanceSerializer):
     def _wallet_detail(self, item, state_data):
         _state_balances = state_data.pop('bls', {})
         if self._wss_api.schema == OrderSchema.exchange:
-            return dict(bls=utils.spot_ws_balance_data(item.get('B')))
+            return dict(bls=utils._spot_ws_balance_data(item.get('B')))
         elif self._wss_api.schema == OrderSchema.margin2:
             return dict(bls=utils.ws_margin_balance_data(item.get('B'), _state_balances))
 
