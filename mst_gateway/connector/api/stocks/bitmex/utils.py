@@ -484,9 +484,13 @@ def load_wallet_data(raw_data: dict, currencies: dict, assets: Union[tuple, list
     if is_for_ws:
         bls_key = 'bls'
         balances = [load_ws_wallet_detail_data(raw_data)]
+        ex_key = 'ex'
+        extra_data = None
     else:
         bls_key = 'balances'
         balances = [load_wallet_detail_data(raw_data)]
+        ex_key = 'extra_data'
+        extra_data = None
 
     balances_summary = {}
     total_balance = {OrderSchema.margin1: {}}
@@ -498,6 +502,7 @@ def load_wallet_data(raw_data: dict, currencies: dict, assets: Union[tuple, list
     load_total_wallet_summary(balances_summary, total_balance, assets, fields, is_for_ws=is_for_ws)
     return {
         bls_key: balances,
+        ex_key: extra_data,
         **balances_summary,
     }
 

@@ -561,6 +561,7 @@ def _load_ws_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union
         'bls': balances,
         'ex': {
             'tre': raw_data.get('canTrade'),
+            'bls': extra_balances,
             **_load_total_wallet_summary_list(total_extra_balance, extra_fields, is_for_ws=True)
         },
         **_load_total_wallet_summary_list(total_balance, fields, is_for_ws=True)
