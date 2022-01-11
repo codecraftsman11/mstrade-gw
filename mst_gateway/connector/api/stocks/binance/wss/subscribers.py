@@ -214,7 +214,7 @@ class BinanceWalletSubscriber(BinanceSubscriber):
         while True:
             if wallet_state := await self.get_wallet_state(api, client):
                 api.partial_state_data[self.subscription].update({'wallet_state': wallet_state})
-            await asyncio.sleep(5)
+            await asyncio.sleep(10)
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
         api.tasks.append(asyncio.create_task(self.subscribe_exchange_rates(api)))
