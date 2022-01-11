@@ -3,8 +3,8 @@ import asyncio
 from asyncio import CancelledError
 from typing import TYPE_CHECKING, Optional
 from websockets.exceptions import ConnectionClosedError
-
-from mst_gateway.exceptions import QueryError
+from mst_gateway.connector.api.types import OrderSchema
+from mst_gateway.exceptions import QueryError, GatewayError
 from .. import utils
 from ..lib import AsyncClient
 from ....wss.subscriber import Subscriber
@@ -159,10 +159,75 @@ class BinanceWalletSubscriber(BinanceSubscriber):
             exchange_rates = state_data.get(api.name.lower(), {}).get(api.schema, {})
             api.partial_state_data[self.subscription].update({'exchange_rates': exchange_rates})
 
+    @classmethod
+    def format_balances(cls, wallet_data: dict) -> dict:
+        balances = wallet_data.pop('bls', [])
+        updated_balances = {}
+        for balance in balances:
+            updated_balances[balance['cur'].lower()] = balance
+        wallet_data['bls'] = updated_balances
+        return wallet_data
+
+    @classmethod
+    def format_extra_balances(cls, wallet_data: dict) -> dict:
+        extra_balances = wallet_data.get('ex', {}).pop('bls', [])
+        updated_extra_balances = {}
+        for balance in extra_balances:
+            updated_extra_balances[balance['cur'].lower()] = balance
+        wallet_data.setdefault('ex', {})['bls'] = updated_extra_balances
+        return wallet_data
+
+    async def get_wallet_state(self, api: BinanceWssApi, client: AsyncClient):
+        schema_handlers = {
+            OrderSchema.exchange: (client.get_account, utils.load_ws_spot_wallet_data),
+            OrderSchema.margin2: (client.get_margin_account, utils.load_ws_margin_wallet_data),
+            OrderSchema.futures: (client.futures_account_v2, utils.load_ws_futures_wallet_data),
+            OrderSchema.futures_coin: (client.futures_coin_account, utils.load_ws_futures_coin_wallet_data),
+        }
+        schema = api.schema
+        kwargs = {
+            'schema': schema,
+            'assets': ('btc', 'usd'),
+            'fields': ('bl', 'upnl', 'mbl'),
+        }
+        try:
+            account = await schema_handlers[schema][0]()
+            exchange_rates = await api.storage.get(StateStorageKey.exchange_rates, api.name, schema)
+        except GatewayError:
+            return {}
+        kwargs.update({
+            'raw_data': account,
+            'currencies': exchange_rates,
+        })
+        if schema in (OrderSchema.margin2, OrderSchema.futures, OrderSchema.futures_coin):
+            kwargs['extra_fields'] = ('bor', 'ist')
+        if schema in (OrderSchema.futures, OrderSchema.futures_coin):
+            kwargs['cross_collaterals'] = []
+
+        wallet_data = schema_handlers[schema][1](**kwargs)
+        wallet_state = self.format_balances(wallet_data)
+        if schema != OrderSchema.exchange:
+            wallet_state = self.format_extra_balances(wallet_state)
+        return wallet_state
+
+    async def update_wallet_state(self, api: BinanceWssApi, client: AsyncClient):
+        while True:
+            if wallet_state := await self.get_wallet_state(api, client):
+                api.partial_state_data[self.subscription].update({'wallet_state': wallet_state})
+            await asyncio.sleep(5)
+
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
         api.tasks.append(asyncio.create_task(self.subscribe_exchange_rates(api)))
+        async with AsyncClient(
+            api_key=api.auth.get('api_key'), api_secret=api.auth.get('api_secret'), testnet=api.test
+        ) as client:
+            api.tasks.append(asyncio.create_task(self.update_wallet_state(api, client)))
+            wallet_state = await self.get_wallet_state(api, client)
         exchange_rates = await api.storage.get(StateStorageKey.exchange_rates, exchange=api.name, schema=api.schema)
-        return {'exchange_rates': exchange_rates}
+        return {
+            'exchange_rates': exchange_rates,
+            'wallet_state': wallet_state,
+        }
 
 
 class BinanceOrderSubscriber(BinanceSubscriber):
