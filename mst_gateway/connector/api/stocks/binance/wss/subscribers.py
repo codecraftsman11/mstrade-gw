@@ -1,5 +1,6 @@
 from __future__ import annotations
 import asyncio
+from copy import deepcopy
 from asyncio import CancelledError
 from typing import TYPE_CHECKING, Optional
 from websockets.exceptions import ConnectionClosedError
@@ -160,22 +161,12 @@ class BinanceWalletSubscriber(BinanceSubscriber):
             api.partial_state_data[self.subscription].update({'exchange_rates': exchange_rates})
 
     @classmethod
-    def format_balances(cls, wallet_data: dict) -> dict:
-        balances = wallet_data.pop('bls', [])
-        updated_balances = {}
-        for balance in balances:
-            updated_balances[balance['cur'].lower()] = balance
-        wallet_data['bls'] = updated_balances
-        return wallet_data
-
-    @classmethod
-    def format_extra_balances(cls, wallet_data: dict) -> dict:
-        extra_balances = wallet_data.get('ex', {}).pop('bls', [])
-        updated_extra_balances = {}
-        for balance in extra_balances:
-            updated_extra_balances[balance['cur'].lower()] = balance
-        wallet_data.setdefault('ex', {})['bls'] = updated_extra_balances
-        return wallet_data
+    def mapping_wallet_data(cls, wallet_data: dict) -> dict:
+        wallet_state = deepcopy(wallet_data)
+        wallet_state['bls'] = {b['cur'].lower(): b for b in wallet_state.pop('bls', [])}
+        if wallet_state.get('ex'):
+            wallet_state['ex']['bls'] = {b['cur'].lower(): b for b in wallet_state['ex'].pop('bls', [])}
+        return wallet_state
 
     async def get_wallet_state(self, api: BinanceWssApi, client: AsyncClient):
         schema_handlers = {
@@ -191,42 +182,43 @@ class BinanceWalletSubscriber(BinanceSubscriber):
             'fields': ('bl', 'upnl', 'mbl'),
         }
         try:
-            account = await schema_handlers[schema][0]()
-            exchange_rates = await api.storage.get(StateStorageKey.exchange_rates, api.name, schema)
+            kwargs['raw_data'] = await schema_handlers[schema][0]()
+            kwargs['currencies'] = await api.storage.get(StateStorageKey.exchange_rates, api.name, schema)
         except GatewayError:
-            return {}
-        kwargs.update({
-            'raw_data': account,
-            'currencies': exchange_rates,
-        })
-        if schema in (OrderSchema.margin2, OrderSchema.futures, OrderSchema.futures_coin):
+            return None, None
+        if schema in (OrderSchema.margin2, OrderSchema.futures):
             kwargs['extra_fields'] = ('bor', 'ist')
-        if schema in (OrderSchema.futures, OrderSchema.futures_coin):
+        if schema in (OrderSchema.futures,):
             kwargs['cross_collaterals'] = []
 
         wallet_data = schema_handlers[schema][1](**kwargs)
-        wallet_state = self.format_balances(wallet_data)
-        if schema != OrderSchema.exchange:
-            wallet_state = self.format_extra_balances(wallet_state)
-        return wallet_state
+        wallet_state = self.mapping_wallet_data(wallet_data)
+        return wallet_data, wallet_state
 
-    async def update_wallet_state(self, api: BinanceWssApi, client: AsyncClient):
+    async def subscribe_wallet_state(self, api: BinanceWssApi, client: AsyncClient):
         while True:
-            if wallet_state := await self.get_wallet_state(api, client):
+            wallet_data, wallet_state = await self.get_wallet_state(api, client)
+            if wallet_data and wallet_state:
                 api.partial_state_data[self.subscription].update({'wallet_state': wallet_state})
-            await asyncio.sleep(10)
+
+                message = {
+                    'acc': api.account_name,
+                    'tb': self.subscription,
+                    'sch': api.schema,
+                    'act': 'update',
+                    'd': [wallet_data]
+                }
+                await api.send_message({self.subscription: message})
+            await asyncio.sleep(30)
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
+        client = AsyncClient(api_key=api.auth.get('api_key'), api_secret=api.auth.get('api_secret'), testnet=api.test)
         api.tasks.append(asyncio.create_task(self.subscribe_exchange_rates(api)))
-        async with AsyncClient(
-            api_key=api.auth.get('api_key'), api_secret=api.auth.get('api_secret'), testnet=api.test
-        ) as client:
-            api.tasks.append(asyncio.create_task(self.update_wallet_state(api, client)))
-            wallet_state = await self.get_wallet_state(api, client)
+        api.tasks.append(asyncio.create_task(self.subscribe_wallet_state(api, client)))
+
         exchange_rates = await api.storage.get(StateStorageKey.exchange_rates, exchange=api.name, schema=api.schema)
         return {
-            'exchange_rates': exchange_rates,
-            'wallet_state': wallet_state,
+            'exchange_rates': exchange_rates
         }
 
 
@@ -287,7 +279,8 @@ class BinanceFuturesPositionSubscriber(BinancePositionSubscriber):
                 api_key=api.auth.get('api_key'), api_secret=api.auth.get('api_secret'), testnet=api.test
         ) as client:
             try:
-                exchange_rates = await api.storage.get(StateStorageKey.exchange_rates, exchange=api.name, schema=api.schema)
+                exchange_rates = await api.storage.get(
+                    StateStorageKey.exchange_rates, exchange=api.name, schema=api.schema)
                 account_info = await client.futures_account_v2()
                 leverage_brackets = await client.futures_leverage_bracket()
                 return {
@@ -316,7 +309,8 @@ class BinanceFuturesCoinPositionSubscriber(BinanceFuturesPositionSubscriber):
                 account_info = await client.futures_coin_account()
                 state_data = await api.storage.get(StateStorageKey.symbol, api.name, api.schema)
                 leverage_brackets = await client.futures_coin_leverage_bracket()
-                exchange_rates = await api.storage.get(StateStorageKey.exchange_rates, exchange=api.name, schema=api.schema)
+                exchange_rates = await api.storage.get(
+                    StateStorageKey.exchange_rates, exchange=api.name, schema=api.schema)
                 return {
                     'position_state': utils.load_futures_coin_positions_state(account_info, state_data),
                     'leverage_brackets': utils.load_leverage_brackets_as_dict(leverage_brackets),

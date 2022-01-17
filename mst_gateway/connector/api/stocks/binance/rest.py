@@ -494,19 +494,12 @@ class BinanceRestApi(StockRestApi):
         is_for_ws = kwargs.pop('is_for_ws', False)
         assets = kwargs.pop('assets', ('btc', 'usd'))
         fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance'))
-        extra_fields = kwargs.pop('extra_fields', ('borrowed', 'interest'))
         data = self._binance_api(self._handler.futures_coin_account, **kwargs)
         currencies = self.storage.get(StateStorageKey.exchange_rates, self.name, schema)
-        cross_collaterals = []
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl')
-            extra_fields = ('bor', 'ist')
-            return utils.load_ws_futures_coin_wallet_data(
-                data, currencies, assets, fields, extra_fields, cross_collaterals, schema
-            )
-        return utils.load_futures_coin_wallet_data(
-            data, currencies, assets, fields, extra_fields, cross_collaterals, schema
-        )
+            return utils.load_ws_futures_coin_wallet_data(data, currencies, assets, fields, schema)
+        return utils.load_futures_coin_wallet_data(data, currencies, assets, fields, schema)
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
         partial = kwargs.pop('partial', None)

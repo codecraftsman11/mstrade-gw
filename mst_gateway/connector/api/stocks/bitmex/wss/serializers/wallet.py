@@ -29,8 +29,6 @@ class BitmexWalletSerializer(BitmexSerializer):
         for balance in balances:
             if balance.get('cur', '').lower() == item.get('currency', '').lower():
                 self._check_balances_data(balance, item)
-        if self._wss_api.register_state and not self.exchange_rates:
-            return None
         assets = ('btc', 'usd')
         fields = ('bl', 'upnl', 'mbl')
         return load_wallet_data(item, self.exchange_rates, assets, fields, is_for_ws=True)

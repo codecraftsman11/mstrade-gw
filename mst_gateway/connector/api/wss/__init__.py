@@ -18,7 +18,6 @@ class StockWssApi(Connector):
     router_class = Router
     subscribers: Dict[str, Subscriber] = {}
     auth_subscribers: Dict[str, Subscriber] = {}
-    register_state_groups = []
     name = "Base"
     BASE_URL = None
     TEST_URL = None
@@ -60,6 +59,7 @@ class StockWssApi(Connector):
         self.register_state = register_state
         super().__init__(auth, logger)
         self.__init_partial_state_data()
+        self.__recv_callback = None
 
     def _load_url(self, url):
         if self.test:
@@ -217,6 +217,7 @@ class StockWssApi(Connector):
         return self._handler
 
     def create_task(self, recv_callback, **kwargs):
+        self.__recv_callback = recv_callback
         _task = asyncio.create_task(
             self.consume(
                 recv_callback,
@@ -233,6 +234,7 @@ class StockWssApi(Connector):
         return True
 
     def run(self, recv_callback, loop=None, **kwargs):
+        self.__recv_callback = recv_callback
         if not loop:
             loop = asyncio.new_event_loop()
         loop.run_until_complete(
@@ -298,6 +300,8 @@ class StockWssApi(Connector):
             except Exception as exc:
                 self._error = errors.ERROR_INVALID_DATA
                 self._logger.error("Error validating incoming message %s; Details: %s", message, exc)
+                import traceback
+                traceback.print_exc()
                 continue
             if not data:
                 continue
@@ -308,6 +312,13 @@ class StockWssApi(Connector):
                     on_message(data)
                 response = True
         return response
+
+    async def send_message(self, data):
+        if self.__recv_callback:
+            if asyncio.iscoroutinefunction(self.__recv_callback):
+                await self.__recv_callback(data)
+            else:
+                self.__recv_callback(data)
 
     def _get_subscriber(self, subscr_name: str) -> Optional[Subscriber]:
         subscr_name = subscr_name.lower()
