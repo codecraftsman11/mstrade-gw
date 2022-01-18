@@ -196,7 +196,7 @@ def load_trade_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     data = {
         'time': to_date(raw_data.get('time')),
         'price': to_float(raw_data.get('price')),
-        'volume': raw_data.get('qty'),
+        'volume': to_float(raw_data.get('qty')),
         'side': load_order_side(raw_data.get('isBuyerMaker'))
     }
     if isinstance(state_data, dict):
