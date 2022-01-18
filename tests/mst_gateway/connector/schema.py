@@ -152,39 +152,39 @@ ORDER_COMMISSION_FIELDS = {
     'type': str,
 }
 
-BASE_WALLET_DETAIL_FIELDS = {
-    'currency': str,
-    'balance': Use(float_valid),
-    'withdraw_balance': Use(float_valid),
-    'margin_balance': Use(float_valid),
-    'init_margin': Use(float_valid),
-    'available_margin': Use(float_valid),
-    'type': str,
-}
-WALLET_DETAIL_FIELDS = {
-    OrderSchema.margin1: {
-        **BASE_WALLET_DETAIL_FIELDS,
-    },
-    OrderSchema.exchange: {
-        **BASE_WALLET_DETAIL_FIELDS,
-    },
-    OrderSchema.futures: {
-        'unrealised_pnl': Use(float_valid),
-        'maint_margin': Use(float_valid),
-        'borrowed': Use(float_valid),
-        'interest': Use(float_valid),
-        'cross_collaterals': list,
-        **BASE_WALLET_DETAIL_FIELDS,
-    },
-    OrderSchema.futures_coin: {
-        'unrealised_pnl': Use(float_valid),
-        'maint_margin': Use(float_valid),
-        'borrowed': Use(float_valid),
-        'interest': Use(float_valid),
-        'cross_collaterals': list,
-        **BASE_WALLET_DETAIL_FIELDS,
-    },
-}
+# BASE_WALLET_DETAIL_FIELDS = {
+#     'currency': str,
+#     'balance': Use(float_valid),
+#     'withdraw_balance': Use(float_valid),
+#     'margin_balance': Use(float_valid),
+#     'init_margin': Use(float_valid),
+#     'available_margin': Use(float_valid),
+#     'type': str,
+# }
+# WALLET_DETAIL_FIELDS = {
+#     OrderSchema.margin1: {
+#         **BASE_WALLET_DETAIL_FIELDS,
+#     },
+#     OrderSchema.exchange: {
+#         **BASE_WALLET_DETAIL_FIELDS,
+#     },
+#     OrderSchema.futures: {
+#         'unrealised_pnl': Use(float_valid),
+#         'maint_margin': Use(float_valid),
+#         'borrowed': Use(float_valid),
+#         'interest': Use(float_valid),
+#         'cross_collaterals': list,
+#         **BASE_WALLET_DETAIL_FIELDS,
+#     },
+#     OrderSchema.futures_coin: {
+#         'unrealised_pnl': Use(float_valid),
+#         'maint_margin': Use(float_valid),
+#         'borrowed': Use(float_valid),
+#         'interest': Use(float_valid),
+#         'cross_collaterals': list,
+#         **BASE_WALLET_DETAIL_FIELDS,
+#     },
+# }
 
 ASSETS_BALANCE = {
     str: Use(float_valid)

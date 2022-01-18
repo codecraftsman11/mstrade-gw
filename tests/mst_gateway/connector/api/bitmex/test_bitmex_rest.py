@@ -277,19 +277,21 @@ class TestBitmexRestApi:
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
         indirect=['rest'],
     )
-    def test_get_wallet_summery(self, rest: BitmexRestApi, schema: str):
-        wallet_summary_schema = Schema(fields.WALLET_SUMMARY_FIELDS)
+    def test_get_wallet_summary(self, rest: BitmexRestApi, schema: str):
         wallet_summary = rest.get_wallet_summary(schemas=[schema])
-        assert wallet_summary_schema.validate(wallet_summary) == wallet_summary
+        assert Schema(fields.WALLET_SUMMARY_FIELDS).validate(wallet_summary) == wallet_summary
+
+        total_cross_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
+        for key in wallet_summary.keys():
+            assert total_cross_schema.validate(wallet_summary[key]) == wallet_summary[key]
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
         indirect=['rest'],
     )
     def test_get_wallet_detail(self, rest: BitmexRestApi, schema: str):
-        wallet_detail_schema = Schema(fields.WALLET_DETAIL_FIELDS[schema])
         wallet_detail = rest.get_wallet_detail(schema=schema, asset=data.ASSET)
-        assert wallet_detail_schema.validate(wallet_detail[schema]) == wallet_detail[schema]
+        assert Schema(fields.WALLET_BALANCE_FIELDS).validate(wallet_detail) == wallet_detail
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
