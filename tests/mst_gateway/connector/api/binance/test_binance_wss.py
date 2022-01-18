@@ -450,12 +450,6 @@ class TestBinanceWssApi:
             _expect[0]['data'][0]['B'].pop(1)
             assert wss._split_message(deepcopy(message)) == _expect
 
-    @classmethod
-    def validate_balances(cls, schema, balances):
-        balance_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS['balance'][schema])
-        for balance in balances:
-            assert balance_schema.validate(balance) == balance
-
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
         'wss, messages, expect', [('tbinance_spot',
@@ -474,8 +468,9 @@ class TestBinanceWssApi:
         schema = wss.schema
         self.init_partial_state(wss, subscr_name)
         header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)
-        data_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name][schema])
-        summary_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
+        data_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name])
+        total_cross_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
+        balance_schema = Schema(fields.WS_WALLET_BALANCE_FIELDS)
         for i, message in enumerate(messages):
             assert await wss.get_data(deepcopy(message)) == {}
 
@@ -486,39 +481,16 @@ class TestBinanceWssApi:
             assert header_schema.validate(_data) == _data
             for d in _data['d']:
                 assert data_schema.validate(d) == d
-                assert summary_schema.validate(d['tbl']) == d['tbl']
-                if schema in (OrderSchema.futures, OrderSchema.futures_coin):
-                    for key in ('tupnl', 'tmbl', 'tbor', 'tist'):
-                        assert summary_schema.validate(d[key]) == d[key]
-                self.validate_balances(schema, d['bls'])
-            assert data == expect[i]
-
-    @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        'wss, messages, expect', [('tbinance_spot',
-                                   wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.exchange],
-                                   wallet_message.DEFAULT_WALLET_DETAIL_GET_DATA_RESULT[OrderSchema.exchange]),
-                                  ('tbinance_futures',
-                                   wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.futures],
-                                   wallet_message.DEFAULT_WALLET_DETAIL_GET_DATA_RESULT[OrderSchema.futures]),
-                                  ('tbinance_futures_coin',
-                                   wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.futures_coin],
-                                   wallet_message.DEFAULT_WALLET_DETAIL_GET_DATA_RESULT[OrderSchema.futures_coin])],
-        indirect=['wss'],
-    )
-    async def test_get_wallet_detail_data(self, wss: BinanceWssApi, messages, expect):
-        subscr_name = 'wallet'
-        schema = wss.schema
-        self.init_partial_state(wss, subscr_name)
-        header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)
-
-        wss._subscriptions = {subscr_name: {get_asset(schema).lower(): {'1'}}}
-        for i, message in enumerate(messages):
-            data = await wss.get_data(deepcopy(message))
-            _data = data.get(subscr_name)
-            assert header_schema.validate(_data) == _data
-            for d in _data['d']:
-                self.validate_balances(schema, d['bls'])
+                for key in ('tbl', 'tupnl', 'tmbl'):
+                    assert total_cross_schema.validate(d[key]) == d[key]
+                for balance in d['bls']:
+                    assert balance_schema.validate(balance) == balance
+                if ex := d['ex']:
+                    assert Schema(fields.WS_WALLET_EXTRA_FIELDS[schema]).validate(ex) == ex
+                    if ex.get('bls'):
+                        extra_balance_schema = Schema(fields.WS_WALLET_EXTRA_BALANCE_FIELDS)
+                        for v in ex['bls']:
+                            assert extra_balance_schema.validate(v) == v
             assert data == expect[i]
 
     @classmethod
@@ -538,6 +510,10 @@ class TestBinanceWssApi:
             wss.partial_state_data[subscr_name].update({
                 'position_state': position_state,
                 'leverage_brackets': {symbol.lower(): leverage_brackets},
+            })
+        if subscr_name == 'wallet':
+            wss.partial_state_data[subscr_name].update({
+                'wallet_state': wallet_message.DEFAULT_WALLET_STATE[schema]
             })
 
     @pytest.mark.asyncio

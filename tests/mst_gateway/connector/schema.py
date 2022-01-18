@@ -295,6 +295,7 @@ WS_MESSAGE_HEADER_FIELDS = {
     'act': str,
     'd': list,
 }
+
 WS_MESSAGE_DATA_FIELDS = {
     'order': {
         'eoid': str,
@@ -336,11 +337,6 @@ WS_MESSAGE_DATA_FIELDS = {
         'lp': Or(None, float),
         'act': str,
         'ss': Or(None, str),
-    },
-    'position_upnl': {
-        'base': Or(None, float),
-        'usd': Or(None, float),
-        'btc': Or(None, float),
     },
     'quote_bin': {
         'tm': Use(iso_datetime_valid),
@@ -390,19 +386,50 @@ WS_MESSAGE_DATA_FIELDS = {
         'tupnl': dict,
         'tmbl': dict,
         'ex': Or(None, dict)
-    },
-    'wallet_balance': {
-        'cur': str,
-        'bl': Use(float_valid),
-        'wbl': Use(float_valid),
-        'upnl': Use(float_valid),
-        'mbl': Use(float_valid),
-        'mm': Use(float_valid),
-        'im': Use(float_valid),
-        'am': Use(float_valid),
-        't': str
-    },
-    'wallet_extra': {
-
     }
+}
+
+WS_POSITION_CROSS_AMOUNT_FIELDS = {
+    'base': Or(None, float),
+    'usd': Or(None, float),
+    'btc': Or(None, float),
+}
+
+WS_WALLET_BALANCE_FIELDS = {
+    'cur': str,
+    'bl': Use(float_valid),
+    'wbl': Use(float_valid),
+    'upnl': Use(float_valid),
+    'mbl': Use(float_valid),
+    'mm': Use(float_valid),
+    'im': Use(float_valid),
+    'am': Use(float_valid),
+    't': str
+}
+
+WS_WALLET_EXTRA_FIELDS = {
+    OrderSchema.margin2: {
+        'bls': list,
+        'tre': bool,
+        'trse': bool,
+        'bore': bool,
+        'mlvl': Use(float_valid),
+        'tbor': dict,
+        'tist': dict
+    },
+    OrderSchema.futures: {
+        'bls': list,
+        'tre': bool,
+        'tbor': dict,
+        'tist': dict
+    },
+    OrderSchema.futures_coin: {
+        'tre': bool
+    }
+}
+
+WS_WALLET_EXTRA_BALANCE_FIELDS = {
+    'cur': str,
+    'bor': Use(float_valid),
+    'ist': Use(float_valid)
 }

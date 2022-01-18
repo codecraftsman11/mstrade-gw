@@ -633,7 +633,7 @@ def to_float(token: Union[int, float, str, None]) -> Optional[float]:
     try:
         return float(token)
     except (ValueError, TypeError):
-        return None
+        return 0.0
 
 
 def symbol2stock(symbol):

@@ -282,7 +282,7 @@ class TestBitmexWssApi:
         header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)
         data_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name])
         total_cross_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
-        balance_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS['wallet_balance'])
+        balance_schema = Schema(fields.WS_WALLET_BALANCE_FIELDS)
         for data in default_data:
             message = json.loads(data['message'])
             wss_data = await wss.get_data(deepcopy(message))

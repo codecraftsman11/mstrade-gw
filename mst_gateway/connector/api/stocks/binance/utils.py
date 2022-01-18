@@ -806,7 +806,7 @@ def _load_ws_futures_balances(raw_data: dict, state_data: dict):
     Update wallet state data by incoming message
     """
     balances = state_data['bls']
-    extra_balances = state_data['ex']['bls']
+    extra_balances = state_data['ex'].get('bls', {})
 
     positions_upnl = {}
     for position in raw_data.get('a', {}).get('P', []):
@@ -862,6 +862,29 @@ def ws_futures_wallet(raw_data: dict, schema: str, state_data: dict, exchange_ra
             **_load_total_wallet_summary_list(total_extra_balance, extra_fields, is_for_ws=True),
             'tre': state_data['ex'].get('tre'),
             'bls': extra_balances,
+        },
+    }
+
+
+def ws_futures_coin_wallet(raw_data: dict, schema: str, state_data: dict, exchange_rates: dict,
+                           fields: iter, extra_fields: iter, assets: iter):
+    """
+    BinanceWalletSerializer
+    """
+    balances, _ = _load_ws_futures_balances(raw_data, state_data)
+    total_balance = {}
+    wallet_summary_in_usd = load_wallet_summary_in_usd(
+        exchange_rates, balances, fields, is_for_ws=True
+    )
+    for asset in assets:
+        total_balance[asset] = convert_to_currency(
+            wallet_summary_in_usd, exchange_rates.get(to_exchange_asset(asset, schema))
+        )
+    return {
+        **_load_total_wallet_summary_list(total_balance, fields, is_for_ws=True),
+        'bls': balances,
+        'ex': {
+            'tre': state_data['ex'].get('tre')
         },
     }
 
