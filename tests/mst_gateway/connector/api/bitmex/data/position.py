@@ -14,15 +14,15 @@ DEFAULT_POSITION_DATA = {
                         {
                             "tm": "2021-12-18T21:47:29.045000",
                             "s": "XBTUSD",
-                            "mp": None,
+                            "mp": 0.0,
                             "upnl": {
                                 "base": 0.0,
                                 "btc": 0.0,
                                 "usd": 0.0
                             },
                             "vl": 0.0,
-                            "lp": None,
-                            "ep": None,
+                            "lp": 0.0,
+                            "ep": 0.0,
                             "sd": None,
                             "lvrp": "cross",
                             "lvr": 100.0,

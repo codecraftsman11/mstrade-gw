@@ -33,7 +33,7 @@ class BitmexPositionSerializer(BitmexSerializer):
             if item.get('liquidationPrice') is None:
                 item['liquidationPrice'] = state[0]['lp']
             if item.get('unrealisedPnl') is None:
-                item['unrealisedPnl'] = state[0]['upnl']
+                item['unrealisedPnl'] = state[0]['upnl']['base']
             if item.get('leverage') is None:
                 item['leverage'] = state[0]['lvr']
             if item.get('crossMargin') is None:
