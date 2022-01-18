@@ -163,35 +163,29 @@ class TestBinanceRestApi:
                         assert total_cross_schema.validate(extra_data[key]) == extra_data[key]
 
     @pytest.mark.parametrize(
-        'rest, schema, expect', [
-            ('tbinance_spot', OrderSchema.exchange, [OrderSchema.exchange]),
-            ('tbinance_futures', OrderSchema.futures, [OrderSchema.exchange, OrderSchema.futures]),
-            ('tbinance_futures', OrderSchema.futures_coin, [OrderSchema.exchange, OrderSchema.futures_coin]),
+        'rest, schema', [
+            ('tbinance_spot', OrderSchema.exchange),
+            ('tbinance_futures', OrderSchema.futures),
+            ('tbinance_futures', OrderSchema.futures_coin),
         ],
         indirect=['rest'],
     )
-    def test_get_wallet_detail(self, rest: BinanceRestApi, schema, expect):
-        wallet_detail = rest.get_wallet_detail(schema, get_asset(schema))
-        assert list(wallet_detail.keys()) == expect
-        assert Schema(fields.WALLET_DETAIL_FIELDS[schema]).validate(wallet_detail[schema]) == wallet_detail[schema]
+    def test_get_wallet_detail(self, rest: BinanceRestApi, schema):
+        wallet_detail = rest.get_wallet_detail(schema=schema, asset=get_asset(schema))
+        assert Schema(fields.WALLET_BALANCE_FIELDS).validate(wallet_detail) == wallet_detail
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_futures', OrderSchema.futures),
-                         ('tbinance_futures', OrderSchema.futures_coin)],
+        'rest, schema', [
+            ('tbinance_spot', OrderSchema.exchange),
+            ('tbinance_futures', OrderSchema.futures),
+            ('tbinance_futures', OrderSchema.futures_coin),
+        ],
         indirect=['rest'],
     )
-    def test_get_wallet_detail_partial(self, rest: BinanceRestApi, schema):
-        wallet_detail = rest.get_wallet_detail(schema, get_asset(schema), partial=True)
-        assert Schema(fields.WALLET_DETAIL_FIELDS[schema]).validate(wallet_detail) == wallet_detail
-
-    @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin2),
-                         ('tbinance_spot', OrderSchema.margin3), ('tbinance_futures', OrderSchema.futures_coin)],
-        indirect=['rest'],
-    )
-    def tes_get_cross_collaterals_invalid_schema(self, rest: BinanceRestApi, schema):
-        with pytest.raises(ConnectorError):
-            rest.get_cross_collaterals(schema)
+    def test_get_wallet_extra_data(self, rest: BinanceRestApi, schema):
+        wallet_extra = rest.get_wallet_extra_data(schema=schema, asset=get_asset(schema))
+        if wallet_extra:
+            assert Schema(fields.WALLET_EXTRA_DATA_FIELDS[schema]).validate(wallet_extra) == wallet_extra
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_futures', OrderSchema.futures),
@@ -337,11 +331,12 @@ class TestBinanceRestApi:
         indirect=['rest'],
     )
     def test_get_wallet_summary(self, rest: BinanceRestApi, schemas):
-        wallet_summary = rest.get_wallet_summary(schemas)
+        wallet_summary = rest.get_wallet_summary(schemas=schemas)
         assert Schema(fields.WALLET_SUMMARY_FIELDS).validate(wallet_summary) == wallet_summary
-        summary_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
-        for summary in wallet_summary.values():
-            assert summary_schema.validate(summary) == summary
+
+        total_cross_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
+        for key in wallet_summary.keys():
+            assert total_cross_schema.validate(wallet_summary[key]) == wallet_summary[key]
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin2),

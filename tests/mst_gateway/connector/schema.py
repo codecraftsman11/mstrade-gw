@@ -141,6 +141,23 @@ WALLET_EXTRA_BALANCE_FIELDS = {
 }
 
 
+WALLET_EXTRA_DATA_FIELDS = {
+    OrderSchema.margin2: {
+        'currency': str,
+        'borrowed': Use(float_valid),
+        'interest': Use(float_valid),
+        'interest_rate': Use(float_valid),
+        'available_borrow': Use(float_valid)
+    },
+    OrderSchema.futures: {
+        'currency': str,
+        'borrowed': Use(float_valid),
+        'interest': Use(float_valid),
+        'cross_collaterals': list
+    }
+}
+
+
 USER_FIELDS = {
     'id': str
 }
@@ -151,40 +168,6 @@ ORDER_COMMISSION_FIELDS = {
     'taker': Use(float_valid),
     'type': str,
 }
-
-# BASE_WALLET_DETAIL_FIELDS = {
-#     'currency': str,
-#     'balance': Use(float_valid),
-#     'withdraw_balance': Use(float_valid),
-#     'margin_balance': Use(float_valid),
-#     'init_margin': Use(float_valid),
-#     'available_margin': Use(float_valid),
-#     'type': str,
-# }
-# WALLET_DETAIL_FIELDS = {
-#     OrderSchema.margin1: {
-#         **BASE_WALLET_DETAIL_FIELDS,
-#     },
-#     OrderSchema.exchange: {
-#         **BASE_WALLET_DETAIL_FIELDS,
-#     },
-#     OrderSchema.futures: {
-#         'unrealised_pnl': Use(float_valid),
-#         'maint_margin': Use(float_valid),
-#         'borrowed': Use(float_valid),
-#         'interest': Use(float_valid),
-#         'cross_collaterals': list,
-#         **BASE_WALLET_DETAIL_FIELDS,
-#     },
-#     OrderSchema.futures_coin: {
-#         'unrealised_pnl': Use(float_valid),
-#         'maint_margin': Use(float_valid),
-#         'borrowed': Use(float_valid),
-#         'interest': Use(float_valid),
-#         'cross_collaterals': list,
-#         **BASE_WALLET_DETAIL_FIELDS,
-#     },
-# }
 
 ASSETS_BALANCE = {
     str: Use(float_valid)

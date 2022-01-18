@@ -474,14 +474,25 @@ def load_isolated_margin_wallet_balances(raw_data: dict) -> list:
     return isolated_margin_balance_data(raw_data.get('assets'))
 
 
-def load_margin_wallet_detail_data(raw_data: dict, asset: str,
-                                   max_borrow: dict, interest_rate: float) -> dict:
+def load_margin_wallet_detail_data(raw_data: dict, asset: str) -> dict:
     for a in raw_data.get('userAssets'):
         if a.get('asset', '').upper() == asset.upper():
             return _margin_balance_data(
                 balances=[a]
             )[0][0]
     raise ConnectorError(f"Invalid asset {asset}.")
+
+
+def load_margin_wallet_extra_data(raw_data: dict, asset: str, max_borrow: dict, interest_rate: float) -> dict:
+    data = {}
+    for a in raw_data.get('userAssets'):
+        if a.get('asset', '').upper() == asset.upper():
+            data['currency'] = asset.upper()
+            data['interest'] = to_float(raw_data.get('interest'))
+            data['borrowed'] = to_float(raw_data.get('borrowed'))
+            data['interest_rate'] = interest_rate
+            data['available_borrow'] = _margin_max_borrow(max_borrow)
+    return data
 
 
 def get_vip(data: dict) -> str:
@@ -628,25 +639,18 @@ def load_future_coin_wallet_balances(raw_data: dict) -> list:
     return _futures_balance_data(raw_data.get('assets'))[0]
 
 
-def load_futures_wallet_detail_data(raw_data: dict, asset: str,
-                                    cross_collaterals: list, collateral_configs: list) -> dict:
+def load_futures_wallet_detail_data(raw_data: dict, asset: str) -> dict:
     for a in raw_data.get('assets'):
         if a.get('asset', '').upper() == asset.upper():
-            balance = _futures_balance_data([a])[0][0]
-            _update_futures_extra_balances([balance], cross_collaterals)
-            cross_collaterals = _load_cross_collaterals_data(
-                cross_collaterals, collateral_configs, asset
-            )
-            balance['cross_collaterals'] = cross_collaterals
-            return balance
+            return _futures_balance_data([a])[0][0]
     raise ConnectorError(f"Invalid asset {asset}.")
 
 
-def _load_cross_collaterals_data(cross_collaterals_data: list, collateral_configs: list, asset: str) -> list:
+def load_futures_wallet_extra_data(cross_collaterals_data: dict, collateral_configs: list, asset: str) -> dict:
     """ combining cross_collaterals data and collateral_configs data """
 
     collaterals = {}
-    for collateral_coin in cross_collaterals_data:
+    for collateral_coin in cross_collaterals_data.get('crossCollaterals', []):
         if collateral_coin.get('loanCoin', '').upper() == asset.upper():
             data = {
                 'collateral_currency': collateral_coin.get('collateralCoin'),
@@ -667,7 +671,12 @@ def _load_cross_collaterals_data(cross_collaterals_data: list, collateral_config
         'interest_grace_period': to_float(config.get('interestGracePeriod')),
         **collaterals.get(config.get('collateralCoin'), {})
     } for config in collateral_configs]
-    return cross_collaterals
+    return {
+        'currency': asset.upper(),
+        'interest': to_float(cross_collaterals_data.get('totalInterest')),
+        'borrowed': to_float(cross_collaterals_data.get('totalBorrowed')),
+        'cross_collaterals': cross_collaterals
+    }
 
 
 def load_futures_cross_collaterals_data(cross_collaterals: list) -> list:
@@ -889,80 +898,11 @@ def wallet_message(schema: str, state_data: dict, exchange_rates: dict, fields: 
         },
     }
 
-
-# def ws_spot_balance_data(balances: list):
-#     data, _ = _spot_ws_balance_data(balances)
-#     return data
-
-
-# def ws_margin_balance_data(balances: list, state_data: dict):
-#     result = []
-#     for b in balances:
-#         _currency = b['a'].lower()
-#         _currency_state = state_data.get('bls', {}).get(_currency, {})
-#         _currency_extra_state = state_data.get('ex', {}).get('bls', {}).get(_currency, {})
-#         _free = to_float(b['f'])
-#         _locked = to_float(b['l'])
-#         _balance = round(_free + _locked, 8)
-#         result.append({
-#             'cur': b['a'],
-#             'bl': _balance,
-#             'wbl': _currency_state.get('wbl', 0),
-#             'bor': _currency_extra_state.get('bor', 0),
-#             'abor': _currency_extra_state.get('abor', 0),
-#             'ist': _currency_extra_state.get('ist', 0),
-#             'istr': _currency_extra_state.get('istr', 0),
-#             'mbl': _balance,
-#             'im': _locked,
-#             'am': _free,
-#             't': 'hold',
-#             'tre': state_data.get('ex', {}).get('tre'),
-#             'trse': state_data.get('ex', {}).get('trse'),
-#             'bore': state_data.get('ex', {}).get('bore'),
-#             'mlvl': state_data.get('ex', {}).get('mlvl'),
-#         })
-#     return result
-
-
-# def ws_futures_balance_data(balances: list, positions: list, state_data: dict):
-#     positions_upnl = {}
-#     for position in positions:
-#         positions_upnl.setdefault(position['ma'].lower(), 0)
-#         positions_upnl[position['ma'].lower()] += to_float(position['up'])
-#     result = []
-#     for b in balances:
-#         _currency = b['a'].lower()
-#         _currency_state = state_data.get('bls', {}).get(_currency, {})
-#         _currency_extra_state = state_data.get('ex', {}).get('bls', {}).get(_currency, {})
-#         _unrealised_pnl = positions_upnl.get(_currency)
-#         margin_balance = to_float(b['wb']) + (_unrealised_pnl or 0)
-#         maint_margin = _currency_state.get('mm', 0)
-#         result.append({
-#             'cur': b['a'],
-#             'bl': to_float(b['wb']),
-#             'wbl': _currency_state.get('wbl', 0),
-#             'bor': _currency_extra_state.get('bor', 0),
-#             'ist': _currency_extra_state.get('ist', 0),
-#             'upnl': _unrealised_pnl,
-#             'mbl': margin_balance,
-#             'mm': maint_margin,
-#             'im': _currency_state.get('im', 0),
-#             'am': margin_balance - maint_margin,
-#             't': to_wallet_state_type(_unrealised_pnl),
-#             'tre': state_data.get('ex', {}).get('tre'),
-#         })
-#     return result
-
-
 def _mock_balance_data(asset) -> dict:
     return {
         'currency': asset.upper(),
         'balance': 0.0,
         'withdraw_balance': 0.0,
-        'borrowed': 0.0,
-        'available_borrow': 0.0,
-        'interest': 0.0,
-        'interest_rate': 0.0,
         'unrealised_pnl': 0.0,
         'margin_balance': 0.0,
         'maint_margin': 0.0,

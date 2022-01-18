@@ -297,6 +297,15 @@ class TestBitmexRestApi:
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
         indirect=['rest'],
     )
+    def test_get_wallet_extra_data(self, rest: BitmexRestApi, schema):
+        wallet_extra = rest.get_wallet_extra_data(schema=schema, asset=data.ASSET)
+        if wallet_extra:
+            assert Schema(fields.WALLET_EXTRA_DATA_FIELDS[schema]).validate(wallet_extra) == wallet_extra
+
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
     def test_ping(self, rest: BitmexRestApi, schema: str):
         assert rest.ping(schema=schema)
 
@@ -308,14 +317,6 @@ class TestBitmexRestApi:
         permissions = rest.get_api_key_permissions(schemas=schemas)
         for schema in schemas:
             assert permissions[schema]
-
-    @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
-        indirect=['rest'],
-    )
-    def test_get_cross_collaterals(self, rest: BitmexRestApi, schema: str):
-        with pytest.raises(ConnectorError):
-            rest.get_cross_collaterals(schema=schema)
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
