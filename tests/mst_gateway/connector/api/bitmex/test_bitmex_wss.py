@@ -277,13 +277,12 @@ class TestBitmexWssApi:
         indirect=['wss']
     )
     async def test_get_wallet_data(self, wss: BitmexWssApi, subscr_name: str, default_data: dict):
-        schema = wss.schema
         self.init_partial_state(wss, subscr_name)
         wss._subscriptions = {subscr_name: {'*': {'1'}}}
         header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)
-        data_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name][schema])
-        summary_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
-        balance_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS['balance'][schema])
+        data_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name])
+        total_cross_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
+        balance_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS['wallet_balance'])
         for data in default_data:
             message = json.loads(data['message'])
             wss_data = await wss.get_data(deepcopy(message))
@@ -291,10 +290,11 @@ class TestBitmexWssApi:
             assert header_schema.validate(_data) == _data
             for d in _data['d']:
                 assert data_schema.validate(d) == d
-                for key in ('tbl', 'tupnl', 'tmbl'):
-                    assert summary_schema.validate(d[key]) == d[key]
                 for balance in d['bls']:
                     assert balance_schema.validate(balance) == balance
+                for key in ('tbl', 'tupnl', 'tmbl'):
+                    assert total_cross_schema.validate(d[key]) == d[key]
+                assert d['ex'] is None
             assert _data == data['expect'][subscr_name]
 
     @pytest.mark.parametrize(

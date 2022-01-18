@@ -603,7 +603,7 @@ def load_vip_level(trading_volume: Union[str, float]) -> str:
 def to_xbt(value: int):
     if isinstance(value, int):
         return round(value / 10 ** 8, 8)
-    return value
+    return to_float(value)
 
 
 def to_date(token: Union[datetime, str]) -> Optional[datetime]:

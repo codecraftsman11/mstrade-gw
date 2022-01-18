@@ -24,10 +24,11 @@ class BitmexWalletSerializer(BitmexSerializer):
     async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
             return None
-        state = self._get_state('wallet')
+        _cur = item.get('currency', '').lower()
+        state = self._get_state(_cur)
         balances = state[0].get('bls', []) if state else []
         for balance in balances:
-            if balance.get('cur', '').lower() == item.get('currency', '').lower():
+            if balance.get('cur', '').lower() == _cur:
                 self._check_balances_data(balance, item)
         assets = ('btc', 'usd')
         fields = ('bl', 'upnl', 'mbl')
@@ -40,6 +41,8 @@ class BitmexWalletSerializer(BitmexSerializer):
             'am': 'availableMargin',
             'im': 'initMargin',
             'wbl': 'withdrawableMargin',
+            'mm': 'maintMargin',
+            'upnl': 'unrealisedPnl'
         }
         return _map.get(key)
 
@@ -53,5 +56,5 @@ class BitmexWalletSerializer(BitmexSerializer):
         valid_item = await self._load_data(message, item)
         if not valid_item:
             return None
-        self._update_state('wallet', valid_item)
+        self._update_state(item.get('currency', '').lower(), valid_item)
         self._update_data(data, valid_item)
