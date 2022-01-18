@@ -467,7 +467,7 @@ def load_isolated_margin_wallet_data(raw_data: dict, currencies: dict,
 
 
 def load_margin_wallet_balances(raw_data: dict) -> list:
-    return _margin_balance_data(raw_data.get('userAssets'))
+    return _margin_balance_data(raw_data.get('userAssets'))[0]
 
 
 def load_isolated_margin_wallet_balances(raw_data: dict) -> list:
@@ -479,10 +479,8 @@ def load_margin_wallet_detail_data(raw_data: dict, asset: str,
     for a in raw_data.get('userAssets'):
         if a.get('asset', '').upper() == asset.upper():
             return _margin_balance_data(
-                balances=[a],
-                max_borrow=_margin_max_borrow(max_borrow),
-                interest_rate=interest_rate
-            )[0]
+                balances=[a]
+            )[0][0]
     raise ConnectorError(f"Invalid asset {asset}.")
 
 
@@ -623,18 +621,18 @@ def load_ws_futures_coin_wallet_data(raw_data: dict, currencies: dict, assets: U
 
 
 def load_future_wallet_balances(raw_data: dict) -> list:
-    return _futures_balance_data(raw_data.get('assets'))
+    return _futures_balance_data(raw_data.get('assets'))[0]
 
 
 def load_future_coin_wallet_balances(raw_data: dict) -> list:
-    return _futures_balance_data(raw_data.get('assets'))
+    return _futures_balance_data(raw_data.get('assets'))[0]
 
 
 def load_futures_wallet_detail_data(raw_data: dict, asset: str,
                                     cross_collaterals: list, collateral_configs: list) -> dict:
     for a in raw_data.get('assets'):
         if a.get('asset', '').upper() == asset.upper():
-            balance = _futures_balance_data([a])[0]
+            balance = _futures_balance_data([a])[0][0]
             _update_futures_extra_balances([balance], cross_collaterals)
             cross_collaterals = _load_cross_collaterals_data(
                 cross_collaterals, collateral_configs, asset

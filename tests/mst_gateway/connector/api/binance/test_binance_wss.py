@@ -475,7 +475,7 @@ class TestBinanceWssApi:
         self.init_partial_state(wss, subscr_name)
         header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)
         data_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name][schema])
-        summary_schema = Schema(fields.SUMMARY_FIELDS)
+        summary_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
         for i, message in enumerate(messages):
             assert await wss.get_data(deepcopy(message)) == {}
 

@@ -282,7 +282,7 @@ class TestBitmexWssApi:
         wss._subscriptions = {subscr_name: {'*': {'1'}}}
         header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)
         data_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name][schema])
-        summary_schema = Schema(fields.SUMMARY_FIELDS)
+        summary_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
         balance_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS['balance'][schema])
         for data in default_data:
             message = json.loads(data['message'])

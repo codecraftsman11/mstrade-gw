@@ -141,15 +141,26 @@ class TestBinanceRestApi:
     )
     def test_get_wallet(self, rest: BinanceRestApi, schema):
         wallet = rest.get_wallet(schema=schema)
-        assert Schema(fields.WALLET_FIELDS[schema]).validate(wallet) == wallet
-        balance_schema = Schema(fields.BALANCE_FIELDS[schema])
+        assert Schema(fields.WALLET_FIELDS).validate(wallet) == wallet
+        balance_schema = Schema(fields.WALLET_BALANCE_FIELDS)
         for balance in wallet['balances']:
             assert balance_schema.validate(balance) == balance
-        summary_schema = Schema(fields.SUMMARY_FIELDS)
-        assert summary_schema.validate(wallet['total_balance']) == wallet['total_balance']
-        if schema in (OrderSchema.futures, OrderSchema.futures_coin):
-            for key in ('total_unrealised_pnl', 'total_margin_balance', 'total_borrowed', 'total_interest'):
-                assert summary_schema.validate(wallet[key]) == wallet[key]
+
+        total_cross_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
+        for key in wallet.keys():
+            if key.startswith('total_'):
+                assert total_cross_schema.validate(wallet[key]) == wallet[key]
+
+        if extra_data := wallet['extra_data']:
+            assert Schema(fields.WALLET_EXTRA_FIELDS[schema]).validate(extra_data) == extra_data
+            if extra_data.get('balances'):
+                extra_balance_schema = Schema(fields.WALLET_EXTRA_BALANCE_FIELDS[schema])
+                for extra_balance in extra_data['balances']:
+                    assert extra_balance_schema.validate(extra_balance) == extra_balance
+
+                for key in extra_data.keys():
+                    if key.startswith('total_'):
+                        assert total_cross_schema.validate(extra_data[key]) == extra_data[key]
 
     @pytest.mark.parametrize(
         'rest, schema, expect', [
@@ -328,7 +339,7 @@ class TestBinanceRestApi:
     def test_get_wallet_summary(self, rest: BinanceRestApi, schemas):
         wallet_summary = rest.get_wallet_summary(schemas)
         assert Schema(fields.WALLET_SUMMARY_FIELDS).validate(wallet_summary) == wallet_summary
-        summary_schema = Schema(fields.SUMMARY_FIELDS)
+        summary_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
         for summary in wallet_summary.values():
             assert summary_schema.validate(summary) == summary
 
