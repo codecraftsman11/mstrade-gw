@@ -194,8 +194,8 @@ def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     data = {
         'exchange_order_id': raw_data.get('orderID'),
         'symbol': raw_data.get('symbol'),
-        'volume': to_float(raw_data.get('orderQty')),
-        'filled_volume': to_float(raw_data.get('cumQty')),
+        'volume': to_int(raw_data.get('orderQty')),
+        'filled_volume': to_int(raw_data.get('cumQty')),
         'stop': to_float(raw_data.get('stopPx')),
         'side': load_order_side(raw_data.get('side')),
         'price': to_float(raw_data.get('price')),
@@ -634,6 +634,13 @@ def to_float(token: Union[int, float, str, None]) -> Optional[float]:
         return float(token)
     except (ValueError, TypeError):
         return 0.0
+
+
+def to_int(token: Union[int, float, str, None]) -> Optional[int]:
+    try:
+        return int(token)
+    except (ValueError, TypeError):
+        return 0
 
 
 def symbol2stock(symbol):

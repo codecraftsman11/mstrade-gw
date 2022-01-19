@@ -208,10 +208,17 @@ def load_trade_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     return data
 
 
-def load_order_side(order_side: bool) -> int:
-    if order_side:
-        return api.BUY
-    return api.SELL
+def load_order_side(order_side: Union[bool, str]) -> int:
+    if isinstance(order_side, bool):
+        if order_side:
+            return api.BUY
+        else:
+            return api.SELL
+    if isinstance(order_side, str):
+        if order_side == var.BINANCE_ORDER_SIDE_SELL:
+            return api.SELL
+        else:
+            return api.BUY
 
 
 def store_order_side(side: int) -> str:
@@ -313,7 +320,7 @@ def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'volume': to_float(raw_data.get('origQty')),
         'filled_volume': to_float(raw_data.get('cumQty')),
         'stop': to_float(raw_data.get('stopPrice')),
-        'side': raw_data.get('side'),
+        'side': load_order_side(raw_data.get('side')),
         'price': to_float(raw_data.get('price')),
         'active': raw_data.get('status') != "NEW",
         'type': raw_data.get('type'),
