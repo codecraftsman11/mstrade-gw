@@ -251,30 +251,56 @@ class TestBitmexRestApi:
         indirect=['rest']
     )
     def test_get_wallet(self, rest: BitmexRestApi, schema: str):
-        wallet_schema = Schema(fields.WALLET_FIELDS[schema])
-        wallet = rest.get_wallet()
-        assert wallet_schema.validate(wallet) == wallet
-        balance_schema = Schema(fields.BALANCE_FIELDS[schema])
+        wallet = rest.get_wallet(schema=schema)
+        assert Schema(fields.WALLET_FIELDS).validate(wallet) == wallet
+        balance_schema = Schema(fields.WALLET_BALANCE_FIELDS)
         for balance in wallet['balances']:
             assert balance_schema.validate(balance) == balance
+
+        total_cross_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
+        for key in wallet.keys():
+            if key.startswith('total_'):
+                assert total_cross_schema.validate(wallet[key]) == wallet[key]
+
+        if extra_data := wallet['extra_data']:
+            assert Schema(fields.WALLET_EXTRA_FIELDS[schema]).validate(extra_data) == extra_data
+            if extra_data.get('balances'):
+                extra_balance_schema = Schema(fields.WALLET_EXTRA_BALANCE_FIELDS[schema])
+                for extra_balance in extra_data['balances']:
+                    assert extra_balance_schema.validate(extra_balance) == extra_balance
+
+                for key in extra_data.keys():
+                    if key.startswith('total_'):
+                        assert total_cross_schema.validate(extra_data[key]) == extra_data[key]
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
         indirect=['rest'],
     )
-    def test_get_wallet_summery(self, rest: BitmexRestApi, schema: str):
-        wallet_summary_schema = Schema(fields.WALLET_SUMMARY_FIELDS)
+    def test_get_wallet_summary(self, rest: BitmexRestApi, schema: str):
         wallet_summary = rest.get_wallet_summary(schemas=[schema])
-        assert wallet_summary_schema.validate(wallet_summary) == wallet_summary
+        assert Schema(fields.WALLET_SUMMARY_FIELDS).validate(wallet_summary) == wallet_summary
+
+        total_cross_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
+        for key in wallet_summary.keys():
+            assert total_cross_schema.validate(wallet_summary[key]) == wallet_summary[key]
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
         indirect=['rest'],
     )
     def test_get_wallet_detail(self, rest: BitmexRestApi, schema: str):
-        wallet_detail_schema = Schema(fields.WALLET_DETAIL_FIELDS[schema])
         wallet_detail = rest.get_wallet_detail(schema=schema, asset=data.ASSET)
-        assert wallet_detail_schema.validate(wallet_detail[schema]) == wallet_detail[schema]
+        assert Schema(fields.WALLET_BALANCE_FIELDS).validate(wallet_detail) == wallet_detail
+
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        indirect=['rest'],
+    )
+    def test_get_wallet_extra_data(self, rest: BitmexRestApi, schema):
+        wallet_extra = rest.get_wallet_extra_data(schema=schema, asset=data.ASSET)
+        if wallet_extra:
+            assert Schema(fields.WALLET_EXTRA_DATA_FIELDS[schema]).validate(wallet_extra) == wallet_extra
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
@@ -291,14 +317,6 @@ class TestBitmexRestApi:
         permissions = rest.get_api_key_permissions(schemas=schemas)
         for schema in schemas:
             assert permissions[schema]
-
-    @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
-        indirect=['rest'],
-    )
-    def test_get_cross_collaterals(self, rest: BitmexRestApi, schema: str):
-        with pytest.raises(ConnectorError):
-            rest.get_cross_collaterals(schema=schema)
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
@@ -501,7 +519,7 @@ class TestOrderBitmexRestApi:
                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin1],
                 'schema': OrderSchema.margin1,
                 'side': BUY,
-                'stop': None,
+                'stop': 0.0,
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.market,
@@ -512,7 +530,7 @@ class TestOrderBitmexRestApi:
                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin1],
                 'schema': OrderSchema.margin1,
                 'side': SELL,
-                'stop': None,
+                'stop': 0.0,
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.market,
@@ -523,7 +541,7 @@ class TestOrderBitmexRestApi:
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin1,
                 'side': BUY,
-                'stop': None,
+                'stop': 0.0,
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.limit,
@@ -534,7 +552,7 @@ class TestOrderBitmexRestApi:
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin1,
                 'side': SELL,
-                'stop': None,
+                'stop': 0.0,
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.limit,
@@ -589,7 +607,7 @@ class TestOrderBitmexRestApi:
                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin1] * 2,
                 'schema': OrderSchema.margin1,
                 'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
-                'stop': None,
+                'stop': 0.0,
                 'symbol': order_data.DEFAULT_SYMBOL,
                 'system_symbol': order_data.DEFAULT_SYSTEM_SYMBOL,
                 'type': OrderType.market,

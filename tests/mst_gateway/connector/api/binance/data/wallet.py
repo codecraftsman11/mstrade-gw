@@ -240,92 +240,6 @@ DEFAULT_WALLET_SPLIT_MESSAGE_RESULT = {
         }
     ],
 }
-DEFAULT_WALLET_DETAIL_GET_DATA_RESULT = {
-    OrderSchema.exchange: [
-        {
-            'wallet': {
-                'acc': 'tbinance.tbinance_spot',
-                'tb': 'wallet',
-                'sch': 'exchange',
-                'act': 'update',
-                'd': [
-                    {
-                        'bls': [
-                            {
-                                'cur': 'USDT',
-                                'bl': 10824.22542493,
-                                'upnl': 0.0,
-                                'mbl': 10824.22542493,
-                                'mm': 49.2,
-                                'im': None,
-                                'am': 10775.02542493,
-                                't': 'trade',
-                            }
-                        ]
-                    }
-                ],
-            }
-        }
-    ],
-    OrderSchema.futures: [
-        {
-            'wallet': {
-                'acc': 'tbinance.tbinance_futures',
-                'tb': 'wallet',
-                'sch': 'futures',
-                'act': 'update',
-                'd': [
-                    {
-                        'bls': [
-                            {
-                                'cur': 'USDT',
-                                'bl': 9999.96949206,
-                                'wbl': 10000.96638768,
-                                'bor': 0.0,
-                                'ist': 0.0,
-                                'upnl': 0.005643,
-                                'mbl': 9999.97513506,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 9999.97513506,
-                                't': 'trade',
-                            }
-                        ]
-                    }
-                ],
-            }
-        }
-    ],
-    OrderSchema.futures_coin: [
-        {
-            'wallet': {
-                'acc': 'tbinance.tbinance_futures',
-                'tb': 'wallet',
-                'sch': 'futures_coin',
-                'act': 'update',
-                'd': [
-                    {
-                        'bls': [
-                            {
-                                'cur': 'BTC',
-                                'bl': 9.99965786,
-                                'wbl': 9.99951235,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 3e-08,
-                                'mbl': 9.99965789,
-                                'mm': 8.25e-06,
-                                'im': 0.00010314,
-                                'am': 9.99964964,
-                                't': 'trade',
-                            }
-                        ]
-                    }
-                ]
-            }
-        },
-    ],
-}
 DEFAULT_WALLET_GET_DATA_RESULT = {
     OrderSchema.exchange: [
         {
@@ -336,95 +250,34 @@ DEFAULT_WALLET_GET_DATA_RESULT = {
                 'act': 'update',
                 'd': [
                     {
-                        'tbl': {'btc': 31.3441251, 'usd': 1527615.17727093},
+                        'tbl': {'btc': 1.21410462, 'usd': 59171.68341493},
+                        'tupnl': {'btc': 0.0, 'usd': 0.0},
+                        'tmbl': {'btc': 1.21410462, 'usd': 59171.68341493},
                         'bls': [
                             {
                                 'cur': 'BTC',
                                 'bl': 0.991,
+                                'wbl': 0.991,
                                 'upnl': 0.0,
                                 'mbl': 0.991,
                                 'mm': 0.0,
-                                'im': None,
+                                'im': 0.0,
                                 'am': 0.991,
-                                't': 'trade',
+                                't': 'hold'
                             },
                             {
                                 'cur': 'USDT',
-                                'bl': 10824.22542493,
+                                'bl': 10873.42542493,
+                                'wbl': 10824.22542493,
                                 'upnl': 0.0,
-                                'mbl': 10824.22542493,
-                                'mm': 49.2,
-                                'im': None,
-                                'am': 10775.02542493,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'BNB',
-                                'bl': 1000.0,
-                                'wbl': 1000.0,
-                                'upnl': 0.0,
-                                'mbl': 1000.0,
+                                'mbl': 10873.42542493,
                                 'mm': 0.0,
-                                'im': None,
-                                'am': 1000.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'BUSD',
-                                'bl': 10000.0,
-                                'wbl': 10000.0,
-                                'upnl': 0.0,
-                                'mbl': 10000.0,
-                                'mm': 0.0,
-                                'im': None,
-                                'am': 10000.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'ETH',
-                                'bl': 100.0,
-                                'wbl': 100.0,
-                                'upnl': 0.0,
-                                'mbl': 100.0,
-                                'mm': 0.0,
-                                'im': None,
-                                'am': 100.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'LTC',
-                                'bl': 500.0,
-                                'wbl': 500.0,
-                                'upnl': 0.0,
-                                'mbl': 500.0,
-                                'mm': 0.0,
-                                'im': None,
-                                'am': 500.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'TRX',
-                                'bl': 500000.0,
-                                'wbl': 500000.0,
-                                'upnl': 0.0,
-                                'mbl': 500000.0,
-                                'mm': 0.0,
-                                'im': None,
-                                'am': 500000.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'XRP',
-                                'bl': 50000.0,
-                                'wbl': 50000.0,
-                                'upnl': 0.0,
-                                'mbl': 50000.0,
-                                'mm': 0.0,
-                                'im': None,
-                                'am': 50000.0,
-                                't': 'trade',
-                            },
+                                'im': 49.2,
+                                'am': 10824.22542493,
+                                't': 'hold'
+                            }
                         ],
+                        'ex': None
                     }
                 ],
             }
@@ -439,57 +292,66 @@ DEFAULT_WALLET_GET_DATA_RESULT = {
                 'act': 'update',
                 'd': [
                     {
-                        'tre': True,
                         'tbl': {'btc': 0.20512901, 'usd': 9999.96949206},
                         'tupnl': {'btc': 1.2e-07, 'usd': 0.005643},
                         'tmbl': {'btc': 0.20512913, 'usd': 9999.97513506},
-                        'tbor': {'btc': 0.0, 'usd': 0.0},
-                        'tist': {'btc': 0.0, 'usd': 0.0},
-                        'tim': 0.0,
-                        'tmm': 0.0,
-                        'toip': 0.0,
-                        'tpim': 0.0,
                         'bls': [
                             {
                                 'cur': 'USDT',
                                 'bl': 9999.96949206,
-                                'wbl': 10000.96638768,
-                                'bor': 0.0,
-                                'ist': 0.0,
+                                'wbl': 9999.97513506,
                                 'upnl': 0.005643,
                                 'mbl': 9999.97513506,
                                 'mm': 0.0,
                                 'im': 0.0,
                                 'am': 9999.97513506,
-                                't': 'trade',
+                                't': 'trade'
                             },
                             {
                                 'cur': 'BNB',
                                 'bl': 0.0,
                                 'wbl': 0.0,
-                                'bor': 0.0,
-                                'ist': 0.0,
                                 'upnl': 0.0,
                                 'mbl': 0.0,
                                 'mm': 0.0,
                                 'im': 0.0,
                                 'am': 0.0,
-                                't': 'trade',
+                                't': 'trade'
                             },
                             {
                                 'cur': 'BUSD',
                                 'bl': 0.0,
                                 'wbl': 0.0,
-                                'bor': 0.0,
-                                'ist': 0.0,
                                 'upnl': 0.0,
                                 'mbl': 0.0,
                                 'mm': 0.0,
                                 'im': 0.0,
                                 'am': 0.0,
-                                't': 'trade',
+                                't': 'trade'
                             },
                         ],
+                        'ex': {
+                            'bls': [
+                                {
+                                    'cur': 'USDT',
+                                    'bor': 0.0,
+                                    'ist': 0.0
+                                },
+                                {
+                                    'cur': 'BNB',
+                                    'bor': 0.0,
+                                    'ist': 0.0
+                                },
+                                {
+                                    'cur': 'BUSD',
+                                    'bor': 0.0,
+                                    'ist': 0.0
+                                },
+                            ],
+                            'tbor': {'btc': 0.0, 'usd': 0.0},
+                            'tist': {'btc': 0.0, 'usd': 0.0},
+                            'tre': True
+                        }
                     }
                 ],
             }
@@ -504,355 +366,166 @@ DEFAULT_WALLET_GET_DATA_RESULT = {
                 'act': 'update',
                 'd': [
                     {
-                        'tre': True,
                         'tbl': {'btc': 12.8698925, 'usd': 627748.31160829},
                         'tupnl': {'btc': 3e-08, 'usd': 0.00146329},
                         'tmbl': {'btc': 12.86989253, 'usd': 627748.31307159},
-                        'tbor': {'btc': 0.0, 'usd': 0.0},
-                        'tist': {'btc': 0.0, 'usd': 0.0},
                         'bls': [
                             {
                                 'cur': 'BTC',
                                 'bl': 9.99965786,
-                                'wbl': 9.99951235,
-                                'bor': 0,
-                                'ist': 0,
+                                'wbl': 9.99955475,
                                 'upnl': 3e-08,
                                 'mbl': 9.99965789,
                                 'mm': 8.25e-06,
                                 'im': 0.00010314,
-                                'am': 9.99964964,
-                                't': 'trade',
+                                'am': 9.99955475,
+                                't': 'trade'
                             },
                             {
                                 'cur': 'ADA',
                                 'bl': 100000.0,
                                 'wbl': 100000.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': None,
+                                'upnl': 0.0,
                                 'mbl': 100000.0,
                                 'mm': 0.0,
                                 'im': 0.0,
                                 'am': 100000.0,
-                                't': 'hold',
-                            },
-                            {
-                                'cur': 'LINK',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'DOGE',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'ETH',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'BNB',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'TRX',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'DOT',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'EOS',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'UNI',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'LTC',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'THETA',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'BCH',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'XRP',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'XLM',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'ETC',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'FIL',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'EGLD',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'SOL',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'LUNA',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'FTM',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'SAND',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'MANA',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'AVAX',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'GALA',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
-                            {
-                                'cur': 'MATIC',
-                                'bl': 0.0,
-                                'wbl': 0.0,
-                                'bor': 0,
-                                'ist': 0,
-                                'upnl': 0.0,
-                                'mbl': 0.0,
-                                'mm': 0.0,
-                                'im': 0.0,
-                                'am': 0.0,
-                                't': 'trade',
-                            },
+                                't': 'hold'
+                            }
                         ],
+                        'ex': {
+                            'tre': True
+                        }
                     }
                 ],
             }
         }
     ],
+}
+
+DEFAULT_WALLET_STATE = {
+    OrderSchema.exchange: {
+        'tbl': {'btc': 0.20512901, 'usd': 9999.96949206},
+        'tupnl': {'btc': 0.0, 'usd': 0.0},
+        'tmbl': {'btc': 0.0, 'usd': 0.0},
+        'bls': {
+            'btc': {
+                'cur': 'BTC',
+                'bl': 0.991,
+                'wbl': 0.991,
+                'upnl': 0.0,
+                'mbl': 0.991,
+                'mm': 0.0,
+                'im': 0.0,
+                'am': 0.991,
+                't': 'hold'
+            },
+            'usdt': {
+                'cur': 'USDT',
+                'bl': 10873.42542493,
+                'wbl': 10824.22542493,
+                'upnl': 0.0,
+                'mbl': 10873.42542493,
+                'mm': 0.0,
+                'im': 49.2,
+                'am': 10824.22542493,
+                't': 'hold'
+            }
+        },
+        'ex': None
+    },
+    OrderSchema.futures: {
+        'tbl': {'btc': 0.20512901, 'usd': 9999.96949206},
+        'tupnl': {'btc': 0.0, 'usd': 0.0},
+        'tmbl': {'btc': 0.20512913, 'usd': 9999.97513506},
+        'bls': {
+            'usdt': {
+                'cur': 'USDT',
+                'bl': 9999.96949206,
+                'wbl': 9999.97513506,
+                'upnl': 0.0,
+                'mbl': 9999.97513506,
+                'mm': 0.0,
+                'im': 0.0,
+                'am': 9999.97513506,
+                't': 'trade'
+            },
+            'bnb': {
+                'cur': 'BNB',
+                'bl': 0.0,
+                'wbl': 0.0,
+                'upnl': 0.0,
+                'mbl': 0.0,
+                'mm': 0.0,
+                'im': 0.0,
+                'am': 0.0,
+                't': 'trade'
+            },
+            'busd': {
+                'cur': 'BUSD',
+                'bl': 0.0,
+                'wbl': 0.0,
+                'upnl': 0.0,
+                'mbl': 0.0,
+                'mm': 0.0,
+                'im': 0.0,
+                'am': 0.0,
+                't': 'trade'
+            }
+        },
+        'ex': {
+            'bls': {
+                'usdt': {
+                    'cur': 'USDT',
+                    'bor': 0.0,
+                    'ist': 0.0
+                },
+                'bnb': {
+                    'cur': 'BNB',
+                    'bor': 0.0,
+                    'ist': 0.0
+                },
+                'busd': {
+                    'cur': 'BUSD',
+                    'bor': 0.0,
+                    'ist': 0.0
+                }
+            },
+            'tbor': {'btc': 0.0, 'usd': 0.0},
+            'tist': {'btc': 0.0, 'usd': 0.0},
+            'tre': True
+        }
+    },
+    OrderSchema.futures_coin: {
+        'tbl': {'btc': 12.8698925, 'usd': 627748.31160829},
+        'tupnl': {'btc': 3e-08, 'usd': 0.00146329},
+        'tmbl': {'btc': 12.86989253, 'usd': 627748.31307159},
+        'bls': {
+            'btc': {
+                'cur': 'BTC',
+                'bl': 9.99965786,
+                'wbl': 9.99951235,
+                'upnl': 3e-08,
+                'mbl': 9.99965789,
+                'mm': 8.25e-06,
+                'im': 0.00010314,
+                'am': 9.99964964,
+                't': 'trade'
+            },
+            'ada': {
+                'cur': 'ADA',
+                'bl': 100000.0,
+                'wbl': 100000.0,
+                'upnl': 0.0,
+                'mbl': 100000.0,
+                'mm': 0.0,
+                'im': 0.0,
+                'am': 100000.0,
+                't': 'hold'
+            }
+        },
+        'ex': {
+            'tre': True
+        }
+    }
 }

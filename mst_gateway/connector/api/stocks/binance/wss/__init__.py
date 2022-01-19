@@ -29,9 +29,6 @@ class BinanceWssApi(StockWssApi):
         'order': subscr_class.BinanceOrderSubscriber(),
         'position': subscr_class.BinancePositionSubscriber(),
     }
-    register_state_groups = [
-        'wallet'
-    ]
 
     router_class = BinanceWssRouter
     refresh_key_time = 1800

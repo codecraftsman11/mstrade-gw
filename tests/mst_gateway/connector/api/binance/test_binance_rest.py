@@ -141,46 +141,51 @@ class TestBinanceRestApi:
     )
     def test_get_wallet(self, rest: BinanceRestApi, schema):
         wallet = rest.get_wallet(schema=schema)
-        assert Schema(fields.WALLET_FIELDS[schema]).validate(wallet) == wallet
-        balance_schema = Schema(fields.BALANCE_FIELDS[schema])
+        assert Schema(fields.WALLET_FIELDS).validate(wallet) == wallet
+        balance_schema = Schema(fields.WALLET_BALANCE_FIELDS)
         for balance in wallet['balances']:
             assert balance_schema.validate(balance) == balance
-        summary_schema = Schema(fields.SUMMARY_FIELDS)
-        assert summary_schema.validate(wallet['total_balance']) == wallet['total_balance']
-        if schema in (OrderSchema.futures, OrderSchema.futures_coin):
-            for key in ('total_unrealised_pnl', 'total_margin_balance', 'total_borrowed', 'total_interest'):
-                assert summary_schema.validate(wallet[key]) == wallet[key]
+
+        total_cross_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
+        for key in wallet.keys():
+            if key.startswith('total_'):
+                assert total_cross_schema.validate(wallet[key]) == wallet[key]
+
+        if extra_data := wallet['extra_data']:
+            assert Schema(fields.WALLET_EXTRA_FIELDS[schema]).validate(extra_data) == extra_data
+            if extra_data.get('balances'):
+                extra_balance_schema = Schema(fields.WALLET_EXTRA_BALANCE_FIELDS[schema])
+                for extra_balance in extra_data['balances']:
+                    assert extra_balance_schema.validate(extra_balance) == extra_balance
+
+                for key in extra_data.keys():
+                    if key.startswith('total_'):
+                        assert total_cross_schema.validate(extra_data[key]) == extra_data[key]
 
     @pytest.mark.parametrize(
-        'rest, schema, expect', [
-            ('tbinance_spot', OrderSchema.exchange, [OrderSchema.exchange]),
-            ('tbinance_futures', OrderSchema.futures, [OrderSchema.exchange, OrderSchema.futures]),
-            ('tbinance_futures', OrderSchema.futures_coin, [OrderSchema.exchange, OrderSchema.futures_coin]),
+        'rest, schema', [
+            ('tbinance_spot', OrderSchema.exchange),
+            ('tbinance_futures', OrderSchema.futures),
+            ('tbinance_futures', OrderSchema.futures_coin),
         ],
         indirect=['rest'],
     )
-    def test_get_wallet_detail(self, rest: BinanceRestApi, schema, expect):
-        wallet_detail = rest.get_wallet_detail(schema, get_asset(schema))
-        assert list(wallet_detail.keys()) == expect
-        assert Schema(fields.WALLET_DETAIL_FIELDS[schema]).validate(wallet_detail[schema]) == wallet_detail[schema]
+    def test_get_wallet_detail(self, rest: BinanceRestApi, schema):
+        wallet_detail = rest.get_wallet_detail(schema=schema, asset=get_asset(schema))
+        assert Schema(fields.WALLET_BALANCE_FIELDS).validate(wallet_detail) == wallet_detail
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_futures', OrderSchema.futures),
-                         ('tbinance_futures', OrderSchema.futures_coin)],
+        'rest, schema', [
+            ('tbinance_spot', OrderSchema.exchange),
+            ('tbinance_futures', OrderSchema.futures),
+            ('tbinance_futures', OrderSchema.futures_coin),
+        ],
         indirect=['rest'],
     )
-    def test_get_wallet_detail_partial(self, rest: BinanceRestApi, schema):
-        wallet_detail = rest.get_wallet_detail(schema, get_asset(schema), partial=True)
-        assert Schema(fields.WALLET_DETAIL_FIELDS[schema]).validate(wallet_detail) == wallet_detail
-
-    @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin2),
-                         ('tbinance_spot', OrderSchema.margin3), ('tbinance_futures', OrderSchema.futures_coin)],
-        indirect=['rest'],
-    )
-    def tes_get_cross_collaterals_invalid_schema(self, rest: BinanceRestApi, schema):
-        with pytest.raises(ConnectorError):
-            rest.get_cross_collaterals(schema)
+    def test_get_wallet_extra_data(self, rest: BinanceRestApi, schema):
+        wallet_extra = rest.get_wallet_extra_data(schema=schema, asset=get_asset(schema))
+        if wallet_extra:
+            assert Schema(fields.WALLET_EXTRA_DATA_FIELDS[schema]).validate(wallet_extra) == wallet_extra
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_futures', OrderSchema.futures),
@@ -326,11 +331,12 @@ class TestBinanceRestApi:
         indirect=['rest'],
     )
     def test_get_wallet_summary(self, rest: BinanceRestApi, schemas):
-        wallet_summary = rest.get_wallet_summary(schemas)
+        wallet_summary = rest.get_wallet_summary(schemas=schemas)
         assert Schema(fields.WALLET_SUMMARY_FIELDS).validate(wallet_summary) == wallet_summary
-        summary_schema = Schema(fields.SUMMARY_FIELDS)
-        for summary in wallet_summary.values():
-            assert summary_schema.validate(summary) == summary
+
+        total_cross_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
+        for key in wallet_summary.keys():
+            assert total_cross_schema.validate(wallet_summary[key]) == wallet_summary[key]
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin2),
@@ -509,7 +515,7 @@ class TestOrderBinanceRestApi:
                  'execution': OrderExec.market,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.exchange,
-                 'side': 'BUY',
+                 'side': BUY,
                  'stop': 0.0,
                  'symbol': 'BTCUSDT',
                  'system_symbol': 'btcusd',
@@ -521,7 +527,7 @@ class TestOrderBinanceRestApi:
                  'execution': OrderExec.market,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.exchange,
-                 'side': 'SELL',
+                 'side': SELL,
                  'stop': 0.0,
                  'symbol': 'BTCUSDT',
                  'system_symbol': 'btcusd',
@@ -533,7 +539,7 @@ class TestOrderBinanceRestApi:
                  'execution': OrderExec.limit,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.exchange,
-                 'side': 'BUY',
+                 'side': BUY,
                  'stop': 0.0,
                  'symbol': 'BTCUSDT',
                  'system_symbol': 'btcusd',
@@ -545,7 +551,7 @@ class TestOrderBinanceRestApi:
                  'execution': OrderExec.limit,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.exchange,
-                 'side': 'SELL',
+                 'side': SELL,
                  'stop': 0.0,
                  'symbol': 'BTCUSDT',
                  'system_symbol': 'btcusd',
@@ -557,7 +563,7 @@ class TestOrderBinanceRestApi:
                  'execution': OrderExec.market,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.futures,
-                 'side': 'BUY',
+                 'side': BUY,
                  'stop': 0.0,
                  'symbol': 'BTCUSDT',
                  'system_symbol': 'btcusd',
@@ -569,7 +575,7 @@ class TestOrderBinanceRestApi:
                  'execution': OrderExec.market,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.futures,
-                 'side': 'SELL',
+                 'side': SELL,
                  'stop': 0.0,
                  'symbol': 'BTCUSDT',
                  'system_symbol': 'btcusd',
@@ -581,7 +587,7 @@ class TestOrderBinanceRestApi:
                  'execution': OrderExec.limit,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.futures,
-                 'side': 'BUY',
+                 'side': BUY,
                  'stop': 0.0,
                  'symbol': 'BTCUSDT',
                  'system_symbol': 'btcusd',
@@ -593,7 +599,7 @@ class TestOrderBinanceRestApi:
                  'execution': OrderExec.limit,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.futures,
-                 'side': 'SELL',
+                 'side': SELL,
                  'stop': 0.0,
                  'symbol': 'BTCUSDT',
                  'system_symbol': 'btcusd',
@@ -605,7 +611,7 @@ class TestOrderBinanceRestApi:
                  'execution': OrderExec.market,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.futures_coin,
-                 'side': 'BUY',
+                 'side': BUY,
                  'stop': 0.0,
                  'symbol': 'BTCUSD_PERP',
                  'system_symbol': 'btcusd',
@@ -617,7 +623,7 @@ class TestOrderBinanceRestApi:
                  'execution': OrderExec.market,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.futures_coin,
-                 'side': 'SELL',
+                 'side': SELL,
                  'stop': 0.0,
                  'symbol': 'BTCUSD_PERP',
                  'system_symbol': 'btcusd',
@@ -629,7 +635,7 @@ class TestOrderBinanceRestApi:
                  'execution': OrderExec.limit,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.futures_coin,
-                 'side': 'BUY',
+                 'side': BUY,
                  'stop': 0.0,
                  'symbol': 'BTCUSD_PERP',
                  'system_symbol': 'btcusd',
@@ -641,7 +647,7 @@ class TestOrderBinanceRestApi:
                  'execution': OrderExec.limit,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.futures_coin,
-                 'side': 'SELL',
+                 'side': SELL,
                  'stop': 0.0,
                  'symbol': 'BTCUSD_PERP',
                  'system_symbol': 'btcusd',
@@ -701,7 +707,7 @@ class TestOrderBinanceRestApi:
                 'execution': OrderExec.limit,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.exchange,
-                'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE_STR,
+                'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
                 'stop': 0.0,
                 'symbol': 'BTCUSDT',
                 'system_symbol': 'btcusd',
@@ -713,7 +719,7 @@ class TestOrderBinanceRestApi:
                 'execution': OrderExec.limit,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.futures,
-                'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE_STR,
+                'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
                 'stop': 0.0,
                 'symbol': 'BTCUSDT',
                 'system_symbol': 'btcusd',
@@ -725,7 +731,7 @@ class TestOrderBinanceRestApi:
                 'execution': OrderExec.limit,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.futures_coin,
-                'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE_STR,
+                'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
                 'stop': 0.0,
                 'symbol': 'BTCUSD_PERP',
                 'system_symbol': 'btcusd',
@@ -757,7 +763,7 @@ class TestOrderBinanceRestApi:
                 'execution': OrderExec.limit,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.exchange,
-                'side': order_data.DEFAULT_ORDER_SIDE_STR,
+                'side': order_data.DEFAULT_ORDER_SIDE,
                 'stop': 0.0,
                 'symbol': 'BTCUSDT',
                 'system_symbol': 'btcusd',
@@ -769,7 +775,7 @@ class TestOrderBinanceRestApi:
                 'execution': OrderExec.limit,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.futures,
-                'side': order_data.DEFAULT_ORDER_SIDE_STR,
+                'side': order_data.DEFAULT_ORDER_SIDE,
                 'stop': 0.0,
                 'symbol': 'BTCUSDT',
                 'system_symbol': 'btcusd',
@@ -781,7 +787,7 @@ class TestOrderBinanceRestApi:
                 'execution': OrderExec.limit,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.futures_coin,
-                'side': order_data.DEFAULT_ORDER_SIDE_STR,
+                'side': order_data.DEFAULT_ORDER_SIDE,
                 'stop': 0.0,
                 'symbol': 'BTCUSD_PERP',
                 'system_symbol': 'btcusd',

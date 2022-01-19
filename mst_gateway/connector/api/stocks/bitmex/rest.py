@@ -144,16 +144,12 @@ class BitmexRestApi(StockRestApi):
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
         if schema == OrderSchema.margin1:
-            partial = kwargs.pop('partial', None)
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
-            wallet_detail = utils.load_wallet_detail_data(data, asset)
-            return wallet_detail if partial else {
-                OrderSchema.margin1: wallet_detail
-            }
+            return utils.load_wallet_detail_data(data, asset)
         raise ConnectorError(f"Invalid schema {schema}.")
 
-    def get_cross_collaterals(self, schema: str, **kwargs) -> list:
-        raise ConnectorError('Bitmex api error. Details: Invalid method.')
+    def get_wallet_extra_data(self, schema: str, asset: str, **kwargs) -> dict:
+        return {}
 
     def get_assets_balance(self, schema: str, **kwargs) -> dict:
         if schema == OrderSchema.margin1:

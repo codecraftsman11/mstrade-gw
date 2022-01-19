@@ -194,8 +194,8 @@ def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     data = {
         'exchange_order_id': raw_data.get('orderID'),
         'symbol': raw_data.get('symbol'),
-        'volume': to_float(raw_data.get('orderQty')),
-        'filled_volume': to_float(raw_data.get('cumQty')),
+        'volume': to_int(raw_data.get('orderQty')),
+        'filled_volume': to_int(raw_data.get('cumQty')),
         'stop': to_float(raw_data.get('stopPx')),
         'side': load_order_side(raw_data.get('side')),
         'price': to_float(raw_data.get('price')),
@@ -484,9 +484,13 @@ def load_wallet_data(raw_data: dict, currencies: dict, assets: Union[tuple, list
     if is_for_ws:
         bls_key = 'bls'
         balances = [load_ws_wallet_detail_data(raw_data)]
+        ex_key = 'ex'
+        extra_data = None
     else:
         bls_key = 'balances'
         balances = [load_wallet_detail_data(raw_data)]
+        ex_key = 'extra_data'
+        extra_data = None
 
     balances_summary = {}
     total_balance = {OrderSchema.margin1: {}}
@@ -498,6 +502,7 @@ def load_wallet_data(raw_data: dict, currencies: dict, assets: Union[tuple, list
     load_total_wallet_summary(balances_summary, total_balance, assets, fields, is_for_ws=is_for_ws)
     return {
         bls_key: balances,
+        ex_key: extra_data,
         **balances_summary,
     }
 
@@ -598,7 +603,7 @@ def load_vip_level(trading_volume: Union[str, float]) -> str:
 def to_xbt(value: int):
     if isinstance(value, int):
         return round(value / 10 ** 8, 8)
-    return value
+    return to_float(value)
 
 
 def to_date(token: Union[datetime, str]) -> Optional[datetime]:
@@ -628,7 +633,14 @@ def to_float(token: Union[int, float, str, None]) -> Optional[float]:
     try:
         return float(token)
     except (ValueError, TypeError):
-        return None
+        return 0.0
+
+
+def to_int(token: Union[int, float, str, None]) -> Optional[int]:
+    try:
+        return int(token)
+    except (ValueError, TypeError):
+        return 0
 
 
 def symbol2stock(symbol):

@@ -74,7 +74,7 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def get_cross_collaterals(self, schema: str, **kwargs) -> list:
+    def get_wallet_extra_data(self, schema: str, asset: str, **kwargs) -> dict:
         raise NotImplementedError
 
     @abstractmethod

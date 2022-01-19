@@ -2,9 +2,7 @@ import datetime
 from mst_gateway.connector.api.types import OrderExec, OrderSchema, OrderType, OrderTTL, BUY, SELL
 
 DEFAULT_ORDER_SIDE = BUY
-DEFAULT_ORDER_SIDE_STR = 'BUY'
 DEFAULT_ORDER_OPPOSITE_SIDE = SELL
-DEFAULT_ORDER_OPPOSITE_SIDE_STR = 'SELL'
 DEFAULT_ORDER_VOLUME = {
     OrderSchema.exchange: 0.001,
     OrderSchema.futures: 0.001,
@@ -23,7 +21,7 @@ DEFAULT_ORDER = {
         'execution': OrderExec.limit,
         'filled_volume': 0.0,
         'schema': OrderSchema.exchange,
-        'side': DEFAULT_ORDER_SIDE_STR,
+        'side': DEFAULT_ORDER_SIDE,
         'stop': 0.0,
         'symbol': 'BTCUSDT',
         'system_symbol': 'btcusd',
@@ -35,7 +33,7 @@ DEFAULT_ORDER = {
         'execution': OrderExec.limit,
         'filled_volume': 0.0,
         'schema': OrderSchema.futures,
-        'side': DEFAULT_ORDER_SIDE_STR,
+        'side': DEFAULT_ORDER_SIDE,
         'stop': 0.0,
         'symbol': 'BTCUSDT',
         'system_symbol': 'btcusd',
@@ -47,7 +45,7 @@ DEFAULT_ORDER = {
         'execution': OrderExec.limit,
         'filled_volume': 0.0,
         'schema': OrderSchema.futures_coin,
-        'side': DEFAULT_ORDER_SIDE_STR,
+        'side': DEFAULT_ORDER_SIDE,
         'stop': 0.0,
         'symbol': 'BTCUSD_PERP',
         'system_symbol': 'btcusd',

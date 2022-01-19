@@ -62,9 +62,9 @@ DEFAULT_ORDER_BOOK_DATA = {
                     "act": "update",
                     "d": [
                         {
-                            "id": None,
+                            "id": 0,
                             "s": "XBTUSD",
-                            "p": None,
+                            "p": 0.0,
                             "vl": 94300,
                             "sd": 0,
                             "ss": "btcusd"

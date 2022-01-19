@@ -22,7 +22,7 @@ class Subscriber:
     async def subscribe(self, api: StockWssApi, symbol=None):
         try:
             api.partial_state_data.setdefault(self.subscription, {}).update(await self.init_partial_state(api))
-        except QueryError:
+        except Exception:
             return False
         return await self._subscribe(api, symbol)
 
