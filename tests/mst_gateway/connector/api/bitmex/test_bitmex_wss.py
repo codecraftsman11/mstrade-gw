@@ -384,10 +384,7 @@ class TestSubscriptionBitmexWssApi:
 
     def validate_messages(self, subscr_name, schema):
         header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)
-        if subscr_name == 'wallet':
-            subscr_schema = fields.WS_MESSAGE_DATA_FIELDS[subscr_name][schema]
-        else:
-            subscr_schema = fields.WS_MESSAGE_DATA_FIELDS[subscr_name]
+        subscr_schema = fields.WS_MESSAGE_DATA_FIELDS[subscr_name]
         data_schema = Schema(subscr_schema)
         for message in self.messages:
             assert header_schema.validate(message[subscr_name]) == message[subscr_name]
