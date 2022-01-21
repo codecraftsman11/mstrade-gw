@@ -686,13 +686,13 @@ def load_futures_wallet_extra_data(cross_collaterals_data: dict, collateral_conf
     }
 
 
-def load_futures_cross_collaterals_data(cross_collaterals: list) -> list:
+def load_futures_cross_collaterals_data(cross_collaterals: dict) -> list:
     data = [{
         'collateral_currency': cross.get('collateralCoin'),
         'borrowed_currency': cross.get('loanCoin'),
         'locked': to_float(cross.get('locked')),
         'borrowed': to_float(cross.get('loanAmount')),
-    } for cross in cross_collaterals]
+    } for cross in cross_collaterals.get('crossCollaterals', [])]
     return data
 
 

@@ -148,7 +148,10 @@ class BitmexRestApi(StockRestApi):
             return utils.load_wallet_detail_data(data, asset)
         raise ConnectorError(f"Invalid schema {schema}.")
 
-    def get_wallet_extra_data(self, schema: str, asset: str, **kwargs) -> dict:
+    def get_wallet_extra_data(self, schema: str, **kwargs) -> dict:
+        return {}
+
+    def get_wallet_detail_extra_data(self, schema: str, asset: str, **kwargs) -> dict:
         return {}
 
     def get_assets_balance(self, schema: str, **kwargs) -> dict:
