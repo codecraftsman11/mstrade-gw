@@ -3,7 +3,7 @@ from typing import Dict, Union, Optional
 from datetime import datetime, timedelta
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
-from mst_gateway.connector.api.utils.utils import convert_to_currency, load_wallet_summary_in_usd
+from mst_gateway.connector.api.utils.utils import load_wallet_summary
 from mst_gateway.exceptions import ConnectorError
 from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
 from mst_gateway.utils import delta
@@ -492,14 +492,7 @@ def load_wallet_data(raw_data: dict, currencies: dict, assets: Union[tuple, list
         ex_key = 'extra_data'
         extra_data = None
 
-    balances_summary = {}
-    total_balance = {OrderSchema.margin1: {}}
-    wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields, is_for_ws=is_for_ws)
-    for asset in assets:
-        total_balance[OrderSchema.margin1][asset] = convert_to_currency(
-            wallet_summary_in_usd, currencies.get(to_exchange_asset(asset))
-        )
-    load_total_wallet_summary(balances_summary, total_balance, assets, fields, is_for_ws=is_for_ws)
+    balances_summary = load_wallet_summary(OrderSchema.margin1, balances, fields, currencies, assets, is_for_ws)
     return {
         bls_key: balances,
         ex_key: extra_data,
@@ -550,24 +543,6 @@ def to_wallet_state_type(value):
     if bool(value):
         return 'trade'
     return 'hold'
-
-
-def to_exchange_asset(asset: str):
-    if asset == 'btc':
-        return 'xbt'
-    return asset
-
-
-def load_total_wallet_summary(total_summary: dict, total_balance: dict, assets: Union[list, tuple],
-                              fields: Union[list, tuple], is_for_ws=False):
-    for schema in total_balance.keys():
-        for field in fields:
-            t_field = f't{field}' if is_for_ws else f'total_{field}'
-            total_summary.setdefault(t_field, {})
-            for asset in assets:
-                total_summary[t_field].setdefault(asset, 0)
-                total_summary[t_field][asset] += total_balance[schema][asset][field]
-    return total_summary
 
 
 def load_commissions(commissions: dict) -> list:

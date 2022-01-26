@@ -14,7 +14,7 @@ from mst_gateway.connector.api.stocks.binance.wss.serializers.position import Bi
 from .lib import Client
 from . import utils, var
 from ...rest import StockRestApi
-from ...utils import load_wallet_summary_in_usd, load_wallet_summary_margin3_in_usd, convert_to_currency
+from ...utils import load_wallet_summary
 from .....exceptions import GatewayError, ConnectorError, RecoverableError, NotFoundError
 
 
@@ -652,8 +652,7 @@ class BinanceRestApi(StockRestApi):
         currency = self._binance_api(schema_handlers[schema.lower()])
         return utils.load_symbols_currencies(currency, self.storage.get(StateStorageKey.symbol, self.name, schema))
 
-    def get_wallet_summary(self, schemas: iter, **kwargs) -> dict:
-        total_summary = {}
+    def get_wallet_summary(self, schema: str, **kwargs) -> dict:
         schema_handlers = {
             OrderSchema.exchange: (
                 self._handler.get_account,
@@ -676,28 +675,16 @@ class BinanceRestApi(StockRestApi):
                 utils.load_future_coin_wallet_balances
             ),
         }
-        if not schemas:
-            schemas = schema_handlers.keys()
-        assets = kwargs.get('assets', ('btc', 'usd'))
+        validate_schema(schema, schema_handlers)
+        schema = schema.lower()
+        try:
+            balances = schema_handlers[schema][1](self._binance_api(schema_handlers[schema][0]))
+        except ConnectorError:
+            return {}
         fields = ('balance', 'unrealised_pnl', 'margin_balance')
-        for schema in schemas:
-            schema = schema.lower()
-            total_balance = {schema: {}}
-            try:
-                currencies = self.storage.get(StateStorageKey.exchange_rates, self.name, schema)
-                balances = schema_handlers[schema][1](self._binance_api(schema_handlers[schema][0]))
-            except (KeyError, ConnectorError):
-                continue
-            if schema == OrderSchema.margin3:
-                wallet_summary_in_usd = load_wallet_summary_margin3_in_usd(currencies, balances, fields)
-            else:
-                wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields)
-            for asset in assets:
-                total_balance[schema][asset] = convert_to_currency(
-                    wallet_summary_in_usd, currencies.get(utils.to_exchange_asset(asset, schema))
-                )
-            utils.load_total_wallet_summary(total_summary, total_balance, assets, fields)
-        return total_summary
+        exchange_rates = self.storage.get(StateStorageKey.exchange_rates, self.name, schema)
+        assets = kwargs.get('assets', ('btc', 'usd'))
+        return load_wallet_summary(schema, balances, fields, exchange_rates, assets)
 
     def list_order_commissions(self, schema: str) -> list:
         schema_handlers = {
