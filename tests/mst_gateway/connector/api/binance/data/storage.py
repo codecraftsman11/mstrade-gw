@@ -19,6 +19,7 @@ STORAGE_DATA = {
                     'system_symbol': 'btcusd',
                     'symbol': 'btcusdt',
                     'exchange': 'tbinance',
+                    'wallet_asset': None,
                 },
             },
             OrderSchema.margin2: {
@@ -36,6 +37,7 @@ STORAGE_DATA = {
                     'system_symbol': 'btcusd',
                     'symbol': 'btcusdt',
                     'exchange': 'tbinance',
+                    'wallet_asset': None,
                 },
             },
             OrderSchema.margin3: {
@@ -53,6 +55,7 @@ STORAGE_DATA = {
                     'system_symbol': 'btcusd',
                     'symbol': 'btcusdt',
                     'exchange': 'tbinance',
+                    'wallet_asset': None,
                 },
             },
             OrderSchema.futures: {
@@ -90,6 +93,7 @@ STORAGE_DATA = {
                     'system_symbol': 'btcusd',
                     'symbol': 'btcusdt',
                     'exchange': 'tbinance',
+                    'wallet_asset': 'USDT',
                 },
             },
             OrderSchema.futures_coin: {
@@ -127,6 +131,7 @@ STORAGE_DATA = {
                     'system_symbol': 'btcusd',
                     'symbol': 'btcusd_perp',
                     'exchange': 'tbinance',
+                    'wallet_asset': 'BTC',
                 },
             },
         },

@@ -50,6 +50,7 @@ SYMBOL_FIELDS = {
     'symbol_schema': Or(None, Use(schema_valid)),
     'created': Or(None, Use(datetime_valid)),
     'max_leverage': Or(None, float),
+    'wallet_asset': Or(None, str),
 }
 
 ORDER_FIELDS = {
@@ -189,6 +190,7 @@ BASE_EXCHANGE_SYMBOL_INFO_FIELDS = {
     'expiration': Or(None, str),
     'expiration_date': Or(None, Use(datetime_valid)),
     'max_leverage': Or(None, float),
+    'wallet_asset': Or(None, str),
 }
 EXCHANGE_SYMBOL_INFO_FIELDS = {
     OrderSchema.margin1: {
@@ -371,6 +373,7 @@ WS_MESSAGE_DATA_FIELDS = {
         'vt': Use(float_valid),
         'crt': Or(None, Use(datetime_valid)),
         'mlvr': Use(float_valid),
+        'wa': Or(None, str),
     },
     'trade': {
         'tm': Use(iso_datetime_valid),
