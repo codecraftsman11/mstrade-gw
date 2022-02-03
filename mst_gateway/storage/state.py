@@ -12,6 +12,14 @@ class StateStorage(BaseSyncStorage):
         timeout = kwargs.get("timeout", self._timeout)
         _key = self.generate_hash_key(key)
         if self.is_dict:
+            self._set_dict(_key, value)
+        else:
+            self._storage.set(_key, value, timeout=timeout)
+
+    def update(self, key, value, *args, **kwargs) -> None:
+        timeout = kwargs.get("timeout", self._timeout)
+        _key = self.generate_hash_key(key)
+        if self.is_dict:
             _tmp = self._get_dict(_key)
         else:
             _tmp = self._storage.get(_key)
@@ -40,6 +48,14 @@ class StateStorage(BaseSyncStorage):
 class AsyncStateStorage(BaseAsyncStorage):
 
     async def set(self, key, value, *args, **kwargs) -> None:
+        timeout = kwargs.get("timeout", self._timeout)
+        _key = self.generate_hash_key(key)
+        if self.is_dict:
+            self._set_dict(_key, value)
+        else:
+            await self._storage.set_async(_key, value, timeout=timeout)
+
+    async def update(self, key, value, *args, **kwargs) -> None:
         timeout = kwargs.get("timeout", self._timeout)
         _key = self.generate_hash_key(key)
         if self.is_dict:

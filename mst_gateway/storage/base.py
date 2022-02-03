@@ -32,6 +32,10 @@ class BaseStorage:
         raise NotImplementedError
 
     @abstractmethod
+    def update(self, *args, **kwargs):
+        raise NotImplementedError
+
+    @abstractmethod
     def get(self, *args, **kwargs):
         raise NotImplementedError
 
