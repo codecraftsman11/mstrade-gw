@@ -356,10 +356,7 @@ class BitmexRestApi(StockRestApi):
 
     def get_wallet_summary(self, schema: str, **kwargs) -> dict:
         if schema == OrderSchema.margin1:
-            try:
-                data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
-            except ConnectorError:
-                return {}
+            data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
             balances = [utils.load_wallet_detail_data(data)]
             fields = ('balance', 'unrealised_pnl', 'margin_balance')
             exchange_rates = self.storage.get(StateStorageKey.exchange_rates, self.name, schema)

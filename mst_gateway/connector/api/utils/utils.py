@@ -42,7 +42,7 @@ def load_wallet_summary(schema: str, balances: list, fields: iter, exchange_rate
         for currency in assets:
             _exchange_rate = exchange_rates.get(to_exchange_asset(schema, currency))
             try:
-                wallet_summary.setdefault(_summary_key, {})[currency] = _value_in_usd * (1 / _exchange_rate)
+                wallet_summary.setdefault(_summary_key, {})[currency] = round(_value_in_usd * (1 / _exchange_rate), 8)
             except TypeError:
                 wallet_summary.setdefault(_summary_key, {})[currency] = 0.0
     return wallet_summary

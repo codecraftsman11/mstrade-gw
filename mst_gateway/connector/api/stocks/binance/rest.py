@@ -677,10 +677,7 @@ class BinanceRestApi(StockRestApi):
         }
         validate_schema(schema, schema_handlers)
         schema = schema.lower()
-        try:
-            balances = schema_handlers[schema][1](self._binance_api(schema_handlers[schema][0]))
-        except ConnectorError:
-            return {}
+        balances = schema_handlers[schema][1](self._binance_api(schema_handlers[schema][0]))
         fields = ('balance', 'unrealised_pnl', 'margin_balance')
         exchange_rates = self.storage.get(StateStorageKey.exchange_rates, self.name, schema)
         assets = kwargs.get('assets', ('btc', 'usd'))

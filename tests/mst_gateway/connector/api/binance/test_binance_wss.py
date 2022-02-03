@@ -492,6 +492,7 @@ class TestBinanceWssApi:
                         for v in ex['bls']:
                             assert extra_balance_schema.validate(v) == v
             assert data == expect[i]
+            assert False
 
     @classmethod
     def init_partial_state(cls, wss: BinanceWssApi, subscr_name):
