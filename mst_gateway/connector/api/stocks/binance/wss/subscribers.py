@@ -154,7 +154,7 @@ class BinanceWalletSubscriber(BinanceSubscriber):
 
     async def subscribe_exchange_rates(self, api: BinanceWssApi):
         redis = await api.storage.get_client()
-        state_channel = (await redis.subscribe(StateStorageKey.exchange_rates))[0]
+        state_channel = (await redis.subscribe(f"{StateStorageKey.exchange_rates}.{api.name}.{api.schema}"))[0]
         while await state_channel.wait_message():
             state_data = await state_channel.get_json()
             exchange_rates = state_data.get(api.name.lower(), {}).get(api.schema, {})
@@ -183,7 +183,7 @@ class BinanceWalletSubscriber(BinanceSubscriber):
         }
         try:
             kwargs['raw_data'] = await schema_handlers[schema][0]()
-            kwargs['currencies'] = await api.storage.get(StateStorageKey.exchange_rates, api.name, schema)
+            kwargs['currencies'] = await api.storage.get(f"{StateStorageKey.exchange_rates}.{api.name}.{schema}")
         except GatewayError:
             return None, None
         if schema in (OrderSchema.margin2, OrderSchema.futures):
@@ -216,7 +216,7 @@ class BinanceWalletSubscriber(BinanceSubscriber):
         api.tasks.append(asyncio.create_task(self.subscribe_exchange_rates(api)))
         api.tasks.append(asyncio.create_task(self.subscribe_wallet_state(api, client)))
 
-        exchange_rates = await api.storage.get(StateStorageKey.exchange_rates, exchange=api.name, schema=api.schema)
+        exchange_rates = await api.storage.get(f"{StateStorageKey.exchange_rates}.{api.name}.{api.schema}")
         return {
             'exchange_rates': exchange_rates
         }
@@ -251,7 +251,7 @@ class BinancePositionSubscriber(BinanceSubscriber):
 
     async def subscribe_exchange_rates(self, api: BinanceWssApi):
         redis = await api.storage.get_client()
-        state_channel = (await redis.subscribe(StateStorageKey.exchange_rates))[0]
+        state_channel = (await redis.subscribe(f"{StateStorageKey.exchange_rates}.{api.name}.{api.schema}"))[0]
         while await state_channel.wait_message():
             state_data = await state_channel.get_json()
             exchange_rates = state_data.get(api.name.lower(), {}).get(api.schema, {})
@@ -263,7 +263,7 @@ class BinancePositionSubscriber(BinanceSubscriber):
         positions_state_data = await api.storage.get_pattern(
             f"{StateStorageKey.state}:{self.subscription}.{api.account_id}.{api.name}.{api.schema}.*".lower()
         )
-        exchange_rates = await api.storage.get(StateStorageKey.exchange_rates, exchange=api.name, schema=api.schema)
+        exchange_rates = await api.storage.get(f"{StateStorageKey.exchange_rates}.{api.name}.{api.schema}")
         return {
             'position_state': utils.load_positions_state(positions_state_data),
             'exchange_rates': exchange_rates,
@@ -280,7 +280,7 @@ class BinanceFuturesPositionSubscriber(BinancePositionSubscriber):
         ) as client:
             try:
                 exchange_rates = await api.storage.get(
-                    StateStorageKey.exchange_rates, exchange=api.name, schema=api.schema)
+                    f"{StateStorageKey.exchange_rates}.{api.name}.{api.schema}")
                 account_info = await client.futures_account_v2()
                 leverage_brackets = await client.futures_leverage_bracket()
                 return {
@@ -310,7 +310,7 @@ class BinanceFuturesCoinPositionSubscriber(BinanceFuturesPositionSubscriber):
                 state_data = await api.storage.get(StateStorageKey.symbol, api.name, api.schema)
                 leverage_brackets = await client.futures_coin_leverage_bracket()
                 exchange_rates = await api.storage.get(
-                    StateStorageKey.exchange_rates, exchange=api.name, schema=api.schema)
+                    f"{StateStorageKey.exchange_rates}.{api.name}.{api.schema}")
                 return {
                     'position_state': utils.load_futures_coin_positions_state(account_info, state_data),
                     'leverage_brackets': utils.load_leverage_brackets_as_dict(leverage_brackets),

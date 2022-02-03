@@ -67,14 +67,10 @@ class AsyncStateStorage(BaseAsyncStorage):
         else:
             await self._storage.set_async(_key, _tmp, timeout=timeout)
 
-    async def get(self, key, exchange: str = None, schema: str = None, *args, **kwargs) -> dict:
+    async def get(self, key, *args, **kwargs) -> dict:
         _key = self.generate_hash_key(key)
         if self.is_dict:
             result = self._get_dict(key) or {}
         else:
             result = await self._storage.get_async(key) or {}
-        if exchange:
-            result = result.get(exchange.lower(), {})
-        if schema:
-            result = result.get(schema.lower(), {})
         return result
