@@ -47,7 +47,6 @@ SYMBOL_FIELDS = {
     'tick': Or(None, float),
     'volume_tick': Or(None, float),
     'system_symbol': Or(None, str),
-    'symbol_schema': Or(None, Use(schema_valid)),
     'created': Or(None, Use(datetime_valid)),
     'max_leverage': Or(None, float),
 }
@@ -177,7 +176,6 @@ BASE_EXCHANGE_SYMBOL_INFO_FIELDS = {
     'symbol': str,
     'system_symbol': str,
     'schema': Use(schema_valid),
-    'symbol_schema': Use(schema_valid),
     'base_asset': str,
     'quote_asset': str,
     'system_base_asset': str,
@@ -352,7 +350,6 @@ WS_MESSAGE_DATA_FIELDS = {
         'tm': Use(iso_datetime_valid),
         's': str,
         'ss': Or(None, str),
-        'ssch': Or(None, Use(schema_valid)),
         'p': float,
         'p24': float,
         'dt': float,
