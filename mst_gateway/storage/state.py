@@ -32,16 +32,12 @@ class StateStorage(BaseSyncStorage):
         else:
             self._storage.set(_key, _tmp, timeout=timeout)
 
-    def get(self, key, exchange: str = None, schema: str = None, *args, **kwargs) -> dict:
+    def get(self, key, *args, **kwargs) -> dict:
         _key = self.generate_hash_key(key)
         if self.is_dict:
             result = self._get_dict(key) or {}
         else:
             result = self._storage.get(key) or {}
-        if exchange:
-            result = result.get(exchange.lower(), {})
-        if schema:
-            result = result.get(schema.lower(), {})
         return result
 
 
