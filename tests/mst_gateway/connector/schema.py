@@ -36,7 +36,6 @@ SYMBOL_FIELDS = {
     'face_price': Use(float_valid),
     'bid_price': Use(float_valid),
     'ask_price': Use(float_valid),
-    'reversed': bool,
     'volume24': Or(int, float),
     'mark_price': Use(float_valid),
     'high_price': Use(float_valid),
@@ -189,6 +188,7 @@ BASE_EXCHANGE_SYMBOL_INFO_FIELDS = {
     'expiration': Or(None, str),
     'expiration_date': Or(None, Use(datetime_valid)),
     'max_leverage': Or(None, float),
+    'extra_params': dict,
 }
 EXCHANGE_SYMBOL_INFO_FIELDS = {
     OrderSchema.margin1: {
@@ -198,11 +198,11 @@ EXCHANGE_SYMBOL_INFO_FIELDS = {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
     },
     OrderSchema.futures: {
-        'leverage_brackets': list,
+        # 'leverage_brackets': list,
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
     },
     OrderSchema.futures_coin: {
-        'leverage_brackets': list,
+        # 'leverage_brackets': list,
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
     },
 }
@@ -359,7 +359,6 @@ WS_MESSAGE_DATA_FIELDS = {
         'fp': float,
         'bip': float,
         'asp': float,
-        're': bool,
         'v24': Use(float_valid),
         'mp': float,
         'hip': float,

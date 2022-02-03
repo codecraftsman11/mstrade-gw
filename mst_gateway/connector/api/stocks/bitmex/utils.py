@@ -19,23 +19,23 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     symbol_time = to_date(raw_data.get('timestamp'))
     price = to_float(raw_data.get('lastPrice'))
     price24 = to_float(raw_data.get('prevPrice24h'))
-    face_price, _reversed = BitmexFinFactory.calc_face_price(symbol, price)
     data = {
         'time': symbol_time,
         'symbol': symbol,
         'price': price,
         'price24': price24,
         'delta': delta(price, price24),
-        'face_price': face_price,
         'bid_price': to_float(raw_data.get('bidPrice')),
         'ask_price': to_float(raw_data.get('askPrice')),
-        'reversed': _reversed,
         'volume24': raw_data.get('volume24h'),
         'mark_price': raw_data.get('markPrice'),
         'high_price': to_float(raw_data.get('highPrice')),
         'low_price': to_float(raw_data.get('lowPrice'))
     }
     if isinstance(state_data, dict):
+        face_price = None
+        if face_price_data := state_data.get('extra_params', {}).get('face_price_data', {}):
+            face_price = BitmexFinFactory.calc_face_price(price, **face_price_data)
         data.update({
             'expiration': state_data.get('expiration'),
             'expiration_date': state_data.get('expiration_date'),
@@ -46,7 +46,8 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
             'schema': state_data.get('schema'),
             'symbol_schema': state_data.get('symbol_schema'),
             'created': to_date(state_data.get('created')),
-            'max_leverage': state_data.get('max_leverage')
+            'max_leverage': state_data.get('max_leverage'),
+            'face_price': face_price,
         })
     return data
 
@@ -56,24 +57,24 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     symbol_time = to_iso_datetime(raw_data.get('timestamp'))
     price = to_float(raw_data.get('lastPrice'))
     price24 = to_float(raw_data.get('prevPrice24h'))
-    face_price, _reversed = BitmexFinFactory.calc_face_price(symbol, price)
     data = {
         'tm': symbol_time,
         's': symbol,
         'p': price,
         'p24': price24,
         'dt': delta(price, price24),
-        'fp': face_price,
         'bip': to_float(raw_data.get('bidPrice')),
         'asp': to_float(raw_data.get('askPrice')),
-        're': _reversed,
         'v24': raw_data.get('volume24h'),
         'mp': to_float(raw_data.get('markPrice')),
         'hip': to_float(raw_data.get("highPrice")),
         'lop': to_float(raw_data.get('lowPrice'))
     }
     if isinstance(state_data, dict):
+        face_price_data = state_data.get('extra_params', {}).get('face_price_data', {})
+        face_price = BitmexFinFactory.calc_face_price(price, **face_price_data)
         data.update({
+            'fp': face_price,
             'exp': state_data.get('expiration'),
             'expd': state_data.get('expiration_date'),
             'pa': state_data.get('pair'),
@@ -135,7 +136,12 @@ def load_exchange_symbol_info(raw_data: list) -> list:
         tick = to_float(d.get('tickSize'))
         volume_tick = to_float(d.get('lotSize'))
         max_leverage = 100 if d.get('initMargin', 0) <= 0 else 1 / d['initMargin']
-
+        face_price_data = {
+            'is_quanto': d.get('isQuanto'),
+            'is_inverse': d.get('isInverse'),
+            'multiplier': d.get('multiplier', 1),
+            'underlying_multiplier': d.get('underlyingToPositionMultiplier', 1)
+        }
         symbol_list.append(
             {
                 'symbol': symbol,
@@ -152,7 +158,8 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                 'symbol_schema': symbol_schema,
                 'tick': tick,
                 'volume_tick': volume_tick,
-                'max_leverage': max_leverage
+                'max_leverage': max_leverage,
+                'extra_params': {'face_price_data': face_price_data}
             }
         )
     return symbol_list

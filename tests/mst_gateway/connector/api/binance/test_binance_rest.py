@@ -230,7 +230,7 @@ class TestBinanceRestApi:
             assert symbol_info_schema.validate(symbol_info) == symbol_info
             if schema in (OrderSchema.futures, OrderSchema.futures_coin):
                 leverage_bracket_schema = Schema(fields.LEVERAGE_BRACKET_FIELDS[schema])
-                for leverage_bracket in symbol_info['leverage_brackets']:
+                for leverage_bracket in symbol_info['extra_params']['leverage_brackets']:
                     assert leverage_bracket_schema.validate(leverage_bracket) == leverage_bracket
 
     @classmethod
@@ -499,7 +499,7 @@ class TestBinanceRestApi:
     def test_get_liquidation(self, rest: BinanceRestApi, schema: str, side: int, volume: float, mark_price: float,
                              price: float, wallet_balance: float, leverage_type: str, expect: Optional[float]):
         leverage_brackets, positions_state = get_liquidation_kwargs(schema)
-        liquidation = rest.get_liquidation(get_symbol(schema), schema,
+        liquidation = rest.get_liquidation(get_symbol(schema).lower(), schema,
                                            leverage_type, wallet_balance, side, volume, price, mark_price=mark_price,
                                            leverage_brackets=leverage_brackets, positions_state=positions_state)
         assert Schema(fields.LIQUIDATION_FIELDS).validate(liquidation) == liquidation

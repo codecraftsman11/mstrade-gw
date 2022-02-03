@@ -165,13 +165,22 @@ class TestBitmexRestApi:
         assert user_schema.validate(user) == user
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, price, face_price, kwargs', [
+            ('tbitmex', 2757.02, 0.00275702, {
+                'is_quanto': True, 'is_inverse': False, 'multiplier': 100, 'underlying_multiplier': None
+            }),
+            ('tbitmex', 38492.64, 0.00002598, {
+                'is_quanto': False, 'is_inverse': True, 'multiplier': None, 'underlying_multiplier': None
+            }),
+            ('tbitmex', 0.07164, 0.00000072, {
+                'is_quanto': False, 'is_inverse': False, 'multiplier': None, 'underlying_multiplier': 100000
+            }),
+        ],
         indirect=['rest'],
     )
-    def test_calc_face_price(self, rest: BitmexRestApi, schema: str):
-        for symbol in rest.list_symbols(schema=schema):
-            face_price = BitmexFinFactory.calc_face_price(symbol['symbol'], symbol['price'])
-            assert isinstance(face_price[0], float)
+    def test_calc_face_price(self, rest: BitmexRestApi, price: float, face_price: float, kwargs: dict):
+        calc_face_price = round(BitmexFinFactory.calc_face_price(price, **kwargs), 8)
+        assert face_price == calc_face_price
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],

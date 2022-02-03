@@ -1,5 +1,4 @@
-import re
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 from mst_gateway.calculator import FinFactory
 from mst_gateway.connector import api
 
@@ -48,90 +47,42 @@ class BitmexFinFactory(FinFactory):
         return result
 
     @classmethod
-    def calc_face_price(cls, symbol: str, price: float, **kwargs) -> Tuple[Optional[float], Optional[bool]]:
-        _symbol = symbol.lower()
-        result = (None, None)
+    def calc_face_price(cls, price: float, **kwargs) -> Optional[float]:
+        if not kwargs:
+            return None
+        is_quanto = kwargs.get('is_quanto')
+        is_inverse = kwargs.get('is_inverse')
+        multiplier = kwargs.get('multiplier', 1)
+        underlying_multiplier = kwargs.get('underlying_multiplier', 1)
         try:
-            if re.match(r"^xbt(usd(t)?|eur)$", _symbol):
-                result = (1 / price, True)
-            elif re.match(r"^xbt[fghjkmnquvxz]\d{2}$", _symbol):
-                result = (1 / price, True)
-            elif _symbol == "xbtjpy":
-                result = (100 / price, True)
-            elif _symbol == "xbtkrw":
-                result = (1000 / price, True)
-            elif _symbol in ("xbt7d_u105", "xbt7d_d95"):
-                result = (0.1 * price, False)
-            elif re.match(r"^adausd(t)?([fghjkmnquvxz]\d{2})?$", _symbol):
-                result = (0.01 * price, False)
-            elif re.match(r"^(altmex|defimex|fil|aave)usd(t)?$", _symbol):
-                result = (1e-6 * price, False)
-            elif re.match(r"^(eth|bch)usd(t)?([fghjkmnquvxz]\d{2})?$", _symbol):
-                result = (1e-6 * price, False)
-            elif re.match(r"^yfiusd(t)?([fghjkmnquvxz]\d{2})?$", _symbol):
-                result = (1e-7 * price, False)
-            elif re.match(r"^ltcusd(t)?$", _symbol):
-                result = (2e-6 * price, False)
-            elif re.match(r"^(uni|sol|sushi)usd(t)?$", _symbol):
-                result = (1e-5 * price, False)
-            elif re.match(r"^(doge|trx|xlm|vet)usd(t)?$", _symbol):
-                result = (0.001 * price, False)
-            elif re.match(r"^maticusd(t)?$", _symbol):
-                result = (0.0001 * price, False)
-            elif re.match(r"^(bnb|dot|eos|link|xtz)usd(t)?([fghjkmnquvxz]\d{2})?$", _symbol):
-                result = (0.0001 * price, False)
-            elif re.match(r"^xrpusd(t)?$", _symbol):
-                result = (0.0002 * price, False)
-            elif re.match(r"^(ada|bch|eos|eth|ltc|trx|xrp|xbteur)[fghjkmnquvxz]\d{2}$", _symbol):
-                result = (price, False)
-            elif re.match(r"^\w*xbt$", _symbol):
-                result = (price, False)
-        except (ValueError, TypeError, ZeroDivisionError):
-            pass
-        return result
+            if is_quanto:
+                face_price = multiplier / 100_000_000 * price
+            elif is_inverse:
+                face_price = 1 / price
+            else:
+                face_price = price / underlying_multiplier
+        except (TypeError, ZeroDivisionError):
+            return None
+        return face_price
 
     @classmethod
-    def calc_price(cls, symbol: str, face_price: float, **kwargs) -> Optional[float]:
-        _symbol = symbol.lower()
-        result = None
+    def calc_price(cls, face_price: float, **kwargs) -> Optional[float]:
+        if not kwargs:
+            return None
+        is_quanto = kwargs.get('is_quanto')
+        is_inverse = kwargs.get('is_inverse')
+        multiplier = kwargs.get('multiplier', 1)
+        underlying_multiplier = kwargs.get('underlying_multiplier', 1)
         try:
-            if re.match(r"^xbt(usd(t)?|eur)$", _symbol):
-                result = 1 / face_price
-            elif re.match(r"^xbt[fghjkmnquvxz]\d{2}$", _symbol):
-                result = 1 / face_price
-            elif _symbol == "xbtjpy":
-                result = 100 / face_price
-            elif _symbol == "xbtkrw":
-                result = 1000 / face_price
-            elif _symbol in ("xbt7d_u105", "xbt7d_d95"):
-                result = face_price / 0.1
-            elif re.match(r"^adausd(t)?([fghjkmnquvxz]\d{2})?$", _symbol):
-                result = face_price / 0.01
-            elif re.match(r"^(altmex|defimex|fil|aave)usd(t)?$", _symbol):
-                result = face_price / 1e-6
-            elif re.match(r"^(eth|bch)usd(t)?([fghjkmnquvxz]\d{2})?$", _symbol):
-                result = face_price / 1e-6
-            elif re.match(r"^yfiusd(t)?([fghjkmnquvxz]\d{2})?$", _symbol):
-                result = face_price / 1e-7
-            elif re.match(r"^ltcusd(t)?$", _symbol):
-                result = face_price / 2e-6
-            elif re.match(r"^(uni|sol|sushi)usd(t)?$", _symbol):
-                result = face_price / 1e-5
-            elif re.match(r"^(doge|trx|xlm|vet)usd(t)?$", _symbol):
-                result = face_price / 0.001
-            elif re.match(r"^maticusd(t)?$", _symbol):
-                result = face_price / 0.0001
-            elif re.match(r"^(bnb|dot|eos|link|xtz)usd(t)?([fghjkmnquvxz]\d{2})?$", _symbol):
-                result = face_price / 0.0001
-            elif re.match(r"^xrpusd(t)?$", _symbol):
-                result = face_price / 0.0002
-            elif re.match(r"^(ada|bch|eos|eth|ltc|trx|xrp|xbteur)[fghjkmnquvxz]\d{2}$", _symbol):
-                result = face_price
-            elif re.match(r"^\w*xbt$", _symbol):
-                result = face_price
-        except (ValueError, TypeError, ZeroDivisionError):
-            pass
-        return result
+            if is_quanto:
+                face_price = 100_000_000 * face_price / multiplier
+            elif is_inverse:
+                face_price = 1 / face_price
+            else:
+                face_price = face_price * underlying_multiplier
+        except (TypeError, ZeroDivisionError):
+            return None
+        return face_price
 
     @classmethod
     def side_by_direction(cls, direction: int) -> int:
