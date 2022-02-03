@@ -50,7 +50,6 @@ def load_symbol_data(schema: str, raw_data: Optional[dict], state_data: Optional
             'tick': state_data.get('tick'),
             'volume_tick': state_data.get('volume_tick'),
             'system_symbol': state_data.get('system_symbol'),
-            'symbol_schema': state_data.get('symbol_schema'),
             'created': to_date(state_data.get('created')),
             'max_leverage': state_data.get('max_leverage')
         })
@@ -81,7 +80,6 @@ def load_exchange_symbol_info(raw_data: list, schema: str, valid_symbols: list =
                 'symbol': d.get('symbol'),
                 'system_symbol': system_symbol.lower(),
                 'schema': schema,
-                'symbol_schema': schema,
                 'base_asset': d.get('baseAsset'),
                 'quote_asset': d.get('quoteAsset'),
                 'system_base_asset': system_base_asset,
@@ -151,7 +149,6 @@ def _load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict, sche
                     'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
                     'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
                     'schema': schema.lower(),
-                    'symbol_schema': schema.lower(),
                     'tick': tick,
                     'volume_tick': volume_tick,
                     'max_leverage': max_leverage,
@@ -1488,7 +1485,6 @@ def load_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict])
             'tck': state_data.get('tick'),
             'vt': state_data.get('volume_tick'),
             'ss': state_data.get('system_symbol'),
-            'ssch': state_data.get('symbol_schema'),
             'crt': to_iso_datetime(to_date(state_data.get('created'))),
             'mlvr': state_data.get('max_leverage')
         })
