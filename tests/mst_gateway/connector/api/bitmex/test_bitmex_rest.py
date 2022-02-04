@@ -278,7 +278,7 @@ class TestBitmexRestApi:
         indirect=['rest'],
     )
     def test_get_wallet_summary(self, rest: BitmexRestApi, schema: str):
-        wallet_summary = rest.get_wallet_summary(schemas=[schema])
+        wallet_summary = rest.get_wallet_summary(schema)
         assert Schema(fields.WALLET_SUMMARY_FIELDS).validate(wallet_summary) == wallet_summary
 
         total_cross_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
