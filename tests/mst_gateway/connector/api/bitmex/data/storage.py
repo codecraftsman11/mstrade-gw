@@ -14,87 +14,83 @@ FROM_DATE = datetime.now(tz=timezone.utc) - timedelta(days=2)
 RANGE_TO_DATE = FROM_DATE + timedelta(minutes=1)
 
 STORAGE_DATA = {
-    StateStorageKey.symbol: {
-        'bitmex': {
-            'margin1': {
-                'ethusd': {
-                    "tick": 0.05,
-                    "pair": [
-                        "ETH",
-                        "USD"
-                    ],
-                    "volume_tick": 1.0,
-                    "max_leverage": 100.0,
-                    "schema": "margin1",
-                    "symbol_schema": "margin1",
-                    "expiration": None,
-                    "expiration_date": None,
-                    "created": "2020-06-25T13:02:57.516637",
-                    "leverage_brackets": [],
-                    "system_symbol": "ethusd",
-                    "symbol": "ethusd",
-                    "exchange": "Bitmex"
-                },
-                'xbtusd': {
-                    "tick": 0.5,
-                    "pair": [
-                        "XBT",
-                        "USD"
-                    ],
-                    "volume_tick": 100.0,
-                    "max_leverage": 100.0,
-                    "schema": "margin1",
-                    "symbol_schema": "margin1",
-                    "expiration": None,
-                    "expiration_date": None,
-                    "created": "2020-07-01T15:10:14.834558",
-                    "leverage_brackets": [],
-                    "system_symbol": "btcusd",
-                    "symbol": "xbtusd",
-                    "exchange": "Bitmex"
-                },
-            }
+    f"{StateStorageKey.symbol}.bitmex.margin1": {
+        'ethusd': {
+            "tick": 0.05,
+            "pair": [
+                "ETH",
+                "USD"
+            ],
+            "volume_tick": 1.0,
+            "max_leverage": 100.0,
+            "schema": "margin1",
+            "symbol_schema": "margin1",
+            "expiration": None,
+            "expiration_date": None,
+            "created": "2020-06-25T13:02:57.516637",
+            "leverage_brackets": [],
+            "system_symbol": "ethusd",
+            "symbol": "ethusd",
+            "exchange": "Bitmex"
         },
-        'tbitmex': {
-            'margin1': {
-                'ethusd': {
-                    "tick": 0.05,
-                    "pair": [
-                        "ETH",
-                        "USD"
-                    ],
-                    "volume_tick": 1.0,
-                    "max_leverage": 100.0,
-                    "schema": "margin1",
-                    "symbol_schema": "margin1",
-                    "expiration": None,
-                    "expiration_date": None,
-                    "created": "2020-06-25T13:03:00.347559",
-                    "leverage_brackets": [],
-                    "system_symbol": "ethusd",
-                    "symbol": "ethusd",
-                    "exchange": "tBitmex"
-                },
-                'xbtusd': {
-                    "tick": 0.5,
-                    "pair": [
-                        "XBT",
-                        "USD"
-                    ],
-                    "volume_tick": 100.0,
-                    "max_leverage": 100.0,
-                    "schema": "margin1",
-                    "symbol_schema": "margin1",
-                    "expiration": None,
-                    "expiration_date": None,
-                    "created": "2020-07-01T15:10:16.748936",
-                    "leverage_brackets": [],
-                    "system_symbol": "btcusd",
-                    "symbol": "xbtusd",
-                    "exchange": "tBitmex"
-                },
-            }
+        'xbtusd': {
+            "tick": 0.5,
+            "pair": [
+                "XBT",
+                "USD"
+            ],
+            "volume_tick": 100.0,
+            "max_leverage": 100.0,
+            "schema": "margin1",
+            "symbol_schema": "margin1",
+            "expiration": None,
+            "expiration_date": None,
+            "created": "2020-07-01T15:10:14.834558",
+            "leverage_brackets": [],
+            "system_symbol": "btcusd",
+            "symbol": "xbtusd",
+            "exchange": "Bitmex"
         },
+    },
+   f"{StateStorageKey.symbol}.tbitmex.margin1": {
+        'margin1': {
+            'ethusd': {
+                "tick": 0.05,
+                "pair": [
+                    "ETH",
+                    "USD"
+                ],
+                "volume_tick": 1.0,
+                "max_leverage": 100.0,
+                "schema": "margin1",
+                "symbol_schema": "margin1",
+                "expiration": None,
+                "expiration_date": None,
+                "created": "2020-06-25T13:03:00.347559",
+                "leverage_brackets": [],
+                "system_symbol": "ethusd",
+                "symbol": "ethusd",
+                "exchange": "tBitmex"
+            },
+            'xbtusd': {
+                "tick": 0.5,
+                "pair": [
+                    "XBT",
+                    "USD"
+                ],
+                "volume_tick": 100.0,
+                "max_leverage": 100.0,
+                "schema": "margin1",
+                "symbol_schema": "margin1",
+                "expiration": None,
+                "expiration_date": None,
+                "created": "2020-07-01T15:10:16.748936",
+                "leverage_brackets": [],
+                "system_symbol": "btcusd",
+                "symbol": "xbtusd",
+                "exchange": "tBitmex"
+            },
+        }
     },
     StateStorageKey.exchange_rates: {
         'tbitmex': {

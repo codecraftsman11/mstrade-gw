@@ -359,6 +359,7 @@ class TestBitmexRestApi:
     def test_get_symbol(self, rest: BitmexRestApi, schema: str):
         symbol_schema = Schema(fields.SYMBOL_FIELDS)
         symbol = rest.get_symbol(schema=schema, symbol=data.SYMBOL)
+        print(f'RESPONSE123 IS {rest.storage.get("data:symbol.tbitmex.margin1")}')
         assert symbol_schema.validate(symbol) == symbol
 
     @pytest.mark.parametrize(
