@@ -137,7 +137,10 @@ def load_exchange_symbol_info(raw_data: list) -> list:
         tick = to_float(d.get('tickSize'))
         volume_tick = to_float(d.get('lotSize'))
         max_leverage = 100 if d.get('initMargin', 0) <= 0 else 1 / d['initMargin']
-
+        wallet_asset = d.get('settlCurrency').upper()
+        # TODO: support bitmex USDT
+        if wallet_asset == 'USDT':
+            wallet_asset = None
         symbol_list.append(
             {
                 'symbol': symbol,
@@ -155,7 +158,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                 'tick': tick,
                 'volume_tick': volume_tick,
                 'max_leverage': max_leverage,
-                'wallet_asset': d.get('settlCurrency').upper(),
+                'wallet_asset': wallet_asset,
             }
         )
     return symbol_list
