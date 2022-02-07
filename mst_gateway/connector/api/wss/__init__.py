@@ -8,7 +8,7 @@ from mst_gateway.storage import AsyncStateStorage, StateStorageKey
 from .router import Router
 from .subscriber import Subscriber
 from .throttle import ThrottleWss
-from .. import errors
+from .. import errors, OrderSchema
 from ..utils import parse_message
 from ...base import Connector
 
@@ -36,7 +36,7 @@ class StockWssApi(Connector):
                  options: dict = None,
                  throttle_rate: int = 30,
                  throttle_storage=None,
-                 schema='margin1',
+                 schema=OrderSchema.margin,
                  state_storage=None,
                  register_state=True):
         self.test = test

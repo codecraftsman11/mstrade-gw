@@ -126,7 +126,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
         if re.search(r'\d{2}$', symbol):
             symbol_schema = OrderSchema.futures
         else:
-            symbol_schema = OrderSchema.margin1
+            symbol_schema = OrderSchema.margin
 
         quote_asset, expiration = _quote_asset(symbol, base_asset, quote_currency, symbol_schema)
         system_base_asset = to_system_asset(base_asset)
@@ -148,7 +148,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                 'expiration_date': to_date(d.get('expiry')),
                 'pair': [base_asset.upper(), quote_asset.upper()],
                 'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
-                'schema': OrderSchema.margin1,
+                'schema': OrderSchema.margin,
                 'symbol_schema': symbol_schema,
                 'tick': tick,
                 'volume_tick': volume_tick,
@@ -332,7 +332,7 @@ def load_api_key_permissions(raw_data: dict, api_key: str, schemas: iter) -> dic
     for acc in raw_data:
         if acc.get('id') == api_key:
             if 'order' in acc.get('permissions'):
-                return {schema: (True if schema == OrderSchema.margin1 else False) for schema in schemas}
+                return {schema: (True if schema == OrderSchema.margin else False) for schema in schemas}
             else:
                 return {schema: False for schema in schemas}
     return {schema: False for schema in schemas}
@@ -492,7 +492,7 @@ def load_wallet_data(raw_data: dict, currencies: dict, assets: Union[tuple, list
         ex_key = 'extra_data'
         extra_data = None
 
-    balances_summary = load_wallet_summary(OrderSchema.margin1, balances, fields, currencies, assets, is_for_ws)
+    balances_summary = load_wallet_summary(OrderSchema.margin, balances, fields, currencies, assets, is_for_ws)
     return {
         bls_key: balances,
         ex_key: extra_data,

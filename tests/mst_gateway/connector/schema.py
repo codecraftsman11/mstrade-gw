@@ -191,7 +191,7 @@ BASE_EXCHANGE_SYMBOL_INFO_FIELDS = {
     'max_leverage': Or(None, float),
 }
 EXCHANGE_SYMBOL_INFO_FIELDS = {
-    OrderSchema.margin1: {
+    OrderSchema.margin: {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
     },
     OrderSchema.exchange: {

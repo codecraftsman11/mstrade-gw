@@ -4,7 +4,7 @@ from mst_gateway.connector.api.types import OrderSchema
 
 def to_exchange_asset(schema: str, asset: str) -> str:
     asset = asset.lower()
-    if schema == OrderSchema.margin1 and asset == 'btc':
+    if schema == OrderSchema.margin and asset == 'btc':
         return 'xbt'
     if schema != OrderSchema.futures_coin and asset == 'usd':
         return 'usdt'

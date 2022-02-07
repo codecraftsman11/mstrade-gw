@@ -1,14 +1,14 @@
 from mst_gateway.connector.api import OrderSchema
 
 DEFAULT_WALLET_DATA = {
-    OrderSchema.margin1: [
+    OrderSchema.margin: [
         {
             'message': '{"table":"margin","action":"partial","data":[{"account":379441,"currency":"XBt","riskLimit":1000000000000,"prevState":"","state":"","action":"","amount":1419341,"pendingCredit":0,"pendingDebit":0,"confirmedDebit":0,"prevRealisedPnl":-92,"prevUnrealisedPnl":0,"grossComm":636,"grossOpenCost":0,"grossOpenPremium":0,"grossExecCost":0,"grossMarkValue":0,"riskValue":0,"taxableMargin":0,"initMargin":0,"maintMargin":0,"sessionMargin":0,"targetExcessMargin":0,"varMargin":0,"realisedPnl":-378,"unrealisedPnl":0,"indicativeTax":0,"unrealisedProfit":0,"syntheticMargin":null,"walletBalance":1418963,"marginBalance":1418963,"marginBalancePcnt":1,"marginLeverage":0,"marginUsedPcnt":0,"excessMargin":1418963,"excessMarginPcnt":1,"availableMargin":1418963,"withdrawableMargin":1418963,"grossLastValue":0,"commission":null,"makerFeeDiscount":null,"takerFeeDiscount":null,"timestamp":"2021-12-18T21:54:31.153Z"},{"account":379441,"currency":"USDt","riskLimit":500000000000000,"prevState":"","state":"","action":"","amount":99999981385,"pendingCredit":0,"pendingDebit":0,"confirmedDebit":0,"prevRealisedPnl":0,"prevUnrealisedPnl":0,"grossComm":0,"grossOpenCost":0,"grossOpenPremium":0,"grossExecCost":0,"grossMarkValue":0,"riskValue":0,"taxableMargin":0,"initMargin":0,"maintMargin":0,"sessionMargin":0,"targetExcessMargin":0,"varMargin":0,"realisedPnl":0,"unrealisedPnl":0,"indicativeTax":0,"unrealisedProfit":0,"syntheticMargin":null,"walletBalance":99999981385,"marginBalance":99999981385,"marginBalancePcnt":1,"marginLeverage":0,"marginUsedPcnt":0,"excessMargin":99999981385,"excessMarginPcnt":1,"availableMargin":99999981385,"withdrawableMargin":99999981385,"grossLastValue":0,"commission":null,"makerFeeDiscount":null,"takerFeeDiscount":null,"timestamp":"2021-12-17T06:00:00.101Z"}]}',
             'expect': {
                 "wallet": {
                     "acc": "tbitmex",
                     "tb": "wallet",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "partial",
                     "d": [
                         {
@@ -59,7 +59,7 @@ DEFAULT_WALLET_DATA = {
                 "wallet": {
                     "acc": "tbitmex",
                     "tb": "wallet",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "update",
                     "d": [
                         {
@@ -91,7 +91,7 @@ DEFAULT_WALLET_DATA = {
                 "wallet": {
                     "acc": "tbitmex",
                     "tb": "wallet",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "update",
                     "d": [
                         {
@@ -123,7 +123,7 @@ DEFAULT_WALLET_DATA = {
                 "wallet": {
                     "acc": "tbitmex",
                     "tb": "wallet",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "update",
                     "d": [
                         {

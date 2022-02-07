@@ -16,7 +16,7 @@ RANGE_TO_DATE = FROM_DATE + timedelta(minutes=1)
 STORAGE_DATA = {
     StateStorageKey.symbol: {
         'bitmex': {
-            'margin1': {
+            OrderSchema.margin: {
                 'ethusd': {
                     "tick": 0.05,
                     "pair": [
@@ -25,8 +25,8 @@ STORAGE_DATA = {
                     ],
                     "volume_tick": 1.0,
                     "max_leverage": 100.0,
-                    "schema": "margin1",
-                    "symbol_schema": "margin1",
+                    "schema": OrderSchema.margin,
+                    "symbol_schema": OrderSchema.margin,
                     "expiration": None,
                     "expiration_date": None,
                     "created": "2020-06-25T13:02:57.516637",
@@ -43,8 +43,8 @@ STORAGE_DATA = {
                     ],
                     "volume_tick": 100.0,
                     "max_leverage": 100.0,
-                    "schema": "margin1",
-                    "symbol_schema": "margin1",
+                    "schema": OrderSchema.margin,
+                    "symbol_schema": OrderSchema.margin,
                     "expiration": None,
                     "expiration_date": None,
                     "created": "2020-07-01T15:10:14.834558",
@@ -56,7 +56,7 @@ STORAGE_DATA = {
             }
         },
         'tbitmex': {
-            'margin1': {
+            OrderSchema.margin: {
                 'ethusd': {
                     "tick": 0.05,
                     "pair": [
@@ -65,8 +65,8 @@ STORAGE_DATA = {
                     ],
                     "volume_tick": 1.0,
                     "max_leverage": 100.0,
-                    "schema": "margin1",
-                    "symbol_schema": "margin1",
+                    "schema": OrderSchema.margin,
+                    "symbol_schema": OrderSchema.margin,
                     "expiration": None,
                     "expiration_date": None,
                     "created": "2020-06-25T13:03:00.347559",
@@ -83,8 +83,8 @@ STORAGE_DATA = {
                     ],
                     "volume_tick": 100.0,
                     "max_leverage": 100.0,
-                    "schema": "margin1",
-                    "symbol_schema": "margin1",
+                    "schema": OrderSchema.margin,
+                    "symbol_schema": OrderSchema.margin,
                     "expiration": None,
                     "expiration_date": None,
                     "created": "2020-07-01T15:10:16.748936",
@@ -98,7 +98,7 @@ STORAGE_DATA = {
     },
     StateStorageKey.exchange_rates: {
         'tbitmex': {
-            OrderSchema.margin1: {
+            OrderSchema.margin: {
                 "xbtz21": 59417,
                 "xrp": 1.008,
                 "usd": 1,
@@ -133,7 +133,7 @@ STORAGE_DATA = {
 }
 
 WALLET_DATA = {
-    OrderSchema.margin1:
+    OrderSchema.margin:
         {
             'currency': 'XBT',
             'balance': 0.01221285,
