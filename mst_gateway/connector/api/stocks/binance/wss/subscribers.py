@@ -101,20 +101,19 @@ class BinanceSubscriber(Subscriber):
         watcher for new symbol when `general_subscribe_available` is False
         """
         redis = await api.storage.get_client()
-        symbol_channel = (await redis.subscribe(StateStorageKey.symbol))[0]
+        symbol_channel = (await redis.subscribe(f"{StateStorageKey.symbol}.{api.name}.{api.schema}"))[0]
         while api.handler and not api.handler.closed:
             while await symbol_channel.wait_message():
                 symbols = await symbol_channel.get_json()
-                new_registered_symbols = set(symbols.get(api.name.lower(), {}).get(api.schema, {}))
-                unsubscribe_symbols = self._subscribed_symbols.difference(new_registered_symbols)
-                subscribe_symbols = new_registered_symbols.difference(self._subscribed_symbols)
+                unsubscribe_symbols = self._subscribed_symbols.difference(symbols)
+                subscribe_symbols = symbols.difference(self._subscribed_symbols)
                 for symbol in unsubscribe_symbols:
                     await asyncio.sleep(1)
                     await self._unsubscribe(api, symbol)
                 for symbol in subscribe_symbols:
                     await asyncio.sleep(1)
                     await self._subscribe(api, symbol)
-                self._subscribed_symbols = new_registered_symbols
+                self._subscribed_symbols = symbols
 
 
 class BinanceOrderBookSubscriber(BinanceSubscriber):
@@ -157,8 +156,7 @@ class BinanceWalletSubscriber(BinanceSubscriber):
         state_channel = (await redis.subscribe(f"{StateStorageKey.exchange_rates}.{api.name}.{api.schema}"))[0]
         while await state_channel.wait_message():
             state_data = await state_channel.get_json()
-            exchange_rates = state_data.get(api.name.lower(), {}).get(api.schema, {})
-            api.partial_state_data[self.subscription].update({'exchange_rates': exchange_rates})
+            api.partial_state_data[self.subscription].update({'exchange_rates': state_data})
 
     @classmethod
     def mapping_wallet_data(cls, wallet_data: dict) -> dict:
