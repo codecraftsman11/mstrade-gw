@@ -121,6 +121,11 @@ def load_funding_rates(funding_rates: list) -> list:
 def load_exchange_symbol_info(raw_data: list) -> list:
     symbol_list = []
     for d in raw_data:
+        wallet_asset = d.get('settlCurrency').upper()
+        # TODO: support bitmex USDT
+        if wallet_asset == 'USDT':
+            continue
+
         symbol = d.get('symbol')
         base_asset = d.get('underlying')
         quote_currency = d.get('quoteCurrency')
@@ -133,14 +138,11 @@ def load_exchange_symbol_info(raw_data: list) -> list:
         quote_asset, expiration = _quote_asset(symbol, base_asset, quote_currency, symbol_schema)
         system_base_asset = to_system_asset(base_asset)
         system_quote_asset = to_system_asset(quote_asset)
-        system_symbol = f"{system_base_asset}{expiration or system_quote_asset}"
+        system_symbol = symbol.lower().replace('xbt', 'btc')
         tick = to_float(d.get('tickSize'))
         volume_tick = to_float(d.get('lotSize'))
         max_leverage = 100 if d.get('initMargin', 0) <= 0 else 1 / d['initMargin']
-        wallet_asset = d.get('settlCurrency').upper()
-        # TODO: support bitmex USDT
-        if wallet_asset == 'USDT':
-            wallet_asset = None
+
         symbol_list.append(
             {
                 'symbol': symbol,
