@@ -146,7 +146,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
         symbol_list.append(
             {
                 'symbol': symbol,
-                'system_symbol': system_symbol.lower(),
+                'system_symbol': system_symbol,
                 'base_asset': base_asset,
                 'quote_asset': quote_asset,
                 'system_base_asset': system_base_asset,
