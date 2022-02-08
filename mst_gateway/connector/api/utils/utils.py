@@ -48,7 +48,8 @@ def load_wallet_summary(schema: str, balances: list, fields: iter, exchange_rate
     return wallet_summary
 
 
-def load_wallet_summary_margin3_in_usd(currencies: dict, balances: list, fields: Union[list, tuple], is_for_ws=False):
+def load_wallet_summary_margin_isolated_in_usd(currencies: dict, balances: list,
+                                               fields: Union[list, tuple], is_for_ws=False):
     _currency_key = 'cur' if is_for_ws else 'currency'
     total_balance = {}
     # init total balance structure if list of balances is empty

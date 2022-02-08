@@ -345,7 +345,7 @@ def load_api_key_permissions(raw_data: dict, schemas: iter) -> dict:
     schema_handlers = {
         OrderSchema.exchange: True,
         OrderSchema.margin_cross: raw_data.get('enableMargin', False),
-        OrderSchema.margin3: raw_data.get('enableMargin', False),
+        OrderSchema.margin_isolated: raw_data.get('enableMargin', False),
         OrderSchema.futures: raw_data.get('enableFutures', False),
         OrderSchema.futures_coin: raw_data.get('enableFutures', False),
     }

@@ -21,8 +21,8 @@ class OrderSchema(ClassWithAttributes):
     exchange = 'exchange'
     margin = 'margin'
     margin_cross = 'margin_cross'
+    margin_isolated = 'margin_isolated'
 
-    margin3 = 'margin3'
     futures = 'futures'
     futures_coin = 'futures_coin'
 
@@ -31,8 +31,8 @@ class OrderSchemaTradeMode(ClassWithAttributes):
     exchange = ['trade', 'exchange']
     margin = ['margin']
     margin_cross = ['margin_cross']
+    margin_isolated = ['margin_isolated']
 
-    margin3 = ['margin3']
     futures = ['futures']
     futures_coin = ['futures_coin']
 

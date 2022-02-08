@@ -732,8 +732,8 @@ def _method_map(func_name: str):
         'transfer_spot_to_isolated_margin': OrderSchema.margin_cross,
         'transfer_isolated_margin_to_spot': OrderSchema.margin_cross,
 
-        # margin3
-        'get_all_isolated_margin_symbols': 'margin3',
+        # margin_isolated
+        'get_all_isolated_margin_symbols': OrderSchema.margin_isolated,
 
 
         # futures

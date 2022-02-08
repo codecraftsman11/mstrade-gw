@@ -38,14 +38,14 @@ STORAGE_DATA = {
                     'exchange': 'tbinance',
                 },
             },
-            OrderSchema.margin3: {
+            OrderSchema.margin_isolated: {
                 'btcusdt': {
                     'tick': 0.01,
                     'pair': ['BTC', 'USDT'],
                     'volume_tick': 1e-06,
                     'max_leverage': None,
-                    'schema': OrderSchema.margin3,
-                    'symbol_schema': OrderSchema.margin3,
+                    'schema': OrderSchema.margin_isolated,
+                    'symbol_schema': OrderSchema.margin_isolated,
                     'expiration': None,
                     'expiration_date': None,
                     'created': '2021-09-06T09:51:21.271836',
