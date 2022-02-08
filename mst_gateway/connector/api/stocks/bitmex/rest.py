@@ -10,7 +10,7 @@ from .lib import (
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector.api.types import OrderSchema
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
-from mst_gateway.connector.api.utils.utils import convert_to_currency
+from mst_gateway.connector.api.utils.utils import load_wallet_summary
 from . import utils, var
 from .utils import binsize2timedelta
 from ...rest import StockRestApi
@@ -355,28 +355,15 @@ class BitmexRestApi(StockRestApi):
         instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive)
         return utils.load_symbols_currencies(instruments, self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}"))
 
-    def get_wallet_summary(self, schemas: iter, **kwargs) -> dict:
-        if not schemas:
-            schemas = (OrderSchema.margin1,)
-        assets = kwargs.get('assets', ('btc', 'usd'))
-        fields = ('balance', 'unrealised_pnl', 'margin_balance')
-
-        total_summary = {}
-        for schema in schemas:
-            total_balance = {schema: {}}
-            if schema == OrderSchema.margin1:
-                data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
-                balances = [utils.load_wallet_detail_data(data)]
-                currencies = self.storage.get(f"{StateStorageKey.exchange_rates}.{self.name}.{schema}")
-            else:
-                continue
-            wallet_summary_in_usd = utils.load_wallet_summary_in_usd(currencies, balances, fields)
-            for asset in assets:
-                total_balance[OrderSchema.margin1][asset] = convert_to_currency(
-                    wallet_summary_in_usd, currencies.get(utils.to_exchange_asset(asset))
-                )
-            utils.load_total_wallet_summary(total_summary, total_balance, assets, fields)
-        return total_summary
+    def get_wallet_summary(self, schema: str, **kwargs) -> dict:
+        if schema == OrderSchema.margin1:
+            data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
+            balances = [utils.load_wallet_detail_data(data)]
+            fields = ('balance', 'unrealised_pnl', 'margin_balance')
+            exchange_rates = self.storage.get(f"{StateStorageKey.exchange_rates}.{self.name}.{schema}")
+            assets = kwargs.get('assets', ('btc', 'usd'))
+            return load_wallet_summary(schema, balances, fields, exchange_rates, assets)
+        raise ConnectorError(f"Invalid schema {schema}.")
 
     def list_order_commissions(self, schema: str) -> list:
         if schema == OrderSchema.margin1:
