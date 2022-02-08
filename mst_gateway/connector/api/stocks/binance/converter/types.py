@@ -10,7 +10,7 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
     """ Order type converter for Binance """
 
     LOAD_TYPE_AND_EXECUTION_MAP = {
-        OrderSchema.margin2: {
+        OrderSchema.margin_cross: {
             'LIMIT': {'type': OrderType.limit, 'execution': OrderExec.limit},
             'MARKET': {'type': OrderType.market, 'execution': OrderExec.market},
             'STOP_LOSS_LIMIT': {'type': OrderType.stop_loss, 'execution': OrderExec.limit},

@@ -74,7 +74,7 @@ class BinanceWssApi(StockWssApi):
             try:
                 if self.schema == OrderSchema.exchange:
                     key = await bin_client.stream_get_listen_key()
-                elif self.schema == OrderSchema.margin2:
+                elif self.schema == OrderSchema.margin_cross:
                     key = await bin_client.margin_stream_get_listen_key()
                 elif self.schema == OrderSchema.futures:
                     key = await bin_client.futures_stream_get_listen_key()

@@ -107,7 +107,7 @@ WALLET_BALANCE_FIELDS = {
 }
 
 WALLET_EXTRA_FIELDS = {
-    OrderSchema.margin2: {
+    OrderSchema.margin_cross: {
         'balances': list,
         'trade_enabled': bool,
         'transfer_enabled': bool,
@@ -128,7 +128,7 @@ WALLET_EXTRA_FIELDS = {
 }
 
 WALLET_EXTRA_BALANCE_FIELDS = {
-    OrderSchema.margin2: {
+    OrderSchema.margin_cross: {
         'currency': str,
         'borrowed': Use(float_valid),
         'interest': Use(float_valid),
@@ -142,7 +142,7 @@ WALLET_EXTRA_BALANCE_FIELDS = {
 
 
 WALLET_EXTRA_DATA_FIELDS = {
-    OrderSchema.margin2: {
+    OrderSchema.margin_cross: {
         'currency': str,
         'borrowed': Use(float_valid),
         'interest': Use(float_valid),
@@ -408,7 +408,7 @@ WS_WALLET_BALANCE_FIELDS = {
 }
 
 WS_WALLET_EXTRA_FIELDS = {
-    OrderSchema.margin2: {
+    OrderSchema.margin_cross: {
         'bls': list,
         'tre': bool,
         'trse': bool,

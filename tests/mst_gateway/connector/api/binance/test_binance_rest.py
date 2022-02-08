@@ -20,7 +20,7 @@ from .data import position as position_data
 def rest_params(param):
     param_map = {
         'tbinance_spot': (cfg.BINANCE_SPOT_TESTNET_AUTH_KEYS,
-                          [OrderSchema.exchange, OrderSchema.margin2, OrderSchema.margin3]),
+                          [OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin3]),
         'tbinance_futures': (cfg.BINANCE_FUTURES_TESTNET_AUTH_KEYS,
                              [OrderSchema.futures, OrderSchema.futures_coin]),
     }
@@ -89,7 +89,7 @@ def get_liquidation_kwargs(schema):
 class TestBinanceRestApi:
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin2),
+        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross),
                          ('tbinance_spot', OrderSchema.margin3), ('tbinance_futures', OrderSchema.futures),
                          ('tbinance_futures', OrderSchema.futures_coin)],
         indirect=['rest'],
@@ -112,18 +112,18 @@ class TestBinanceRestApi:
 
     @pytest.mark.parametrize(
         'rest, schemas, expect', [
-            ('tbinance_spot', [OrderSchema.exchange, OrderSchema.margin2, OrderSchema.margin3,
+            ('tbinance_spot', [OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin3,
                                OrderSchema.futures, OrderSchema.futures_coin], {
                  OrderSchema.exchange: True,
-                 OrderSchema.margin2: False,
+                 OrderSchema.margin_cross: False,
                  OrderSchema.margin3: False,
                  OrderSchema.futures: False,
                  OrderSchema.futures_coin: False,
              }),
-            ('tbinance_futures', [OrderSchema.exchange, OrderSchema.margin2, OrderSchema.margin3,
+            ('tbinance_futures', [OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin3,
                                   OrderSchema.futures, OrderSchema.futures_coin], {
                  OrderSchema.exchange: False,
-                 OrderSchema.margin2: False,
+                 OrderSchema.margin_cross: False,
                  OrderSchema.margin3: False,
                  OrderSchema.futures: True,
                  OrderSchema.futures_coin: True,
@@ -199,7 +199,7 @@ class TestBinanceRestApi:
             assert asset_balance_schema.validate({a: b}) == {a: b}
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin2),
+        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross),
                          ('tbinance_spot', OrderSchema.margin3), ('tbinance_futures', OrderSchema.futures),
                          ('tbinance_futures', OrderSchema.futures_coin)],
         indirect=['rest'],
@@ -209,7 +209,7 @@ class TestBinanceRestApi:
         assert Schema(fields.SYMBOL_FIELDS).validate(symbol) == symbol
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin2),
+        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross),
                          ('tbinance_spot', OrderSchema.margin3), ('tbinance_futures', OrderSchema.futures),
                          ('tbinance_futures', OrderSchema.futures_coin)],
         indirect=['rest'],
@@ -277,10 +277,10 @@ class TestBinanceRestApi:
                                 ('tbinance_spot', OrderSchema.exchange, 10),
                                 ('tbinance_spot', OrderSchema.exchange, 100),
                                 ('tbinance_spot', OrderSchema.exchange, 1000),
-                                ('tbinance_spot', OrderSchema.margin2, None),
-                                ('tbinance_spot', OrderSchema.margin2, 10),
-                                ('tbinance_spot', OrderSchema.margin2, 100),
-                                ('tbinance_spot', OrderSchema.margin2, 1000),
+                                ('tbinance_spot', OrderSchema.margin_cross, None),
+                                ('tbinance_spot', OrderSchema.margin_cross, 10),
+                                ('tbinance_spot', OrderSchema.margin_cross, 100),
+                                ('tbinance_spot', OrderSchema.margin_cross, 1000),
                                 ('tbinance_spot', OrderSchema.margin3, None),
                                 ('tbinance_spot', OrderSchema.margin3, 10),
                                 ('tbinance_spot', OrderSchema.margin3, 100),
@@ -304,7 +304,7 @@ class TestBinanceRestApi:
             assert len(trades) == count
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin2),
+        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross),
                          ('tbinance_futures', OrderSchema.futures), ('tbinance_futures', OrderSchema.futures_coin)],
         indirect=['rest'],
     )
@@ -314,7 +314,7 @@ class TestBinanceRestApi:
             assert symbol_schema.validate(symbol) == symbol
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin2),
+        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross),
                          ('tbinance_futures', OrderSchema.futures), ('tbinance_futures', OrderSchema.futures_coin)],
         indirect=['rest'],
     )
@@ -338,7 +338,7 @@ class TestBinanceRestApi:
             assert total_cross_schema.validate(wallet_summary[key]) == wallet_summary[key]
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin2),
+        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross),
                          ('tbinance_futures', OrderSchema.futures), ('tbinance_futures', OrderSchema.futures_coin)],
         indirect=['rest'],
     )
@@ -348,7 +348,7 @@ class TestBinanceRestApi:
             assert commission_schema.validate(commission) == commission
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin2),
+        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross),
                          ('tbinance_spot', OrderSchema.margin3), ('tbinance_futures', OrderSchema.futures),
                          ('tbinance_futures', OrderSchema.futures_coin)],
         indirect=['rest'],
@@ -363,7 +363,7 @@ class TestBinanceRestApi:
         assert isinstance(int_level, int)
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin2),
+        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross),
                          ('tbinance_futures', OrderSchema.futures), ('tbinance_futures', OrderSchema.futures_coin)],
         indirect=['rest'],
     )
@@ -373,7 +373,7 @@ class TestBinanceRestApi:
 
     @pytest.mark.parametrize(
         'rest, schema, period_hour, period_multiplier, ', [('tbinance_spot', OrderSchema.exchange, 8, 1),
-                                                           ('tbinance_spot', OrderSchema.margin2, 8, 1),
+                                                           ('tbinance_spot', OrderSchema.margin_cross, 8, 1),
                                                            ('tbinance_futures', OrderSchema.futures, 8, 1),
                                                            ('tbinance_futures', OrderSchema.futures_coin, 8, 1)],
         indirect=['rest'],
@@ -390,8 +390,8 @@ class TestBinanceRestApi:
     @pytest.mark.parametrize(
         'rest, schema, period_hour, period_multiplier', [('tbinance_spot', OrderSchema.exchange, 8, 1),
                                                          ('tbinance_spot', OrderSchema.exchange, 8, 2),
-                                                         ('tbinance_spot', OrderSchema.margin2, 8, 1),
-                                                         ('tbinance_spot', OrderSchema.margin2, 8, 2),
+                                                         ('tbinance_spot', OrderSchema.margin_cross, 8, 1),
+                                                         ('tbinance_spot', OrderSchema.margin_cross, 8, 2),
                                                          ('tbinance_futures', OrderSchema.futures, 8, 1),
                                                          ('tbinance_futures', OrderSchema.futures, 8, 2)],
         indirect=['rest'],
@@ -423,7 +423,7 @@ class TestBinanceRestApi:
         assert isinstance(resp[1], float)
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin2),
+        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross),
                          ('tbinance_spot', OrderSchema.margin3)],
         indirect=['rest'],
     )
@@ -432,7 +432,7 @@ class TestBinanceRestApi:
             rest.get_leverage(schema=schema, symbol=get_symbol(schema))
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin2),
+        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross),
                          ('tbinance_spot', OrderSchema.margin3)],
         indirect=['rest'],
     )
@@ -443,7 +443,7 @@ class TestBinanceRestApi:
                                  leverage_type_update=True, leverage_update=True)
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin2),
+        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross),
                          ('tbinance_futures', OrderSchema.futures), ('tbinance_futures', OrderSchema.futures_coin)],
         indirect=['rest'],
     )
@@ -452,7 +452,7 @@ class TestBinanceRestApi:
         assert Schema(fields.POSITION_FIELDS).validate(position) == position
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin2),
+        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross),
                          ('tbinance_futures', OrderSchema.futures), ('tbinance_futures', OrderSchema.futures_coin)],
         indirect=['rest'],
     )
@@ -462,7 +462,7 @@ class TestBinanceRestApi:
             assert position_schema.validate(position) == position
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin2),
+        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross),
                          ('tbinance_futures', OrderSchema.futures), ('tbinance_futures', OrderSchema.futures_coin)],
         indirect=['rest'],
     )
@@ -476,7 +476,7 @@ class TestBinanceRestApi:
         [
             ('tbinance_spot', OrderSchema.exchange, BUY, 0.1, 55555.0, 55555.0, 10000.0, LeverageType.isolated,
              None),
-            ('tbinance_spot', OrderSchema.margin2, BUY, 0.1, 55555.0, 55555.0, 10000.0, LeverageType.isolated,
+            ('tbinance_spot', OrderSchema.margin_cross, BUY, 0.1, 55555.0, 55555.0, 10000.0, LeverageType.isolated,
              None),
             ('tbinance_futures', OrderSchema.futures, BUY, 1.0, 55555.0, 55555.0, 10000.0, LeverageType.isolated,
              45733.668341708544),

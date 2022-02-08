@@ -37,7 +37,7 @@ class BinanceWalletSerializer(BinanceSerializer):
             fields = ('bl', 'upnl', 'mbl')
             return utils.ws_spot_wallet(
                 item, self._wss_api.schema, self.wallet_state, self.exchange_rates, fields, assets)
-        elif self._wss_api.schema == OrderSchema.margin2:
+        elif self._wss_api.schema == OrderSchema.margin_cross:
             fields = ('bl', 'upnl', 'mbl')
             extra_fields = ('ist', 'bor')
             return utils.ws_margin_wallet(item, self._wss_api.schema, self.wallet_state, self.exchange_rates,

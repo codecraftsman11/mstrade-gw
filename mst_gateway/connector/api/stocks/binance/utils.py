@@ -344,7 +344,7 @@ def load_user_data(raw_data: dict) -> dict:
 def load_api_key_permissions(raw_data: dict, schemas: iter) -> dict:
     schema_handlers = {
         OrderSchema.exchange: True,
-        OrderSchema.margin2: raw_data.get('enableMargin', False),
+        OrderSchema.margin_cross: raw_data.get('enableMargin', False),
         OrderSchema.margin3: raw_data.get('enableMargin', False),
         OrderSchema.futures: raw_data.get('enableFutures', False),
         OrderSchema.futures_coin: raw_data.get('enableFutures', False),
@@ -1770,7 +1770,7 @@ def load_exchange_position(raw_data: dict, schema: str, mark_price: float) -> di
     return data
 
 
-def load_margin2_position(raw_data: dict, schema: str, mark_price: float) -> dict:
+def load_margin_cross_position(raw_data: dict, schema: str, mark_price: float) -> dict:
     return load_exchange_position(raw_data, schema, mark_price)
 
 
@@ -1803,7 +1803,7 @@ def load_exchange_position_list(raw_data: dict, schema: str, symbol_list: list) 
     return [load_exchange_position(v, schema, symbols_mark_price.get(v.get('symbol'))) for k, v in raw_data.items()]
 
 
-def load_margin2_position_list(raw_data: dict, schema: str, symbol_list: list) -> list:
+def load_margin_cross_position_list(raw_data: dict, schema: str, symbol_list: list) -> list:
     return load_exchange_position_list(raw_data, schema, symbol_list)
 
 
@@ -1874,7 +1874,7 @@ def to_usd(base: float, asset: str, exchange_rates: dict, expiration: Optional[s
         return None
 
 
-def load_margin2_position_ws_data(
+def load_margin_cross_position_ws_data(
         raw_data: dict, position_state: dict, state_data: Optional[dict], exchange_rates: dict) -> dict:
     data = load_exchange_position_ws_data(raw_data, position_state, state_data, exchange_rates)
     if not data['leverage_type']:

@@ -5,7 +5,7 @@ BINANCE_MAX_ORDER_BOOK_LIMIT = 1000
 
 BINANCE_WALLET_TYPES = [
     api.OrderSchema.exchange,
-    api.OrderSchema.margin2,
+    api.OrderSchema.margin_cross,
     api.OrderSchema.margin3,
     api.OrderSchema.futures,
     api.OrderSchema.futures_coin,
@@ -118,7 +118,7 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         },
     },
 
-    api.OrderSchema.margin2: {
+    api.OrderSchema.margin_cross: {
         'MARKET': {
             'params': [
                 *DEFAULT_PARAMETERS,

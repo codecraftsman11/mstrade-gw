@@ -171,7 +171,7 @@ class BinanceWalletSubscriber(BinanceSubscriber):
     async def get_wallet_state(self, api: BinanceWssApi, client: AsyncClient):
         schema_handlers = {
             OrderSchema.exchange: (client.get_account, utils.load_ws_spot_wallet_data),
-            OrderSchema.margin2: (client.get_margin_account, utils.load_ws_margin_wallet_data),
+            OrderSchema.margin_cross: (client.get_margin_account, utils.load_ws_margin_wallet_data),
             OrderSchema.futures: (client.futures_account_v2, utils.load_ws_futures_wallet_data),
             OrderSchema.futures_coin: (client.futures_coin_account, utils.load_ws_futures_coin_wallet_data),
         }
@@ -186,7 +186,7 @@ class BinanceWalletSubscriber(BinanceSubscriber):
             kwargs['currencies'] = await api.storage.get(StateStorageKey.exchange_rates, api.name, schema)
         except GatewayError:
             return None, None
-        if schema in (OrderSchema.margin2, OrderSchema.futures):
+        if schema in (OrderSchema.margin_cross, OrderSchema.futures):
             kwargs['extra_fields'] = ('bor', 'ist')
         if schema in (OrderSchema.futures,):
             kwargs['cross_collaterals'] = []

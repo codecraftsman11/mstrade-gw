@@ -21,14 +21,14 @@ STORAGE_DATA = {
                     'exchange': 'tbinance',
                 },
             },
-            OrderSchema.margin2: {
+            OrderSchema.margin_cross: {
                 'btcusdt': {
                     'tick': 0.01,
                     'pair': ['BTC', 'USDT'],
                     'volume_tick': 1e-06,
                     'max_leverage': None,
-                    'schema': OrderSchema.margin2,
-                    'symbol_schema': OrderSchema.margin2,
+                    'schema': OrderSchema.margin_cross,
+                    'symbol_schema': OrderSchema.margin_cross,
                     'expiration': None,
                     'expiration_date': None,
                     'created': '2021-09-06T09:51:21.271836',
@@ -141,7 +141,7 @@ STORAGE_DATA = {
         'leverage_type': LeverageType.isolated,
         'action': 'update',
     },
-    f"position.1.tbinance.{OrderSchema.margin2}.btcusdt": {
+    f"position.1.tbinance.{OrderSchema.margin_cross}.btcusdt": {
         'id': '1',
         'symbol': 'btcusdt',
         'side': BUY,

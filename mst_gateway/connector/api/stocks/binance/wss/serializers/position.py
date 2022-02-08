@@ -46,8 +46,8 @@ class BinancePositionSerializer(BinanceSerializer):
         symbol_position_state = self.get_position_state(self.position_state, self._item_symbol)
         if self._wss_api.schema == OrderSchema.exchange:
             return utils.load_exchange_position_ws_data(item, symbol_position_state, state_data, self.exchange_rates)
-        if self._wss_api.schema == OrderSchema.margin2:
-            return utils.load_margin2_position_ws_data(item, symbol_position_state, state_data, self.exchange_rates)
+        if self._wss_api.schema == OrderSchema.margin_cross:
+            return utils.load_margin_cross_position_ws_data(item, symbol_position_state, state_data, self.exchange_rates)
         return None
 
 

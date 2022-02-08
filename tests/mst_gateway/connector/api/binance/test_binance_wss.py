@@ -22,7 +22,7 @@ from .data import quote_bin as quote_message
 from .data import symbol as symbol_message
 from .data import trade as trade_message
 from .data import wallet as wallet_message
-from .test_binance_rest import get_symbol, get_asset, get_liquidation_kwargs
+from .test_binance_rest import get_symbol, get_liquidation_kwargs
 
 
 def ws_class(name):
