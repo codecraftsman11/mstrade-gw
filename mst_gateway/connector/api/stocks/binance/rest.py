@@ -36,7 +36,7 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin_cross: self._handler.margin_ping,
             OrderSchema.margin_isolated: self._handler.isolated_margin_ping,
             OrderSchema.futures: self._handler.futures_ping,
-            OrderSchema.futures_coin: self._handler.futures_coin_ping,
+            OrderSchema.margin_coin: self._handler.futures_coin_ping,
         }
         try:
             self._binance_api(schema_handlers[schema.lower()])
@@ -59,7 +59,7 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin_cross,
             OrderSchema.margin_isolated,
             OrderSchema.futures,
-            OrderSchema.futures_coin,
+            OrderSchema.margin_coin,
         ]
         permissions = {schema: False for schema in schemas if schema in default_schemas}
         if self.test:
@@ -81,7 +81,7 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin_cross: (self._handler.get_ticker, self._spot_get_symbols_handler),
             OrderSchema.margin_isolated: (self._handler.get_ticker, self._spot_get_symbols_handler),
             OrderSchema.futures: (self._handler.futures_ticker, self._futures_get_symbols_handler),
-            OrderSchema.futures_coin: (self._handler.futures_coin_ticker, self._futures_get_symbols_handler),
+            OrderSchema.margin_coin: (self._handler.futures_coin_ticker, self._futures_get_symbols_handler),
 
         }
         validate_schema(schema, schema_handlers)
@@ -101,7 +101,7 @@ class BinanceRestApi(StockRestApi):
                 self._handler.futures_orderbook_ticker,
                 self._handler.futures_mark_price,
             ),
-            OrderSchema.futures_coin: (
+            OrderSchema.margin_coin: (
                 self._handler.futures_coin_orderbook_ticker,
                 self._handler.futures_coin_mark_price,
             ),
@@ -141,7 +141,7 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin_cross: (self._handler.get_ticker, self._spot_list_symbols_handler),
             OrderSchema.margin_isolated: (self._handler.get_ticker, self._spot_list_symbols_handler),
             OrderSchema.futures: (self._handler.futures_ticker, self._futures_list_symbols_handler),
-            OrderSchema.futures_coin: (self._handler.futures_coin_ticker, self._futures_list_symbols_handler),
+            OrderSchema.margin_coin: (self._handler.futures_coin_ticker, self._futures_list_symbols_handler),
         }
         validate_schema(schema, schema_handlers)
         schema = schema.lower()
@@ -161,7 +161,7 @@ class BinanceRestApi(StockRestApi):
                 self._handler.futures_orderbook_ticker,
                 self._handler.futures_mark_price,
             ),
-            OrderSchema.futures_coin: (
+            OrderSchema.margin_coin: (
                 self._handler.futures_coin_orderbook_ticker,
                 self._handler.futures_coin_mark_price,
             ),
@@ -186,17 +186,17 @@ class BinanceRestApi(StockRestApi):
                     symbol.get('symbol') for symbol in self._binance_api(self._handler.get_all_isolated_margin_symbols)
                 ]
             return utils.load_exchange_symbol_info(data.get('symbols', []), schema, valid_symbols)
-        if schema in (OrderSchema.futures, OrderSchema.futures_coin):
+        if schema in (OrderSchema.futures, OrderSchema.margin_coin):
             schema_handlers = {
                 OrderSchema.futures: (
                     self._handler.futures_exchange_info,
                     self._handler.futures_leverage_bracket,
                     utils.load_futures_exchange_symbol_info,
                 ),
-                OrderSchema.futures_coin: (
+                OrderSchema.margin_coin: (
                     self._handler.futures_coin_exchange_info,
                     self._handler.futures_coin_leverage_bracket,
-                    utils.load_futures_coin_exchange_symbol_info,
+                    utils.load_margin_coin_exchange_symbol_info,
                 ),
             }
             data = self._binance_api(schema_handlers[schema][0])
@@ -213,7 +213,7 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin_cross: self._handler.get_klines,
             OrderSchema.margin_isolated: self._handler.get_klines,
             OrderSchema.futures: self._handler.futures_klines,
-            OrderSchema.futures_coin: self._handler.futures_coin_klines,
+            OrderSchema.margin_coin: self._handler.futures_coin_klines,
         }
         validate_schema(schema, schema_handlers)
         data = self._binance_api(
@@ -260,7 +260,7 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin_cross: self._handler.create_margin_order,
             OrderSchema.margin_isolated: self._handler.create_isolated_margin_order,
             OrderSchema.futures: self._handler.futures_create_order,
-            OrderSchema.futures_coin: self._handler.futures_coin_create_order,
+            OrderSchema.margin_coin: self._handler.futures_coin_create_order,
         }
         validate_schema(schema, schema_handlers)
         main_params = {
@@ -301,7 +301,7 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin_cross: self._handler.cancel_margin_order,
             OrderSchema.margin_isolated: self._handler.cancel_isolated_margin_order,
             OrderSchema.futures: self._handler.futures_cancel_order,
-            OrderSchema.futures_coin: self._handler.futures_coin_cancel_order,
+            OrderSchema.margin_coin: self._handler.futures_coin_cancel_order,
         }
         validate_schema(schema, schema_handlers)
         params = utils.map_api_parameter_names({
@@ -318,7 +318,7 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin_cross: self._handler.get_margin_order,
             OrderSchema.margin_isolated: self._handler.get_isolated_margin_order,
             OrderSchema.futures: self._handler.futures_get_order,
-            OrderSchema.futures_coin: self._handler.futures_coin_get_order,
+            OrderSchema.margin_coin: self._handler.futures_coin_get_order,
         }
         validate_schema(schema, schema_handlers)
         params = utils.map_api_parameter_names({
@@ -341,7 +341,7 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin_cross: (self._handler.get_open_margin_orders, self._handler.get_all_margin_orders),
             OrderSchema.margin_isolated: (self._handler.get_open_margin_orders, self._handler.get_all_isolated_margin_orders),
             OrderSchema.futures: (self._handler.futures_get_open_orders, self._handler.futures_get_all_orders),
-            OrderSchema.futures_coin: (
+            OrderSchema.margin_coin: (
                 self._handler.futures_coin_get_open_orders, self._handler.futures_coin_get_all_orders
             ),
         }
@@ -367,7 +367,7 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin_cross: self._handler.get_recent_trades,
             OrderSchema.margin_isolated: self._handler.get_recent_trades,
             OrderSchema.futures: self._handler.futures_recent_trades,
-            OrderSchema.futures_coin: self._handler.futures_coin_recent_trades,
+            OrderSchema.margin_coin: self._handler.futures_coin_recent_trades,
         }
         validate_schema(schema, schema_handlers)
         data = self._binance_api(
@@ -400,7 +400,7 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin_cross: self._handler.get_order_book,
             OrderSchema.margin_isolated: self._handler.get_order_book,
             OrderSchema.futures: self._handler.futures_order_book,
-            OrderSchema.futures_coin: self._handler.futures_coin_order_book,
+            OrderSchema.margin_coin: self._handler.futures_coin_order_book,
         }
         validate_schema(schema, schema_handlers)
         limit = var.BINANCE_MAX_ORDER_BOOK_LIMIT
@@ -426,7 +426,7 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin_cross: self._margin_wallet,
             OrderSchema.margin_isolated: self._isolated_margin_wallet,
             OrderSchema.futures: self._futures_wallet,
-            OrderSchema.futures_coin: self._futures_coin_wallet,
+            OrderSchema.margin_coin: self._margin_coin_wallet,
         }
         validate_schema(schema, schema_handlers)
         return schema_handlers[schema](schema=schema, **kwargs)
@@ -490,7 +490,7 @@ class BinanceRestApi(StockRestApi):
             data, currencies, assets, fields, extra_fields, cross_collaterals.get('crossCollaterals', []), schema
         )
 
-    def _futures_coin_wallet(self, schema: str, **kwargs):
+    def _margin_coin_wallet(self, schema: str, **kwargs):
         is_for_ws = kwargs.pop('is_for_ws', False)
         assets = kwargs.pop('assets', ('btc', 'usd'))
         fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance'))
@@ -498,8 +498,8 @@ class BinanceRestApi(StockRestApi):
         currencies = self.storage.get(StateStorageKey.exchange_rates, self.name, schema)
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl')
-            return utils.load_ws_futures_coin_wallet_data(data, currencies, assets, fields, schema)
-        return utils.load_futures_coin_wallet_data(data, currencies, assets, fields, schema)
+            return utils.load_ws_margin_coin_wallet_data(data, currencies, assets, fields, schema)
+        return utils.load_margin_coin_wallet_data(data, currencies, assets, fields, schema)
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
         schema_handlers = {
@@ -508,7 +508,7 @@ class BinanceRestApi(StockRestApi):
             # TODO: refactor margin_isolated schema
             # OrderSchema.margin_isolated: (self._handler.get_isolated_margin_account, utils.isolated_margin_balance_data),
             OrderSchema.futures: (self._handler.futures_account_v2, utils.load_futures_wallet_detail_data),
-            OrderSchema.futures_coin: (self._handler.futures_coin_account, utils.load_futures_wallet_detail_data)
+            OrderSchema.margin_coin: (self._handler.futures_coin_account, utils.load_futures_wallet_detail_data)
         }
         validate_schema(schema, schema_handlers)
         data = self._binance_api(schema_handlers[schema][0], **kwargs)
@@ -522,7 +522,7 @@ class BinanceRestApi(StockRestApi):
 
     def get_wallet_detail_extra_data(self, schema: str, asset: str, **kwargs) -> dict:
         validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin_isolated,
-                                 OrderSchema.futures, OrderSchema.futures_coin))
+                                 OrderSchema.futures, OrderSchema.margin_coin))
         if schema == OrderSchema.margin_cross:
             _margin = self._binance_api(self._handler.get_margin_account, **kwargs)
             _borrow = self._binance_api(self._handler.get_max_margin_loan, asset=asset.upper())
@@ -549,8 +549,8 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin_cross: (self._handler.get_margin_assets_balance, utils.load_margin_asset_balance),
             OrderSchema.margin_isolated: (self._handler.get_isolated_margin_assets_balance, utils.load_margin_asset_balance),
             OrderSchema.futures: (self._handler.get_futures_assets_balance, utils.load_futures_asset_balance),
-            OrderSchema.futures_coin: (
-                self._handler.get_futures_coin_assets_balance, utils.load_futures_coin_asset_balance
+            OrderSchema.margin_coin: (
+                self._handler.get_margin_coin_assets_balance, utils.load_margin_coin_asset_balance
             ),
         }
         validate_schema(schema, schema_handlers)
@@ -563,11 +563,11 @@ class BinanceRestApi(StockRestApi):
             (OrderSchema.exchange, OrderSchema.margin_cross): self._handler.transfer_spot_to_margin,
             (OrderSchema.exchange, OrderSchema.margin_isolated): self._handler.transfer_spot_to_isolated_margin,
             (OrderSchema.exchange, OrderSchema.futures): self._handler.transfer_spot_to_futures,
-            (OrderSchema.exchange, OrderSchema.futures_coin): self._handler.transfer_spot_to_futures_coin,
+            (OrderSchema.exchange, OrderSchema.margin_coin): self._handler.transfer_spot_to_margin_coin,
             (OrderSchema.margin_cross, OrderSchema.exchange): self._handler.transfer_margin_to_spot,
             (OrderSchema.margin_isolated, OrderSchema.exchange): self._handler.transfer_isolated_margin_to_spot,
             (OrderSchema.futures, OrderSchema.exchange): self._handler.transfer_futures_to_spot,
-            (OrderSchema.futures_coin, OrderSchema.exchange): self._handler.transfer_futures_coin_to_spot,
+            (OrderSchema.margin_coin, OrderSchema.exchange): self._handler.transfer_margin_coin_to_spot,
         }
         try:
             data = self._binance_api(
@@ -634,7 +634,7 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.exchange: self._handler.get_symbol_ticker,
             OrderSchema.margin_cross: self._handler.get_symbol_ticker,
             OrderSchema.futures: self._handler.futures_symbol_ticker,
-            OrderSchema.futures_coin: self._handler.futures_coin_symbol_ticker,
+            OrderSchema.margin_coin: self._handler.futures_coin_symbol_ticker,
         }
         validate_schema(schema, schema_handlers)
         currency = self._binance_api(schema_handlers[schema.lower()], symbol=utils.symbol2stock(symbol))
@@ -646,7 +646,7 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin_cross: self._handler.get_symbol_ticker,
             OrderSchema.margin_isolated: self._handler.get_symbol_ticker,
             OrderSchema.futures: self._handler.futures_symbol_ticker,
-            OrderSchema.futures_coin: self._handler.futures_coin_symbol_ticker,
+            OrderSchema.margin_coin: self._handler.futures_coin_symbol_ticker,
         }
         validate_schema(schema, schema_handlers)
         currency = self._binance_api(schema_handlers[schema.lower()])
@@ -670,9 +670,9 @@ class BinanceRestApi(StockRestApi):
                 self._handler.futures_account_v2,
                 utils.load_future_wallet_balances
             ),
-            OrderSchema.futures_coin: (
+            OrderSchema.margin_coin: (
                 self._handler.futures_coin_account,
-                utils.load_future_coin_wallet_balances
+                utils.load_margin_coin_wallet_balances
             ),
         }
         validate_schema(schema, schema_handlers)
@@ -688,7 +688,7 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.exchange: self._handler.get_trade_level,
             OrderSchema.margin_cross: self._handler.get_trade_level,
             OrderSchema.futures: self._handler.futures_trade_level,
-            OrderSchema.futures_coin: self._handler.futures_coin_trade_level,
+            OrderSchema.margin_coin: self._handler.margin_coin_trade_level,
         }
         validate_schema(schema, schema_handlers)
         data = self._binance_api(schema_handlers[schema.lower()])
@@ -702,7 +702,7 @@ class BinanceRestApi(StockRestApi):
 
     def get_alt_currency_commission(self, schema: str) -> dict:
         validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.futures,
-                                 OrderSchema.futures_coin))
+                                 OrderSchema.margin_coin))
         try:
             result = self._binance_api(self._handler.get_bnb_burn_spot_margin)
             is_active = bool(result.get('spotBNBBurn'))
@@ -715,14 +715,14 @@ class BinanceRestApi(StockRestApi):
 
     def get_funding_rates(self, symbol: str, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
         validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.futures,
-                                 OrderSchema.futures_coin))
+                                 OrderSchema.margin_coin))
         schema = schema.lower()
         if schema in (OrderSchema.exchange, OrderSchema.margin_cross):
             return []
-        if schema in (OrderSchema.futures, OrderSchema.futures_coin):
+        if schema in (OrderSchema.futures, OrderSchema.margin_coin):
             schema_handlers = {
                 OrderSchema.futures: self._handler.futures_funding_rate,
-                OrderSchema.futures_coin: self._handler.futures_coin_funding_rate,
+                OrderSchema.margin_coin: self._handler.futures_coin_funding_rate,
             }
             funding_rates = self._binance_api(
                 schema_handlers[schema],
@@ -756,7 +756,7 @@ class BinanceRestApi(StockRestApi):
     def get_leverage(self, schema: str, symbol: str, **kwargs) -> tuple:
         schema_handlers = {
             OrderSchema.futures: self._handler.futures_position_information,
-            OrderSchema.futures_coin: self._handler.futures_coin_position_information,
+            OrderSchema.margin_coin: self._handler.margin_coin_position_information,
         }
         validate_schema(schema, schema_handlers)
         data = self._binance_api(schema_handlers[schema.lower()], symbol=utils.symbol2stock(symbol))
@@ -769,7 +769,7 @@ class BinanceRestApi(StockRestApi):
                 self._handler.futures_change_margin_type,
                 self._handler.futures_change_leverage,
             ),
-            OrderSchema.futures_coin: (
+            OrderSchema.margin_coin: (
                 self._handler.futures_coin_change_margin_type,
                 self._handler.futures_coin_change_leverage,
             ),
@@ -791,13 +791,13 @@ class BinanceRestApi(StockRestApi):
 
     def get_position(self, schema: str, symbol: str, **kwargs) -> dict:
         validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.futures,
-                                 OrderSchema.futures_coin))
+                                 OrderSchema.margin_coin))
         schema = schema.lower()
-        if schema in (OrderSchema.futures, OrderSchema.futures_coin):
+        if schema in (OrderSchema.futures, OrderSchema.margin_coin):
             schema_handlers = {
                 OrderSchema.futures: (self._handler.futures_position_information, utils.load_futures_position),
-                OrderSchema.futures_coin: (
-                    self._handler.futures_coin_position_information, utils.load_futures_coin_position
+                OrderSchema.margin_coin: (
+                    self._handler.margin_coin_position_information, utils.load_margin_coin_position
                 )
             }
             response = self._binance_api(schema_handlers[schema][0], symbol=symbol.upper())
@@ -819,13 +819,13 @@ class BinanceRestApi(StockRestApi):
 
     def list_positions(self, schema: str, **kwargs) -> list:
         validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.futures,
-                                 OrderSchema.futures_coin))
+                                 OrderSchema.margin_coin))
         schema = schema.lower()
-        if schema in (OrderSchema.futures, OrderSchema.futures_coin):
+        if schema in (OrderSchema.futures, OrderSchema.margin_coin):
             schema_handlers = {
                 OrderSchema.futures: (self._handler.futures_position_information, utils.load_futures_position_list),
-                OrderSchema.futures_coin: (
-                    self._handler.futures_coin_position_information, utils.load_futures_coin_position_list
+                OrderSchema.margin_coin: (
+                    self._handler.margin_coin_position_information, utils.load_margin_coin_position_list
                 )
             }
             data = self._binance_api(schema_handlers[schema][0])
@@ -846,10 +846,10 @@ class BinanceRestApi(StockRestApi):
         if schema == OrderSchema.futures:
             account_info = self._binance_api(self._handler.futures_account_v2)
             return utils.load_futures_positions_state(account_info)
-        if schema == OrderSchema.futures_coin:
+        if schema == OrderSchema.margin_coin:
             account_info = self._binance_api(self._handler.futures_coin_account)
             state_data = self.storage.get(StateStorageKey.symbol, self.name, schema)
-            return utils.load_futures_coin_positions_state(account_info, state_data)
+            return utils.load_margin_coin_positions_state(account_info, state_data)
         return {}
 
     def get_liquidation(
@@ -864,9 +864,9 @@ class BinanceRestApi(StockRestApi):
         **kwargs,
     ) -> dict:
         validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.futures,
-                                 OrderSchema.futures_coin))
+                                 OrderSchema.margin_coin))
         liquidation_price = None
-        if schema.lower() in (OrderSchema.futures, OrderSchema.futures_coin):
+        if schema.lower() in (OrderSchema.futures, OrderSchema.margin_coin):
             positions_state = kwargs.get('positions_state', {})
             _, other_positions_state = BinanceFuturesPositionSerializer.split_positions_state(
                 positions_state, symbol,

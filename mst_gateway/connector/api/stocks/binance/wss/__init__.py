@@ -7,7 +7,7 @@ from . import subscribers as subscr_class
 from .router import BinanceWssRouter, BinanceFuturesWssRouter, BinanceFuturesCoinWssRouter
 from .utils import is_auth_ok, make_cmd
 from ..lib import AsyncClient
-from ..utils import to_float, remap_futures_coin_position_request_data
+from ..utils import to_float, remap_margin_coin_position_request_data
 from .... import OrderSchema
 from ....wss import StockWssApi
 from .. import var
@@ -78,7 +78,7 @@ class BinanceWssApi(StockWssApi):
                     key = await bin_client.margin_stream_get_listen_key()
                 elif self.schema == OrderSchema.futures:
                     key = await bin_client.futures_stream_get_listen_key()
-                elif self.schema == OrderSchema.futures_coin:
+                elif self.schema == OrderSchema.margin_coin:
                     key = await bin_client.futures_coin_stream_get_listen_key()
                 else:
                     raise ConnectorError(f"Invalid schema {self.schema}.")
@@ -288,7 +288,7 @@ class BinanceFuturesCoinWssApi(BinanceFuturesWssApi):
         for position in message.pop('data', []):
             if position.get('positionSide', '') == var.BinancePositionSideMode.BOTH:
                 _messages.append(dict(**message, data=[
-                    remap_futures_coin_position_request_data(position)
+                    remap_margin_coin_position_request_data(position)
                 ]))
         return _messages
 

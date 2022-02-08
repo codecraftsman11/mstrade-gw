@@ -97,26 +97,26 @@ ORDER_BOOK_PARAMS = [
     ('tbinance_futures', OrderSchema.futures, SELL, True, 1.0, None),
     ('tbinance_futures', OrderSchema.futures, SELL, True, None, 1.0),
     ('tbinance_futures', OrderSchema.futures, SELL, True, 1.0, 1.0),
-    ('tbinance_futures', OrderSchema.futures_coin, None, True, None, None),
-    ('tbinance_futures', OrderSchema.futures_coin, None, True, 1.0, None),
-    ('tbinance_futures', OrderSchema.futures_coin, None, True, None, 1.0),
-    ('tbinance_futures', OrderSchema.futures_coin, None, True, 1.0, 1.0),
-    ('tbinance_futures', OrderSchema.futures_coin, BUY, False, None, None),
-    ('tbinance_futures', OrderSchema.futures_coin, BUY, False, 1.0, None),
-    ('tbinance_futures', OrderSchema.futures_coin, BUY, False, None, 1.0),
-    ('tbinance_futures', OrderSchema.futures_coin, BUY, False, 1.0, 1.0),
-    ('tbinance_futures', OrderSchema.futures_coin, BUY, True, None, None),
-    ('tbinance_futures', OrderSchema.futures_coin, BUY, True, 1.0, None),
-    ('tbinance_futures', OrderSchema.futures_coin, BUY, True, None, 1.0),
-    ('tbinance_futures', OrderSchema.futures_coin, BUY, True, 1.0, 1.0),
-    ('tbinance_futures', OrderSchema.futures_coin, SELL, False, None, None),
-    ('tbinance_futures', OrderSchema.futures_coin, SELL, False, 1.0, None),
-    ('tbinance_futures', OrderSchema.futures_coin, SELL, False, None, 1.0),
-    ('tbinance_futures', OrderSchema.futures_coin, SELL, False, 1.0, 1.0),
-    ('tbinance_futures', OrderSchema.futures_coin, SELL, True, None, None),
-    ('tbinance_futures', OrderSchema.futures_coin, SELL, True, 1.0, None),
-    ('tbinance_futures', OrderSchema.futures_coin, SELL, True, None, 1.0),
-    ('tbinance_futures', OrderSchema.futures_coin, SELL, True, 1.0, 1.0),
+    ('tbinance_futures', OrderSchema.margin_coin, None, True, None, None),
+    ('tbinance_futures', OrderSchema.margin_coin, None, True, 1.0, None),
+    ('tbinance_futures', OrderSchema.margin_coin, None, True, None, 1.0),
+    ('tbinance_futures', OrderSchema.margin_coin, None, True, 1.0, 1.0),
+    ('tbinance_futures', OrderSchema.margin_coin, BUY, False, None, None),
+    ('tbinance_futures', OrderSchema.margin_coin, BUY, False, 1.0, None),
+    ('tbinance_futures', OrderSchema.margin_coin, BUY, False, None, 1.0),
+    ('tbinance_futures', OrderSchema.margin_coin, BUY, False, 1.0, 1.0),
+    ('tbinance_futures', OrderSchema.margin_coin, BUY, True, None, None),
+    ('tbinance_futures', OrderSchema.margin_coin, BUY, True, 1.0, None),
+    ('tbinance_futures', OrderSchema.margin_coin, BUY, True, None, 1.0),
+    ('tbinance_futures', OrderSchema.margin_coin, BUY, True, 1.0, 1.0),
+    ('tbinance_futures', OrderSchema.margin_coin, SELL, False, None, None),
+    ('tbinance_futures', OrderSchema.margin_coin, SELL, False, 1.0, None),
+    ('tbinance_futures', OrderSchema.margin_coin, SELL, False, None, 1.0),
+    ('tbinance_futures', OrderSchema.margin_coin, SELL, False, 1.0, 1.0),
+    ('tbinance_futures', OrderSchema.margin_coin, SELL, True, None, None),
+    ('tbinance_futures', OrderSchema.margin_coin, SELL, True, 1.0, None),
+    ('tbinance_futures', OrderSchema.margin_coin, SELL, True, None, 1.0),
+    ('tbinance_futures', OrderSchema.margin_coin, SELL, True, 1.0, 1.0),
 ]
 
 
@@ -155,7 +155,7 @@ DEFAULT_ORDER_BOOK_MESSAGE = {
         ],
         'a': [['49329.52', '0.010'], ['49353.42', '0.040']],
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'e': 'depthUpdate',
         'E': 1638963974916,
         'T': 1638963974726,
@@ -215,7 +215,7 @@ DEFAULT_ORDER_BOOK_LOOKUP_TABLE_RESULT = {
             }
         ],
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'table': 'depthUpdate',
         'action': 'update',
         'data': [
@@ -379,7 +379,7 @@ DEFAULT_ORDER_BOOK_SPLIT_MESSAGE_RESULT = {
             ],
         },
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'table': 'depthUpdate',
             'action': 'delete',
@@ -587,12 +587,12 @@ DEFAULT_ORDER_BOOK_GET_DATA_RESULT = {
             }
         },
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'order_book': {
                 'acc': 'tbinance.tbinance_futures',
                 'tb': 'order_book',
-                'sch': 'futures_coin',
+                'sch': 'margin_coin',
                 'act': 'delete',
                 'd': [
                     {
@@ -618,7 +618,7 @@ DEFAULT_ORDER_BOOK_GET_DATA_RESULT = {
             'order_book': {
                 'acc': 'tbinance.tbinance_futures',
                 'tb': 'order_book',
-                'sch': 'futures_coin',
+                'sch': 'margin_coin',
                 'act': 'update',
                 'd': [
                     {

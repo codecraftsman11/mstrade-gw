@@ -49,7 +49,7 @@ DEFAULT_QUOTE_BIN_MESSAGE = {
             'B': '0',
         },
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'e': 'kline',
         'E': 1638966273261,
         's': 'BTCUSD_PERP',
@@ -135,7 +135,7 @@ DEFAULT_QUOTE_BIN_LOOKUP_TABLE_RESULT = {
             }
         ],
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'table': 'kline',
         'action': 'update',
         'data': [
@@ -231,7 +231,7 @@ DEFAULT_QUOTE_BIN_SPLIT_MESSAGE_RESULT = {
             ],
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'table': 'kline',
             'action': 'update',
@@ -309,12 +309,12 @@ DEFAULT_QUOTE_BIN_GET_DATA_RESULT = {
             }
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'quote_bin': {
                 'acc': 'tbinance.tbinance_futures',
                 'tb': 'quote_bin',
-                'sch': 'futures_coin',
+                'sch': 'margin_coin',
                 'act': 'update',
                 'd': [
                     {

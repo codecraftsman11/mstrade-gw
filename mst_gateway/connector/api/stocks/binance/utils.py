@@ -163,8 +163,8 @@ def load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict) -> li
     return _load_futures_exchange_symbol_info(raw_data, leverage_data, OrderSchema.futures, 'status')
 
 
-def load_futures_coin_exchange_symbol_info(raw_data: list, leverage_data: dict) -> list:
-    return _load_futures_exchange_symbol_info(raw_data, leverage_data, OrderSchema.futures_coin, 'contractStatus')
+def load_margin_coin_exchange_symbol_info(raw_data: list, leverage_data: dict) -> list:
+    return _load_futures_exchange_symbol_info(raw_data, leverage_data, OrderSchema.margin_coin, 'contractStatus')
 
 
 def validate_symbol_pair_and_assets(raw_data):
@@ -347,7 +347,7 @@ def load_api_key_permissions(raw_data: dict, schemas: iter) -> dict:
         OrderSchema.margin_cross: raw_data.get('enableMargin', False),
         OrderSchema.margin_isolated: raw_data.get('enableMargin', False),
         OrderSchema.futures: raw_data.get('enableFutures', False),
-        OrderSchema.futures_coin: raw_data.get('enableFutures', False),
+        OrderSchema.margin_coin: raw_data.get('enableFutures', False),
     }
     return {schema: schema_handlers.get(schema, False) for schema in schemas}
 
@@ -551,9 +551,9 @@ def load_ws_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union[
     }
 
 
-def load_futures_coin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
-                                  fields: Union[list, tuple], schema: str) -> dict:
-    balances, _ = _futures_coin_balance_data(raw_data.get('assets'))
+def load_margin_coin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
+                                 fields: Union[list, tuple], schema: str) -> dict:
+    balances, _ = _margin_coin_balance_data(raw_data.get('assets'))
     balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets)
     return {
         'balances': balances,
@@ -564,9 +564,9 @@ def load_futures_coin_wallet_data(raw_data: dict, currencies: dict, assets: Unio
     }
 
 
-def load_ws_futures_coin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
-                                     fields: Union[list, tuple], schema: str) -> dict:
-    balances, _ = _ws_futures_coin_balance_data(raw_data.get('assets'))
+def load_ws_margin_coin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
+                                    fields: Union[list, tuple], schema: str) -> dict:
+    balances, _ = _ws_margin_coin_balance_data(raw_data.get('assets'))
     balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets, is_for_ws=True)
     return {
         'bls': balances,
@@ -581,7 +581,7 @@ def load_future_wallet_balances(raw_data: dict) -> list:
     return _futures_balance_data(raw_data.get('assets'))[0]
 
 
-def load_future_coin_wallet_balances(raw_data: dict) -> list:
+def load_margin_coin_wallet_balances(raw_data: dict) -> list:
     return _futures_balance_data(raw_data.get('assets'))[0]
 
 
@@ -653,7 +653,7 @@ def load_futures_asset_balance(raw_data: list) -> dict:
     return balances
 
 
-def load_futures_coin_asset_balance(raw_data: list) -> dict:
+def load_margin_coin_asset_balance(raw_data: list) -> dict:
     return load_futures_asset_balance(raw_data)
 
 
@@ -783,7 +783,7 @@ def ws_futures_wallet(raw_data: dict, schema: str, state_data: dict, exchange_ra
     }
 
 
-def ws_futures_coin_wallet(raw_data: dict, schema: str, state_data: dict, currencies: dict,
+def ws_margin_coin_wallet(raw_data: dict, schema: str, state_data: dict, currencies: dict,
                            fields: iter, extra_fields: iter, assets: iter):
     """
     BinanceWalletSerializer
@@ -1032,9 +1032,9 @@ def _ws_futures_balance_data(balances: list):
     return result, extra_result
 
 
-def _futures_coin_balance_data(balances: list):
+def _margin_coin_balance_data(balances: list):
     """
-    used: load_futures_coin_wallet_data
+    used: load_margin_coin_wallet_data
     """
     result = []
     for b in balances:
@@ -1053,9 +1053,9 @@ def _futures_coin_balance_data(balances: list):
     return result, None
 
 
-def _ws_futures_coin_balance_data(balances: list):
+def _ws_margin_coin_balance_data(balances: list):
     """
-    used: load_ws_futures_coin_wallet_data
+    used: load_ws_margin_coin_wallet_data
     """
     result = []
     for b in balances:
@@ -1175,7 +1175,7 @@ def load_commissions(raw_data: dict) -> list:
 
 
 def to_exchange_asset(asset: str, schema: str):
-    if asset == 'usd' and schema != OrderSchema.futures_coin:
+    if asset == 'usd' and schema != OrderSchema.margin_coin:
         return 'usdt'
     return asset
 
@@ -1550,7 +1550,7 @@ def assign_custom_parameter_values(options: Optional[dict], schema: Optional[str
     if options.get('is_iceberg'):
         new_options['iceberg_volume'] = options['iceberg_volume'] or 0
 
-    if options.get('is_passive') and schema in [api.OrderSchema.futures_coin, api.OrderSchema.futures]:
+    if options.get('is_passive') and schema in [api.OrderSchema.margin_coin, api.OrderSchema.futures]:
         new_options['ttl'] = var.PARAMETER_NAMES_MAP.get('GTX')
     return new_options
 
@@ -1627,12 +1627,12 @@ def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, sta
         })
         if exp := state_data.get('expiration', None):
             expiration = exp
-    if schema == OrderSchema.futures_coin:
+    if schema == OrderSchema.margin_coin:
         try:
             asset = state_data.get('pair')[0].lower()
         except (TypeError, IndexError, AttributeError):
             asset = None
-        unrealised_pnl = load_ws_futures_coin_position_unrealised_pnl(unrealised_pnl, exchange_rates, asset, expiration)
+        unrealised_pnl = load_ws_margin_coin_position_unrealised_pnl(unrealised_pnl, exchange_rates, asset, expiration)
     else:
         unrealised_pnl = load_ws_futures_position_unrealised_pnl(unrealised_pnl, exchange_rates, expiration)
     data['upnl'] = unrealised_pnl
@@ -1647,7 +1647,7 @@ def load_ws_futures_position_unrealised_pnl(base: float, exchange_rates: dict, e
     }
 
 
-def load_ws_futures_coin_position_unrealised_pnl(
+def load_ws_margin_coin_position_unrealised_pnl(
         base: float, exchange_rates: dict, asset: str, expiration: Optional[str]) -> dict:
     if expiration and (asset_to_usd := exchange_rates.get(f"{asset}{expiration}".lower())):
         pass
@@ -1709,7 +1709,7 @@ def load_futures_positions_state(account_info: dict) -> dict:
     return positions_state
 
 
-def load_futures_coin_positions_state(account_info: dict, state_data: dict) -> dict:
+def load_margin_coin_positions_state(account_info: dict, state_data: dict) -> dict:
     balances = {}
     for asset in account_info.get('assets', []):
         balances[asset['asset'].lower()] = to_float(asset['crossWalletBalance'])
@@ -1723,7 +1723,7 @@ def load_futures_coin_positions_state(account_info: dict, state_data: dict) -> d
             _unrealised_pnl = to_float(position['unrealizedProfit'])
             mark_price = BinanceFinFactory.calc_mark_price(
                 volume, entry_price, _unrealised_pnl,
-                schema=OrderSchema.futures_coin, symbol=symbol, side=side,
+                schema=OrderSchema.margin_coin, symbol=symbol, side=side,
             )
             try:
                 wallet_asset = state_data.get(symbol, {}).get('pair', [])[0].lower()
@@ -1792,7 +1792,7 @@ def load_futures_position(raw_data: dict, schema: str) -> dict:
     return data
 
 
-def load_futures_coin_position(raw_data: dict, schema: str) -> dict:
+def load_margin_coin_position(raw_data: dict, schema: str) -> dict:
     return load_futures_position(raw_data, schema)
 
 
@@ -1811,7 +1811,7 @@ def load_futures_position_list(raw_data: list, schema: str) -> list:
     return [load_futures_position(data, schema) for data in raw_data if to_float(data.get('positionAmt')) != 0]
 
 
-def load_futures_coin_position_list(raw_data: list, schema: str) -> list:
+def load_margin_coin_position_list(raw_data: list, schema: str) -> list:
     return load_futures_position_list(raw_data, schema)
 
 
@@ -1884,13 +1884,13 @@ def load_margin_cross_position_ws_data(
     return data
 
 
-def load_futures_coin_position_request_leverage(margin_type: str) -> str:
+def load_margin_coin_position_request_leverage(margin_type: str) -> str:
     if margin_type.lower() == LeverageType.isolated:
         return LeverageType.isolated
     return LeverageType.cross
 
 
-def remap_futures_coin_position_request_data(data: dict) -> dict:
+def remap_margin_coin_position_request_data(data: dict) -> dict:
     volume = to_float(data.get('positionAmt'))
     return {
         'E': time2timestamp(datetime.now()),
@@ -1900,7 +1900,7 @@ def remap_futures_coin_position_request_data(data: dict) -> dict:
         'entry_price': to_float(data.get('entryPrice')),
         'mark_price': to_float(data.get('markPrice')),
         'leverage': to_float(data.get('leverage')),
-        'leverage_type': load_futures_coin_position_request_leverage(data.get('marginType')),
+        'leverage_type': load_margin_coin_position_request_leverage(data.get('marginType')),
         'unrealised_pnl': to_float(data.get('unRealizedProfit')),
         'liquidation_price': to_float(data.get('liquidationPrice')),
     }

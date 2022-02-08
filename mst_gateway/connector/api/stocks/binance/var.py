@@ -8,7 +8,7 @@ BINANCE_WALLET_TYPES = [
     api.OrderSchema.margin_cross,
     api.OrderSchema.margin_isolated,
     api.OrderSchema.futures,
-    api.OrderSchema.futures_coin,
+    api.OrderSchema.margin_coin,
 ]
 
 BINANCE_ORDER_SIDE_BUY = 'BUY'
@@ -58,7 +58,7 @@ DEFAULT_PARAMETERS = [
 
 PARAMETERS_BY_ORDER_TYPE_MAP = {
 
-    api.OrderSchema.futures_coin: {
+    api.OrderSchema.margin_coin: {
         'MARKET': {
             'params': [
                 *DEFAULT_PARAMETERS,

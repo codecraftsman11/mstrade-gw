@@ -92,14 +92,14 @@ STORAGE_DATA = {
                     'exchange': 'tbinance',
                 },
             },
-            OrderSchema.futures_coin: {
+            OrderSchema.margin_coin: {
                 'btcusd_perp': {
                     'tick': 0.1,
                     'pair': ['BTC', 'USD'],
                     'volume_tick': 1.0,
                     'max_leverage': 125.0,
-                    'schema': OrderSchema.futures_coin,
-                    'symbol_schema': OrderSchema.futures_coin,
+                    'schema': OrderSchema.margin_coin,
+                    'symbol_schema': OrderSchema.margin_coin,
                     'expiration': 'None',
                     'expiration_date': 'None',
                     'created': '2021-09-06T09:51:21.288366',
@@ -182,7 +182,7 @@ STORAGE_DATA = {
                                   'lina': 0.0473, 'hnt': 39.182, 'algo': 1.4237, 'hbar': 0.24943, 'zec': 166.1,
                                   'ogn': 0.6654, 'zen': 61.94, 'neo': 25.823, 'srm': 7.733, 'matic': 1.942,
                                   'c98': 2.19, 'busd': 1.5902205456, 'ftt': 66.6302408606},
-            OrderSchema.futures_coin: {'ltc': 265.0, 'usd': 1, 'bch211231': 450.0, 'usd211231': 1, 'gala': 0.59115,
+            OrderSchema.margin_coin: {'ltc': 265.0, 'usd': 1, 'bch211231': 450.0, 'usd211231': 1, 'gala': 0.59115,
                                        'ada211231': 2.6, 'sol': 145.087, 'btc220325': 62900.0, 'usd220325': 1,
                                        'sand': 2.5447, 'ftm': 2.7606, 'bch': 559.17, 'fil': 54.166, 'link': 27.32,
                                        'avax': 137.07, 'eth': 4707.26, 'bnb': 371.699, 'eos': 5.5, 'luna': 38.0,
@@ -218,7 +218,7 @@ STORAGE_DATA = {
                          'upnl': 0.0, 'mbl': 10000.96638768, 'mm': 0.0, 'im': 0.0, 'am': 10000.96638768, 't': 'trade'},
                 'busd': {'cur': 'BUSD', 'bl': 0.0, 'wbl': 0.0, 'bor': 0.0, 'ist': 0.0, 'upnl': 0.0, 'mbl': 0.0,
                          'mm': 0.0, 'im': 0.0, 'am': 0.0, 't': 'trade'}}},
-        OrderSchema.futures_coin: {'tre': True, 'tbl': {'btc': 12.88807193, 'usd': 624669.38071048},
+        OrderSchema.margin_coin: {'tre': True, 'tbl': {'btc': 12.88807193, 'usd': 624669.38071048},
                                    'tupnl': {'btc': -3.6e-07, 'usd': -0.01744877},
                                    'tmbl': {'btc': 12.88807157, 'usd': 624669.36326171},
                                    'tbor': {'btc': 0.0, 'usd': 0.0}, 'tist': {'btc': 0.0, 'usd': 0.0}, 'bls': {

@@ -58,10 +58,10 @@ class BinanceFuturesWalletSerializer(BinanceWalletSerializer):
     def _wallet_list(self, item):
         assets = ('btc', 'usd')
         fields = ('bl', 'upnl', 'mbl')
-        if self._wss_api.schema == OrderSchema.futures_coin:
+        if self._wss_api.schema == OrderSchema.margin_coin:
             extra_fields = []
-            return utils.ws_futures_coin_wallet(item, self._wss_api.schema, self.wallet_state, self.exchange_rates,
-                                                fields, extra_fields, assets)
+            return utils.ws_margin_coin_wallet(item, self._wss_api.schema, self.wallet_state, self.exchange_rates,
+                                               fields, extra_fields, assets)
         else:
             extra_fields = ('ist', 'bor')
             return utils.ws_futures_wallet(item, self._wss_api.schema, self.wallet_state, self.exchange_rates,

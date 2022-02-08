@@ -22,7 +22,7 @@ DEFAULT_LEVERAGE_BRACKETS = {
          'maintMarginRatio': 0.25, 'cum': 25016300.0},
         {'bracket': 10, 'initialLeverage': 1, 'notionalCap': 9223372036854775807, 'notionalFloor': 300000000,
          'maintMarginRatio': 0.5, 'cum': 100016300.0}],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {'bracket': 1, 'initialLeverage': 125, 'qtyCap': 5, 'qtyFloor': 0, 'maintMarginRatio': 0.004, 'cum': 0.0},
         {'bracket': 2, 'initialLeverage': 100, 'qtyCap': 10, 'qtyFloor': 5, 'maintMarginRatio': 0.005, 'cum': 0.005},
         {'bracket': 3, 'initialLeverage': 50, 'qtyCap': 20, 'qtyFloor': 10, 'maintMarginRatio': 0.01, 'cum': 0.055},
@@ -84,7 +84,7 @@ DEFAULT_SYMBOL_DETAIL_MESSAGE = {
         'L': 217094660,
         'n': 116540,
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'e': '24hrTicker',
         'E': 1638965331103,
         's': 'BTCUSD_PERP',
@@ -164,7 +164,7 @@ DEFAULT_SYMBOL_DETAIL_LOOKUP_TABLE_RESULT = {
             }
         ],
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'table': '24hrTicker',
         'action': 'update',
         'data': [
@@ -254,7 +254,7 @@ DEFAULT_SYMBOL_DETAIL_SPLIT_MESSAGE_RESULT = {
             ],
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'table': '24hrTicker',
             'action': 'update',
@@ -357,12 +357,12 @@ DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT = {
             }
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'symbol': {
                 'acc': 'tbinance.tbinance_futures',
                 'tb': 'symbol',
-                'sch': 'futures_coin',
+                'sch': 'margin_coin',
                 'act': 'update',
                 'd': [
                     {
@@ -385,7 +385,7 @@ DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT = {
                         'tck': 0.1,
                         'vt': 1.0,
                         'ss': 'btcusd',
-                        'ssch': 'futures_coin',
+                        'ssch': 'margin_coin',
                         'crt': '2021-09-06T09:51:21.288366',
                         'mlvr': 125.0,
                     }
@@ -445,7 +445,7 @@ DEFAULT_SYMBOL_MESSAGE = {
             'n': 116538,
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'e': '24hrTicker',
             'E': 1638965329255,
@@ -527,7 +527,7 @@ DEFAULT_SYMBOL_LOOKUP_TABLE_RESULT = {
             }
         ],
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'table': '24hrTicker',
         'action': 'update',
         'data': [
@@ -617,7 +617,7 @@ DEFAULT_SYMBOL_SPLIT_MESSAGE_RESULT = {
             ],
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'table': '24hrTicker',
             'action': 'update',
@@ -720,12 +720,12 @@ DEFAULT_SYMBOL_GET_DATA_RESULT = {
             }
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'symbol': {
                 'acc': 'tbinance.tbinance_futures',
                 'tb': 'symbol',
-                'sch': 'futures_coin',
+                'sch': 'margin_coin',
                 'act': 'update',
                 'd': [
                     {
@@ -748,7 +748,7 @@ DEFAULT_SYMBOL_GET_DATA_RESULT = {
                         'tck': 0.1,
                         'vt': 1.0,
                         'ss': 'btcusd',
-                        'ssch': 'futures_coin',
+                        'ssch': 'margin_coin',
                         'crt': '2021-09-06T09:51:21.288366',
                         'mlvr': 125.0,
                     }

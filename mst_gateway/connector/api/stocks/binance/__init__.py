@@ -15,6 +15,6 @@ def get_ws_api_class(**kwargs):
     schema = kwargs.get('schema', '').lower()
     if schema == OrderSchema.futures:
         return BinanceFuturesWssApi
-    if schema == OrderSchema.futures_coin:
+    if schema == OrderSchema.margin_coin:
         return BinanceFuturesCoinWssApi
     return BinanceWssApi

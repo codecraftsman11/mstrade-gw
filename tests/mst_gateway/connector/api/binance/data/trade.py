@@ -25,7 +25,7 @@ DEFAULT_TRADE_MESSAGE = {
         'X': 'MARKET',
         'm': True,
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'e': 'trade',
         'E': 1638965335074,
         'T': 1638965335062,
@@ -74,7 +74,7 @@ DEFAULT_TRADE_LOOKUP_TABLE_RESULT = {
             }
         ],
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'table': 'trade',
         'action': 'update',
         'data': [
@@ -133,7 +133,7 @@ DEFAULT_TRADE_SPLIT_MESSAGE_RESULT = {
             ],
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'table': 'trade',
             'action': 'update',
@@ -194,12 +194,12 @@ DEFAULT_TRADE_GET_DATA_RESULT = {
             }
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'trade': {
                 'acc': 'tbinance.tbinance_futures',
                 'tb': 'trade',
-                'sch': 'futures_coin',
+                'sch': 'margin_coin',
                 'act': 'insert',
                 'd': [
                     {

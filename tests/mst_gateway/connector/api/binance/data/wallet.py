@@ -34,7 +34,7 @@ DEFAULT_WALLET_MESSAGE = {
             'm': 'ORDER',
         },
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'e': 'ACCOUNT_UPDATE',
         'T': 1639058394216,
         'E': 1639058394219,
@@ -112,7 +112,7 @@ DEFAULT_WALLET_LOOKUP_TABLE_RESULT = {
             }
         ],
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'table': 'ACCOUNT_UPDATE',
         'action': 'update',
         'data': [
@@ -200,7 +200,7 @@ DEFAULT_WALLET_SPLIT_MESSAGE_RESULT = {
             ],
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'table': 'ACCOUNT_UPDATE',
             'action': 'update',
@@ -357,12 +357,12 @@ DEFAULT_WALLET_GET_DATA_RESULT = {
             }
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'wallet': {
                 'acc': 'tbinance.tbinance_futures',
                 'tb': 'wallet',
-                'sch': 'futures_coin',
+                'sch': 'margin_coin',
                 'act': 'update',
                 'd': [
                     {
@@ -496,7 +496,7 @@ DEFAULT_WALLET_STATE = {
             'tre': True
         }
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'tbl': {'btc': 12.8698925, 'usd': 627748.31160829},
         'tupnl': {'btc': 3e-08, 'usd': 0.00146329},
         'tmbl': {'btc': 12.86989253, 'usd': 627748.31307159},

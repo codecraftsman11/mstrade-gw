@@ -14,12 +14,12 @@ class BinanceFinFactory(FinFactory):
         return 10
 
     @classmethod
-    def _is_futures_coin(cls, **kwargs) -> bool:
-        return kwargs.get('schema', '').lower() == api.OrderSchema.futures_coin
+    def _is_margin_coin(cls, **kwargs) -> bool:
+        return kwargs.get('schema', '').lower() == api.OrderSchema.margin_coin
 
     @classmethod
     def calc_face_price(cls, symbol: str, price: float, **kwargs) -> Tuple[Optional[float], Optional[bool]]:
-        if cls._is_futures_coin(**kwargs):
+        if cls._is_margin_coin(**kwargs):
             try:
                 return cls.get_contract_multiplier(symbol) / price, True
             except (TypeError, ZeroDivisionError):
@@ -28,7 +28,7 @@ class BinanceFinFactory(FinFactory):
 
     @classmethod
     def calc_price(cls, symbol: str, face_price: float, **kwargs) -> Optional[float]:
-        if cls._is_futures_coin(**kwargs):
+        if cls._is_margin_coin(**kwargs):
             try:
                 return cls.get_contract_multiplier(symbol) / face_price
             except (TypeError, ZeroDivisionError):
@@ -50,7 +50,7 @@ class BinanceFinFactory(FinFactory):
         try:
             quantity = abs(volume)
             direction = cls.direction_by_side(side)
-            if cls._is_futures_coin(**kwargs):
+            if cls._is_margin_coin(**kwargs):
                 liquidation_price = (quantity * maint_margin_rate + direction * quantity) / (
                     (wallet_balance - maint_margin_sum + unrealised_pnl_sum + maint_amount) / (
                         cls.get_contract_multiplier(kwargs.get('symbol')) + direction *
@@ -78,7 +78,7 @@ class BinanceFinFactory(FinFactory):
     def filter_leverage_brackets(cls, leverage_brackets: list, **kwargs) -> tuple:
         maint_margin_rate = None
         maint_amount = None
-        if cls._is_futures_coin(**kwargs):
+        if cls._is_margin_coin(**kwargs):
             _prefix = 'qty'
             _value = kwargs.get('volume')
         else:
@@ -106,7 +106,7 @@ class BinanceFinFactory(FinFactory):
     def calc_notional_value(cls, volume: float, mark_price: float, **kwargs) -> Optional[float]:
         try:
             quantity = abs(volume)
-            if cls._is_futures_coin(**kwargs):
+            if cls._is_margin_coin(**kwargs):
                 return quantity * cls.get_contract_multiplier(kwargs.get('symbol')) / mark_price
             return quantity * mark_price
         except (TypeError, ZeroDivisionError):
@@ -116,7 +116,7 @@ class BinanceFinFactory(FinFactory):
     def calc_maint_margin(cls, volume: float, mark_price: float, maint_amount: float, maint_margin_rate: float,
                           **kwargs) -> Optional[float]:
         try:
-            if cls._is_futures_coin(**kwargs):
+            if cls._is_margin_coin(**kwargs):
                 return abs(volume) * cls.get_contract_multiplier(
                     kwargs.get('symbol')
                 ) * (maint_margin_rate / mark_price) - maint_amount
@@ -159,7 +159,7 @@ class BinanceFinFactory(FinFactory):
     @classmethod
     def calc_unrealised_pnl_by_side(cls, entry_price: float, mark_price: float, volume: float, side: int,
                                     **kwargs) -> Optional[float]:
-        if cls._is_futures_coin(**kwargs):
+        if cls._is_margin_coin(**kwargs):
             try:
                 return abs(volume) * cls.direction_by_side(side) * cls.get_contract_multiplier(
                     kwargs.get('symbol')
@@ -171,7 +171,7 @@ class BinanceFinFactory(FinFactory):
     @classmethod
     def calc_unrealised_pnl_by_direction(cls, entry_price: float, mark_price: float, volume: float, direction: int,
                                          **kwargs) -> Optional[float]:
-        if cls._is_futures_coin(**kwargs):
+        if cls._is_margin_coin(**kwargs):
             try:
                 return abs(volume) * direction * cls.get_contract_multiplier(
                     kwargs.get('symbol')
@@ -182,7 +182,7 @@ class BinanceFinFactory(FinFactory):
 
     @classmethod
     def calc_mark_price(cls, volume: float, entry_price: float, unrealised_pnl: float, **kwargs) -> Optional[float]:
-        if cls._is_futures_coin(**kwargs):
+        if cls._is_margin_coin(**kwargs):
             try:
                 return 1 / (1 / entry_price - (
                     unrealised_pnl / (

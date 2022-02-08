@@ -122,7 +122,7 @@ WALLET_EXTRA_FIELDS = {
         'total_borrowed': dict,
         'total_interest': dict,
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'trade_enabled': bool
     }
 }
@@ -201,7 +201,7 @@ EXCHANGE_SYMBOL_INFO_FIELDS = {
         'leverage_brackets': list,
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'leverage_brackets': list,
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
     },
@@ -218,7 +218,7 @@ LEVERAGE_BRACKET_FIELDS = {
         'notionalFloor': int,
         **BASE_LEVERAGE_BRACKETS_FIELDS,
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'qtyCap': int,
         'qtyFloor': int,
         **BASE_LEVERAGE_BRACKETS_FIELDS,
@@ -423,7 +423,7 @@ WS_WALLET_EXTRA_FIELDS = {
         'tbor': dict,
         'tist': dict
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'tre': bool
     }
 }

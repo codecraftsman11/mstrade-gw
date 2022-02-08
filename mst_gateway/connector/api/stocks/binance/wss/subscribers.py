@@ -173,7 +173,7 @@ class BinanceWalletSubscriber(BinanceSubscriber):
             OrderSchema.exchange: (client.get_account, utils.load_ws_spot_wallet_data),
             OrderSchema.margin_cross: (client.get_margin_account, utils.load_ws_margin_wallet_data),
             OrderSchema.futures: (client.futures_account_v2, utils.load_ws_futures_wallet_data),
-            OrderSchema.futures_coin: (client.futures_coin_account, utils.load_ws_futures_coin_wallet_data),
+            OrderSchema.margin_coin: (client.futures_coin_account, utils.load_ws_margin_coin_wallet_data),
         }
         schema = api.schema
         kwargs = {
@@ -312,7 +312,7 @@ class BinanceFuturesCoinPositionSubscriber(BinanceFuturesPositionSubscriber):
                 exchange_rates = await api.storage.get(
                     StateStorageKey.exchange_rates, exchange=api.name, schema=api.schema)
                 return {
-                    'position_state': utils.load_futures_coin_positions_state(account_info, state_data),
+                    'position_state': utils.load_margin_coin_positions_state(account_info, state_data),
                     'leverage_brackets': utils.load_leverage_brackets_as_dict(leverage_brackets),
                     'exchange_rates': exchange_rates,
                 }

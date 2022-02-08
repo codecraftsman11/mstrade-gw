@@ -24,7 +24,7 @@ class OrderSchema(ClassWithAttributes):
     margin_isolated = 'margin_isolated'
 
     futures = 'futures'
-    futures_coin = 'futures_coin'
+    margin_coin = 'margin_coin'
 
 
 class OrderSchemaTradeMode(ClassWithAttributes):
@@ -34,7 +34,7 @@ class OrderSchemaTradeMode(ClassWithAttributes):
     margin_isolated = ['margin_isolated']
 
     futures = ['futures']
-    futures_coin = ['futures_coin']
+    margin_coin = ['margin_coin']
 
     @classmethod
     def schema_pairs(cls):
