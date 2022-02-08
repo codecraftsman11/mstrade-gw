@@ -190,7 +190,6 @@ class TestBitmexWssApi:
         indirect=['wss']
     )
     async def test_get_data(self, wss: BitmexWssApi, subscr_name: str, default_data: list):
-        print(f'WE ARE HERE')
         self.init_partial_state(wss, subscr_name)
         wss._subscriptions = {subscr_name: {'*': {'1'}}}
         message_header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)

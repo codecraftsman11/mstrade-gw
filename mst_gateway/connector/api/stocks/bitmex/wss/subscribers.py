@@ -72,7 +72,6 @@ class BitmexWalletSubscriber(BitmexSubscriber):
     async def subscribe_exchange_rates(self, api: BitmexWssApi):
         redis = await api.storage.get_client()
         state_channel = (await redis.subscribe(f"{StateStorageKey.exchange_rates}.{api.name}.{api.schema}"))[0]
-        print(f'EXCHANGE RATED IS {await state_channel.get_json()}')
         state_data = await state_channel.get_json()
         while await state_channel.wait_message():
             state_data = await state_channel.get_json()
@@ -80,7 +79,6 @@ class BitmexWalletSubscriber(BitmexSubscriber):
             api.partial_state_data[self.subscription].update({'exchange_rates': exchange_rates})
 
     async def init_partial_state(self, api: BitmexWssApi) -> dict:
-        print(f'WE ARE HERE')
         api.tasks.append(asyncio.create_task(self.subscribe_exchange_rates(api)))
         exchange_rates = await api.storage.get(f"{StateStorageKey.exchange_rates}.{api.name}.{api.schema}")
         return {'exchange_rates': exchange_rates}

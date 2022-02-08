@@ -177,7 +177,6 @@ class BitmexRestApi(StockRestApi):
         state_data = self.storage.get(
             f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin1}".lower()
         ).get(utils.stock2symbol(symbol), dict())
-        print(f'STORAGEQWE {self.storage._storage}')
         return utils.load_symbol_data(instruments[0], state_data)
 
     def list_symbols(self, schema, **kwargs) -> list:
