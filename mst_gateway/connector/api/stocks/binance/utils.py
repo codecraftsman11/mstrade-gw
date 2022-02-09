@@ -50,7 +50,8 @@ def load_symbol_data(schema: str, raw_data: Optional[dict], state_data: Optional
             'system_symbol': state_data.get('system_symbol'),
             'symbol_schema': state_data.get('symbol_schema'),
             'created': to_date(state_data.get('created')),
-            'max_leverage': state_data.get('max_leverage')
+            'max_leverage': state_data.get('max_leverage'),
+            'wallet_asset': state_data.get('wallet_asset'),
         })
     return data
 
@@ -90,7 +91,8 @@ def load_exchange_symbol_info(raw_data: list, schema: str, valid_symbols: list =
                 'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
                 'tick': tick,
                 'volume_tick': volume_tick,
-                'max_leverage': None
+                'max_leverage': None,
+                'wallet_asset': None,
             })
     return symbol_list
 
@@ -154,6 +156,7 @@ def _load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict, sche
                     'volume_tick': volume_tick,
                     'max_leverage': max_leverage,
                     'leverage_brackets': leverage_brackets,
+                    'wallet_asset': d.get('marginAsset').upper(),
                 }
             )
     return symbol_list
@@ -1361,7 +1364,8 @@ def load_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict])
             'ss': state_data.get('system_symbol'),
             'ssch': state_data.get('symbol_schema'),
             'crt': to_iso_datetime(to_date(state_data.get('created'))),
-            'mlvr': state_data.get('max_leverage')
+            'mlvr': state_data.get('max_leverage'),
+            'wa': state_data.get('wallet_asset'),
         })
     return data
 

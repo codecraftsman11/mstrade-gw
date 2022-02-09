@@ -50,7 +50,7 @@ STORAGE_DATA = {
             "system_symbol": "btcusd",
             "symbol": "xbtusd",
             "exchange": "Bitmex"
-        },
+        }
     },
     f"{StateStorageKey.symbol}.tbitmex.margin1": {
         'ethusd': {

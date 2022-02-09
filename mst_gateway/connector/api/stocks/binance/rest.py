@@ -516,7 +516,10 @@ class BinanceRestApi(StockRestApi):
 
     def get_wallet_extra_data(self, schema: str, **kwargs) -> dict:
         if schema == OrderSchema.futures:
-            cross_collaterals = self._binance_api(self._handler.futures_loan_wallet)
+            try:
+                cross_collaterals = self._binance_api(self._handler.futures_loan_wallet, **kwargs)
+            except ConnectorError:
+                return {}
             return {'cross_collaterals': utils.load_futures_cross_collaterals_data(cross_collaterals)}
         return {}
 

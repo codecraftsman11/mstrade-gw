@@ -22,7 +22,7 @@ from .data import quote_bin as quote_message
 from .data import symbol as symbol_message
 from .data import trade as trade_message
 from .data import wallet as wallet_message
-from .test_binance_rest import get_symbol, get_asset, get_liquidation_kwargs
+from .test_binance_rest import get_symbol, get_liquidation_kwargs
 
 
 def ws_class(name):
@@ -470,7 +470,7 @@ class TestBinanceWssApi:
         data_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name])
         total_cross_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
         balance_schema = Schema(fields.WS_WALLET_BALANCE_FIELDS)
-        for i, message in enumerate(messages):
+        for message in messages:
             assert await wss.get_data(deepcopy(message)) == {}
 
         wss._subscriptions = {subscr_name: {'*': {'1'}}}
@@ -531,7 +531,7 @@ class TestBinanceWssApi:
     async def test_get_position_data(self, wss: BinanceWssApi, messages, expect):
         subscr_name = 'position'
         self.init_partial_state(wss, subscr_name)
-        for i, message in enumerate(messages):
+        for message in messages:
             assert await wss.get_data(deepcopy(message)) == {}
 
         wss._subscriptions = {subscr_name: {'*': {'1'}}}
@@ -620,9 +620,8 @@ class TestBinanceWssApi:
         indirect=['wss'],
     )
     async def test_get_data(self, wss: BinanceWssApi, subscr_name, messages, expect):
-        for i, message in enumerate(messages):
-            data = await wss.get_data(deepcopy(message))
-            assert data.get(subscr_name, {}) == {}
+        for message in messages:
+            assert await wss.get_data(deepcopy(message)) == {}
 
         wss._subscriptions = {subscr_name: {'*': {'1'}}}
         for i, message in enumerate(messages):
