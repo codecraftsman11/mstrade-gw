@@ -38,7 +38,7 @@ def _debug(caplog):
 def rest(request, _debug) -> BinanceRestApi:
     param = request.param
     auth, available_schemas = rest_params(param)
-    with BinanceRestApi(test=True, name='tbinance', auth=auth, throttle_limit=30,
+    with BinanceRestApi(test=True, name='tbinance', auth=auth, throttle_limit=120,
                         state_storage=deepcopy(state_data.STORAGE_DATA),
                         logger=_debug['logger']) as api:
         api.open()

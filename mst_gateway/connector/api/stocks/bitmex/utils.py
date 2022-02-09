@@ -44,7 +44,6 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
             'volume_tick': state_data.get('volume_tick'),
             'system_symbol': state_data.get('system_symbol'),
             'schema': state_data.get('schema'),
-            'symbol_schema': state_data.get('symbol_schema'),
             'created': to_date(state_data.get('created')),
             'max_leverage': state_data.get('max_leverage'),
             'wallet_asset': state_data.get('wallet_asset'),
@@ -81,7 +80,6 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
             'tck': state_data.get('tick'),
             'vt': state_data.get('volume_tick'),
             'ss': state_data.get('system_symbol'),
-            'ssch': state_data.get('symbol_schema'),
             'crt': to_iso_datetime(state_data.get('created')),
             'mlvr': state_data.get('max_leverage'),
             'wa': state_data.get('wallet_asset'),
@@ -129,13 +127,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
         symbol = d.get('symbol')
         base_asset = d.get('underlying')
         quote_currency = d.get('quoteCurrency')
-
-        if re.search(r'\d{2}$', symbol):
-            symbol_schema = OrderSchema.futures
-        else:
-            symbol_schema = OrderSchema.margin1
-
-        quote_asset, expiration = _quote_asset(symbol, base_asset, quote_currency, symbol_schema)
+        quote_asset, expiration = _quote_asset(symbol, base_asset, quote_currency)
         system_base_asset = to_system_asset(base_asset)
         system_quote_asset = to_system_asset(quote_asset)
         system_symbol = symbol.lower().replace('xbt', 'btc')
@@ -156,7 +148,6 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                 'pair': [base_asset.upper(), quote_asset.upper()],
                 'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
                 'schema': OrderSchema.margin1,
-                'symbol_schema': symbol_schema,
                 'tick': tick,
                 'volume_tick': volume_tick,
                 'max_leverage': max_leverage,
@@ -166,9 +157,9 @@ def load_exchange_symbol_info(raw_data: list) -> list:
     return symbol_list
 
 
-def _quote_asset(symbol, base_asset, quote_currency, symbol_schema):
+def _quote_asset(symbol, base_asset, quote_currency) -> tuple:
     quote_asset = symbol[len(base_asset):].upper()
-    if symbol_schema == OrderSchema.futures:
+    if re.search(r'\d{2}$', symbol):
         return quote_currency, quote_asset[-3:]
     return quote_asset, None
 
