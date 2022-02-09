@@ -26,7 +26,6 @@ STORAGE_DATA = {
                     "volume_tick": 1.0,
                     "max_leverage": 100.0,
                     "schema": "margin1",
-                    "symbol_schema": "margin1",
                     "expiration": None,
                     "expiration_date": None,
                     "created": "2020-06-25T13:02:57.516637",
@@ -41,7 +40,8 @@ STORAGE_DATA = {
                     },
                     "system_symbol": "ethusd",
                     "symbol": "ethusd",
-                    "exchange": "Bitmex"
+                    "exchange": "Bitmex",
+                    "wallet_asset": "XBT",
                 },
                 'xbtusd': {
                     "tick": 0.5,
@@ -52,7 +52,6 @@ STORAGE_DATA = {
                     "volume_tick": 100.0,
                     "max_leverage": 100.0,
                     "schema": "margin1",
-                    "symbol_schema": "margin1",
                     "expiration": None,
                     "expiration_date": None,
                     "created": "2020-07-01T15:10:14.834558",
@@ -67,7 +66,8 @@ STORAGE_DATA = {
                     },
                     "system_symbol": "btcusd",
                     "symbol": "xbtusd",
-                    "exchange": "Bitmex"
+                    "exchange": "Bitmex",
+                    "wallet_asset": "XBT",
                 },
             }
         },
@@ -82,7 +82,6 @@ STORAGE_DATA = {
                     "volume_tick": 1.0,
                     "max_leverage": 100.0,
                     "schema": "margin1",
-                    "symbol_schema": "margin1",
                     "expiration": None,
                     "expiration_date": None,
                     "created": "2020-06-25T13:03:00.347559",
@@ -97,7 +96,8 @@ STORAGE_DATA = {
                     },
                     "system_symbol": "ethusd",
                     "symbol": "ethusd",
-                    "exchange": "tBitmex"
+                    "exchange": "tBitmex",
+                    "wallet_asset": "XBT",
                 },
                 'xbtusd': {
                     "tick": 0.5,
@@ -108,7 +108,6 @@ STORAGE_DATA = {
                     "volume_tick": 100.0,
                     "max_leverage": 100.0,
                     "schema": "margin1",
-                    "symbol_schema": "margin1",
                     "expiration": None,
                     "expiration_date": None,
                     "created": "2020-07-01T15:10:16.748936",
@@ -123,7 +122,8 @@ STORAGE_DATA = {
                     },
                     "system_symbol": "btcusd",
                     "symbol": "xbtusd",
-                    "exchange": "tBitmex"
+                    "exchange": "tBitmex",
+                    "wallet_asset": "XBT",
                 },
             }
         },

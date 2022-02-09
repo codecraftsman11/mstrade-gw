@@ -46,9 +46,9 @@ SYMBOL_FIELDS = {
     'tick': Or(None, float),
     'volume_tick': Or(None, float),
     'system_symbol': Or(None, str),
-    'symbol_schema': Or(None, Use(schema_valid)),
     'created': Or(None, Use(datetime_valid)),
     'max_leverage': Or(None, float),
+    'wallet_asset': Or(None, str),
 }
 
 ORDER_FIELDS = {
@@ -176,7 +176,6 @@ BASE_EXCHANGE_SYMBOL_INFO_FIELDS = {
     'symbol': str,
     'system_symbol': str,
     'schema': Use(schema_valid),
-    'symbol_schema': Use(schema_valid),
     'base_asset': str,
     'quote_asset': str,
     'system_base_asset': str,
@@ -188,6 +187,7 @@ BASE_EXCHANGE_SYMBOL_INFO_FIELDS = {
     'expiration': Or(None, str),
     'expiration_date': Or(None, Use(datetime_valid)),
     'max_leverage': Or(None, float),
+    'wallet_asset': Or(None, str),
     'extra_params': dict,
 }
 EXCHANGE_SYMBOL_INFO_FIELDS = {
@@ -198,11 +198,9 @@ EXCHANGE_SYMBOL_INFO_FIELDS = {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
     },
     OrderSchema.futures: {
-        # 'leverage_brackets': list,
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
     },
     OrderSchema.futures_coin: {
-        # 'leverage_brackets': list,
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
     },
 }
@@ -352,7 +350,6 @@ WS_MESSAGE_DATA_FIELDS = {
         'tm': Use(iso_datetime_valid),
         's': str,
         'ss': Or(None, str),
-        'ssch': Or(None, Use(schema_valid)),
         'p': float,
         'p24': float,
         'dt': float,
@@ -370,6 +367,7 @@ WS_MESSAGE_DATA_FIELDS = {
         'vt': Use(float_valid),
         'crt': Or(None, Use(datetime_valid)),
         'mlvr': Use(float_valid),
+        'wa': Or(None, str),
     },
     'trade': {
         'tm': Use(iso_datetime_valid),

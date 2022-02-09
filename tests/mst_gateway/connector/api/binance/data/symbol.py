@@ -312,9 +312,9 @@ DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT = {
                         'tck': 0.01,
                         'vt': 1e-06,
                         'ss': 'btcusd',
-                        'ssch': 'exchange',
                         'crt': '2021-09-06T09:51:21.271836',
                         'mlvr': None,
+                        'wa': None,
                     }
                 ],
             }
@@ -347,9 +347,9 @@ DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT = {
                         'tck': 0.01,
                         'vt': 0.001,
                         'ss': 'btcusd',
-                        'ssch': 'futures',
                         'crt': '2021-09-06T09:51:21.272746',
                         'mlvr': 125.0,
+                        'wa': 'USDT',
                     }
                 ],
             }
@@ -382,9 +382,9 @@ DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT = {
                         'tck': 0.1,
                         'vt': 1.0,
                         'ss': 'btcusd',
-                        'ssch': 'futures_coin',
                         'crt': '2021-09-06T09:51:21.288366',
                         'mlvr': 125.0,
+                        'wa': 'BTC',
                     }
                 ],
             }
@@ -672,9 +672,9 @@ DEFAULT_SYMBOL_GET_DATA_RESULT = {
                         'tck': 0.01,
                         'vt': 1e-06,
                         'ss': 'btcusd',
-                        'ssch': 'exchange',
                         'crt': '2021-09-06T09:51:21.271836',
                         'mlvr': None,
+                        'wa': None,
                     }
                 ],
             }
@@ -707,9 +707,9 @@ DEFAULT_SYMBOL_GET_DATA_RESULT = {
                         'tck': 0.01,
                         'vt': 0.001,
                         'ss': 'btcusd',
-                        'ssch': 'futures',
                         'crt': '2021-09-06T09:51:21.272746',
                         'mlvr': 125.0,
+                        'wa': 'USDT',
                     }
                 ],
             }
@@ -742,9 +742,9 @@ DEFAULT_SYMBOL_GET_DATA_RESULT = {
                         'tck': 0.1,
                         'vt': 1.0,
                         'ss': 'btcusd',
-                        'ssch': 'futures_coin',
                         'crt': '2021-09-06T09:51:21.288366',
                         'mlvr': 125.0,
+                        'wa': 'BTC',
                     }
                 ],
             }

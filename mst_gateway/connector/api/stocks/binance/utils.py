@@ -2,9 +2,7 @@ from datetime import datetime, timezone
 from typing import Union, Optional
 from mst_gateway.connector import api
 from mst_gateway.calculator import BinanceFinFactory
-from mst_gateway.connector.api.utils.utils import (
-    convert_to_currency, load_wallet_summary_in_usd, load_wallet_summary_margin3_in_usd
-)
+from mst_gateway.connector.api.utils.utils import load_wallet_summary
 from mst_gateway.connector.api.stocks.binance.var import BinancePositionSideMode
 from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
 from mst_gateway.utils import delta
@@ -50,9 +48,9 @@ def load_symbol_data(schema: str, raw_data: Optional[dict], state_data: Optional
             'tick': state_data.get('tick'),
             'volume_tick': state_data.get('volume_tick'),
             'system_symbol': state_data.get('system_symbol'),
-            'symbol_schema': state_data.get('symbol_schema'),
             'created': to_date(state_data.get('created')),
-            'max_leverage': state_data.get('max_leverage')
+            'max_leverage': state_data.get('max_leverage'),
+            'wallet_asset': state_data.get('wallet_asset'),
         })
     return data
 
@@ -81,7 +79,6 @@ def load_exchange_symbol_info(raw_data: list, schema: str, valid_symbols: list =
                 'symbol': d.get('symbol'),
                 'system_symbol': system_symbol.lower(),
                 'schema': schema,
-                'symbol_schema': schema,
                 'base_asset': d.get('baseAsset'),
                 'quote_asset': d.get('quoteAsset'),
                 'system_base_asset': system_base_asset,
@@ -93,6 +90,7 @@ def load_exchange_symbol_info(raw_data: list, schema: str, valid_symbols: list =
                 'tick': tick,
                 'volume_tick': volume_tick,
                 'max_leverage': None,
+                'wallet_asset': None,
                 'extra_params': {}
             })
     return symbol_list
@@ -156,10 +154,10 @@ def _load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict, sche
                     'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
                     'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
                     'schema': schema.lower(),
-                    'symbol_schema': schema.lower(),
                     'tick': tick,
                     'volume_tick': volume_tick,
                     'max_leverage': max_leverage,
+                    'wallet_asset': d.get('marginAsset').upper(),
                     'extra_params': extra_params
                 }
             )
@@ -361,33 +359,23 @@ def load_api_key_permissions(raw_data: dict, schemas: iter) -> dict:
 
 def load_spot_wallet_data(raw_data: dict, currencies: dict,
                           assets: Union[list, tuple], fields: Union[list, tuple], schema: str) -> dict:
-    balances, extra_balances = _spot_balance_data(raw_data.get('balances'))
-    total_balance = {}
-    wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields)
-    for asset in assets:
-        total_balance[asset] = convert_to_currency(
-            wallet_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
-        )
+    balances, _ = _spot_balance_data(raw_data.get('balances'))
+    balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets)
     return {
         'balances': balances,
         'extra_data': None,
-        **_load_total_wallet_summary_list(total_balance, fields)
+        **balances_summary
     }
 
 
 def load_ws_spot_wallet_data(raw_data: dict, currencies: dict,
                              assets: Union[list, tuple], fields: Union[list, tuple], schema: str) -> dict:
-    balances, extra_balances = _spot_ws_balance_data(raw_data.get('balances'))
-    total_balance = {}
-    wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields, is_for_ws=True)
-    for asset in assets:
-        total_balance[asset] = convert_to_currency(
-            wallet_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
-        )
+    balances, _ = _spot_ws_balance_data(raw_data.get('balances'))
+    balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets, is_for_ws=True)
     return {
         'bls': balances,
         'ex': None,
-        **_load_total_wallet_summary_list(total_balance, fields, is_for_ws=True)
+        **balances_summary,
     }
 
 
@@ -408,17 +396,8 @@ def load_margin_wallet_data(raw_data: dict, currencies: dict,
                             assets: Union[list, tuple], fields: Union[list, tuple],
                             extra_fields: Union[list, tuple], schema: str) -> dict:
     balances, extra_balances = _margin_balance_data(raw_data.get('userAssets'))
-    total_balance = {}
-    total_extra_balance = {}
-    wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields)
-    wallet_extra_summary_in_usd = load_wallet_summary_in_usd(currencies, extra_balances, extra_fields)
-    for asset in assets:
-        total_balance[asset] = convert_to_currency(
-            wallet_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
-        )
-        total_extra_balance[asset] = convert_to_currency(
-            wallet_extra_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
-        )
+    balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets)
+    extra_balances_summary = load_wallet_summary(schema, extra_balances, extra_fields, currencies, assets)
     return {
         'balances': balances,
         'extra_data': {
@@ -427,9 +406,9 @@ def load_margin_wallet_data(raw_data: dict, currencies: dict,
             'borrow_enabled': raw_data.get('borrowEnabled'),
             'margin_level': to_float(raw_data.get('marginLevel')),
             'balances': extra_balances,
-            **_load_total_wallet_summary_list(total_extra_balance, extra_fields)
+            **extra_balances_summary
         },
-        **_load_total_wallet_summary_list(total_balance, fields)
+        **balances_summary
     }
 
 
@@ -437,17 +416,9 @@ def load_ws_margin_wallet_data(raw_data: dict, currencies: dict,
                                assets: Union[list, tuple], fields: Union[list, tuple],
                                extra_fields: Union[list, tuple], schema: str) -> dict:
     balances, extra_balances = _margin_ws_balance_data(raw_data.get('userAssets'))
-    total_balance = {}
-    total_extra_balance = {}
-    wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields, is_for_ws=True)
-    wallet_extra_summary_in_usd = load_wallet_summary_in_usd(currencies, extra_balances, extra_fields, is_for_ws=True)
-    for asset in assets:
-        total_balance[asset] = convert_to_currency(
-            wallet_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
-        )
-        total_extra_balance[asset] = convert_to_currency(
-            wallet_extra_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
-        )
+    balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets, is_for_ws=True)
+    extra_balances_summary = load_wallet_summary(schema, extra_balances, extra_fields, currencies, assets,
+                                                 is_for_ws=True)
     return {
         'bls': balances,
         'ex': {
@@ -456,9 +427,9 @@ def load_ws_margin_wallet_data(raw_data: dict, currencies: dict,
             'bore': raw_data.get('borrowEnabled'),
             'mlvl': raw_data.get('marginLevel'),
             'bls': extra_balances,
-            **_load_total_wallet_summary_list(total_extra_balance, extra_fields, is_for_ws=True)
+            **extra_balances_summary
         },
-        **_load_total_wallet_summary_list(total_balance, fields, is_for_ws=True)
+        **balances_summary
     }
 
 
@@ -466,15 +437,10 @@ def load_isolated_margin_wallet_data(raw_data: dict, currencies: dict,
                                      assets: Union[list, tuple], fields: Union[list, tuple],
                                      extra_fields: Union[list, tuple], schema: str) -> dict:
     balances = isolated_margin_balance_data(raw_data.get('assets'))
-    total_balance = dict()
-    wallet_summary_in_usd = load_wallet_summary_margin3_in_usd(currencies, balances, fields)
-    for asset in assets:
-        total_balance[asset] = convert_to_currency(
-            wallet_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
-        )
+    balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets)
     return {
         'balances': balances,
-        **_load_total_wallet_summary_list(total_balance, fields)
+        **balances_summary,
     }
 
 
@@ -549,25 +515,16 @@ def load_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union[lis
                              cross_collaterals: list, schema: str) -> dict:
     balances, extra_balances = _futures_balance_data(raw_data.get('assets'))
     _update_futures_extra_balances(extra_balances, cross_collaterals)
-    total_balance = {}
-    total_extra_balance = {}
-    wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields)
-    wallet_extra_summary_in_usd = load_wallet_summary_in_usd(currencies, extra_balances, extra_fields)
-    for asset in assets:
-        total_balance[asset] = convert_to_currency(
-            wallet_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
-        )
-        total_extra_balance[asset] = convert_to_currency(
-            wallet_extra_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
-        )
+    balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets)
+    extra_balances_summary = load_wallet_summary(schema, extra_balances, extra_fields, currencies, assets)
     return {
         'balances': balances,
         'extra_data': {
             'trade_enabled': raw_data.get('canTrade'),
             'balances': extra_balances,
-            **_load_total_wallet_summary_list(total_extra_balance, extra_fields)
+            **extra_balances_summary
         },
-        **_load_total_wallet_summary_list(total_balance, fields)
+        **balances_summary
     }
 
 
@@ -585,61 +542,43 @@ def load_ws_futures_wallet_data(raw_data: dict, currencies: dict, assets: Union[
                                 cross_collaterals: list, schema: str) -> dict:
     balances, extra_balances = _ws_futures_balance_data(raw_data.get('assets'))
     _update_ws_futures_extra_balances(balances, cross_collaterals)
-    total_balance = {}
-    total_extra_balance = {}
-    wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields, is_for_ws=True)
-    wallet_extra_summary_in_usd = load_wallet_summary_in_usd(currencies, extra_balances, extra_fields, is_for_ws=True)
-    for asset in assets:
-        total_balance[asset] = convert_to_currency(
-            wallet_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
-        )
-        total_extra_balance[asset] = convert_to_currency(
-            wallet_extra_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
-        )
+    balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets, is_for_ws=True)
+    extra_balances_summary = load_wallet_summary(schema, extra_balances, extra_fields, currencies, assets,
+                                                 is_for_ws=True)
     return {
         'bls': balances,
         'ex': {
             'tre': raw_data.get('canTrade'),
             'bls': extra_balances,
-            **_load_total_wallet_summary_list(total_extra_balance, extra_fields, is_for_ws=True)
+            **extra_balances_summary
         },
-        **_load_total_wallet_summary_list(total_balance, fields, is_for_ws=True)
+        **balances_summary
     }
 
 
 def load_futures_coin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
                                   fields: Union[list, tuple], schema: str) -> dict:
     balances, _ = _futures_coin_balance_data(raw_data.get('assets'))
-    total_balance = {}
-    wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields)
-    for asset in assets:
-        total_balance[asset] = convert_to_currency(
-            wallet_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
-        )
+    balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets)
     return {
         'balances': balances,
         'extra_data': {
             'trade_enabled': raw_data.get('canTrade'),
         },
-        **_load_total_wallet_summary_list(total_balance, fields)
+        **balances_summary
     }
 
 
 def load_ws_futures_coin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
                                      fields: Union[list, tuple], schema: str) -> dict:
     balances, _ = _ws_futures_coin_balance_data(raw_data.get('assets'))
-    total_balance = {}
-    wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields, is_for_ws=True)
-    for asset in assets:
-        total_balance[asset] = convert_to_currency(
-            wallet_summary_in_usd, currencies.get(to_exchange_asset(asset, schema))
-        )
+    balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets, is_for_ws=True)
     return {
         'bls': balances,
         'ex': {
             'tre': raw_data.get('canTrade'),
         },
-        **_load_total_wallet_summary_list(total_balance, fields, is_for_ws=True)
+        **balances_summary
     }
 
 
@@ -739,14 +678,9 @@ def ws_spot_wallet(raw_data: dict, schema: str, state_data: dict, exchange_rates
     """
     data, _ = _spot_ws_balance_data(raw_data.get('B', []))
     balances = _update_state_ws_spot_balances(data, state_data['bls'])
-    total_balance = {}
-    wallet_summary_in_usd = load_wallet_summary_in_usd(exchange_rates, balances, fields, is_for_ws=True)
-    for asset in assets:
-        total_balance[asset] = convert_to_currency(
-            wallet_summary_in_usd, exchange_rates.get(to_exchange_asset(asset, schema))
-        )
+    balances_summary = load_wallet_summary(schema, balances, fields, exchange_rates, assets, is_for_ws=True)
     return {
-        **_load_total_wallet_summary_list(total_balance, fields, is_for_ws=True),
+        **balances_summary,
         'bls': balances,
         'ex': None,
     }
@@ -784,26 +718,14 @@ def ws_margin_wallet(raw_data: dict, schema: str, state_data: dict, exchange_rat
     BinanceWalletSerializer
     """
     balances, extra_balances = _load_ws_margin_balances(raw_data, state_data)
-    total_balance = {}
-    total_extra_balance = {}
-    wallet_summary_in_usd = load_wallet_summary_in_usd(
-        exchange_rates, balances, fields, is_for_ws=True
-    )
-    wallet_extra_summary_in_usd = load_wallet_summary_in_usd(
-        exchange_rates, extra_balances, extra_fields, is_for_ws=True
-    )
-    for asset in assets:
-        total_balance[asset] = convert_to_currency(
-            wallet_summary_in_usd, exchange_rates.get(to_exchange_asset(asset, schema))
-        )
-        total_extra_balance[asset] = convert_to_currency(
-            wallet_extra_summary_in_usd, exchange_rates.get(to_exchange_asset(asset, schema))
-        )
+    balances_summary = load_wallet_summary(schema, balances, fields, exchange_rates, assets, is_for_ws=True)
+    extra_balances_summary = load_wallet_summary(schema, extra_balances, extra_fields, exchange_rates, assets,
+                                                 is_for_ws=True)
     return {
-        **_load_total_wallet_summary_list(total_balance, fields, is_for_ws=True),
+        **balances_summary,
         'bls': balances,
         'ex': {
-            **_load_total_wallet_summary_list(total_extra_balance, extra_fields, is_for_ws=True),
+            **extra_balances_summary,
             'tre': state_data['ex'].get('tre'),
             'trse': state_data['ex'].get('trse'),
             'bore': state_data['ex'].get('bore'),
@@ -852,86 +774,35 @@ def ws_futures_wallet(raw_data: dict, schema: str, state_data: dict, exchange_ra
     BinanceWalletSerializer
     """
     balances, extra_balances = _load_ws_futures_balances(raw_data, state_data)
-    total_balance = {}
-    total_extra_balance = {}
-    wallet_summary_in_usd = load_wallet_summary_in_usd(
-        exchange_rates, balances, fields, is_for_ws=True
-    )
-    wallet_extra_summary_in_usd = load_wallet_summary_in_usd(
-        exchange_rates, extra_balances, extra_fields, is_for_ws=True
-    )
-    for asset in assets:
-        total_balance[asset] = convert_to_currency(
-            wallet_summary_in_usd, exchange_rates.get(to_exchange_asset(asset, schema))
-        )
-        total_extra_balance[asset] = convert_to_currency(
-            wallet_extra_summary_in_usd, exchange_rates.get(to_exchange_asset(asset, schema))
-        )
+    balances_summary = load_wallet_summary(schema, balances, fields, exchange_rates, assets, is_for_ws=True)
+    extra_balances_summary = load_wallet_summary(schema, extra_balances, extra_fields, exchange_rates, assets,
+                                                 is_for_ws=True)
     return {
-        **_load_total_wallet_summary_list(total_balance, fields, is_for_ws=True),
+        **balances_summary,
         'bls': balances,
         'ex': {
-            **_load_total_wallet_summary_list(total_extra_balance, extra_fields, is_for_ws=True),
+            **extra_balances_summary,
             'tre': state_data['ex'].get('tre'),
             'bls': extra_balances,
         },
     }
 
 
-def ws_futures_coin_wallet(raw_data: dict, schema: str, state_data: dict, exchange_rates: dict,
+def ws_futures_coin_wallet(raw_data: dict, schema: str, state_data: dict, currencies: dict,
                            fields: iter, extra_fields: iter, assets: iter):
     """
     BinanceWalletSerializer
     """
     balances, _ = _load_ws_futures_balances(raw_data, state_data)
-    total_balance = {}
-    wallet_summary_in_usd = load_wallet_summary_in_usd(
-        exchange_rates, balances, fields, is_for_ws=True
-    )
-    for asset in assets:
-        total_balance[asset] = convert_to_currency(
-            wallet_summary_in_usd, exchange_rates.get(to_exchange_asset(asset, schema))
-        )
+    balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets, is_for_ws=True)
     return {
-        **_load_total_wallet_summary_list(total_balance, fields, is_for_ws=True),
+        **balances_summary,
         'bls': balances,
         'ex': {
             'tre': state_data['ex'].get('tre')
         },
     }
 
-
-def wallet_message(schema: str, state_data: dict, exchange_rates: dict, fields: iter, extra_fields: iter, assets: iter):
-    """
-    Convert from state to message
-    """
-    balances = state_data['bls']
-
-    extra_balances = state_data['ex']['bls']
-    total_balance = {}
-    total_extra_balance = {}
-    wallet_summary_in_usd = load_wallet_summary_in_usd(
-        exchange_rates, balances, fields, is_for_ws=True
-    )
-    wallet_extra_summary_in_usd = load_wallet_summary_in_usd(
-        exchange_rates, extra_balances, extra_fields, is_for_ws=True
-    )
-    for asset in assets:
-        total_balance[asset] = convert_to_currency(
-            wallet_summary_in_usd, exchange_rates.get(to_exchange_asset(asset, schema))
-        )
-        total_extra_balance[asset] = convert_to_currency(
-            wallet_extra_summary_in_usd, exchange_rates.get(to_exchange_asset(asset, schema))
-        )
-    return {
-        **_load_total_wallet_summary_list(total_balance, fields, is_for_ws=True),
-        'bls': balances,
-        'ex': {
-            **_load_total_wallet_summary_list(total_extra_balance, extra_fields, is_for_ws=True),
-            'tre': state_data['ex'].get('tre'),
-            'bls': extra_balances,
-        },
-    }
 
 def _mock_balance_data(asset) -> dict:
     return {
@@ -1493,9 +1364,9 @@ def load_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict])
             'tck': state_data.get('tick'),
             'vt': state_data.get('volume_tick'),
             'ss': state_data.get('system_symbol'),
-            'ssch': state_data.get('symbol_schema'),
             'crt': to_iso_datetime(to_date(state_data.get('created'))),
-            'mlvr': state_data.get('max_leverage')
+            'mlvr': state_data.get('max_leverage'),
+            'wa': state_data.get('wallet_asset'),
         })
     return data
 
