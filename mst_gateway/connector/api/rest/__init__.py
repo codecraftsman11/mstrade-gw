@@ -207,7 +207,7 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def get_wallet_summary(self, schemas: iter, **kwargs) -> dict:
+    def get_wallet_summary(self, schema: str, **kwargs) -> dict:
         raise NotImplementedError
 
     @abstractmethod

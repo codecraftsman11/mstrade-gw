@@ -33,6 +33,7 @@ DEFAULT_SYMBOL_DATA = {
                             "ss": "btcusd",
                             "crt": "2020-07-01T15:10:16.748936",
                             "mlvr": 100.0,
+                            "wa": "XBT",
                         }
                     ],
                 }
@@ -70,6 +71,7 @@ DEFAULT_SYMBOL_DATA = {
                             "ss": "btcusd",
                             "crt": "2020-07-01T15:10:16.748936",
                             "mlvr": 100.0,
+                            "wa": "XBT",
                         }
                     ],
                 }
@@ -106,6 +108,7 @@ DEFAULT_SYMBOL_DATA = {
                             "ss": "btcusd",
                             "crt": "2020-07-01T15:10:16.748936",
                             "mlvr": 100.0,
+                            "wa": "XBT",
                         }
                     ],
                 }

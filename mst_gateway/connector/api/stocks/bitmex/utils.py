@@ -3,7 +3,7 @@ from typing import Dict, Union, Optional
 from datetime import datetime, timedelta
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
-from mst_gateway.connector.api.utils.utils import convert_to_currency, load_wallet_summary_in_usd
+from mst_gateway.connector.api.utils.utils import load_wallet_summary
 from mst_gateway.exceptions import ConnectorError
 from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
 from mst_gateway.utils import delta
@@ -45,7 +45,8 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
             'system_symbol': state_data.get('system_symbol'),
             'schema': state_data.get('schema'),
             'created': to_date(state_data.get('created')),
-            'max_leverage': state_data.get('max_leverage')
+            'max_leverage': state_data.get('max_leverage'),
+            'wallet_asset': state_data.get('wallet_asset'),
         })
     return data
 
@@ -80,7 +81,8 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
             'vt': state_data.get('volume_tick'),
             'ss': state_data.get('system_symbol'),
             'crt': to_iso_datetime(state_data.get('created')),
-            'mlvr': state_data.get('max_leverage')
+            'mlvr': state_data.get('max_leverage'),
+            'wa': state_data.get('wallet_asset'),
         })
     return data
 
@@ -117,13 +119,18 @@ def load_funding_rates(funding_rates: list) -> list:
 def load_exchange_symbol_info(raw_data: list) -> list:
     symbol_list = []
     for d in raw_data:
+        wallet_asset = d.get('settlCurrency').upper()
+        # TODO: support bitmex USDT
+        if wallet_asset == 'USDT':
+            continue
+
         symbol = d.get('symbol')
         base_asset = d.get('underlying')
         quote_currency = d.get('quoteCurrency')
         quote_asset, expiration = _quote_asset(symbol, base_asset, quote_currency)
         system_base_asset = to_system_asset(base_asset)
         system_quote_asset = to_system_asset(quote_asset)
-        system_symbol = f"{system_base_asset}{expiration or system_quote_asset}"
+        system_symbol = symbol.lower().replace('xbt', 'btc')
         tick = to_float(d.get('tickSize'))
         volume_tick = to_float(d.get('lotSize'))
         max_leverage = 100 if d.get('initMargin', 0) <= 0 else 1 / d['initMargin']
@@ -131,7 +138,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
         symbol_list.append(
             {
                 'symbol': symbol,
-                'system_symbol': system_symbol.lower(),
+                'system_symbol': system_symbol,
                 'base_asset': base_asset,
                 'quote_asset': quote_asset,
                 'system_base_asset': system_base_asset,
@@ -143,7 +150,8 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                 'schema': OrderSchema.margin1,
                 'tick': tick,
                 'volume_tick': volume_tick,
-                'max_leverage': max_leverage
+                'max_leverage': max_leverage,
+                'wallet_asset': wallet_asset,
             }
         )
     return symbol_list
@@ -483,14 +491,7 @@ def load_wallet_data(raw_data: dict, currencies: dict, assets: Union[tuple, list
         ex_key = 'extra_data'
         extra_data = None
 
-    balances_summary = {}
-    total_balance = {OrderSchema.margin1: {}}
-    wallet_summary_in_usd = load_wallet_summary_in_usd(currencies, balances, fields, is_for_ws=is_for_ws)
-    for asset in assets:
-        total_balance[OrderSchema.margin1][asset] = convert_to_currency(
-            wallet_summary_in_usd, currencies.get(to_exchange_asset(asset))
-        )
-    load_total_wallet_summary(balances_summary, total_balance, assets, fields, is_for_ws=is_for_ws)
+    balances_summary = load_wallet_summary(OrderSchema.margin1, balances, fields, currencies, assets, is_for_ws)
     return {
         bls_key: balances,
         ex_key: extra_data,
@@ -541,24 +542,6 @@ def to_wallet_state_type(value):
     if bool(value):
         return 'trade'
     return 'hold'
-
-
-def to_exchange_asset(asset: str):
-    if asset == 'btc':
-        return 'xbt'
-    return asset
-
-
-def load_total_wallet_summary(total_summary: dict, total_balance: dict, assets: Union[list, tuple],
-                              fields: Union[list, tuple], is_for_ws=False):
-    for schema in total_balance.keys():
-        for field in fields:
-            t_field = f't{field}' if is_for_ws else f'total_{field}'
-            total_summary.setdefault(t_field, {})
-            for asset in assets:
-                total_summary[t_field].setdefault(asset, 0)
-                total_summary[t_field][asset] += total_balance[schema][asset][field]
-    return total_summary
 
 
 def load_commissions(commissions: dict) -> list:

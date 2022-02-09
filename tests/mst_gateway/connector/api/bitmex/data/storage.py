@@ -32,7 +32,8 @@ STORAGE_DATA = {
                     "leverage_brackets": [],
                     "system_symbol": "ethusd",
                     "symbol": "ethusd",
-                    "exchange": "Bitmex"
+                    "exchange": "Bitmex",
+                    "wallet_asset": "XBT",
                 },
                 'xbtusd': {
                     "tick": 0.5,
@@ -49,7 +50,8 @@ STORAGE_DATA = {
                     "leverage_brackets": [],
                     "system_symbol": "btcusd",
                     "symbol": "xbtusd",
-                    "exchange": "Bitmex"
+                    "exchange": "Bitmex",
+                    "wallet_asset": "XBT",
                 },
             }
         },
@@ -70,7 +72,8 @@ STORAGE_DATA = {
                     "leverage_brackets": [],
                     "system_symbol": "ethusd",
                     "symbol": "ethusd",
-                    "exchange": "tBitmex"
+                    "exchange": "tBitmex",
+                    "wallet_asset": "XBT",
                 },
                 'xbtusd': {
                     "tick": 0.5,
@@ -87,7 +90,8 @@ STORAGE_DATA = {
                     "leverage_brackets": [],
                     "system_symbol": "btcusd",
                     "symbol": "xbtusd",
-                    "exchange": "tBitmex"
+                    "exchange": "tBitmex",
+                    "wallet_asset": "XBT",
                 },
             }
         },

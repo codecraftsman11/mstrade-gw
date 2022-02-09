@@ -5,7 +5,7 @@ from asyncio import CancelledError
 from typing import TYPE_CHECKING, Optional
 from websockets.exceptions import ConnectionClosedError
 from mst_gateway.connector.api.types import OrderSchema
-from mst_gateway.exceptions import QueryError, GatewayError
+from mst_gateway.exceptions import QueryError, GatewayError, ConnectorError
 from .. import utils
 from ..lib import AsyncClient
 from ....wss.subscriber import Subscriber
@@ -189,8 +189,11 @@ class BinanceWalletSubscriber(BinanceSubscriber):
         if schema in (OrderSchema.margin2, OrderSchema.futures):
             kwargs['extra_fields'] = ('bor', 'ist')
         if schema in (OrderSchema.futures,):
-            kwargs['cross_collaterals'] = []
-
+            try:
+                cross_collaterals = await client.futures_loan_wallet()
+            except ConnectorError:
+                cross_collaterals = {}
+            kwargs['cross_collaterals'] = utils.load_futures_cross_collaterals_data(cross_collaterals)
         wallet_data = schema_handlers[schema][1](**kwargs)
         wallet_state = self.mapping_wallet_data(wallet_data)
         return wallet_data, wallet_state
