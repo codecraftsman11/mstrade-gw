@@ -138,8 +138,8 @@ def load_exchange_symbol_info(raw_data: list) -> list:
         face_price_data = {
             'is_quanto': d.get('isQuanto'),
             'is_inverse': d.get('isInverse'),
-            'multiplier': d.get('multiplier', 1),
-            'underlying_multiplier': d.get('underlyingToPositionMultiplier', 1)
+            'multiplier': d.get('multiplier'),
+            'underlying_multiplier': d.get('underlyingToPositionMultiplier')
         }
         symbol_list.append(
             {

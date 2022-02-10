@@ -48,21 +48,22 @@ class BitmexFinFactory(FinFactory):
 
     @classmethod
     def calc_face_price(cls, price: float, **kwargs) -> Optional[float]:
+        face_price = None
         if not kwargs:
-            return None
+            return face_price
         is_quanto = kwargs.get('is_quanto')
         is_inverse = kwargs.get('is_inverse')
-        multiplier = kwargs.get('multiplier', 1)
-        underlying_multiplier = kwargs.get('underlying_multiplier', 1)
+        multiplier = kwargs.get('multiplier')
+        underlying_multiplier = kwargs.get('underlying_multiplier')
         try:
             if is_quanto:
                 face_price = multiplier / 100_000_000 * price
             elif is_inverse:
                 face_price = 1 / price
-            else:
+            elif not is_quanto and not is_inverse and underlying_multiplier:
                 face_price = price / underlying_multiplier
         except (TypeError, ZeroDivisionError):
-            return None
+            face_price = None
         return face_price
 
     @classmethod
