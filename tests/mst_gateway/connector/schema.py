@@ -14,6 +14,13 @@ from .validators import (
 )
 from mst_gateway.connector.api.types import OrderSchema
 
+
+TOTAL_CROSS_AMOUNT_FIELDS = {
+    'btc': Use(float_valid),
+    'usd': Use(float_valid),
+}
+
+
 QUOTE_BIN_FIELDS = {
     'time': Use(datetime_valid),
     'volume': Or(int, str),
@@ -86,13 +93,7 @@ TRADE_FIELDS = {
     'symbol': Or(None, str),
     'system_symbol': Or(None, str),
 }
-WALLET_FIELDS = {
-    'balances': list,
-    'total_balance': dict,
-    'total_unrealised_pnl': dict,
-    'total_margin_balance': dict,
-    'extra_data': Or(None, dict)
-}
+
 WALLET_BALANCE_FIELDS = {
     'currency': str,
     'balance': Use(float_valid),
@@ -105,40 +106,48 @@ WALLET_BALANCE_FIELDS = {
     'type': str,
 }
 
+WALLET_FIELDS = {
+    'balances': [
+        WALLET_BALANCE_FIELDS
+    ],
+    'total_balance': TOTAL_CROSS_AMOUNT_FIELDS,
+    'total_unrealised_pnl': TOTAL_CROSS_AMOUNT_FIELDS,
+    'total_margin_balance': TOTAL_CROSS_AMOUNT_FIELDS,
+    'extra_data': Or(None, dict)
+}
+
 WALLET_EXTRA_FIELDS = {
     OrderSchema.margin2: {
-        'balances': list,
+        'balances': [
+            {
+                'currency': str,
+                'borrowed': Use(float_valid),
+                'interest': Use(float_valid),
+            }
+        ],
         'trade_enabled': bool,
         'transfer_enabled': bool,
         'borrow_enabled': bool,
         'margin_level': Use(float_valid),
-        'total_borrowed': dict,
-        'total_interest': dict,
+        'total_borrowed': TOTAL_CROSS_AMOUNT_FIELDS,
+        'total_interest': TOTAL_CROSS_AMOUNT_FIELDS,
     },
     OrderSchema.futures: {
-        'balances': list,
+        'balances': [
+            {
+                'currency': str,
+                'borrowed': Use(float_valid),
+                'interest': Use(float_valid),
+            }
+        ],
         'trade_enabled': bool,
-        'total_borrowed': dict,
-        'total_interest': dict,
+        'total_borrowed': TOTAL_CROSS_AMOUNT_FIELDS,
+        'total_interest': TOTAL_CROSS_AMOUNT_FIELDS,
     },
     OrderSchema.futures_coin: {
         'trade_enabled': bool
     }
 }
-
-WALLET_EXTRA_BALANCE_FIELDS = {
-    OrderSchema.margin2: {
-        'currency': str,
-        'borrowed': Use(float_valid),
-        'interest': Use(float_valid),
-    },
-    OrderSchema.futures: {
-        'currency': str,
-        'borrowed': Use(float_valid),
-        'interest': Use(float_valid),
-    }
-}
-
 
 WALLET_EXTRA_DATA_FIELDS = {
     OrderSchema.margin2: {
@@ -188,39 +197,61 @@ BASE_EXCHANGE_SYMBOL_INFO_FIELDS = {
     'expiration_date': Or(None, Use(datetime_valid)),
     'max_leverage': Or(None, float),
     'wallet_asset': Or(None, str),
-    'extra_params': dict,
 }
+
 EXCHANGE_SYMBOL_INFO_FIELDS = {
     OrderSchema.margin1: {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
+        'extra_params': {
+            'face_price_data': {
+                'is_quanto': bool,
+                'is_inverse': bool,
+                'multiplier': int,
+                'underlying_multiplier': Or(None, int),
+            }
+        }
     },
     OrderSchema.exchange: {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
+        'extra_params': dict
+    },
+    OrderSchema.margin2: {
+        **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
+        'extra_params': dict
     },
     OrderSchema.futures: {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
+        'extra_params': {
+            'leverage_brackets': [
+                {
+                    'bracket': int,
+                    'initialLeverage': int,
+                    'maintMarginRatio': Use(float_valid),
+                    'cum': Use(float_valid),
+                    'notionalCap': int,
+                    'notionalFloor': int
+                }
+            ]
+        }
     },
     OrderSchema.futures_coin: {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
-    },
-}
-BASE_LEVERAGE_BRACKETS_FIELDS = {
-    'bracket': int,
-    'initialLeverage': int,
-    'maintMarginRatio': Use(float_valid),
-    'cum': Use(float_valid),
-}
-LEVERAGE_BRACKET_FIELDS = {
-    OrderSchema.futures: {
-        'notionalCap': int,
-        'notionalFloor': int,
-        **BASE_LEVERAGE_BRACKETS_FIELDS,
-    },
-    OrderSchema.futures_coin: {
-        'qtyCap': int,
-        'qtyFloor': int,
-        **BASE_LEVERAGE_BRACKETS_FIELDS,
-    },
+        'extra_params': {
+            'face_price_data': {
+                'contract_size': int
+            },
+            'leverage_brackets': [
+                {
+                    'bracket': int,
+                    'initialLeverage': int,
+                    'maintMarginRatio': Use(float_valid),
+                    'cum': Use(float_valid),
+                    'qtyCap': int,
+                    'qtyFloor': int
+                }
+            ]
+        }
+    }
 }
 
 CURRENCY_EXCHANGE_SYMBOL_FIELDS = {
@@ -235,13 +266,9 @@ SYMBOL_CURRENCY_FIELDS = {
 }
 
 WALLET_SUMMARY_FIELDS = {
-    'total_balance': dict,
-    'total_unrealised_pnl': dict,
-    'total_margin_balance': dict,
-}
-TOTAL_CROSS_AMOUNT_FIELDS = {
-    'btc': Use(float_valid),
-    'usd': Use(float_valid),
+    'total_balance': TOTAL_CROSS_AMOUNT_FIELDS,
+    'total_unrealised_pnl': TOTAL_CROSS_AMOUNT_FIELDS,
+    'total_margin_balance': TOTAL_CROSS_AMOUNT_FIELDS,
 }
 
 ALT_CURRENCY_COMMISSION_FIELDS = {
@@ -294,6 +321,18 @@ WS_MESSAGE_HEADER_FIELDS = {
     'd': list,
 }
 
+WS_WALLET_BALANCE_FIELDS = {
+    'cur': str,
+    'bl': Use(float_valid),
+    'wbl': Use(float_valid),
+    'upnl': Use(float_valid),
+    'mbl': Use(float_valid),
+    'mm': Use(float_valid),
+    'im': Use(float_valid),
+    'am': Use(float_valid),
+    't': str
+}
+
 WS_MESSAGE_DATA_FIELDS = {
     'order': {
         'eoid': str,
@@ -329,7 +368,11 @@ WS_MESSAGE_DATA_FIELDS = {
         'vl': float,
         'ep': Or(None, float),
         'mp': Or(None, float),
-        'upnl': dict,
+        'upnl': {
+            'base': Or(None, float),
+            'usd': Or(None, float),
+            'btc': Or(None, float),
+        },
         'lvrp': Use(leverage_type_valid),
         'lvr': Use(float_valid),
         'lp': Or(None, float),
@@ -378,55 +421,45 @@ WS_MESSAGE_DATA_FIELDS = {
         'p': Use(float_valid)
     },
     'wallet': {
-        'bls': list,
-        'tbl': dict,
-        'tupnl': dict,
-        'tmbl': dict,
+        'bls': [
+            WS_WALLET_BALANCE_FIELDS
+        ],
+        'tbl': TOTAL_CROSS_AMOUNT_FIELDS,
+        'tupnl': TOTAL_CROSS_AMOUNT_FIELDS,
+        'tmbl': TOTAL_CROSS_AMOUNT_FIELDS,
         'ex': Or(None, dict)
     }
 }
 
-WS_POSITION_CROSS_AMOUNT_FIELDS = {
-    'base': Or(None, float),
-    'usd': Or(None, float),
-    'btc': Or(None, float),
-}
-
-WS_WALLET_BALANCE_FIELDS = {
-    'cur': str,
-    'bl': Use(float_valid),
-    'wbl': Use(float_valid),
-    'upnl': Use(float_valid),
-    'mbl': Use(float_valid),
-    'mm': Use(float_valid),
-    'im': Use(float_valid),
-    'am': Use(float_valid),
-    't': str
-}
-
 WS_WALLET_EXTRA_FIELDS = {
     OrderSchema.margin2: {
-        'bls': list,
+        'bls': [
+            {
+                'cur': str,
+                'bor': Use(float_valid),
+                'ist': Use(float_valid)
+            }
+        ],
         'tre': bool,
         'trse': bool,
         'bore': bool,
         'mlvl': Use(float_valid),
-        'tbor': dict,
-        'tist': dict
+        'tbor': TOTAL_CROSS_AMOUNT_FIELDS,
+        'tist': TOTAL_CROSS_AMOUNT_FIELDS
     },
     OrderSchema.futures: {
-        'bls': list,
+        'bls': [
+            {
+                'cur': str,
+                'bor': Use(float_valid),
+                'ist': Use(float_valid)
+            }
+        ],
         'tre': bool,
-        'tbor': dict,
-        'tist': dict
+        'tbor': TOTAL_CROSS_AMOUNT_FIELDS,
+        'tist': TOTAL_CROSS_AMOUNT_FIELDS
     },
     OrderSchema.futures_coin: {
         'tre': bool
     }
-}
-
-WS_WALLET_EXTRA_BALANCE_FIELDS = {
-    'cur': str,
-    'bor': Use(float_valid),
-    'ist': Use(float_valid)
 }
