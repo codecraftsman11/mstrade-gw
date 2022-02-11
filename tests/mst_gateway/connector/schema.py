@@ -202,7 +202,7 @@ BASE_EXCHANGE_SYMBOL_INFO_FIELDS = {
 EXCHANGE_SYMBOL_INFO_FIELDS = {
     OrderSchema.margin1: {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
-        'extra_params': {
+        'extra': {
             'face_price_data': {
                 'is_quanto': bool,
                 'is_inverse': bool,
@@ -213,15 +213,15 @@ EXCHANGE_SYMBOL_INFO_FIELDS = {
     },
     OrderSchema.exchange: {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
-        'extra_params': dict
+        'extra': dict
     },
     OrderSchema.margin2: {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
-        'extra_params': dict
+        'extra': dict
     },
     OrderSchema.futures: {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
-        'extra_params': {
+        'extra': {
             'leverage_brackets': [
                 {
                     'bracket': int,
@@ -236,7 +236,7 @@ EXCHANGE_SYMBOL_INFO_FIELDS = {
     },
     OrderSchema.futures_coin: {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
-        'extra_params': {
+        'extra': {
             'face_price_data': {
                 'contract_size': int
             },

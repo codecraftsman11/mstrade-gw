@@ -34,7 +34,7 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     }
     if isinstance(state_data, dict):
         face_price = None
-        if face_price_data := state_data.get('extra_params', {}).get('face_price_data', {}):
+        if face_price_data := state_data.get('extra', {}).get('face_price_data', {}):
             face_price = BitmexFinFactory.calc_face_price(price, **face_price_data)
         data.update({
             'expiration': state_data.get('expiration'),
@@ -71,7 +71,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'lop': to_float(raw_data.get('lowPrice'))
     }
     if isinstance(state_data, dict):
-        face_price_data = state_data.get('extra_params', {}).get('face_price_data', {})
+        face_price_data = state_data.get('extra', {}).get('face_price_data', {})
         face_price = BitmexFinFactory.calc_face_price(price, **face_price_data)
         data.update({
             'fp': face_price,
@@ -158,7 +158,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                 'volume_tick': volume_tick,
                 'max_leverage': max_leverage,
                 'wallet_asset': wallet_asset,
-                'extra_params': {'face_price_data': face_price_data}
+                'extra': {'face_price_data': face_price_data}
             }
         )
     return symbol_list

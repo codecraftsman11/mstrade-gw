@@ -29,7 +29,7 @@ STORAGE_DATA = {
                     "expiration": None,
                     "expiration_date": None,
                     "created": "2020-06-25T13:02:57.516637",
-                    "extra_params": {
+                    "extra": {
                         'face_price_data': {
                             'is_quanto': True,
                             'is_inverse': False,
@@ -55,7 +55,7 @@ STORAGE_DATA = {
                     "expiration": None,
                     "expiration_date": None,
                     "created": "2020-07-01T15:10:14.834558",
-                    "extra_params": {
+                    "extra": {
                         'face_price_data': {
                             'is_quanto': False,
                             'is_inverse': True,
@@ -85,7 +85,7 @@ STORAGE_DATA = {
                     "expiration": None,
                     "expiration_date": None,
                     "created": "2020-06-25T13:03:00.347559",
-                    "extra_params": {
+                    "extra": {
                         'face_price_data': {
                             'is_quanto': True,
                             'is_inverse': False,
@@ -111,7 +111,7 @@ STORAGE_DATA = {
                     "expiration": None,
                     "expiration_date": None,
                     "created": "2020-07-01T15:10:16.748936",
-                    "extra_params": {
+                    "extra": {
                         'face_price_data': {
                             'is_quanto': False,
                             'is_inverse': True,

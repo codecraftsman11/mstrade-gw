@@ -38,7 +38,7 @@ def load_symbol_data(schema: str, raw_data: Optional[dict], state_data: Optional
         'low_price': to_float(raw_data.get('lowPrice'))
     }
     if isinstance(state_data, dict):
-        face_price_data = state_data.get('extra_params', {}).get('face_price_data', {})
+        face_price_data = state_data.get('extra', {}).get('face_price_data', {})
         face_price = BinanceFinFactory.calc_face_price(price, **face_price_data)
         data.update({
             'face_price': face_price,
@@ -91,7 +91,7 @@ def load_exchange_symbol_info(raw_data: list, schema: str, valid_symbols: list =
                 'volume_tick': volume_tick,
                 'max_leverage': None,
                 'wallet_asset': None,
-                'extra_params': {}
+                'extra': {}
             })
     return symbol_list
 
@@ -133,11 +133,11 @@ def _load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict, sche
             volume_tick = get_tick_from_symbol_filters(d, 'LOT_SIZE', 'stepSize')
             _symbol = d.get('symbol') if expiration is None else d.get('symbol', '')[:len(f"_{expiration}")]
             max_leverage = 100.0
-            extra_params = {}
+            extra = {}
             if face_price_data := d.get('contractSize'):
-                extra_params['face_price_data'] = {'contract_size': face_price_data}
+                extra['face_price_data'] = {'contract_size': face_price_data}
             leverage_brackets = leverage_data.get(_symbol.lower(), [])
-            extra_params['leverage_brackets'] = leverage_brackets
+            extra['leverage_brackets'] = leverage_brackets
             if leverage_brackets and leverage_brackets[0].get('initialLeverage'):
                 max_leverage = to_float(leverage_brackets[0]['initialLeverage'])
 
@@ -158,7 +158,7 @@ def _load_futures_exchange_symbol_info(raw_data: list, leverage_data: dict, sche
                     'volume_tick': volume_tick,
                     'max_leverage': max_leverage,
                     'wallet_asset': d.get('marginAsset').upper(),
-                    'extra_params': extra_params
+                    'extra': extra
                 }
             )
     return symbol_list
@@ -1354,7 +1354,7 @@ def load_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict])
         'lop': to_float(raw_data.get('l'))
     }
     if isinstance(state_data, dict):
-        face_price_data = state_data.get('extra_params', {}).get('face_price_data', {})
+        face_price_data = state_data.get('extra', {}).get('face_price_data', {})
         face_price = BinanceFinFactory.calc_face_price(price, schema=schema, **face_price_data)
         data.update({
             'fp': face_price,
@@ -1727,7 +1727,7 @@ def load_futures_coin_positions_state(account_info: dict, state_data: dict) -> d
             entry_price = to_float(position['entryPrice'])
             _unrealised_pnl = to_float(position['unrealizedProfit'])
             contract_size = state_data.get(
-                symbol, {}).get('extra_params', {}).get('face_price_data', {}).get('contract_size')
+                symbol, {}).get('extra', {}).get('face_price_data', {}).get('contract_size')
             mark_price = BinanceFinFactory.calc_mark_price(
                 volume, entry_price, _unrealised_pnl,
                 schema=OrderSchema.futures_coin, symbol=symbol, side=side, contract_size=contract_size

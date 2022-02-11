@@ -14,7 +14,7 @@ STORAGE_DATA = {
                     'expiration': None,
                     'expiration_date': None,
                     'created': '2021-09-06T09:51:21.271836',
-                    'extra_params': {},
+                    'extra': {},
                     'system_symbol': 'btcusd',
                     'symbol': 'btcusdt',
                     'exchange': 'tbinance',
@@ -31,7 +31,7 @@ STORAGE_DATA = {
                     'expiration': None,
                     'expiration_date': None,
                     'created': '2021-09-06T09:51:21.271836',
-                    'extra_params': {},
+                    'extra': {},
                     'system_symbol': 'btcusd',
                     'symbol': 'btcusdt',
                     'exchange': 'tbinance',
@@ -48,7 +48,7 @@ STORAGE_DATA = {
                     'expiration': None,
                     'expiration_date': None,
                     'created': '2021-09-06T09:51:21.271836',
-                    'extra_params': {},
+                    'extra': {},
                     'system_symbol': 'btcusd',
                     'symbol': 'btcusdt',
                     'exchange': 'tbinance',
@@ -65,7 +65,7 @@ STORAGE_DATA = {
                     'expiration': 'None',
                     'expiration_date': 'None',
                     'created': '2021-09-06T09:51:21.272746',
-                    'extra_params': {
+                    'extra': {
                         'leverage_brackets': [
                             {'bracket': 1, 'initialLeverage': 125, 'notionalCap': 50000, 'notionalFloor': 0,
                              'maintMarginRatio': 0.004, 'cum': 0.0},
@@ -105,7 +105,7 @@ STORAGE_DATA = {
                     'expiration': 'None',
                     'expiration_date': 'None',
                     'created': '2021-09-06T09:51:21.288366',
-                    'extra_params': {
+                    'extra': {
                         'face_price_data': {'contract_size': 100},
                         'leverage_brackets': [
                             {'bracket': 1, 'initialLeverage': 125, 'qtyCap': 5, 'qtyFloor': 0,
