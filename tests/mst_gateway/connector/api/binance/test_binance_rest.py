@@ -142,9 +142,6 @@ class TestBinanceRestApi:
     def test_get_wallet(self, rest: BinanceRestApi, schema):
         wallet = rest.get_wallet(schema=schema)
         assert Schema(fields.WALLET_FIELDS).validate(wallet) == wallet
-        balance_schema = Schema(fields.WALLET_BALANCE_FIELDS)
-        for balance in wallet['balances']:
-            assert balance_schema.validate(balance) == balance
 
         total_cross_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
         for key in wallet.keys():
@@ -153,14 +150,6 @@ class TestBinanceRestApi:
 
         if extra_data := wallet['extra_data']:
             assert Schema(fields.WALLET_EXTRA_FIELDS[schema]).validate(extra_data) == extra_data
-            if extra_data.get('balances'):
-                extra_balance_schema = Schema(fields.WALLET_EXTRA_BALANCE_FIELDS[schema])
-                for extra_balance in extra_data['balances']:
-                    assert extra_balance_schema.validate(extra_balance) == extra_balance
-
-                for key in extra_data.keys():
-                    if key.startswith('total_'):
-                        assert total_cross_schema.validate(extra_data[key]) == extra_data[key]
 
     @pytest.mark.parametrize(
         'rest, schema', [
@@ -225,13 +214,10 @@ class TestBinanceRestApi:
         indirect=['rest'],
     )
     def test_get_exchange_symbol_info(self, rest: BinanceRestApi, schema):
-        symbol_info_schema = Schema(fields.EXCHANGE_SYMBOL_INFO_FIELDS[schema])
-        for symbol_info in rest.get_exchange_symbol_info(schema):
-            assert symbol_info_schema.validate(symbol_info) == symbol_info
-            if schema in (OrderSchema.futures, OrderSchema.futures_coin):
-                leverage_bracket_schema = Schema(fields.LEVERAGE_BRACKET_FIELDS[schema])
-                for leverage_bracket in symbol_info['leverage_brackets']:
-                    assert leverage_bracket_schema.validate(leverage_bracket) == leverage_bracket
+        exchange_symbol_schema = Schema(fields.EXCHANGE_SYMBOL_INFO_FIELDS[schema])
+        exchange_symbols = rest.get_exchange_symbol_info(schema=schema)
+        for exchange_symbol in exchange_symbols:
+            assert exchange_symbol_schema.validate(exchange_symbol) == exchange_symbol
 
     @classmethod
     def validate_order_book(cls, order_book, side, split, min_volume_buy, min_volume_sell):
@@ -332,10 +318,6 @@ class TestBinanceRestApi:
     def test_get_wallet_summary(self, rest: BinanceRestApi, schema):
         wallet_summary = rest.get_wallet_summary(schema)
         assert Schema(fields.WALLET_SUMMARY_FIELDS).validate(wallet_summary) == wallet_summary
-
-        total_cross_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
-        for key in wallet_summary.keys():
-            assert total_cross_schema.validate(wallet_summary[key]) == wallet_summary[key]
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin2),
@@ -498,7 +480,7 @@ class TestBinanceRestApi:
     def test_get_liquidation(self, rest: BinanceRestApi, schema: str, side: int, volume: float, mark_price: float,
                              price: float, wallet_balance: float, leverage_type: str, expect: Optional[float]):
         leverage_brackets, positions_state = get_liquidation_kwargs(schema)
-        liquidation = rest.get_liquidation(get_symbol(schema), schema,
+        liquidation = rest.get_liquidation(get_symbol(schema).lower(), schema,
                                            leverage_type, wallet_balance, side, volume, price, mark_price=mark_price,
                                            leverage_brackets=leverage_brackets, positions_state=positions_state)
         assert Schema(fields.LIQUIDATION_FIELDS).validate(liquidation) == liquidation

@@ -868,6 +868,8 @@ class BinanceRestApi(StockRestApi):
     ) -> dict:
         validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin2, OrderSchema.futures,
                                  OrderSchema.futures_coin))
+        symbol_state_data = self.storage.get(StateStorageKey.symbol, self.name, schema).get(symbol, {})
+        contract_size = symbol_state_data.get('extra', {}).get('face_price_data', {}).get('contract_size')
         liquidation_price = None
         if schema.lower() in (OrderSchema.futures, OrderSchema.futures_coin):
             positions_state = kwargs.get('positions_state', {})
@@ -880,12 +882,14 @@ class BinanceRestApi(StockRestApi):
                 leverage_type,
                 other_positions_state,
                 leverage_brackets,
+                contract_size
             )
             liquidation_price = BinanceFinFactory.calc_liquidation_price(
                 entry_price=price,
                 volume=volume,
                 side=side,
                 leverage_type=leverage_type,
+                contract_size=contract_size,
                 wallet_balance=wallet_balance,
                 leverage_brackets=leverage_brackets,
                 maint_margin_sum=maint_margin_sum,
