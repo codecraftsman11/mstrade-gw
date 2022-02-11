@@ -1,17 +1,17 @@
 from abc import abstractmethod
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 
 class FinFactory:
 
     @classmethod
     @abstractmethod
-    def calc_face_price(cls, symbol: str, price: float, **kwargs) -> Tuple[Optional[float], Optional[bool]]:
+    def calc_face_price(cls, price: float, **kwargs) -> Optional[float]:
         raise NotImplementedError
 
     @classmethod
     @abstractmethod
-    def calc_price(cls, symbol: str, face_price: float, **kwargs) -> Optional[float]:
+    def calc_price(cls, face_price: float, **kwargs) -> Optional[float]:
         raise NotImplementedError
 
     @classmethod

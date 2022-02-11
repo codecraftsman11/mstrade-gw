@@ -452,15 +452,11 @@ class TestBinanceWssApi:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        'wss, messages, expect', [('tbinance_spot',
-                                   wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.exchange],
-                                   wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.exchange]),
+        'wss, messages, expect', [
                                   ('tbinance_futures',
                                    wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.futures],
                                    wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.futures]),
-                                  ('tbinance_futures_coin',
-                                   wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.futures_coin],
-                                   wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.futures_coin])],
+                                  ],
         indirect=['wss'],
     )
     async def test_get_wallet_data(self, wss: BinanceWssApi, messages, expect):
@@ -469,8 +465,6 @@ class TestBinanceWssApi:
         self.init_partial_state(wss, subscr_name)
         header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)
         data_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name])
-        total_cross_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
-        balance_schema = Schema(fields.WS_WALLET_BALANCE_FIELDS)
         for message in messages:
             assert await wss.get_data(deepcopy(message)) == {}
 
@@ -481,16 +475,9 @@ class TestBinanceWssApi:
             assert header_schema.validate(_data) == _data
             for d in _data['d']:
                 assert data_schema.validate(d) == d
-                for key in ('tbl', 'tupnl', 'tmbl'):
-                    assert total_cross_schema.validate(d[key]) == d[key]
-                for balance in d['bls']:
-                    assert balance_schema.validate(balance) == balance
+
                 if ex := d['ex']:
                     assert Schema(fields.WS_WALLET_EXTRA_FIELDS[schema]).validate(ex) == ex
-                    if ex.get('bls'):
-                        extra_balance_schema = Schema(fields.WS_WALLET_EXTRA_BALANCE_FIELDS)
-                        for v in ex['bls']:
-                            assert extra_balance_schema.validate(v) == v
             assert data == expect[i]
 
     @classmethod
