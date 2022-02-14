@@ -31,7 +31,9 @@ STORAGE_DATA = {
             "leverage_brackets": [],
             "system_symbol": "ethusd",
             "symbol": "ethusd",
-            "exchange": "Bitmex"
+            "exchange": "Bitmex",
+            'wallet_asset': 'XBT',
+            'extra': {},
         },
         'xbtusd': {
             "tick": 0.5,
@@ -49,7 +51,9 @@ STORAGE_DATA = {
             "leverage_brackets": [],
             "system_symbol": "btcusd",
             "symbol": "xbtusd",
-            "exchange": "Bitmex"
+            "exchange": "Bitmex",
+            'wallet_asset': 'XBT',
+            'extra': {},
         }
     },
     f"{StateStorageKey.symbol}.tbitmex.margin1": {
@@ -69,7 +73,9 @@ STORAGE_DATA = {
             "leverage_brackets": [],
             "system_symbol": "ethusd",
             "symbol": "ethusd",
-            "exchange": "tBitmex"
+            "exchange": "tBitmex",
+            'wallet_asset': 'XBT',
+            'extra': {},
         },
         'xbtusd': {
             "tick": 0.5,
@@ -87,7 +93,9 @@ STORAGE_DATA = {
             "leverage_brackets": [],
             "system_symbol": "btcusd",
             "symbol": "xbtusd",
-            "exchange": "tBitmex"
+            "exchange": "tBitmex",
+            'wallet_asset': 'XBT',
+            'extra': {},
         },
     },
     f"{StateStorageKey.exchange_rates}.tbitmex.{OrderSchema.margin1}": {
