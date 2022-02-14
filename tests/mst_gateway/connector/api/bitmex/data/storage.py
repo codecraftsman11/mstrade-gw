@@ -28,12 +28,19 @@ STORAGE_DATA = {
             "expiration": None,
             "expiration_date": None,
             "created": "2020-06-25T13:02:57.516637",
-            "leverage_brackets": [],
             "system_symbol": "ethusd",
             "symbol": "ethusd",
             "exchange": "Bitmex",
             'wallet_asset': 'XBT',
-            'extra': {},
+            "extra": {
+                'face_price_data': {
+                    'is_quanto': True,
+                    'is_inverse': False,
+                    'multiplier': 100,
+                    'underlying_multiplier': None,
+                },
+                "leverage_brackets": [],
+            },
         },
         'xbtusd': {
             "tick": 0.5,
@@ -48,12 +55,19 @@ STORAGE_DATA = {
             "expiration": None,
             "expiration_date": None,
             "created": "2020-07-01T15:10:14.834558",
-            "leverage_brackets": [],
             "system_symbol": "btcusd",
             "symbol": "xbtusd",
             "exchange": "Bitmex",
             'wallet_asset': 'XBT',
-            'extra': {},
+            "extra": {
+                'face_price_data': {
+                    'is_quanto': False,
+                    'is_inverse': True,
+                    'multiplier': -100000000,
+                    'underlying_multiplier': None,
+                },
+                "leverage_brackets": [],
+            },
         }
     },
     f"{StateStorageKey.symbol}.tbitmex.margin1": {
@@ -70,12 +84,19 @@ STORAGE_DATA = {
             "expiration": None,
             "expiration_date": None,
             "created": "2020-06-25T13:03:00.347559",
-            "leverage_brackets": [],
             "system_symbol": "ethusd",
             "symbol": "ethusd",
             "exchange": "tBitmex",
             'wallet_asset': 'XBT',
-            'extra': {},
+            "extra": {
+                'face_price_data': {
+                    'is_quanto': True,
+                    'is_inverse': False,
+                    'multiplier': 100,
+                    'underlying_multiplier': None,
+                },
+                "leverage_brackets": [],
+            },
         },
         'xbtusd': {
             "tick": 0.5,
@@ -90,12 +111,19 @@ STORAGE_DATA = {
             "expiration": None,
             "expiration_date": None,
             "created": "2020-07-01T15:10:16.748936",
-            "leverage_brackets": [],
             "system_symbol": "btcusd",
             "symbol": "xbtusd",
             "exchange": "tBitmex",
             'wallet_asset': 'XBT',
-            'extra': {},
+            "extra": {
+                'face_price_data': {
+                    'is_quanto': False,
+                    'is_inverse': True,
+                    'multiplier': -100000000,
+                    'underlying_multiplier': None,
+                },
+                "leverage_brackets": [],
+            },
         },
     },
     f"{StateStorageKey.exchange_rates}.tbitmex.{OrderSchema.margin1}": {
