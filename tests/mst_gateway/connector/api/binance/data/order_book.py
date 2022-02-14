@@ -73,50 +73,50 @@ ORDER_BOOK_PARAMS = [
     ('tbinance_spot', OrderSchema.margin_isolated, SELL, True, 1.0, None),
     ('tbinance_spot', OrderSchema.margin_isolated, SELL, True, None, 1.0),
     ('tbinance_spot', OrderSchema.margin_isolated, SELL, True, 1.0, 1.0),
-    ('tbinance_futures', OrderSchema.futures, None, False, None, None),
-    ('tbinance_futures', OrderSchema.futures, None, False, 1.0, None),
-    ('tbinance_futures', OrderSchema.futures, None, False, None, 1.0),
-    ('tbinance_futures', OrderSchema.futures, None, False, 1.0, 1.0),
-    ('tbinance_futures', OrderSchema.futures, None, True, None, None),
-    ('tbinance_futures', OrderSchema.futures, None, True, 1.0, None),
-    ('tbinance_futures', OrderSchema.futures, None, True, None, 1.0),
-    ('tbinance_futures', OrderSchema.futures, None, True, 1.0, 1.0),
-    ('tbinance_futures', OrderSchema.futures, BUY, False, None, None),
-    ('tbinance_futures', OrderSchema.futures, BUY, False, 1.0, None),
-    ('tbinance_futures', OrderSchema.futures, BUY, False, None, 1.0),
-    ('tbinance_futures', OrderSchema.futures, BUY, False, 1.0, 1.0),
-    ('tbinance_futures', OrderSchema.futures, BUY, True, None, None),
-    ('tbinance_futures', OrderSchema.futures, BUY, True, 1.0, None),
-    ('tbinance_futures', OrderSchema.futures, BUY, True, None, 1.0),
-    ('tbinance_futures', OrderSchema.futures, BUY, True, 1.0, 1.0),
-    ('tbinance_futures', OrderSchema.futures, SELL, False, None, None),
-    ('tbinance_futures', OrderSchema.futures, SELL, False, 1.0, None),
-    ('tbinance_futures', OrderSchema.futures, SELL, False, None, 1.0),
-    ('tbinance_futures', OrderSchema.futures, SELL, False, 1.0, 1.0),
-    ('tbinance_futures', OrderSchema.futures, SELL, True, None, None),
-    ('tbinance_futures', OrderSchema.futures, SELL, True, 1.0, None),
-    ('tbinance_futures', OrderSchema.futures, SELL, True, None, 1.0),
-    ('tbinance_futures', OrderSchema.futures, SELL, True, 1.0, 1.0),
-    ('tbinance_futures', OrderSchema.margin_coin, None, True, None, None),
-    ('tbinance_futures', OrderSchema.margin_coin, None, True, 1.0, None),
-    ('tbinance_futures', OrderSchema.margin_coin, None, True, None, 1.0),
-    ('tbinance_futures', OrderSchema.margin_coin, None, True, 1.0, 1.0),
-    ('tbinance_futures', OrderSchema.margin_coin, BUY, False, None, None),
-    ('tbinance_futures', OrderSchema.margin_coin, BUY, False, 1.0, None),
-    ('tbinance_futures', OrderSchema.margin_coin, BUY, False, None, 1.0),
-    ('tbinance_futures', OrderSchema.margin_coin, BUY, False, 1.0, 1.0),
-    ('tbinance_futures', OrderSchema.margin_coin, BUY, True, None, None),
-    ('tbinance_futures', OrderSchema.margin_coin, BUY, True, 1.0, None),
-    ('tbinance_futures', OrderSchema.margin_coin, BUY, True, None, 1.0),
-    ('tbinance_futures', OrderSchema.margin_coin, BUY, True, 1.0, 1.0),
-    ('tbinance_futures', OrderSchema.margin_coin, SELL, False, None, None),
-    ('tbinance_futures', OrderSchema.margin_coin, SELL, False, 1.0, None),
-    ('tbinance_futures', OrderSchema.margin_coin, SELL, False, None, 1.0),
-    ('tbinance_futures', OrderSchema.margin_coin, SELL, False, 1.0, 1.0),
-    ('tbinance_futures', OrderSchema.margin_coin, SELL, True, None, None),
-    ('tbinance_futures', OrderSchema.margin_coin, SELL, True, 1.0, None),
-    ('tbinance_futures', OrderSchema.margin_coin, SELL, True, None, 1.0),
-    ('tbinance_futures', OrderSchema.margin_coin, SELL, True, 1.0, 1.0),
+    ('tbinance_margin', OrderSchema.margin, None, False, None, None),
+    ('tbinance_margin', OrderSchema.margin, None, False, 1.0, None),
+    ('tbinance_margin', OrderSchema.margin, None, False, None, 1.0),
+    ('tbinance_margin', OrderSchema.margin, None, False, 1.0, 1.0),
+    ('tbinance_margin', OrderSchema.margin, None, True, None, None),
+    ('tbinance_margin', OrderSchema.margin, None, True, 1.0, None),
+    ('tbinance_margin', OrderSchema.margin, None, True, None, 1.0),
+    ('tbinance_margin', OrderSchema.margin, None, True, 1.0, 1.0),
+    ('tbinance_margin', OrderSchema.margin, BUY, False, None, None),
+    ('tbinance_margin', OrderSchema.margin, BUY, False, 1.0, None),
+    ('tbinance_margin', OrderSchema.margin, BUY, False, None, 1.0),
+    ('tbinance_margin', OrderSchema.margin, BUY, False, 1.0, 1.0),
+    ('tbinance_margin', OrderSchema.margin, BUY, True, None, None),
+    ('tbinance_margin', OrderSchema.margin, BUY, True, 1.0, None),
+    ('tbinance_margin', OrderSchema.margin, BUY, True, None, 1.0),
+    ('tbinance_margin', OrderSchema.margin, BUY, True, 1.0, 1.0),
+    ('tbinance_margin', OrderSchema.margin, SELL, False, None, None),
+    ('tbinance_margin', OrderSchema.margin, SELL, False, 1.0, None),
+    ('tbinance_margin', OrderSchema.margin, SELL, False, None, 1.0),
+    ('tbinance_margin', OrderSchema.margin, SELL, False, 1.0, 1.0),
+    ('tbinance_margin', OrderSchema.margin, SELL, True, None, None),
+    ('tbinance_margin', OrderSchema.margin, SELL, True, 1.0, None),
+    ('tbinance_margin', OrderSchema.margin, SELL, True, None, 1.0),
+    ('tbinance_margin', OrderSchema.margin, SELL, True, 1.0, 1.0),
+    ('tbinance_margin', OrderSchema.margin_coin, None, True, None, None),
+    ('tbinance_margin', OrderSchema.margin_coin, None, True, 1.0, None),
+    ('tbinance_margin', OrderSchema.margin_coin, None, True, None, 1.0),
+    ('tbinance_margin', OrderSchema.margin_coin, None, True, 1.0, 1.0),
+    ('tbinance_margin', OrderSchema.margin_coin, BUY, False, None, None),
+    ('tbinance_margin', OrderSchema.margin_coin, BUY, False, 1.0, None),
+    ('tbinance_margin', OrderSchema.margin_coin, BUY, False, None, 1.0),
+    ('tbinance_margin', OrderSchema.margin_coin, BUY, False, 1.0, 1.0),
+    ('tbinance_margin', OrderSchema.margin_coin, BUY, True, None, None),
+    ('tbinance_margin', OrderSchema.margin_coin, BUY, True, 1.0, None),
+    ('tbinance_margin', OrderSchema.margin_coin, BUY, True, None, 1.0),
+    ('tbinance_margin', OrderSchema.margin_coin, BUY, True, 1.0, 1.0),
+    ('tbinance_margin', OrderSchema.margin_coin, SELL, False, None, None),
+    ('tbinance_margin', OrderSchema.margin_coin, SELL, False, 1.0, None),
+    ('tbinance_margin', OrderSchema.margin_coin, SELL, False, None, 1.0),
+    ('tbinance_margin', OrderSchema.margin_coin, SELL, False, 1.0, 1.0),
+    ('tbinance_margin', OrderSchema.margin_coin, SELL, True, None, None),
+    ('tbinance_margin', OrderSchema.margin_coin, SELL, True, 1.0, None),
+    ('tbinance_margin', OrderSchema.margin_coin, SELL, True, None, 1.0),
+    ('tbinance_margin', OrderSchema.margin_coin, SELL, True, 1.0, 1.0),
 ]
 
 
@@ -139,7 +139,7 @@ DEFAULT_ORDER_BOOK_MESSAGE = {
             ['50266.42000000', '0.00000000'],
         ],
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'e': 'depthUpdate',
         'E': 1638963965447,
         'T': 1638963965439,
@@ -193,7 +193,7 @@ DEFAULT_ORDER_BOOK_LOOKUP_TABLE_RESULT = {
             }
         ],
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'table': 'depthUpdate',
         'action': 'update',
         'data': [
@@ -305,7 +305,7 @@ DEFAULT_ORDER_BOOK_SPLIT_MESSAGE_RESULT = {
             ],
         },
     ],
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'table': 'depthUpdate',
             'action': 'delete',
@@ -517,12 +517,12 @@ DEFAULT_ORDER_BOOK_GET_DATA_RESULT = {
             }
         },
     ],
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'order_book': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'order_book',
-                'sch': 'futures',
+                'sch': OrderSchema.margin,
                 'act': 'delete',
                 'd': [
                     {
@@ -546,9 +546,9 @@ DEFAULT_ORDER_BOOK_GET_DATA_RESULT = {
         },
         {
             'order_book': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'order_book',
-                'sch': 'futures',
+                'sch': OrderSchema.margin,
                 'act': 'update',
                 'd': [
                     {
@@ -590,7 +590,7 @@ DEFAULT_ORDER_BOOK_GET_DATA_RESULT = {
     OrderSchema.margin_coin: [
         {
             'order_book': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'order_book',
                 'sch': 'margin_coin',
                 'act': 'delete',
@@ -616,7 +616,7 @@ DEFAULT_ORDER_BOOK_GET_DATA_RESULT = {
         },
         {
             'order_book': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'order_book',
                 'sch': 'margin_coin',
                 'act': 'update',

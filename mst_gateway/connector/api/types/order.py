@@ -22,8 +22,6 @@ class OrderSchema(ClassWithAttributes):
     margin = 'margin'
     margin_cross = 'margin_cross'
     margin_isolated = 'margin_isolated'
-
-    futures = 'futures'
     margin_coin = 'margin_coin'
 
 
@@ -32,8 +30,6 @@ class OrderSchemaTradeMode(ClassWithAttributes):
     margin = ['margin']
     margin_cross = ['margin_cross']
     margin_isolated = ['margin_isolated']
-
-    futures = ['futures']
     margin_coin = ['margin_coin']
 
     @classmethod

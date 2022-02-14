@@ -56,7 +56,7 @@ class BinanceWssRouter(Router):
         return None
 
 
-class BinanceFuturesWssRouter(BinanceWssRouter):
+class BinanceMarginWssRouter(BinanceWssRouter):
     table_route_map = {
         'trade': 'trade',
         'depthUpdate': 'order_book',
@@ -73,14 +73,14 @@ class BinanceFuturesWssRouter(BinanceWssRouter):
         'trade': serializers.BinanceTradeSerializer,
         'order_book': serializers.BinanceOrderBookSerializer,
         'quote_bin': serializers.BinanceQuoteBinSerializer,
-        'symbol': serializers.BinanceFuturesSymbolSerializer,
-        'wallet': serializers.BinanceFuturesWalletSerializer,
+        'symbol': serializers.BinanceMarginSymbolSerializer,
+        'wallet': serializers.BinanceMarginWalletSerializer,
         'order': serializers.BinanceOrderSerializer,
-        'position': serializers.BinanceFuturesPositionSerializer,
+        'position': serializers.BinanceMarginPositionSerializer,
     }
 
 
-class BinanceFuturesCoinWssRouter(BinanceWssRouter):
+class BinanceMarginCoinWssRouter(BinanceWssRouter):
     table_route_map = {
         '24hrTicker': 'symbol',
         'bookTicker': 'symbol',
@@ -94,11 +94,11 @@ class BinanceFuturesCoinWssRouter(BinanceWssRouter):
     }
 
     serializer_classes = {
-        'symbol': serializers.BinanceFuturesSymbolSerializer,
+        'symbol': serializers.BinanceMarginSymbolSerializer,
         'quote_bin': serializers.BinanceQuoteBinSerializer,
         'trade': serializers.BinanceTradeSerializer,
         'order_book': serializers.BinanceOrderBookSerializer,
-        'wallet': serializers.BinanceFuturesWalletSerializer,
+        'wallet': serializers.BinanceMarginWalletSerializer,
         'order': serializers.BinanceOrderSerializer,
-        'position': serializers.BinanceFuturesCoinPositionSerializer
+        'position': serializers.BinanceMarginCoinPositionSerializer
     }

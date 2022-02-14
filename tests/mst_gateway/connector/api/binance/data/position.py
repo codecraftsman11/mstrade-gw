@@ -1,7 +1,7 @@
 from mst_gateway.connector.api.types import OrderSchema, LeverageType
 
 DEFAULT_POSITIONS_STATE = {
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'btcusdt': {
             'action': 'update',
             'cross_wallet_balance': 99760.41099324,
@@ -60,7 +60,7 @@ DEFAULT_POSITION_MESSAGE = {
             'n': 85219,
         }
     ],
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'e': 'ACCOUNT_UPDATE',
         'T': 1639499597056,
         'E': 1639499597059,
@@ -143,7 +143,7 @@ DEFAULT_POSITION_LOOKUP_TABLE_RESULT = {
             }
         ],
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'table': 'ACCOUNT_UPDATE',
         'action': 'update',
         'data': [
@@ -245,7 +245,7 @@ DEFAULT_POSITION_SPLIT_MESSAGE_RESULT = {
             ],
         }
     ],
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'table': 'ACCOUNT_UPDATE',
             'action': 'update',
@@ -353,12 +353,12 @@ DEFAULT_POSITION_GET_DATA_RESULT = {
             }
         }
     ],
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'position': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'position',
-                'sch': 'futures',
+                'sch': OrderSchema.margin,
                 'act': 'update',
                 'd': [
                     {
@@ -386,7 +386,7 @@ DEFAULT_POSITION_GET_DATA_RESULT = {
     OrderSchema.margin_coin: [
         {
             'position': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'position',
                 'sch': 'margin_coin',
                 'act': 'update',
@@ -415,7 +415,7 @@ DEFAULT_POSITION_GET_DATA_RESULT = {
     ],
 }
 DEFAULT_POSITION_DETAIL_MESSAGES = {
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'table': 'ACCOUNT_UPDATE',
             'action': 'update',
@@ -627,12 +627,12 @@ DEFAULT_POSITION_DETAIL_MESSAGES = {
     ],
 }
 DEFAULT_POSITION_DETAIL_GET_DATA_RESULT = {
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'position': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'position',
-                'sch': 'futures',
+                'sch': OrderSchema.margin,
                 'act': 'update',
                 'd': [
                     {
@@ -658,9 +658,9 @@ DEFAULT_POSITION_DETAIL_GET_DATA_RESULT = {
         },
         {
             'position': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'position',
-                'sch': 'futures',
+                'sch': OrderSchema.margin,
                 'act': 'update',
                 'd': [
                     {
@@ -686,9 +686,9 @@ DEFAULT_POSITION_DETAIL_GET_DATA_RESULT = {
         },
         {
             'position': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'position',
-                'sch': 'futures',
+                'sch': OrderSchema.margin,
                 'act': 'update',
                 'd': [
                     {
@@ -714,9 +714,9 @@ DEFAULT_POSITION_DETAIL_GET_DATA_RESULT = {
         },
         {
             'position': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'position',
-                'sch': 'futures',
+                'sch': OrderSchema.margin,
                 'act': 'update',
                 'd': [
                     {
@@ -740,7 +740,7 @@ DEFAULT_POSITION_DETAIL_GET_DATA_RESULT = {
     OrderSchema.margin_coin: [
         {
             'position': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'position',
                 'sch': 'margin_coin',
                 'act': 'update',
@@ -768,7 +768,7 @@ DEFAULT_POSITION_DETAIL_GET_DATA_RESULT = {
         },
         {
             'position': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'position',
                 'sch': 'margin_coin',
                 'act': 'update',
@@ -796,7 +796,7 @@ DEFAULT_POSITION_DETAIL_GET_DATA_RESULT = {
         },
         {
             'position': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'position',
                 'sch': 'margin_coin',
                 'act': 'update',
@@ -824,7 +824,7 @@ DEFAULT_POSITION_DETAIL_GET_DATA_RESULT = {
         },
         {
             'position': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'position',
                 'sch': 'margin_coin',
                 'act': 'update',

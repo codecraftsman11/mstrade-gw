@@ -7,7 +7,7 @@ BINANCE_WALLET_TYPES = [
     api.OrderSchema.exchange,
     api.OrderSchema.margin_cross,
     api.OrderSchema.margin_isolated,
-    api.OrderSchema.futures,
+    api.OrderSchema.margin,
     api.OrderSchema.margin_coin,
 ]
 
@@ -79,7 +79,7 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         },
     },
 
-    api.OrderSchema.futures: {
+    api.OrderSchema.margin: {
         'MARKET': {
             'params': [
                 *DEFAULT_PARAMETERS,

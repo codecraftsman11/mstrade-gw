@@ -116,7 +116,7 @@ WALLET_EXTRA_FIELDS = {
         'total_borrowed': dict,
         'total_interest': dict,
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'balances': list,
         'trade_enabled': bool,
         'total_borrowed': dict,
@@ -133,7 +133,7 @@ WALLET_EXTRA_BALANCE_FIELDS = {
         'borrowed': Use(float_valid),
         'interest': Use(float_valid),
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'currency': str,
         'borrowed': Use(float_valid),
         'interest': Use(float_valid),
@@ -149,7 +149,7 @@ WALLET_EXTRA_DATA_FIELDS = {
         'interest_rate': Use(float_valid),
         'available_borrow': Use(float_valid)
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'currency': str,
         'borrowed': Use(float_valid),
         'interest': Use(float_valid),
@@ -197,7 +197,7 @@ EXCHANGE_SYMBOL_INFO_FIELDS = {
     OrderSchema.exchange: {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'leverage_brackets': list,
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
     },
@@ -213,7 +213,7 @@ BASE_LEVERAGE_BRACKETS_FIELDS = {
     'cum': Use(float_valid),
 }
 LEVERAGE_BRACKET_FIELDS = {
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'notionalCap': int,
         'notionalFloor': int,
         **BASE_LEVERAGE_BRACKETS_FIELDS,
@@ -417,7 +417,7 @@ WS_WALLET_EXTRA_FIELDS = {
         'tbor': dict,
         'tist': dict
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'bls': list,
         'tre': bool,
         'tbor': dict,

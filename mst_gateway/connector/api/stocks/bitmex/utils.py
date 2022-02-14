@@ -124,7 +124,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
         quote_currency = d.get('quoteCurrency')
 
         if re.search(r'\d{2}$', symbol):
-            symbol_schema = OrderSchema.futures
+            symbol_schema = OrderSchema.margin
         else:
             symbol_schema = OrderSchema.margin
 
@@ -160,7 +160,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
 
 def _quote_asset(symbol, base_asset, quote_currency, symbol_schema):
     quote_asset = symbol[len(base_asset):].upper()
-    if symbol_schema == OrderSchema.futures:
+    if symbol_schema == OrderSchema.margin:
         return quote_currency, quote_asset[-3:]
     return quote_asset, None
 

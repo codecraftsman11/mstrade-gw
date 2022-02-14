@@ -4,7 +4,7 @@ from typing import Optional, Union
 from mst_gateway.exceptions import ConnectorError
 from websockets import client
 from . import subscribers as subscr_class
-from .router import BinanceWssRouter, BinanceFuturesWssRouter, BinanceFuturesCoinWssRouter
+from .router import BinanceWssRouter, BinanceMarginWssRouter, BinanceMarginCoinWssRouter
 from .utils import is_auth_ok, make_cmd
 from ..lib import AsyncClient
 from ..utils import to_float, remap_margin_coin_position_request_data
@@ -76,7 +76,7 @@ class BinanceWssApi(StockWssApi):
                     key = await bin_client.stream_get_listen_key()
                 elif self.schema == OrderSchema.margin_cross:
                     key = await bin_client.margin_stream_get_listen_key()
-                elif self.schema == OrderSchema.futures:
+                elif self.schema == OrderSchema.margin:
                     key = await bin_client.futures_stream_get_listen_key()
                 elif self.schema == OrderSchema.margin_coin:
                     key = await bin_client.futures_coin_stream_get_listen_key()
@@ -191,7 +191,7 @@ class BinanceWssApi(StockWssApi):
         return 'update'
 
 
-class BinanceFuturesWssApi(BinanceWssApi):
+class BinanceMarginWssApi(BinanceWssApi):
     BASE_URL = 'wss://fstream.binance.com/ws'
     TEST_URL = 'wss://stream.binancefuture.com/ws'
 
@@ -199,15 +199,15 @@ class BinanceFuturesWssApi(BinanceWssApi):
         'order_book': subscr_class.BinanceOrderBookSubscriber(),
         'trade': subscr_class.BinanceTradeSubscriber(),
         'quote_bin': subscr_class.BinanceQuoteBinSubscriber(),
-        'symbol': subscr_class.BinanceFuturesSymbolSubscriber(),
+        'symbol': subscr_class.BinanceMarginSymbolSubscriber(),
     }
     auth_subscribers = {
         'wallet': subscr_class.BinanceWalletSubscriber(),
         'order': subscr_class.BinanceOrderSubscriber(),
-        'position': subscr_class.BinanceFuturesPositionSubscriber(),
+        'position': subscr_class.BinanceMarginPositionSubscriber(),
     }
 
-    router_class = BinanceFuturesWssRouter
+    router_class = BinanceMarginWssRouter
 
     def __init__(self,
                  name: str = None,
@@ -219,7 +219,7 @@ class BinanceFuturesWssApi(BinanceWssApi):
                  options: dict = None,
                  throttle_rate: int = 30,
                  throttle_storage=None,
-                 schema='futures',
+                 schema=OrderSchema.margin,
                  state_storage=None,
                  register_state=True):
         super().__init__(name, account_name, url, test, auth, logger, options, throttle_rate,
@@ -248,12 +248,12 @@ class BinanceFuturesWssApi(BinanceWssApi):
         return _messages
 
 
-class BinanceFuturesCoinWssApi(BinanceFuturesWssApi):
+class BinanceMarginCoinWssApi(BinanceMarginWssApi):
     BASE_URL = 'wss://dstream.binance.com/ws'
     TEST_URL = 'wss://dstream.binancefuture.com/ws'
 
     subscribers = {
-        'symbol': subscr_class.BinanceFuturesSymbolSubscriber(),
+        'symbol': subscr_class.BinanceMarginSymbolSubscriber(),
         'quote_bin': subscr_class.BinanceQuoteBinSubscriber(),
         'trade': subscr_class.BinanceTradeSubscriber(),
         'order_book': subscr_class.BinanceOrderBookSubscriber(),
@@ -261,10 +261,10 @@ class BinanceFuturesCoinWssApi(BinanceFuturesWssApi):
     auth_subscribers = {
         'wallet': subscr_class.BinanceWalletSubscriber(),
         'order': subscr_class.BinanceOrderSubscriber(),
-        'position': subscr_class.BinanceFuturesCoinPositionSubscriber(),
+        'position': subscr_class.BinanceMarginCoinPositionSubscriber(),
     }
 
-    router_class = BinanceFuturesCoinWssRouter
+    router_class = BinanceMarginCoinWssRouter
 
     def _lookup_table(self, message: Union[dict, list]) -> Optional[dict]:
         if isinstance(message, dict) and message.get('result'):

@@ -55,14 +55,14 @@ STORAGE_DATA = {
                     'exchange': 'tbinance',
                 },
             },
-            OrderSchema.futures: {
+            OrderSchema.margin: {
                 'btcusdt': {
                     'tick': 0.01,
                     'pair': ['BTC', 'USDT'],
                     'volume_tick': 0.001,
                     'max_leverage': 125.0,
-                    'schema': OrderSchema.futures,
-                    'symbol_schema': OrderSchema.futures,
+                    'schema': OrderSchema.margin,
+                    'symbol_schema': OrderSchema.margin,
                     'expiration': 'None',
                     'expiration_date': 'None',
                     'created': '2021-09-06T09:51:21.272746',
@@ -155,7 +155,7 @@ STORAGE_DATA = {
         'tbinance': {
             OrderSchema.exchange: {'bnb': 547.9, 'btc': 48736.89, 'eth': 2757.89, 'ltc': 1095.94, 'trx': 0.09164,
                                    'xrp': 0.8234, 'usdt': 1, 'busd': 0.9843693856},
-            OrderSchema.futures: {'reef': 0.0202, 'usdt': 1, 'trx': 0.08882, 'skl': 0.2362, 'qtum': 10.01,
+            OrderSchema.margin: {'reef': 0.0202, 'usdt': 1, 'trx': 0.08882, 'skl': 0.2362, 'qtum': 10.01,
                                   'iotx': 0.10816, 'ont': 0.7995, 'ksm': 341.4, 'akro': 0.02533, 'icx': 1.155,
                                   '1000xec': 0.1316, 'celo': 6.0, 'sxp': 2.2534, 'link': 20.409, 'dgb': 0.04952,
                                   'rsr': 0.03669, 'comp': 191.0, 'icp': 32.18, 'sushi': 5.564, 'yfi': 26859.0,
@@ -209,7 +209,7 @@ STORAGE_DATA = {
                     'am': 50000.0, 't': 'hold'}}}
     },
     f"{StateStorageKey.state}:wallet.2": {
-        OrderSchema.futures: {'tre': True, 'tbl': {'btc': 0.20648184, 'usd': 10000.96638768},
+        OrderSchema.margin: {'tre': True, 'tbl': {'btc': 0.20648184, 'usd': 10000.96638768},
                               'tupnl': {'btc': 0.0, 'usd': 0.0}, 'tmbl': {'btc': 0.20648184, 'usd': 10000.96638768},
                               'tbor': {'btc': 0.0, 'usd': 0.0}, 'tist': {'btc': 0.0, 'usd': 0.0}, 'bls': {
                 'bnb': {'cur': 'BNB', 'bl': 0.0, 'wbl': 0.0, 'bor': 0.0, 'ist': 0.0, 'upnl': 0.0, 'mbl': 0.0, 'mm': 0.0,

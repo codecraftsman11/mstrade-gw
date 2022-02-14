@@ -1,5 +1,5 @@
 from .rest import BinanceRestApi
-from .wss import BinanceWssApi, BinanceFuturesWssApi, BinanceFuturesCoinWssApi
+from .wss import BinanceWssApi, BinanceMarginWssApi, BinanceMarginCoinWssApi
 from mst_gateway.connector.api.types.order import OrderSchema
 
 
@@ -13,8 +13,8 @@ def get_rest_api_class(**kwargs):
 
 def get_ws_api_class(**kwargs):
     schema = kwargs.get('schema', '').lower()
-    if schema == OrderSchema.futures:
-        return BinanceFuturesWssApi
+    if schema == OrderSchema.margin:
+        return BinanceMarginWssApi
     if schema == OrderSchema.margin_coin:
-        return BinanceFuturesCoinWssApi
+        return BinanceMarginCoinWssApi
     return BinanceWssApi

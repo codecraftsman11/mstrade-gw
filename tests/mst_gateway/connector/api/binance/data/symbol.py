@@ -1,7 +1,7 @@
 from mst_gateway.connector.api.types import OrderSchema
 
 DEFAULT_LEVERAGE_BRACKETS = {
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {'bracket': 1, 'initialLeverage': 125, 'notionalCap': 50000, 'notionalFloor': 0,
          'maintMarginRatio': 0.004, 'cum': 0.0},
         {'bracket': 2, 'initialLeverage': 100, 'notionalCap': 250000, 'notionalFloor': 50000,
@@ -64,7 +64,7 @@ DEFAULT_SYMBOL_DETAIL_MESSAGE = {
         'L': 459561,
         'n': 83207,
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'e': '24hrTicker',
         'E': 1638964455555,
         's': 'BTCUSDT',
@@ -138,7 +138,7 @@ DEFAULT_SYMBOL_DETAIL_LOOKUP_TABLE_RESULT = {
             }
         ],
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'table': '24hrTicker',
         'action': 'update',
         'data': [
@@ -226,7 +226,7 @@ DEFAULT_SYMBOL_DETAIL_SPLIT_MESSAGE_RESULT = {
             ],
         }
     ],
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'table': '24hrTicker',
             'action': 'update',
@@ -321,12 +321,12 @@ DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT = {
             }
         }
     ],
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'symbol': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'symbol',
-                'sch': 'futures',
+                'sch': OrderSchema.margin,
                 'act': 'update',
                 'd': [
                     {
@@ -349,7 +349,7 @@ DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT = {
                         'tck': 0.01,
                         'vt': 0.001,
                         'ss': 'btcusd',
-                        'ssch': 'futures',
+                        'ssch': OrderSchema.margin,
                         'crt': '2021-09-06T09:51:21.272746',
                         'mlvr': 125.0,
                     }
@@ -360,7 +360,7 @@ DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT = {
     OrderSchema.margin_coin: [
         {
             'symbol': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'symbol',
                 'sch': 'margin_coin',
                 'act': 'update',
@@ -423,7 +423,7 @@ DEFAULT_SYMBOL_MESSAGE = {
             'n': 85219,
         }
     ],
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'e': '24hrTicker',
             'E': 1638964453905,
@@ -501,7 +501,7 @@ DEFAULT_SYMBOL_LOOKUP_TABLE_RESULT = {
             }
         ],
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'table': '24hrTicker',
         'action': 'update',
         'data': [
@@ -589,7 +589,7 @@ DEFAULT_SYMBOL_SPLIT_MESSAGE_RESULT = {
             ],
         }
     ],
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'table': '24hrTicker',
             'action': 'update',
@@ -684,12 +684,12 @@ DEFAULT_SYMBOL_GET_DATA_RESULT = {
             }
         }
     ],
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'symbol': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'symbol',
-                'sch': 'futures',
+                'sch': OrderSchema.margin,
                 'act': 'update',
                 'd': [
                     {
@@ -712,7 +712,7 @@ DEFAULT_SYMBOL_GET_DATA_RESULT = {
                         'tck': 0.01,
                         'vt': 0.001,
                         'ss': 'btcusd',
-                        'ssch': 'futures',
+                        'ssch': OrderSchema.margin,
                         'crt': '2021-09-06T09:51:21.272746',
                         'mlvr': 125.0,
                     }
@@ -723,7 +723,7 @@ DEFAULT_SYMBOL_GET_DATA_RESULT = {
     OrderSchema.margin_coin: [
         {
             'symbol': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'symbol',
                 'sch': 'margin_coin',
                 'act': 'update',
