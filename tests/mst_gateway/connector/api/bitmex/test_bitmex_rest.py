@@ -165,13 +165,22 @@ class TestBitmexRestApi:
         assert user_schema.validate(user) == user
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, price, face_price, kwargs', [
+            ('tbitmex', 2757.02, 0.00275702, {
+                'is_quanto': True, 'is_inverse': False, 'multiplier': 100, 'underlying_multiplier': None
+            }),
+            ('tbitmex', 38492.64, 0.00002598, {
+                'is_quanto': False, 'is_inverse': True, 'multiplier': None, 'underlying_multiplier': None
+            }),
+            ('tbitmex', 0.07164, 0.00000072, {
+                'is_quanto': False, 'is_inverse': False, 'multiplier': None, 'underlying_multiplier': 100000
+            }),
+        ],
         indirect=['rest'],
     )
-    def test_calc_face_price(self, rest: BitmexRestApi, schema: str):
-        for symbol in rest.list_symbols(schema=schema):
-            face_price = BitmexFinFactory.calc_face_price(symbol['symbol'], symbol['price'])
-            assert isinstance(face_price[0], float)
+    def test_calc_face_price(self, rest: BitmexRestApi, price: float, face_price: float, kwargs: dict):
+        calc_face_price = round(BitmexFinFactory.calc_face_price(price, **kwargs), 8)
+        assert face_price == calc_face_price
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
@@ -253,9 +262,6 @@ class TestBitmexRestApi:
     def test_get_wallet(self, rest: BitmexRestApi, schema: str):
         wallet = rest.get_wallet(schema=schema)
         assert Schema(fields.WALLET_FIELDS).validate(wallet) == wallet
-        balance_schema = Schema(fields.WALLET_BALANCE_FIELDS)
-        for balance in wallet['balances']:
-            assert balance_schema.validate(balance) == balance
 
         total_cross_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
         for key in wallet.keys():
@@ -264,14 +270,6 @@ class TestBitmexRestApi:
 
         if extra_data := wallet['extra_data']:
             assert Schema(fields.WALLET_EXTRA_FIELDS[schema]).validate(extra_data) == extra_data
-            if extra_data.get('balances'):
-                extra_balance_schema = Schema(fields.WALLET_EXTRA_BALANCE_FIELDS[schema])
-                for extra_balance in extra_data['balances']:
-                    assert extra_balance_schema.validate(extra_balance) == extra_balance
-
-                for key in extra_data.keys():
-                    if key.startswith('total_'):
-                        assert total_cross_schema.validate(extra_data[key]) == extra_data[key]
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],
@@ -280,10 +278,6 @@ class TestBitmexRestApi:
     def test_get_wallet_summary(self, rest: BitmexRestApi, schema: str):
         wallet_summary = rest.get_wallet_summary(schema)
         assert Schema(fields.WALLET_SUMMARY_FIELDS).validate(wallet_summary) == wallet_summary
-
-        total_cross_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
-        for key in wallet_summary.keys():
-            assert total_cross_schema.validate(wallet_summary[key]) == wallet_summary[key]
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin1)],

@@ -243,8 +243,7 @@ class TestBinanceWssApi:
     )
     def test_get_state_data(self, wss: BinanceWssApi, symbol):
         assert wss.get_state_data(symbol) == state_data.STORAGE_DATA[
-            StateStorageKey.symbol
-        ][wss.name][wss.schema].get((symbol or '').lower())
+            f"{StateStorageKey.symbol}.{wss.name}.{wss.schema}"].get((symbol or '').lower())
 
     @pytest.mark.parametrize('wss', ['tbinance_spot', 'tbinance_futures', 'tbinance_futures_coin'], indirect=True)
     def test_parse_message(self, wss: BinanceWssApi):
@@ -452,25 +451,19 @@ class TestBinanceWssApi:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        'wss, messages, expect', [('tbinance_spot',
-                                   wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.exchange],
-                                   wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.exchange]),
+        'wss, messages, expect', [
                                   ('tbinance_futures',
                                    wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.futures],
                                    wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.futures]),
-                                  ('tbinance_futures_coin',
-                                   wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.futures_coin],
-                                   wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.futures_coin])],
+                                  ],
         indirect=['wss'],
     )
     async def test_get_wallet_data(self, wss: BinanceWssApi, messages, expect):
         subscr_name = 'wallet'
         schema = wss.schema
         self.init_partial_state(wss, subscr_name)
-        header_schema = Schema(fields.WS_WALLET_MESSAGE_HEADER_FIELDS)
+        header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)
         data_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name])
-        total_cross_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
-        balance_schema = Schema(fields.WS_WALLET_BALANCE_FIELDS)
         for message in messages:
             assert await wss.get_data(deepcopy(message)) == {}
 
@@ -479,19 +472,11 @@ class TestBinanceWssApi:
             data = await wss.get_data(deepcopy(message))
             _data = data[subscr_name]
             assert header_schema.validate(_data) == _data
-            d = _data['d']
-            assert data_schema.validate(d) == d
-            for key in ('tbl', 'tupnl', 'tmbl'):
-                assert total_cross_schema.validate(d[key]) == d[key]
-            for balance in d['bls']:
-                assert balance_schema.validate(balance) == balance
-            if ex := _data['ex']:
-                assert Schema(fields.WS_WALLET_EXTRA_FIELDS[schema]).validate(ex) == ex
-                if ex.get('bls'):
-                    extra_balance_schema = Schema(fields.WS_WALLET_EXTRA_BALANCE_FIELDS)
-                    for v in ex['bls']:
-                        assert extra_balance_schema.validate(v) == v
+            for d in _data['d']:
+                assert data_schema.validate(d) == d
 
+                if ex := d['ex']:
+                    assert Schema(fields.WS_WALLET_EXTRA_FIELDS[schema]).validate(ex) == ex
             assert data == expect[i]
 
     @classmethod
@@ -500,7 +485,7 @@ class TestBinanceWssApi:
         schema = wss.schema
         symbol = get_symbol(schema)
         wss.partial_state_data[subscr_name]['exchange_rates'] = deepcopy(
-            state_data.STORAGE_DATA[StateStorageKey.exchange_rates][exchange][schema]
+            state_data.STORAGE_DATA[f"{StateStorageKey.exchange_rates}.{exchange}.{schema}"]
         )
         if subscr_name == 'position':
             leverage_brackets, position_state = get_position_partial_state_data(schema)
@@ -666,27 +651,14 @@ class TestSubscriptionBinanceWssApi:
         except asyncio.TimeoutError:
             wss.logger.warning('No messages.')
 
-    def validate_messages(self, subscr_name):
+    def validate_messages(self, subscr_name, schema):
+        header_schema = Schema(fields.WS_MESSAGE_HEADER_FIELDS)
+        subscr_schema = fields.WS_MESSAGE_DATA_FIELDS[subscr_name]
+        data_schema = Schema(subscr_schema)
         for message in self.messages:
-            header = message[subscr_name]
-            assert Schema(fields.WS_MESSAGE_HEADER_FIELDS).validate(header) == header
-            for data in header['d']:
-                assert Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name]).validate(data) == data
-
-    def validate_wallet_messages(self, subscr_name, schema):
-        for message in self.messages:
-            header = message[subscr_name]
-            assert Schema(fields.WS_WALLET_MESSAGE_HEADER_FIELDS).validate(header) == header
-            data = header['d']
-            assert Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name]).validate(data) == data
-            for key in ('tbl', 'tupnl', 'tmbl'):
-                assert Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS).validate(data[key]) == data[key]
-            for balance in data['bls']:
-                assert Schema(fields.WS_WALLET_BALANCE_FIELDS).validate(balance) == balance
-            if extra_data := header['ex']:
-                assert Schema(fields.WS_WALLET_EXTRA_FIELDS[schema]).validate(extra_data) == extra_data
-                for extra_balance in extra_data.get('bls', []):
-                    assert Schema(fields.WS_WALLET_EXTRA_BALANCE_FIELDS).validate(extra_balance) == extra_balance
+            assert header_schema.validate(message[subscr_name]) == message[subscr_name]
+            for data in message[subscr_name]['d']:
+                assert data_schema.validate(data) == data
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
@@ -720,10 +692,7 @@ class TestSubscriptionBinanceWssApi:
         if subscr_name == 'wallet':
             symbol = None
         await self.subscribe(wss_auth, subscr_channel, subscr_name, symbol)
-        if subscr_name == 'wallet':
-            self.validate_wallet_messages(subscr_name, wss_auth.schema)
-        else:
-            self.validate_messages(subscr_name)
+        self.validate_messages(subscr_name, wss_auth.schema)
         self.reset()
         assert wss_auth._subscriptions == {subscr_name: {f"{symbol or '*'}".lower(): {subscr_channel}}}
         assert await wss_auth.unsubscribe(subscr_channel, subscr_name, symbol)

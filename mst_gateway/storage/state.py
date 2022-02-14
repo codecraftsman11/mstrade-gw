@@ -12,6 +12,14 @@ class StateStorage(BaseSyncStorage):
         timeout = kwargs.get("timeout", self._timeout)
         _key = self.generate_hash_key(key)
         if self.is_dict:
+            self._set_dict(_key, value)
+        else:
+            self._storage.set(_key, value, timeout=timeout)
+
+    def update(self, key, value, *args, **kwargs) -> None:
+        timeout = kwargs.get("timeout", self._timeout)
+        _key = self.generate_hash_key(key)
+        if self.is_dict:
             _tmp = self._get_dict(_key)
         else:
             _tmp = self._storage.get(_key)
@@ -24,22 +32,26 @@ class StateStorage(BaseSyncStorage):
         else:
             self._storage.set(_key, _tmp, timeout=timeout)
 
-    def get(self, key, exchange: str = None, schema: str = None, *args, **kwargs) -> dict:
+    def get(self, key, *args, **kwargs) -> dict:
         _key = self.generate_hash_key(key)
         if self.is_dict:
             result = self._get_dict(key) or {}
         else:
             result = self._storage.get(key) or {}
-        if exchange:
-            result = result.get(exchange.lower(), {})
-        if schema:
-            result = result.get(schema.lower(), {})
         return result
 
 
 class AsyncStateStorage(BaseAsyncStorage):
 
     async def set(self, key, value, *args, **kwargs) -> None:
+        timeout = kwargs.get("timeout", self._timeout)
+        _key = self.generate_hash_key(key)
+        if self.is_dict:
+            self._set_dict(_key, value)
+        else:
+            await self._storage.set_async(_key, value, timeout=timeout)
+
+    async def update(self, key, value, *args, **kwargs) -> None:
         timeout = kwargs.get("timeout", self._timeout)
         _key = self.generate_hash_key(key)
         if self.is_dict:
@@ -55,14 +67,10 @@ class AsyncStateStorage(BaseAsyncStorage):
         else:
             await self._storage.set_async(_key, _tmp, timeout=timeout)
 
-    async def get(self, key, exchange: str = None, schema: str = None, *args, **kwargs) -> dict:
+    async def get(self, key, *args, **kwargs) -> dict:
         _key = self.generate_hash_key(key)
         if self.is_dict:
             result = self._get_dict(key) or {}
         else:
             result = await self._storage.get_async(key) or {}
-        if exchange:
-            result = result.get(exchange.lower(), {})
-        if schema:
-            result = result.get(schema.lower(), {})
         return result
