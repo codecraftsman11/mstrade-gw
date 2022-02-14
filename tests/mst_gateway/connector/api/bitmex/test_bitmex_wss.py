@@ -66,7 +66,7 @@ class TestBitmexWssApi:
         exchange = wss.name
         schema = wss.schema
         wss.partial_state_data[subscr_name]['exchange_rates'] = deepcopy(
-            storage.STORAGE_DATA[StateStorageKey.exchange_rates][exchange][schema]
+            storage.STORAGE_DATA[f"{StateStorageKey.exchange_rates}.{exchange}.{schema}"]
         )
 
     @pytest.mark.asyncio
@@ -267,7 +267,7 @@ class TestBitmexWssApi:
     )
     def test_get_state_data(self, wss: BitmexWssApi, symbol: Optional[str]):
         state = wss.get_state_data(symbol)
-        assert state == storage.STORAGE_DATA[StateStorageKey.symbol][wss.name][wss.schema].get((symbol or '').lower())
+        assert state == storage.STORAGE_DATA[f"{StateStorageKey.symbol}.{wss.name}.{wss.schema}"].get((symbol or '').lower())
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(

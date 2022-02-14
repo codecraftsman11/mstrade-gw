@@ -243,8 +243,7 @@ class TestBinanceWssApi:
     )
     def test_get_state_data(self, wss: BinanceWssApi, symbol):
         assert wss.get_state_data(symbol) == state_data.STORAGE_DATA[
-            StateStorageKey.symbol
-        ][wss.name][wss.schema].get((symbol or '').lower())
+            f"{StateStorageKey.symbol}.{wss.name}.{wss.schema}"].get((symbol or '').lower())
 
     @pytest.mark.parametrize('wss', ['tbinance_spot', 'tbinance_futures', 'tbinance_futures_coin'], indirect=True)
     def test_parse_message(self, wss: BinanceWssApi):
@@ -486,7 +485,7 @@ class TestBinanceWssApi:
         schema = wss.schema
         symbol = get_symbol(schema)
         wss.partial_state_data[subscr_name]['exchange_rates'] = deepcopy(
-            state_data.STORAGE_DATA[StateStorageKey.exchange_rates][exchange][schema]
+            state_data.STORAGE_DATA[f"{StateStorageKey.exchange_rates}.{exchange}.{schema}"]
         )
         if subscr_name == 'position':
             leverage_brackets, position_state = get_position_partial_state_data(schema)
