@@ -295,6 +295,14 @@ WS_MESSAGE_HEADER_FIELDS = {
     'act': str,
     'd': list,
 }
+WS_WALLET_MESSAGE_HEADER_FIELDS = {
+    'acc': str,
+    'tb': str,
+    'sch': Use(schema_valid),
+    'act': str,
+    'd': dict,
+    'ex': Or(None, dict),
+}
 
 WS_MESSAGE_DATA_FIELDS = {
     'order': {
@@ -385,7 +393,6 @@ WS_MESSAGE_DATA_FIELDS = {
         'tbl': dict,
         'tupnl': dict,
         'tmbl': dict,
-        'ex': Or(None, dict)
     }
 }
 

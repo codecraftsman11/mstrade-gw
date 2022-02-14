@@ -5,7 +5,8 @@ from asyncio import CancelledError
 from typing import TYPE_CHECKING, Optional
 from websockets.exceptions import ConnectionClosedError
 from mst_gateway.connector.api.types import OrderSchema
-from mst_gateway.exceptions import QueryError, GatewayError, ConnectorError
+from mst_gateway.exceptions import QueryError, GatewayError
+from binance.exceptions import BinanceAPIException
 from .. import utils
 from ..lib import AsyncClient
 from ....wss.subscriber import Subscriber
@@ -184,14 +185,14 @@ class BinanceWalletSubscriber(BinanceSubscriber):
         try:
             kwargs['raw_data'] = await schema_handlers[schema][0]()
             kwargs['currencies'] = await api.storage.get(StateStorageKey.exchange_rates, api.name, schema)
-        except GatewayError:
+        except (GatewayError, BinanceAPIException):
             return None, None
         if schema in (OrderSchema.margin2, OrderSchema.futures):
             kwargs['extra_fields'] = ('bor', 'ist')
         if schema in (OrderSchema.futures,):
             try:
                 cross_collaterals = await client.futures_loan_wallet()
-            except ConnectorError:
+            except (GatewayError, BinanceAPIException):
                 cross_collaterals = {}
             kwargs['cross_collaterals'] = utils.load_futures_cross_collaterals_data(cross_collaterals)
         wallet_data = schema_handlers[schema][1](**kwargs)
@@ -209,20 +210,24 @@ class BinanceWalletSubscriber(BinanceSubscriber):
                     'tb': self.subscription,
                     'sch': api.schema,
                     'act': 'update',
-                    'd': [wallet_data]
+                    'ex': wallet_data.pop('ex', None),
+                    'd': wallet_data,
                 }
                 await api.send_message({self.subscription: message})
             await asyncio.sleep(30)
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
-        client = AsyncClient(api_key=api.auth.get('api_key'), api_secret=api.auth.get('api_secret'), testnet=api.test)
         api.tasks.append(asyncio.create_task(self.subscribe_exchange_rates(api)))
-        api.tasks.append(asyncio.create_task(self.subscribe_wallet_state(api, client)))
-
         exchange_rates = await api.storage.get(StateStorageKey.exchange_rates, exchange=api.name, schema=api.schema)
-        return {
-            'exchange_rates': exchange_rates
-        }
+        async with AsyncClient(
+            api_key=api.auth.get('api_key'), api_secret=api.auth.get('api_secret'), testnet=api.test
+        ) as client:
+            api.tasks.append(asyncio.create_task(self.subscribe_wallet_state(api, client)))
+            _, wallet_state = await self.get_wallet_state(api, client)
+            return {
+                'exchange_rates': exchange_rates,
+                'wallet_state': wallet_state or {},
+            }
 
 
 class BinanceOrderSubscriber(BinanceSubscriber):

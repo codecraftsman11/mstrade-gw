@@ -49,6 +49,20 @@ class BinanceWalletSerializer(BinanceSerializer):
             return None
         self._update_data(data, valid_item)
 
+    async def data(self, message) -> Optional[dict]:
+        (action, data) = await self._get_data(message)
+        if not data:
+            return None
+        data = data[0]
+        return {
+            'acc': self._wss_api.account_name,
+            'tb': self.subscription,
+            'sch': self._wss_api.schema,
+            'act': action,
+            'ex': data.pop('ex', None),
+            'd': data,
+        }
+
 
 class BinanceFuturesWalletSerializer(BinanceWalletSerializer):
 
