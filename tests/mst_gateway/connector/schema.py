@@ -320,6 +320,14 @@ WS_MESSAGE_HEADER_FIELDS = {
     'act': str,
     'd': list,
 }
+WS_WALLET_MESSAGE_HEADER_FIELDS = {
+    'acc': str,
+    'tb': str,
+    'sch': Use(schema_valid),
+    'act': str,
+    'd': dict,
+    'ex': Or(None, dict),
+}
 
 WS_WALLET_BALANCE_FIELDS = {
     'cur': str,
@@ -396,7 +404,7 @@ WS_MESSAGE_DATA_FIELDS = {
         'p': float,
         'p24': float,
         'dt': float,
-        'fp': float,
+        'fp': Or(None, float),
         'bip': float,
         'asp': float,
         'v24': Use(float_valid),
@@ -427,18 +435,18 @@ WS_MESSAGE_DATA_FIELDS = {
         'tbl': TOTAL_CROSS_AMOUNT_FIELDS,
         'tupnl': TOTAL_CROSS_AMOUNT_FIELDS,
         'tmbl': TOTAL_CROSS_AMOUNT_FIELDS,
-        'ex': Or(None, dict)
     }
 }
 
+WS_WALLET_EXTRA_BALANCE_FIELDS = {
+    'cur': str,
+    'bor': Use(float_valid),
+    'ist': Use(float_valid)
+}
 WS_WALLET_EXTRA_FIELDS = {
     OrderSchema.margin2: {
         'bls': [
-            {
-                'cur': str,
-                'bor': Use(float_valid),
-                'ist': Use(float_valid)
-            }
+            WS_WALLET_EXTRA_BALANCE_FIELDS
         ],
         'tre': bool,
         'trse': bool,
@@ -449,11 +457,7 @@ WS_WALLET_EXTRA_FIELDS = {
     },
     OrderSchema.futures: {
         'bls': [
-            {
-                'cur': str,
-                'bor': Use(float_valid),
-                'ist': Use(float_valid)
-            }
+            WS_WALLET_EXTRA_BALANCE_FIELDS
         ],
         'tre': bool,
         'tbor': TOTAL_CROSS_AMOUNT_FIELDS,
