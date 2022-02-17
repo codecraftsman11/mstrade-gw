@@ -97,6 +97,11 @@ class StockWssApi(Connector):
         for subscription in [*self.subscribers.keys(), *self.auth_subscribers.keys()]:
             self.partial_state_data.setdefault(subscription, {}).clear()
 
+    async def __cleanup_subscribers(self):
+        for sub in [*self.subscribers.values(), *self.auth_subscribers.values()]:
+            if sub.rest_client:
+                await sub.rest_client.close_connection()
+
     async def get_data(self, message: dict) -> Dict[str, Dict]:
         data = await self._router.get_data(message)
         return data
@@ -279,14 +284,12 @@ class StockWssApi(Connector):
     async def close(self):
         self._subscriptions = {}
         self.__del_partial_state_data()
+        await self.__cleanup_subscribers()
         self.cancel_task()
         if not self._handler:
             return
         await self._handler.close()
         self._handler = None
-        for sub in list(self.subscribers.values()) + list(self.auth_subscribers.values()):
-            if sub.client:
-                await sub.client.close_connection()
 
     async def process_message(self, message, on_message: Optional[callable] = None):
         response = False
