@@ -15,6 +15,7 @@ class Subscriber:
     general_subscribe_available = True
     detail_subscribe_available = True
     is_close_connection = True
+    client = None
 
     def __init__(self):
         pass

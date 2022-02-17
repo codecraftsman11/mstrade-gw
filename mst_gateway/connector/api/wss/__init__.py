@@ -284,6 +284,9 @@ class StockWssApi(Connector):
             return
         await self._handler.close()
         self._handler = None
+        for sub in list(self.subscribers.values()) + list(self.auth_subscribers.values()):
+            if sub.client:
+                await sub.client.close_connection()
 
     async def process_message(self, message, on_message: Optional[callable] = None):
         response = False
