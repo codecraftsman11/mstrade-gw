@@ -122,13 +122,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
         symbol = d.get('symbol')
         base_asset = d.get('underlying')
         quote_currency = d.get('quoteCurrency')
-
-        if re.search(r'\d{2}$', symbol):
-            symbol_schema = OrderSchema.margin
-        else:
-            symbol_schema = OrderSchema.margin
-
-        quote_asset, expiration = _quote_asset(symbol, base_asset, quote_currency, symbol_schema)
+        quote_asset, expiration = _quote_asset(symbol, base_asset, quote_currency)
         system_base_asset = to_system_asset(base_asset)
         system_quote_asset = to_system_asset(quote_asset)
         system_symbol = f"{system_base_asset}{expiration or system_quote_asset}"
@@ -149,7 +143,7 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                 'pair': [base_asset.upper(), quote_asset.upper()],
                 'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
                 'schema': OrderSchema.margin,
-                'symbol_schema': symbol_schema,
+                'symbol_schema': OrderSchema.margin,
                 'tick': tick,
                 'volume_tick': volume_tick,
                 'max_leverage': max_leverage
@@ -158,9 +152,9 @@ def load_exchange_symbol_info(raw_data: list) -> list:
     return symbol_list
 
 
-def _quote_asset(symbol, base_asset, quote_currency, symbol_schema):
+def _quote_asset(symbol, base_asset, quote_currency):
     quote_asset = symbol[len(base_asset):].upper()
-    if symbol_schema == OrderSchema.margin:
+    if re.search(r'\d{2}$', symbol):
         return quote_currency, quote_asset[-3:]
     return quote_asset, None
 
