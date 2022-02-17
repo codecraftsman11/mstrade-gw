@@ -192,13 +192,10 @@ BASE_EXCHANGE_SYMBOL_INFO_FIELDS = {
 }
 EXCHANGE_SYMBOL_INFO_FIELDS = {
     OrderSchema.margin: {
+        Optional('leverage_brackets'): list,
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
     },
     OrderSchema.exchange: {
-        **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
-    },
-    OrderSchema.margin: {
-        'leverage_brackets': list,
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
     },
     OrderSchema.margin_coin: {
