@@ -28,7 +28,8 @@ class BinanceRestApi(StockRestApi):
     def _connect(self, **kwargs):
         return Client(api_key=self._auth.get('api_key'),
                       api_secret=self._auth.get('api_secret'),
-                      testnet=self.test)
+                      testnet=self.test,
+                      ratelimit_service=self.ratelimit)
 
     def ping(self, schema: str) -> bool:
         schema_handlers = {
@@ -145,7 +146,11 @@ class BinanceRestApi(StockRestApi):
         }
         validate_schema(schema, schema_handlers)
         schema = schema.lower()
-        data = self._binance_api(schema_handlers[schema][0])
+        # proxies = {
+        #     'https': 'http://FjoH3A:aEa0u0@138.128.98.210:8000'
+        # }
+        # kwargs['requests_params'] = {'proxies': proxies}
+        data = self._binance_api(schema_handlers[schema][0], **kwargs)
         state_data = self.storage.get(StateStorageKey.symbol, self.name, schema)
         return schema_handlers[schema][1](schema, data, state_data)
 
@@ -420,6 +425,7 @@ class BinanceRestApi(StockRestApi):
         return utils.load_order_book_data(data, symbol, side, split, offset, depth, state_data)
 
     def get_wallet(self, **kwargs) -> dict:
+
         schema = kwargs.pop('schema', '').lower()
         schema_handlers = {
             OrderSchema.exchange: self._spot_wallet,
@@ -432,6 +438,12 @@ class BinanceRestApi(StockRestApi):
         return schema_handlers[schema](schema=schema, **kwargs)
 
     def _spot_wallet(self, schema: str, **kwargs):
+        proxies = {
+            'https': 'http://FjoH3A:aEa0u0@138.128.98.210:8000'
+        }
+        import asyncio
+        print(f'RATELIMIT SERVICER IS {self.ratelimit}')
+        # kwargs['requests_params'] = {'proxies': proxies}
         is_for_ws = kwargs.pop('is_for_ws', False)
         assets = kwargs.pop('assets', ('btc', 'usd'))
         fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance'))

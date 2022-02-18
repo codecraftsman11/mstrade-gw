@@ -23,7 +23,7 @@ class StockRestApi(Connector):
     name = 'Base'
 
     def __init__(self, name: str = None, auth: dict = None, test: bool = True, logger: Logger = None,
-                 throttle_storage=None, throttle_limit: int = None, state_storage=None):
+                 throttle_storage=None, throttle_limit: int = None, state_storage=None, ratelimit_client=None):
         if name is not None:
             self.name = name.lower()
         self.test = test
@@ -35,6 +35,8 @@ class StockRestApi(Connector):
         self._throttle_limit = throttle_limit
         if state_storage is not None:
             self.storage = StateStorage(storage=state_storage)
+        if ratelimit_client is not None:
+            self.ratelimit = ratelimit_client
         super().__init__(auth, logger)
 
     def throttle_hash_name(self, name=None):
