@@ -401,7 +401,7 @@ class Client(BaseClient):
         return []
 
     def get_margin_coin_assets_balance(self, **params):
-        res = self.margin_coin_account_balance(**params)
+        res = self.futures_coin_account_balance(**params)
         if res:
             return res
         return []
@@ -559,9 +559,9 @@ class Client(BaseClient):
     def margin_coin_position_information(self, **params):
         if symbol := params.pop('symbol', None):
             params['pair'] = utils.symbol2pair(symbol)
-            return [position for position in super().margin_coin_position_information(**params)
+            return [position for position in super().futures_coin_position_information(**params)
                     if position.get('symbol', '').lower() == symbol.lower()]
-        return super().margin_coin_position_information(**params)
+        return super().futures_coin_position_information(**params)
 
     def get_isolated_margin_order(self, **params):
         params['isIsolated'] = 'TRUE'

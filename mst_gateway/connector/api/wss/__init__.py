@@ -15,6 +15,7 @@ from ...base import Connector
 
 class StockWssApi(Connector):
     __metaclass__ = ABCMeta
+    driver = "base"
     router_class = Router
     subscribers: Dict[str, Subscriber] = {}
     auth_subscribers: Dict[str, Subscriber] = {}

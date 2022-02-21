@@ -6,6 +6,7 @@ from .router import BitmexWssRouter
 from .utils import is_auth_ok, make_cmd
 from .. import var
 from ..lib import bitmex_signature
+from ....types import ExchangeDrivers
 from ....wss import StockWssApi
 
 
@@ -13,6 +14,7 @@ BITMEX_WSS_DEFAULT_TIMEOUT = 5
 
 
 class BitmexWssApi(StockWssApi):
+    driver = ExchangeDrivers.bitmex
     BASE_URL = "wss://ws.bitmex.com/realtime"
     TEST_URL = "wss://ws.testnet.bitmex.com/realtime"
     name = "bitmex"

@@ -353,9 +353,9 @@ def load_api_key_permissions(raw_data: dict, schemas: iter) -> dict:
 
 
 def load_spot_wallet_data(raw_data: dict, currencies: dict,
-                          assets: Union[list, tuple], fields: Union[list, tuple], schema: str) -> dict:
+                          assets: Union[list, tuple], fields: Union[list, tuple], driver: str, schema: str) -> dict:
     balances, _ = _spot_balance_data(raw_data.get('balances'))
-    balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets)
+    balances_summary = load_wallet_summary(driver, schema, balances, fields, currencies, assets)
     return {
         'balances': balances,
         'extra_data': None,
@@ -364,9 +364,9 @@ def load_spot_wallet_data(raw_data: dict, currencies: dict,
 
 
 def load_ws_spot_wallet_data(raw_data: dict, currencies: dict,
-                             assets: Union[list, tuple], fields: Union[list, tuple], schema: str) -> dict:
+                             assets: Union[list, tuple], fields: Union[list, tuple], driver: str, schema: str) -> dict:
     balances, _ = _spot_ws_balance_data(raw_data.get('balances'))
-    balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets, is_for_ws=True)
+    balances_summary = load_wallet_summary(driver, schema, balances, fields, currencies, assets, is_for_ws=True)
     return {
         'bls': balances,
         'ex': None,
@@ -389,10 +389,10 @@ def load_spot_wallet_detail_data(raw_data: dict, asset: str) -> dict:
 
 def load_margin_cross_wallet_data(raw_data: dict, currencies: dict,
                             assets: Union[list, tuple], fields: Union[list, tuple],
-                            extra_fields: Union[list, tuple], schema: str) -> dict:
+                            extra_fields: Union[list, tuple], driver: str, schema: str) -> dict:
     balances, extra_balances = _margin_cross_balance_data(raw_data.get('userAssets'))
-    balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets)
-    extra_balances_summary = load_wallet_summary(schema, extra_balances, extra_fields, currencies, assets)
+    balances_summary = load_wallet_summary(driver, schema, balances, fields, currencies, assets)
+    extra_balances_summary = load_wallet_summary(driver, schema, extra_balances, extra_fields, currencies, assets)
     return {
         'balances': balances,
         'extra_data': {
@@ -409,10 +409,10 @@ def load_margin_cross_wallet_data(raw_data: dict, currencies: dict,
 
 def load_ws_margin_cross_wallet_data(raw_data: dict, currencies: dict,
                                assets: Union[list, tuple], fields: Union[list, tuple],
-                               extra_fields: Union[list, tuple], schema: str) -> dict:
+                               extra_fields: Union[list, tuple], driver: str, schema: str) -> dict:
     balances, extra_balances = _margin_cross_ws_balance_data(raw_data.get('userAssets'))
-    balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets, is_for_ws=True)
-    extra_balances_summary = load_wallet_summary(schema, extra_balances, extra_fields, currencies, assets,
+    balances_summary = load_wallet_summary(driver, schema, balances, fields, currencies, assets, is_for_ws=True)
+    extra_balances_summary = load_wallet_summary(driver, schema, extra_balances, extra_fields, currencies, assets,
                                                  is_for_ws=True)
     return {
         'bls': balances,
@@ -430,9 +430,9 @@ def load_ws_margin_cross_wallet_data(raw_data: dict, currencies: dict,
 
 def load_margin_isolated_wallet_data(raw_data: dict, currencies: dict,
                                      assets: Union[list, tuple], fields: Union[list, tuple],
-                                     extra_fields: Union[list, tuple], schema: str) -> dict:
+                                     extra_fields: Union[list, tuple], driver: str, schema: str) -> dict:
     balances = margin_isolated_balance_data(raw_data.get('assets'))
-    balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets)
+    balances_summary = load_wallet_summary(driver, schema, balances, fields, currencies, assets)
     return {
         'balances': balances,
         **balances_summary,
@@ -507,11 +507,11 @@ def _update_margin_extra_balances(balances: list, cross_collaterals: list) -> li
 
 def load_margin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
                              fields: Union[list, tuple], extra_fields: Union[list, tuple],
-                             cross_collaterals: list, schema: str) -> dict:
+                             cross_collaterals: list, driver: str, schema: str) -> dict:
     balances, extra_balances = _margin_balance_data(raw_data.get('assets'))
     _update_margin_extra_balances(extra_balances, cross_collaterals)
-    balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets)
-    extra_balances_summary = load_wallet_summary(schema, extra_balances, extra_fields, currencies, assets)
+    balances_summary = load_wallet_summary(driver, schema, balances, fields, currencies, assets)
+    extra_balances_summary = load_wallet_summary(driver, schema, extra_balances, extra_fields, currencies, assets)
     return {
         'balances': balances,
         'extra_data': {
@@ -534,11 +534,11 @@ def _update_ws_margin_extra_balances(balances: list, cross_collaterals: list) ->
 
 def load_ws_margin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
                                 fields: Union[list, tuple], extra_fields: Union[list, tuple],
-                                cross_collaterals: list, schema: str) -> dict:
+                                cross_collaterals: list, driver: str, schema: str) -> dict:
     balances, extra_balances = _ws_margin_balance_data(raw_data.get('assets'))
     _update_ws_margin_extra_balances(balances, cross_collaterals)
-    balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets, is_for_ws=True)
-    extra_balances_summary = load_wallet_summary(schema, extra_balances, extra_fields, currencies, assets,
+    balances_summary = load_wallet_summary(driver, schema, balances, fields, currencies, assets, is_for_ws=True)
+    extra_balances_summary = load_wallet_summary(driver, schema, extra_balances, extra_fields, currencies, assets,
                                                  is_for_ws=True)
     return {
         'bls': balances,
@@ -552,9 +552,9 @@ def load_ws_margin_wallet_data(raw_data: dict, currencies: dict, assets: Union[l
 
 
 def load_margin_coin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
-                                 fields: Union[list, tuple], schema: str) -> dict:
+                                 fields: Union[list, tuple], driver: str, schema: str) -> dict:
     balances, _ = _margin_coin_balance_data(raw_data.get('assets'))
-    balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets)
+    balances_summary = load_wallet_summary(driver, schema, balances, fields, currencies, assets)
     return {
         'balances': balances,
         'extra_data': {
@@ -565,9 +565,9 @@ def load_margin_coin_wallet_data(raw_data: dict, currencies: dict, assets: Union
 
 
 def load_ws_margin_coin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
-                                    fields: Union[list, tuple], schema: str) -> dict:
+                                    fields: Union[list, tuple], driver: str, schema: str) -> dict:
     balances, _ = _ws_margin_coin_balance_data(raw_data.get('assets'))
-    balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets, is_for_ws=True)
+    balances_summary = load_wallet_summary(driver, schema, balances, fields, currencies, assets, is_for_ws=True)
     return {
         'bls': balances,
         'ex': {
@@ -667,13 +667,14 @@ def _update_state_ws_spot_balances(balances: list, state_balances: dict) -> list
     return list(state_balances.values())
 
 
-def ws_spot_wallet(raw_data: dict, schema: str, state_data: dict, exchange_rates: dict, fields: iter, assets: iter):
+def ws_spot_wallet(raw_data: dict,
+                   driver: str, schema: str, state_data: dict, exchange_rates: dict, fields: iter, assets: iter):
     """
     BinanceWalletSerializer
     """
     data, _ = _spot_ws_balance_data(raw_data.get('B', []))
     balances = _update_state_ws_spot_balances(data, state_data['bls'])
-    balances_summary = load_wallet_summary(schema, balances, fields, exchange_rates, assets, is_for_ws=True)
+    balances_summary = load_wallet_summary(driver, schema, balances, fields, exchange_rates, assets, is_for_ws=True)
     return {
         **balances_summary,
         'bls': balances,
@@ -707,14 +708,14 @@ def _load_ws_margin_cross_balances(raw_data: dict, state_data: dict):
     return list(balances.values()), list(extra_balances.values())
 
 
-def ws_margin_cross_wallet(raw_data: dict, schema: str, state_data: dict, exchange_rates: dict,
+def ws_margin_cross_wallet(raw_data: dict, driver: str, schema: str, state_data: dict, exchange_rates: dict,
                      fields: iter, extra_fields: iter, assets: iter):
     """
     BinanceWalletSerializer
     """
     balances, extra_balances = _load_ws_margin_cross_balances(raw_data, state_data)
-    balances_summary = load_wallet_summary(schema, balances, fields, exchange_rates, assets, is_for_ws=True)
-    extra_balances_summary = load_wallet_summary(schema, extra_balances, extra_fields, exchange_rates, assets,
+    balances_summary = load_wallet_summary(driver, schema, balances, fields, exchange_rates, assets, is_for_ws=True)
+    extra_balances_summary = load_wallet_summary(driver, schema, extra_balances, extra_fields, exchange_rates, assets,
                                                  is_for_ws=True)
     return {
         **balances_summary,
@@ -763,14 +764,14 @@ def _load_ws_margin_balances(raw_data: dict, state_data: dict):
     return list(balances.values()), list(extra_balances.values())
 
 
-def ws_margin_wallet(raw_data: dict, schema: str, state_data: dict, exchange_rates: dict,
+def ws_margin_wallet(raw_data: dict, driver: str, schema: str, state_data: dict, exchange_rates: dict,
                       fields: iter, extra_fields: iter, assets: iter):
     """
     BinanceWalletSerializer
     """
     balances, extra_balances = _load_ws_margin_balances(raw_data, state_data)
-    balances_summary = load_wallet_summary(schema, balances, fields, exchange_rates, assets, is_for_ws=True)
-    extra_balances_summary = load_wallet_summary(schema, extra_balances, extra_fields, exchange_rates, assets,
+    balances_summary = load_wallet_summary(driver, schema, balances, fields, exchange_rates, assets, is_for_ws=True)
+    extra_balances_summary = load_wallet_summary(driver, schema, extra_balances, extra_fields, exchange_rates, assets,
                                                  is_for_ws=True)
     return {
         **balances_summary,
@@ -783,13 +784,13 @@ def ws_margin_wallet(raw_data: dict, schema: str, state_data: dict, exchange_rat
     }
 
 
-def ws_margin_coin_wallet(raw_data: dict, schema: str, state_data: dict, currencies: dict,
+def ws_margin_coin_wallet(raw_data: dict, driver: str, schema: str, state_data: dict, currencies: dict,
                            fields: iter, extra_fields: iter, assets: iter):
     """
     BinanceWalletSerializer
     """
     balances, _ = _load_ws_margin_balances(raw_data, state_data)
-    balances_summary = load_wallet_summary(schema, balances, fields, currencies, assets, is_for_ws=True)
+    balances_summary = load_wallet_summary(driver, schema, balances, fields, currencies, assets, is_for_ws=True)
     return {
         **balances_summary,
         'bls': balances,

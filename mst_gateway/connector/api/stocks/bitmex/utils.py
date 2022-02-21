@@ -473,7 +473,7 @@ def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
     return quote_bin
 
 
-def load_wallet_data(raw_data: dict, currencies: dict, assets: Union[tuple, list], fields: tuple,
+def load_wallet_data(raw_data: dict, currencies: dict, assets: Union[tuple, list], fields: tuple, driver: str,
                      is_for_ws=False) -> dict:
     if is_for_ws:
         bls_key = 'bls'
@@ -486,7 +486,7 @@ def load_wallet_data(raw_data: dict, currencies: dict, assets: Union[tuple, list
         ex_key = 'extra_data'
         extra_data = None
 
-    balances_summary = load_wallet_summary(OrderSchema.margin, balances, fields, currencies, assets, is_for_ws)
+    balances_summary = load_wallet_summary(driver, OrderSchema.margin, balances, fields, currencies, assets, is_for_ws)
     return {
         bls_key: balances,
         ex_key: extra_data,

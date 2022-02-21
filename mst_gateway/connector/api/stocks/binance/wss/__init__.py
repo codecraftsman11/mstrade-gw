@@ -8,12 +8,13 @@ from .router import BinanceWssRouter, BinanceMarginWssRouter, BinanceMarginCoinW
 from .utils import is_auth_ok, make_cmd
 from ..lib import AsyncClient
 from ..utils import to_float, remap_margin_coin_position_request_data
-from .... import OrderSchema
+from .... import OrderSchema, ExchangeDrivers
 from ....wss import StockWssApi
 from .. import var
 
 
 class BinanceWssApi(StockWssApi):
+    driver = ExchangeDrivers.binance
     BASE_URL = 'wss://stream.binance.com:9443/ws'
     TEST_URL = 'wss://testnet.binance.vision/ws'
     name = 'binance'

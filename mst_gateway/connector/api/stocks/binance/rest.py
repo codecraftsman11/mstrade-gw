@@ -8,7 +8,7 @@ from mst_gateway.connector.api.utils import time2timestamp
 from requests.structures import CaseInsensitiveDict
 from mst_gateway.storage import StateStorageKey
 from mst_gateway.calculator import BinanceFinFactory
-from mst_gateway.connector.api.types import OrderSchema, OrderType
+from mst_gateway.connector.api.types import OrderSchema, OrderType, ExchangeDrivers
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id, validate_schema
 from mst_gateway.connector.api.stocks.binance.wss.serializers.position import BinanceMarginPositionSerializer
 from .lib import Client
@@ -19,6 +19,7 @@ from .....exceptions import GatewayError, ConnectorError, RecoverableError, NotF
 
 
 class BinanceRestApi(StockRestApi):
+    driver = ExchangeDrivers.binance
     name = 'binance'
     fin_factory = BinanceFinFactory()
 
@@ -339,7 +340,8 @@ class BinanceRestApi(StockRestApi):
         schema_handlers = {
             OrderSchema.exchange: (self._handler.get_open_orders, self._handler.get_all_orders),
             OrderSchema.margin_cross: (self._handler.get_open_margin_orders, self._handler.get_all_margin_orders),
-            OrderSchema.margin_isolated: (self._handler.get_open_margin_orders, self._handler.get_all_isolated_margin_orders),
+            OrderSchema.margin_isolated: (self._handler.get_open_margin_orders,
+                                          self._handler.get_all_isolated_margin_orders),
             OrderSchema.margin: (self._handler.futures_get_open_orders, self._handler.futures_get_all_orders),
             OrderSchema.margin_coin: (
                 self._handler.futures_coin_get_open_orders, self._handler.futures_coin_get_all_orders
@@ -385,15 +387,15 @@ class BinanceRestApi(StockRestApi):
         raise NotImplementedError
 
     def get_order_book(
-        self,
-        symbol: str,
-        depth: int = None,
-        side: int = None,
-        split: bool = False,
-        offset: int = 0,
-        schema: str = None,
-        min_volume_buy: float = None,
-        min_volume_sell: float = None,
+            self,
+            symbol: str,
+            depth: int = None,
+            side: int = None,
+            split: bool = False,
+            offset: int = 0,
+            schema: str = None,
+            min_volume_buy: float = None,
+            min_volume_sell: float = None,
     ):
         schema_handlers = {
             OrderSchema.exchange: self._handler.get_order_book,
@@ -439,8 +441,8 @@ class BinanceRestApi(StockRestApi):
         currencies = self.storage.get(StateStorageKey.exchange_rates, self.name, schema)
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl')
-            return utils.load_ws_spot_wallet_data(data, currencies, assets, fields, schema)
-        return utils.load_spot_wallet_data(data, currencies, assets, fields, schema)
+            return utils.load_ws_spot_wallet_data(data, currencies, assets, fields, self.driver, schema)
+        return utils.load_spot_wallet_data(data, currencies, assets, fields, self.driver, schema)
 
     def _cross_margin_wallet(self, schema: str, **kwargs):
         is_for_ws = kwargs.pop('is_for_ws', False)
@@ -452,8 +454,9 @@ class BinanceRestApi(StockRestApi):
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl')
             extra_fields = ('bor', 'ist')
-            return utils.load_ws_margin_cross_wallet_data(data, currencies, assets, fields, extra_fields, schema)
-        return utils.load_margin_cross_wallet_data(data, currencies, assets, fields, extra_fields, schema)
+            return utils.load_ws_margin_cross_wallet_data(data, currencies, assets, fields, extra_fields, self.driver,
+                                                          schema)
+        return utils.load_margin_cross_wallet_data(data, currencies, assets, fields, extra_fields, self.driver, schema)
 
     def _isolated_margin_wallet(self, schema: str, **kwargs):
         # TODO: refactor by new structures
@@ -466,8 +469,10 @@ class BinanceRestApi(StockRestApi):
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl')
             extra_fields = ('bor', 'ist')
-            return utils.load_ws_margin_cross_wallet_data(data, currencies, assets, fields, extra_fields, schema)
-        return utils.load_margin_isolated_wallet_data(data, currencies, assets, fields, extra_fields, schema)
+            return utils.load_ws_margin_cross_wallet_data(data, currencies, assets, fields, extra_fields, self.driver,
+                                                          schema)
+        return utils.load_margin_isolated_wallet_data(data, currencies, assets, fields, extra_fields, self.driver,
+                                                      schema)
 
     def _margin_wallet(self, schema: str, **kwargs):
         is_for_ws = kwargs.pop('is_for_ws', False)
@@ -483,10 +488,10 @@ class BinanceRestApi(StockRestApi):
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl')
             extra_fields = ('bor', 'ist')
-            return utils.load_ws_margin_cross_wallet_data(data, currencies, assets, fields, extra_fields,
-                                                          cross_collaterals.get('crossCollaterals', []))
-        return utils.load_margin_cross_wallet_data(data, currencies, assets, fields, extra_fields,
-                                                   cross_collaterals.get('crossCollaterals', []))
+            return utils.load_ws_margin_wallet_data(data, currencies, assets, fields, extra_fields,
+                                                    cross_collaterals.get('crossCollaterals', []), self.driver, schema)
+        return utils.load_margin_wallet_data(data, currencies, assets, fields, extra_fields,
+                                             cross_collaterals.get('crossCollaterals', []), self.driver, schema)
 
     def _margin_coin_wallet(self, schema: str, **kwargs):
         is_for_ws = kwargs.pop('is_for_ws', False)
@@ -496,8 +501,8 @@ class BinanceRestApi(StockRestApi):
         currencies = self.storage.get(StateStorageKey.exchange_rates, self.name, schema)
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl')
-            return utils.load_ws_margin_coin_wallet_data(data, currencies, assets, fields, schema)
-        return utils.load_margin_coin_wallet_data(data, currencies, assets, fields, schema)
+            return utils.load_ws_margin_coin_wallet_data(data, currencies, assets, fields, self.driver, schema)
+        return utils.load_margin_coin_wallet_data(data, currencies, assets, fields, self.driver, schema)
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
         schema_handlers = {
@@ -505,8 +510,8 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin_cross: (self._handler.get_margin_account, utils.load_margin_cross_wallet_detail_data),
             # TODO: refactor margin_isolated schema
             # OrderSchema.margin_isolated: (self._handler.get_isolated_margin_account, utils.isolated_margin_balance_data),
-            OrderSchema.margin: (self._handler.futures_account_v2, utils.load_margin_cross_wallet_detail_data),
-            OrderSchema.margin_coin: (self._handler.futures_coin_account, utils.load_margin_cross_wallet_detail_data)
+            OrderSchema.margin: (self._handler.futures_account_v2, utils.load_margin_wallet_detail_data),
+            OrderSchema.margin_coin: (self._handler.futures_coin_account, utils.load_margin_wallet_detail_data)
         }
         validate_schema(schema, schema_handlers)
         data = self._binance_api(schema_handlers[schema][0], **kwargs)
@@ -538,14 +543,15 @@ class BinanceRestApi(StockRestApi):
             except ConnectorError:
                 cross_collaterals = {}
                 collateral_configs = []
-            return utils.load_margin_cross_wallet_extra_data(cross_collaterals, collateral_configs, asset, )
+            return utils.load_margin_wallet_extra_data(cross_collaterals, collateral_configs, asset)
         return {}
 
     def get_assets_balance(self, schema: str, **kwargs) -> dict:
         schema_handlers = {
             OrderSchema.exchange: (self._handler.get_assets_balance, utils.load_exchange_asset_balance),
             OrderSchema.margin_cross: (self._handler.get_margin_assets_balance, utils.load_margin_cross_asset_balance),
-            OrderSchema.margin_isolated: (self._handler.get_isolated_margin_assets_balance, utils.load_margin_cross_asset_balance),
+            OrderSchema.margin_isolated: (
+            self._handler.get_isolated_margin_assets_balance, utils.load_margin_cross_asset_balance),
             OrderSchema.margin: (self._handler.get_futures_assets_balance, utils.load_margin_cross_asset_balance),
             OrderSchema.margin_coin: (
                 self._handler.get_margin_coin_assets_balance, utils.load_margin_coin_asset_balance
@@ -679,7 +685,7 @@ class BinanceRestApi(StockRestApi):
         fields = ('balance', 'unrealised_pnl', 'margin_balance')
         exchange_rates = self.storage.get(StateStorageKey.exchange_rates, self.name, schema)
         assets = kwargs.get('assets', ('btc', 'usd'))
-        return load_wallet_summary(schema, balances, fields, exchange_rates, assets)
+        return load_wallet_summary(self.driver, schema, balances, fields, exchange_rates, assets)
 
     def list_order_commissions(self, schema: str) -> list:
         schema_handlers = {
@@ -727,7 +733,7 @@ class BinanceRestApi(StockRestApi):
                 symbol=utils.symbol2stock(symbol),
                 startTime=int(
                     (
-                        datetime.now() - timedelta(hours=period_hour*period_multiplier, minutes=1)
+                            datetime.now() - timedelta(hours=period_hour * period_multiplier, minutes=1)
                     ).timestamp() * 1000
                 ),
                 limit=1000,
@@ -744,7 +750,7 @@ class BinanceRestApi(StockRestApi):
                 self._handler.futures_funding_rate,
                 startTime=int(
                     (
-                        datetime.now() - timedelta(hours=period_hour*period_multiplier, minutes=1)
+                            datetime.now() - timedelta(hours=period_hour * period_multiplier, minutes=1)
                     ).timestamp() * 1000
                 ),
                 limit=1000,
@@ -851,15 +857,15 @@ class BinanceRestApi(StockRestApi):
         return {}
 
     def get_liquidation(
-        self,
-        symbol: str,
-        schema: str,
-        leverage_type: str,
-        wallet_balance: float,
-        side: int,
-        volume: float,
-        price: float,
-        **kwargs,
+            self,
+            symbol: str,
+            schema: str,
+            leverage_type: str,
+            wallet_balance: float,
+            side: int,
+            volume: float,
+            price: float,
+            **kwargs,
     ) -> dict:
         validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin,
                                  OrderSchema.margin_coin))
@@ -935,9 +941,9 @@ class BinanceRestApi(StockRestApi):
         api_kwargs = dict()
         for _k, _v in kwargs.items():
             if _k == 'date_from' and isinstance(_v, datetime):
-                api_kwargs['startTime'] = int(_v.timestamp()*1000)
+                api_kwargs['startTime'] = int(_v.timestamp() * 1000)
             if _k == 'date_to' and isinstance(_v, datetime):
-                api_kwargs['endTime'] = int(_v.timestamp()*1000)
+                api_kwargs['endTime'] = int(_v.timestamp() * 1000)
             if _k == 'count' and _v is not None:
                 api_kwargs['limit'] = _v
         return api_kwargs
@@ -988,6 +994,6 @@ class BinanceRestApi(StockRestApi):
             num = int(rate[:-1])
         except ValueError:
             num = 1
-        period = rate[len(rate)-1:]
+        period = rate[len(rate) - 1:]
         duration = {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}.get(period.lower(), 60)
         return int((now + timedelta(seconds=((num * duration) - now.second))).timestamp())

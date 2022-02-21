@@ -450,26 +450,17 @@ class TestBinanceWssApi:
             _expect[0]['data'][0]['B'].pop(1)
             assert wss._split_message(deepcopy(message)) == _expect
 
-    # @pytest.mark.asyncio
-    # @pytest.mark.parametrize(
-    #     'wss, messages, expect', [('tbinance_spot',
-    #                                wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.exchange],
-    #                                wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.exchange]),
-    #                               ('tbinance_margin',
-    #                                wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.margin],
-    #                                wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.margin]),
-    #                               ('tbinance_margin_coin',
-    #                                wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.margin_coin],
-    #                                wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.margin_coin])],
-    #     indirect=['wss'],
-    # )
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        'wss, messages, expect', [
+        'wss, messages, expect', [('tbinance_spot',
+                                   wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.exchange],
+                                   wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.exchange]),
                                   ('tbinance_margin',
                                    wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.margin],
                                    wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.margin]),
-                                 ],
+                                  ('tbinance_margin_coin',
+                                   wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.margin_coin],
+                                   wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.margin_coin])],
         indirect=['wss'],
     )
     async def test_get_wallet_data(self, wss: BinanceWssApi, messages, expect):

@@ -8,7 +8,7 @@ from .lib import (
     bitmex_connector, APIKeyAuthenticator, SwaggerClient
 )
 from mst_gateway.calculator import BitmexFinFactory
-from mst_gateway.connector.api.types import OrderSchema
+from mst_gateway.connector.api.types import OrderSchema, ExchangeDrivers
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
 from mst_gateway.connector.api.utils.utils import load_wallet_summary
 from . import utils, var
@@ -38,6 +38,7 @@ class BitmexFactory:
 
 
 class BitmexRestApi(StockRestApi):
+    driver = ExchangeDrivers.bitmex
     name = 'bitmex'
     fin_factory = BitmexFinFactory()
 
@@ -139,7 +140,7 @@ class BitmexRestApi(StockRestApi):
         if schema == OrderSchema.margin:
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
             currencies = self.storage.get(StateStorageKey.exchange_rates, self.name, schema)
-            return utils.load_wallet_data(data, currencies, assets, fields)
+            return utils.load_wallet_data(data, currencies, assets, fields, self.driver)
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
@@ -361,7 +362,7 @@ class BitmexRestApi(StockRestApi):
             fields = ('balance', 'unrealised_pnl', 'margin_balance')
             exchange_rates = self.storage.get(StateStorageKey.exchange_rates, self.name, schema)
             assets = kwargs.get('assets', ('btc', 'usd'))
-            return load_wallet_summary(schema, balances, fields, exchange_rates, assets)
+            return load_wallet_summary(self.driver, schema, balances, fields, exchange_rates, assets)
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def list_order_commissions(self, schema: str) -> list:
