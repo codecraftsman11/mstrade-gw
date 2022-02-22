@@ -1,7 +1,9 @@
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 import time
 from typing import Dict, Optional
 from binance.client import AsyncClient as BaseAsyncClient, Client as BaseClient
-from binance.exceptions import BinanceRequestException
+from binance.exceptions import BinanceRequestException, BinanceAPIException
 from mst_gateway.connector.api.stocks.binance import utils
 
 
@@ -27,7 +29,8 @@ class Client(BaseClient):
         if data and isinstance(data, dict):
             kwargs['data'] = data
 
-        if 'requests_params' in kwargs['data']:
+        # find any requests params passed and apply them
+        if data and 'requests_params' in data:
             # merge requests params into kwargs
             kwargs.update(kwargs['data']['requests_params'])
             del (kwargs['data']['requests_params'])
@@ -36,8 +39,6 @@ class Client(BaseClient):
             # generate signature
             kwargs['data']['timestamp'] = int(time.time() * 1000 + self.timestamp_offset)
             kwargs['data']['signature'] = self._generate_signature(kwargs['data'])
-
-            # find any requests params passed and apply them
 
         # sort get and post params to match signature order
         if data:
@@ -52,17 +53,12 @@ class Client(BaseClient):
         return kwargs
 
     def _request(self, method, uri: str, signed: bool, force_params: bool = False, **kwargs) -> Dict:
-        import asyncio
-        r = asyncio.run(
-            self.ratelimit.create_reservation('name', 'core', 'GET', 'https://google.com.ua', 'qweqwe123123123',
-                                              {'seconds': 10, 'nanos': 15}, {'seconds': 20, 'nanos': 15},
-                                              'https://google.com.ua/'))
-        kwargs['data']['requests_params'] = {'proxies': r}
-
+        with ThreadPoolExecutor() as pool:
+            result = pool.submit(asyncio.run, self.ratelimit.create_reservation(
+                                     source='source', method='method', url='url', hashed_uid='hashed_uid', max_send_time={'seconds': 10, 'nanos': 15}
+                                 )).result()
+        kwargs.setdefault('data', {}).setdefault('requests_params', {})['proxies'] = result
         kwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
-        print(f'METHOD IS {method}')
-        print(f'KWARGS IS {kwargs}')
-        print(f'URI IS {uri}')
         self.response = getattr(self.session, method)(uri, **kwargs)
         return self._handle_response(self.response)
 

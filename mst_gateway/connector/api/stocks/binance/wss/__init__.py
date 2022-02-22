@@ -6,7 +6,7 @@ from websockets import client
 from . import subscribers as subscr_class
 from .router import BinanceWssRouter, BinanceFuturesWssRouter, BinanceFuturesCoinWssRouter
 from .utils import is_auth_ok, make_cmd
-from ..lib import AsyncClient
+from .. import rest
 from ..utils import to_float, remap_futures_coin_position_request_data
 from .... import OrderSchema
 from ....wss import StockWssApi
@@ -68,18 +68,18 @@ class BinanceWssApi(StockWssApi):
         self._url = f"{self._url}/{self.listen_key}"
 
     async def _generate_listen_key(self):
-        async with AsyncClient(
-                api_key=self.auth.get('api_key'), api_secret=self.auth.get('api_secret'), testnet=self.test
+        with rest.BinanceRestApi(
+                auth=self.auth, test=self.test, ratelimit_client=self.ratelimit
         ) as bin_client:
             try:
                 if self.schema == OrderSchema.exchange:
-                    key = await bin_client.stream_get_listen_key()
+                    key = bin_client.handler.stream_get_listen_key()
                 elif self.schema == OrderSchema.margin2:
-                    key = await bin_client.margin_stream_get_listen_key()
+                    key = bin_client.handler.margin_stream_get_listen_key()
                 elif self.schema == OrderSchema.futures:
-                    key = await bin_client.futures_stream_get_listen_key()
+                    key = bin_client.handler.futures_stream_get_listen_key()
                 elif self.schema == OrderSchema.futures_coin:
-                    key = await bin_client.futures_coin_stream_get_listen_key()
+                    key = bin_client.handler.futures_coin_stream_get_listen_key()
                 else:
                     raise ConnectorError(f"Invalid schema {self.schema}.")
             except Exception as e:

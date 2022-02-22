@@ -38,7 +38,9 @@ class StockWssApi(Connector):
                  throttle_storage=None,
                  schema='margin1',
                  state_storage=None,
+                 ratelimit_client=None,
                  register_state=True):
+
         self.test = test
         self.tasks = list()
         if name is not None:
@@ -56,6 +58,8 @@ class StockWssApi(Connector):
         self.schema = schema
         if state_storage is not None:
             self.storage = AsyncStateStorage(state_storage)
+        if ratelimit_client is not None:
+            self.ratelimit = ratelimit_client
         self.register_state = register_state
         super().__init__(auth, logger)
         self.__init_partial_state_data()
@@ -96,6 +100,11 @@ class StockWssApi(Connector):
     def __del_partial_state_data(self):
         for subscription in [*self.subscribers.keys(), *self.auth_subscribers.keys()]:
             self.partial_state_data.setdefault(subscription, {}).clear()
+
+    async def __cleanup_subscribers(self):
+        for sub in [*self.subscribers.values(), *self.auth_subscribers.values()]:
+            if sub.rest_client:
+                await sub.rest_client.close_connection()
 
     async def get_data(self, message: dict) -> Dict[str, Dict]:
         data = await self._router.get_data(message)
@@ -279,6 +288,7 @@ class StockWssApi(Connector):
     async def close(self):
         self._subscriptions = {}
         self.__del_partial_state_data()
+        await self.__cleanup_subscribers()
         self.cancel_task()
         if not self._handler:
             return
@@ -300,8 +310,6 @@ class StockWssApi(Connector):
             except Exception as exc:
                 self._error = errors.ERROR_INVALID_DATA
                 self._logger.error("Error validating incoming message %s; Details: %s", message, exc)
-                import traceback
-                traceback.print_exc()
                 continue
             if not data:
                 continue
@@ -348,12 +356,11 @@ class StockWssApi(Connector):
         return self.__state_data.get(symbol.lower())
 
     async def __load_state_data(self):
-        self.__state_data = await self.storage.get(StateStorageKey.symbol, self.name, self.schema)
+        self.__state_data = await self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{self.schema}")
         redis = await self.storage.get_client()
-        symbol_channel = (await redis.subscribe(StateStorageKey.symbol))[0]
+        symbol_channel = (await redis.subscribe(f"{StateStorageKey.symbol}.{self.name}.{self.schema}"))[0]
         while await symbol_channel.wait_message():
-            symbols = await symbol_channel.get_json()
-            self.__state_data = symbols.get(self.name, {}).get(self.schema, {})
+            self.__state_data = await symbol_channel.get_json()
 
     @property
     def state_symbol_list(self) -> list:
