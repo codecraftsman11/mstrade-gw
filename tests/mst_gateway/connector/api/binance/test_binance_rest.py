@@ -21,7 +21,7 @@ def rest_params(param):
     param_map = {
         'tbinance_spot': (cfg.BINANCE_SPOT_TESTNET_AUTH_KEYS,
                           [OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin_isolated]),
-        'tbinance_margin': (cfg.BINANCE_MARGIN_TESTNET_AUTH_KEYS,
+        'tbinance_margin': (cfg.BINANCE_FUTURES_TESTNET_AUTH_KEYS,
                              [OrderSchema.margin, OrderSchema.margin_coin]),
     }
     return param_map[param]

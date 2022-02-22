@@ -21,7 +21,7 @@ BITMEX_SYMBOL = 'XBTUSD'
 
 def rest_params(name):
     name_map = {
-        'tbitmex': (True, cfg.BITMEX_TESTNET_AUTH_KEYS, [OrderSchema.margin])
+        'tbitmex': (True, cfg.BITMEX_AUTH_KEYS, [OrderSchema.margin])
     }
     return name_map[name]
 

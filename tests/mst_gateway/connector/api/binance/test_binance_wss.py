@@ -37,11 +37,11 @@ def wss_params(param):
                           cfg.BINANCE_SPOT_TESTNET_WSS_API_URL,
                           cfg.BINANCE_SPOT_TESTNET_AUTH_KEYS),
         'tbinance_margin': (OrderSchema.margin, 'tbinance.tbinance_margin.2',
-                             cfg.BINANCE_MARGIN_TESTNET_WSS_API_URL,
-                             cfg.BINANCE_MARGIN_TESTNET_AUTH_KEYS),
+                            cfg.BINANCE_MARGIN_TESTNET_WSS_API_URL,
+                            cfg.BINANCE_FUTURES_TESTNET_AUTH_KEYS),
         'tbinance_margin_coin': (OrderSchema.margin_coin, 'tbinance.tbinance_margin.2',
-                                  cfg.BINANCE_MARGIN_COIN_TESTNET_WSS_API_URL,
-                                  cfg.BINANCE_MARGIN_TESTNET_AUTH_KEYS),
+                                 cfg.BINANCE_FUTURES_COIN_TESTNET_WSS_API_URL,
+                                 cfg.BINANCE_FUTURES_COIN_TESTNET_AUTH_KEYS),
     }
     return param_map[param]
 
