@@ -97,7 +97,7 @@ class BitmexRestApi(StockRestApi):
         return [utils.load_quote_bin_data(data, state_data, binsize=binsize) for data in quote_bins]
 
     def list_quote_bins(self, symbol, schema, binsize='1m', count=100, **kwargs) -> list:
-        kwargs['state_data'] = self.storage.get(StateStorageKey.symbol, self.name, schema).get(symbol.lower(), {})
+        kwargs['state_data'] = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}").get(symbol.lower(), {})
         pages = count // var.BITMEX_MAX_QUOTE_BINS_COUNT + 1
         pages_mod = count % var.BITMEX_MAX_QUOTE_BINS_COUNT or var.BITMEX_MAX_QUOTE_BINS_COUNT
         quote_bins = []
@@ -139,7 +139,7 @@ class BitmexRestApi(StockRestApi):
         fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance'))
         if schema == OrderSchema.margin:
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
-            currencies = self.storage.get(StateStorageKey.exchange_rates, self.name, schema)
+            currencies = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}")
             return utils.load_wallet_data(data, currencies, assets, fields, self.driver)
         raise ConnectorError(f"Invalid schema {schema}.")
 
@@ -176,7 +176,7 @@ class BitmexRestApi(StockRestApi):
         if not instruments:
             return dict()
         state_data = self.storage.get(
-            StateStorageKey.symbol, self.name, OrderSchema.margin
+            f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin}".lower()
         ).get(utils.stock2symbol(symbol), dict())
         return utils.load_symbol_data(instruments[0], state_data)
 
@@ -184,7 +184,7 @@ class BitmexRestApi(StockRestApi):
         data, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive,
                                    **kwargs)
         state_data = self.storage.get(
-            StateStorageKey.symbol, self.name, OrderSchema.margin
+            f"{StateStorageKey.symbol}.{self.name}.{schema}"
         )
         symbols = []
         for d in data:
@@ -213,7 +213,7 @@ class BitmexRestApi(StockRestApi):
 
         data, _ = self._bitmex_api(self._handler.Order.Order_new, **params)
         state_data = self.storage.get(
-            StateStorageKey.symbol, self.name, OrderSchema.margin
+            f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin}"
         ).get(symbol.lower(), dict())
         return utils.load_order_data(data, state_data)
 
@@ -246,7 +246,7 @@ class BitmexRestApi(StockRestApi):
                 raise NotFoundError(error)
             raise ConnectorError(error)
         state_data = self.storage.get(
-            StateStorageKey.symbol, self.name, OrderSchema.margin
+            f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin}"
         ).get(data[0]['symbol'].lower(), dict())
         return utils.load_order_data(data[0], state_data)
 
@@ -260,7 +260,7 @@ class BitmexRestApi(StockRestApi):
         if not data:
             return None
         state_data = self.storage.get(
-            StateStorageKey.symbol, self.name, OrderSchema.margin
+            f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin}"
         ).get(data[0]['symbol'].lower(), dict())
         return utils.load_order_data(data[0], state_data)
 
@@ -287,7 +287,7 @@ class BitmexRestApi(StockRestApi):
                                      reverse=True,
                                      **options)
         state_data = self.storage.get(
-            StateStorageKey.symbol, self.name, OrderSchema.margin
+            f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin}"
         ).get(symbol.lower(), dict())
         return [utils.load_order_data(data, state_data) for data in orders]
 
@@ -297,7 +297,7 @@ class BitmexRestApi(StockRestApi):
                                      reverse=True,
                                      **self._api_kwargs(kwargs))
         state_data = self.storage.get(
-            StateStorageKey.symbol, self.name, schema
+            f"{StateStorageKey.symbol}.{self.name}.{schema}"
         ).get(symbol.lower(), dict())
         return [utils.load_trade_data(data, state_data) for data in trades]
 
@@ -329,7 +329,7 @@ class BitmexRestApi(StockRestApi):
             self._handler.OrderBook.OrderBook_getL2, symbol=utils.symbol2stock(symbol),
             depth=_depth,
         )
-        state_data = self.storage.get(StateStorageKey.symbol, self.name, schema).get(symbol.lower(), dict())
+        state_data = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}").get(symbol.lower(), dict())
         splitted_ob = utils.split_order_book(ob_items, state_data)
         filtered_ob = utils.filter_order_book(splitted_ob, min_volume_buy, min_volume_sell)
         data_ob = utils.slice_order_book(filtered_ob, depth, offset)
@@ -353,14 +353,14 @@ class BitmexRestApi(StockRestApi):
 
     def get_symbols_currencies(self, schema: str) -> dict:
         instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive)
-        return utils.load_symbols_currencies(instruments, self.storage.get(StateStorageKey.symbol, self.name, schema))
+        return utils.load_symbols_currencies(instruments, self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}"))
 
     def get_wallet_summary(self, schema: str, **kwargs) -> dict:
         if schema == OrderSchema.margin:
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
             balances = [utils.load_wallet_detail_data(data)]
             fields = ('balance', 'unrealised_pnl', 'margin_balance')
-            exchange_rates = self.storage.get(StateStorageKey.exchange_rates, self.name, schema)
+            exchange_rates = self.storage.get(f"{StateStorageKey.exchange_rates}.{self.name}.{schema}")
             assets = kwargs.get('assets', ('btc', 'usd'))
             return load_wallet_summary(self.driver, schema, balances, fields, exchange_rates, assets)
         raise ConnectorError(f"Invalid schema {schema}.")

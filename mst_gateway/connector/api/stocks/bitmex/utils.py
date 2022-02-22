@@ -19,23 +19,23 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     symbol_time = to_date(raw_data.get('timestamp'))
     price = to_float(raw_data.get('lastPrice'))
     price24 = to_float(raw_data.get('prevPrice24h'))
-    face_price, _reversed = BitmexFinFactory.calc_face_price(symbol, price)
     data = {
         'time': symbol_time,
         'symbol': symbol,
         'price': price,
         'price24': price24,
         'delta': delta(price, price24),
-        'face_price': face_price,
         'bid_price': to_float(raw_data.get('bidPrice')),
         'ask_price': to_float(raw_data.get('askPrice')),
-        'reversed': _reversed,
         'volume24': raw_data.get('volume24h'),
         'mark_price': raw_data.get('markPrice'),
         'high_price': to_float(raw_data.get('highPrice')),
         'low_price': to_float(raw_data.get('lowPrice'))
     }
     if isinstance(state_data, dict):
+        face_price = None
+        if face_price_data := state_data.get('extra', {}).get('face_price_data', {}):
+            face_price = BitmexFinFactory.calc_face_price(price, **face_price_data)
         data.update({
             'expiration': state_data.get('expiration'),
             'expiration_date': state_data.get('expiration_date'),
@@ -44,9 +44,10 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
             'volume_tick': state_data.get('volume_tick'),
             'system_symbol': state_data.get('system_symbol'),
             'schema': state_data.get('schema'),
-            'symbol_schema': state_data.get('symbol_schema'),
             'created': to_date(state_data.get('created')),
-            'max_leverage': state_data.get('max_leverage')
+            'max_leverage': state_data.get('max_leverage'),
+            'wallet_asset': state_data.get('wallet_asset'),
+            'face_price': face_price,
         })
     return data
 
@@ -56,33 +57,33 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     symbol_time = to_iso_datetime(raw_data.get('timestamp'))
     price = to_float(raw_data.get('lastPrice'))
     price24 = to_float(raw_data.get('prevPrice24h'))
-    face_price, _reversed = BitmexFinFactory.calc_face_price(symbol, price)
     data = {
         'tm': symbol_time,
         's': symbol,
         'p': price,
         'p24': price24,
         'dt': delta(price, price24),
-        'fp': face_price,
         'bip': to_float(raw_data.get('bidPrice')),
         'asp': to_float(raw_data.get('askPrice')),
-        're': _reversed,
         'v24': raw_data.get('volume24h'),
         'mp': to_float(raw_data.get('markPrice')),
         'hip': to_float(raw_data.get("highPrice")),
         'lop': to_float(raw_data.get('lowPrice'))
     }
     if isinstance(state_data, dict):
+        face_price_data = state_data.get('extra', {}).get('face_price_data', {})
+        face_price = BitmexFinFactory.calc_face_price(price, **face_price_data)
         data.update({
+            'fp': face_price,
             'exp': state_data.get('expiration'),
             'expd': state_data.get('expiration_date'),
             'pa': state_data.get('pair'),
             'tck': state_data.get('tick'),
             'vt': state_data.get('volume_tick'),
             'ss': state_data.get('system_symbol'),
-            'ssch': state_data.get('symbol_schema'),
             'crt': to_iso_datetime(state_data.get('created')),
-            'mlvr': state_data.get('max_leverage')
+            'mlvr': state_data.get('max_leverage'),
+            'wa': state_data.get('wallet_asset'),
         })
     return data
 
@@ -119,21 +120,31 @@ def load_funding_rates(funding_rates: list) -> list:
 def load_exchange_symbol_info(raw_data: list) -> list:
     symbol_list = []
     for d in raw_data:
+        wallet_asset = d.get('settlCurrency').upper()
+        # TODO: support bitmex USDT
+        if wallet_asset == 'USDT':
+            continue
+
         symbol = d.get('symbol')
         base_asset = d.get('underlying')
         quote_currency = d.get('quoteCurrency')
         quote_asset, expiration = _quote_asset(symbol, base_asset, quote_currency)
         system_base_asset = to_system_asset(base_asset)
         system_quote_asset = to_system_asset(quote_asset)
-        system_symbol = f"{system_base_asset}{expiration or system_quote_asset}"
+        system_symbol = symbol.lower().replace('xbt', 'btc')
         tick = to_float(d.get('tickSize'))
         volume_tick = to_float(d.get('lotSize'))
         max_leverage = 100 if d.get('initMargin', 0) <= 0 else 1 / d['initMargin']
-
+        face_price_data = {
+            'is_quanto': d.get('isQuanto'),
+            'is_inverse': d.get('isInverse'),
+            'multiplier': d.get('multiplier'),
+            'underlying_multiplier': d.get('underlyingToPositionMultiplier')
+        }
         symbol_list.append(
             {
                 'symbol': symbol,
-                'system_symbol': system_symbol.lower(),
+                'system_symbol': system_symbol,
                 'base_asset': base_asset,
                 'quote_asset': quote_asset,
                 'system_base_asset': system_base_asset,
@@ -143,16 +154,17 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                 'pair': [base_asset.upper(), quote_asset.upper()],
                 'system_pair': [system_base_asset.upper(), system_quote_asset.upper()],
                 'schema': OrderSchema.margin,
-                'symbol_schema': OrderSchema.margin,
                 'tick': tick,
                 'volume_tick': volume_tick,
-                'max_leverage': max_leverage
+                'max_leverage': max_leverage,
+                'wallet_asset': wallet_asset,
+                'extra': {'face_price_data': face_price_data}
             }
         )
     return symbol_list
 
 
-def _quote_asset(symbol, base_asset, quote_currency):
+def _quote_asset(symbol, base_asset, quote_currency) -> tuple:
     quote_asset = symbol[len(base_asset):].upper()
     if re.search(r'\d{2}$', symbol):
         return quote_currency, quote_asset[-3:]

@@ -1,4 +1,3 @@
-import re
 from typing import Optional, Tuple, Union
 from mst_gateway.calculator import FinFactory
 from mst_gateway.connector import api
@@ -7,38 +6,34 @@ from mst_gateway.connector import api
 class BinanceFinFactory(FinFactory):
 
     @classmethod
-    def get_contract_multiplier(cls, symbol: str) -> int:
-        _symbol = symbol.lower()
-        if re.match(r"^btcusd", _symbol):
-            return 100
-        return 10
-
-    @classmethod
     def _is_margin_coin(cls, **kwargs) -> bool:
         return kwargs.get('schema', '').lower() == api.OrderSchema.margin_coin
 
     @classmethod
-    def calc_face_price(cls, symbol: str, price: float, **kwargs) -> Tuple[Optional[float], Optional[bool]]:
+    def calc_face_price(cls, price: float, **kwargs) -> Optional[float]:
         if cls._is_margin_coin(**kwargs):
-            try:
-                return cls.get_contract_multiplier(symbol) / price, True
-            except (TypeError, ZeroDivisionError):
-                return None, None
-        return price, False
+            if contract_size := kwargs.get('contract_size'):
+                try:
+                    return contract_size / price
+                except (TypeError, ZeroDivisionError):
+                    return None
+        return price
 
     @classmethod
-    def calc_price(cls, symbol: str, face_price: float, **kwargs) -> Optional[float]:
+    def calc_price(cls, face_price: float, **kwargs) -> Optional[float]:
         if cls._is_margin_coin(**kwargs):
-            try:
-                return cls.get_contract_multiplier(symbol) / face_price
-            except (TypeError, ZeroDivisionError):
-                return None
+            if contract_size := kwargs.get('contract_size'):
+                try:
+                    return contract_size / face_price
+                except (TypeError, ZeroDivisionError):
+                    return None
         return face_price
 
     @classmethod
     def calc_liquidation_price(cls, side: int, leverage_type: str, entry_price: float, **kwargs) -> Optional[float]:
         volume = kwargs.pop('volume', None)
         mark_price = kwargs.pop('mark_price', None)
+        contract_size = kwargs.get('contract_size')
         notional_value = cls.calc_notional_value(volume, mark_price, **kwargs)
         wallet_balance = kwargs.get('wallet_balance')
         maint_margin_sum = kwargs.get('maint_margin_sum')
@@ -53,7 +48,7 @@ class BinanceFinFactory(FinFactory):
             if cls._is_margin_coin(**kwargs):
                 liquidation_price = (quantity * maint_margin_rate + direction * quantity) / (
                     (wallet_balance - maint_margin_sum + unrealised_pnl_sum + maint_amount) / (
-                        cls.get_contract_multiplier(kwargs.get('symbol')) + direction *
+                        contract_size + direction *
                         quantity / entry_price
                     )
                 )
@@ -107,7 +102,8 @@ class BinanceFinFactory(FinFactory):
         try:
             quantity = abs(volume)
             if cls._is_margin_coin(**kwargs):
-                return quantity * cls.get_contract_multiplier(kwargs.get('symbol')) / mark_price
+                contract_size = kwargs.get('contract_size')
+                return quantity * contract_size / mark_price
             return quantity * mark_price
         except (TypeError, ZeroDivisionError):
             return None
@@ -117,16 +113,15 @@ class BinanceFinFactory(FinFactory):
                           **kwargs) -> Optional[float]:
         try:
             if cls._is_margin_coin(**kwargs):
-                return abs(volume) * cls.get_contract_multiplier(
-                    kwargs.get('symbol')
-                ) * (maint_margin_rate / mark_price) - maint_amount
+                contract_size = kwargs.get('contract_size')
+                return abs(volume) * contract_size * (maint_margin_rate / mark_price) - maint_amount
             return cls.calc_notional_value(volume, mark_price) * maint_margin_rate - maint_amount
         except (TypeError, ZeroDivisionError):
             return None
 
     @classmethod
     def calc_positions_sum(
-        cls, schema: str, leverage_type: str, positions_state: dict, leverage_brackets: dict
+        cls, schema: str, leverage_type: str, positions_state: dict, leverage_brackets: dict, contract_size: float
     ) -> Tuple[float, float]:
         maint_margin_sum = 0.0
         unrealised_pnl_sum = 0.0
@@ -146,12 +141,12 @@ class BinanceFinFactory(FinFactory):
                 )
                 if maint_margin := cls.calc_maint_margin(
                     volume, mark_price, maint_amount, maint_margin_rate,
-                    schema=schema, symbol=symbol,
+                    schema=schema, symbol=symbol, contract_size=contract_size
                 ):
                     maint_margin_sum += maint_margin
                 if unrealized_pnl := cls.calc_unrealised_pnl_by_side(
                     position_data['entry_price'], mark_price, volume, position_data['side'],
-                    schema=schema, symbol=symbol,
+                    schema=schema, symbol=symbol, contract_size=contract_size
                 ):
                     unrealised_pnl_sum += unrealized_pnl
         return maint_margin_sum, unrealised_pnl_sum
@@ -161,9 +156,8 @@ class BinanceFinFactory(FinFactory):
                                     **kwargs) -> Optional[float]:
         if cls._is_margin_coin(**kwargs):
             try:
-                return abs(volume) * cls.direction_by_side(side) * cls.get_contract_multiplier(
-                    kwargs.get('symbol')
-                ) * (1 / entry_price - 1 / mark_price)
+                contract_size = kwargs.get('contract_size')
+                return abs(volume) * cls.direction_by_side(side) * contract_size * (1 / entry_price - 1 / mark_price)
             except (TypeError, ZeroDivisionError):
                 return None
         return super().calc_unrealised_pnl_by_side(entry_price, mark_price, volume, side)
@@ -172,10 +166,9 @@ class BinanceFinFactory(FinFactory):
     def calc_unrealised_pnl_by_direction(cls, entry_price: float, mark_price: float, volume: float, direction: int,
                                          **kwargs) -> Optional[float]:
         if cls._is_margin_coin(**kwargs):
+            contract_size = kwargs.get('contract_size')
             try:
-                return abs(volume) * direction * cls.get_contract_multiplier(
-                    kwargs.get('symbol')
-                ) * (1 / entry_price - 1 / mark_price)
+                return abs(volume) * direction * contract_size * (1 / entry_price - 1 / mark_price)
             except (TypeError, ZeroDivisionError):
                 return None
         return super().calc_unrealised_pnl_by_direction(entry_price, mark_price, volume, direction)
@@ -183,11 +176,11 @@ class BinanceFinFactory(FinFactory):
     @classmethod
     def calc_mark_price(cls, volume: float, entry_price: float, unrealised_pnl: float, **kwargs) -> Optional[float]:
         if cls._is_margin_coin(**kwargs):
+            contract_size = kwargs.get('contract_size')
             try:
                 return 1 / (1 / entry_price - (
                     unrealised_pnl / (
-                        abs(volume) * cls.direction_by_side(kwargs.get('side')) *
-                        cls.get_contract_multiplier(kwargs.get('symbol'))
+                        abs(volume) * cls.direction_by_side(kwargs.get('side')) * contract_size
                     )
                 ))
             except (TypeError, ZeroDivisionError):

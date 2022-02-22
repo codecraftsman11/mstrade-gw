@@ -20,7 +20,6 @@ DEFAULT_SYMBOL_DATA = {
                             "fp": 2.1426122728830992e-05,
                             "bip": 46671.5,
                             "asp": 46672.0,
-                            "re": True,
                             "v24": 3513000,
                             "mp": 46704.01,
                             "hip": 47251.0,
@@ -31,9 +30,9 @@ DEFAULT_SYMBOL_DATA = {
                             "tck": 0.5,
                             "vt": 100.0,
                             "ss": "btcusd",
-                            "ssch": OrderSchema.margin,
                             "crt": "2020-07-01T15:10:16.748936",
                             "mlvr": 100.0,
+                            "wa": "XBT",
                         }
                     ],
                 }
@@ -58,7 +57,6 @@ DEFAULT_SYMBOL_DATA = {
                             "fp": 2.1417174432177163e-05,
                             "bip": 46671.5,
                             "asp": 46672.0,
-                            "re": True,
                             "v24": 3513000,
                             "mp": 46704.01,
                             "hip": 47251.0,
@@ -69,9 +67,9 @@ DEFAULT_SYMBOL_DATA = {
                             "tck": 0.5,
                             "vt": 100.0,
                             "ss": "btcusd",
-                            "ssch": OrderSchema.margin,
                             "crt": "2020-07-01T15:10:16.748936",
                             "mlvr": 100.0,
+                            "wa": "XBT",
                         }
                     ],
                 }
@@ -95,7 +93,6 @@ DEFAULT_SYMBOL_DATA = {
                             "fp": 2.1417174432177163e-05,
                             "bip": 46671.5,
                             "asp": 46672.0,
-                            "re": True,
                             "v24": 3513000,
                             "mp": 46599.19,
                             "hip": 47251.0,
@@ -106,14 +103,13 @@ DEFAULT_SYMBOL_DATA = {
                             "tck": 0.5,
                             "vt": 100.0,
                             "ss": "btcusd",
-                            "ssch": OrderSchema.margin,
                             "crt": "2020-07-01T15:10:16.748936",
                             "mlvr": 100.0,
+                            "wa": "XBT",
                         }
                     ],
                 }
             }
-
         }
     ]
 }

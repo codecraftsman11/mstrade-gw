@@ -673,6 +673,9 @@ class AsyncClient(BaseAsyncClient):
         params['isIsolated'] = 'TRUE'
         return await self.repay_margin_loan(**params)
 
+    async def futures_loan_wallet(self, **params):
+        return await self._request_margin_v2_api('get', 'futures/loan/wallet', signed=True, data=params)
+
 
 def _method_map(func_name: str):
     hash_map = {

@@ -89,9 +89,12 @@ class BinanceMarginPositionSerializer(BinancePositionSerializer):
                         side = utils.load_position_side_by_volume(volume)
                         entry_price = utils.to_float(position.get('ep'))
                         unrealised_pnl = utils.to_float(position.get('up'))
+                        state_data = self._wss_api.get_state_data(symbol)
+                        contract_size = state_data.get(
+                            'extra', {}).get('face_price_data', {}).get('contract_size')
                         mark_price = BinanceFinFactory.calc_mark_price(
                             volume, entry_price, unrealised_pnl,
-                            schema=self._wss_api.schema, symbol=symbol, side=side,
+                            schema=self._wss_api.schema, symbol=symbol, side=side, contract_size=contract_size
                         )
                         self.update_positions_state(
                             symbol,
@@ -169,12 +172,14 @@ class BinanceMarginPositionSerializer(BinancePositionSerializer):
         if self._wss_api.register_state:
             if (state_data := self._wss_api.get_state_data(symbol)) is None:
                 return None
+        contract_size = state_data.get('extra', {}).get('face_price_data', {}).get('contract_size')
         symbol_position_state, other_positions_state = self.split_positions_state(self.position_state, symbol)
         maint_margin_sum, unrealised_pnl_sum = BinanceFinFactory.calc_positions_sum(
             self._wss_api.schema,
             symbol_position_state['leverage_type'],
             other_positions_state,
             self.leverage_brackets,
+            contract_size
         )
         entry_price = symbol_position_state['entry_price']
         mark_price = symbol_position_state['mark_price']
@@ -195,11 +200,11 @@ class BinanceMarginPositionSerializer(BinancePositionSerializer):
             leverage_brackets=self.leverage_brackets.get(symbol, {}),
             maint_margin_sum=maint_margin_sum,
             unrealised_pnl_sum=unrealised_pnl_sum,
-            schema=self._wss_api.schema, symbol=symbol
+            schema=self._wss_api.schema, symbol=symbol, contract_size=contract_size
         )
         symbol_position_state['unrealised_pnl'] = BinanceFinFactory.calc_unrealised_pnl_by_side(
             entry_price, mark_price, volume, side,
-            schema=self._wss_api.schema, symbol=symbol
+            schema=self._wss_api.schema, symbol=symbol, contract_size=contract_size
         )
         return utils.load_margin_position_ws_data(item, symbol_position_state, state_data, self.exchange_rates,
                                                   self._wss_api.schema)

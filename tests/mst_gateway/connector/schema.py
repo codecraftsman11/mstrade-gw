@@ -14,6 +14,13 @@ from .validators import (
 )
 from mst_gateway.connector.api.types import OrderSchema
 
+
+TOTAL_CROSS_AMOUNT_FIELDS = {
+    'btc': Use(float_valid),
+    'usd': Use(float_valid),
+}
+
+
 QUOTE_BIN_FIELDS = {
     'time': Use(datetime_valid),
     'volume': Or(int, str),
@@ -36,7 +43,6 @@ SYMBOL_FIELDS = {
     'face_price': Use(float_valid),
     'bid_price': Use(float_valid),
     'ask_price': Use(float_valid),
-    'reversed': bool,
     'volume24': Or(int, float),
     'mark_price': Use(float_valid),
     'high_price': Use(float_valid),
@@ -47,9 +53,9 @@ SYMBOL_FIELDS = {
     'tick': Or(None, float),
     'volume_tick': Or(None, float),
     'system_symbol': Or(None, str),
-    'symbol_schema': Or(None, Use(schema_valid)),
     'created': Or(None, Use(datetime_valid)),
     'max_leverage': Or(None, float),
+    'wallet_asset': Or(None, str),
 }
 
 ORDER_FIELDS = {
@@ -87,13 +93,7 @@ TRADE_FIELDS = {
     'symbol': Or(None, str),
     'system_symbol': Or(None, str),
 }
-WALLET_FIELDS = {
-    'balances': list,
-    'total_balance': dict,
-    'total_unrealised_pnl': dict,
-    'total_margin_balance': dict,
-    'extra_data': Or(None, dict)
-}
+
 WALLET_BALANCE_FIELDS = {
     'currency': str,
     'balance': Use(float_valid),
@@ -106,40 +106,48 @@ WALLET_BALANCE_FIELDS = {
     'type': str,
 }
 
+WALLET_FIELDS = {
+    'balances': [
+        WALLET_BALANCE_FIELDS
+    ],
+    'total_balance': TOTAL_CROSS_AMOUNT_FIELDS,
+    'total_unrealised_pnl': TOTAL_CROSS_AMOUNT_FIELDS,
+    'total_margin_balance': TOTAL_CROSS_AMOUNT_FIELDS,
+    'extra_data': Or(None, dict)
+}
+
 WALLET_EXTRA_FIELDS = {
     OrderSchema.margin_cross: {
-        'balances': list,
+        'balances': [
+            {
+                'currency': str,
+                'borrowed': Use(float_valid),
+                'interest': Use(float_valid),
+            }
+        ],
         'trade_enabled': bool,
         'transfer_enabled': bool,
         'borrow_enabled': bool,
         'margin_level': Use(float_valid),
-        'total_borrowed': dict,
-        'total_interest': dict,
+        'total_borrowed': TOTAL_CROSS_AMOUNT_FIELDS,
+        'total_interest': TOTAL_CROSS_AMOUNT_FIELDS,
     },
     OrderSchema.margin: {
-        'balances': list,
+        'balances': [
+            {
+                'currency': str,
+                'borrowed': Use(float_valid),
+                'interest': Use(float_valid),
+            }
+        ],
         'trade_enabled': bool,
-        'total_borrowed': dict,
-        'total_interest': dict,
+        'total_borrowed': TOTAL_CROSS_AMOUNT_FIELDS,
+        'total_interest': TOTAL_CROSS_AMOUNT_FIELDS,
     },
     OrderSchema.margin_coin: {
         'trade_enabled': bool
     }
 }
-
-WALLET_EXTRA_BALANCE_FIELDS = {
-    OrderSchema.margin_cross: {
-        'currency': str,
-        'borrowed': Use(float_valid),
-        'interest': Use(float_valid),
-    },
-    OrderSchema.margin: {
-        'currency': str,
-        'borrowed': Use(float_valid),
-        'interest': Use(float_valid),
-    }
-}
-
 
 WALLET_EXTRA_DATA_FIELDS = {
     OrderSchema.margin_cross: {
@@ -177,7 +185,6 @@ BASE_EXCHANGE_SYMBOL_INFO_FIELDS = {
     'symbol': str,
     'system_symbol': str,
     'schema': Use(schema_valid),
-    'symbol_schema': Use(schema_valid),
     'base_asset': str,
     'quote_asset': str,
     'system_base_asset': str,
@@ -189,18 +196,38 @@ BASE_EXCHANGE_SYMBOL_INFO_FIELDS = {
     'expiration': Or(None, str),
     'expiration_date': Or(None, Use(datetime_valid)),
     'max_leverage': Or(None, float),
+    'wallet_asset': Or(None, str),
 }
+
 EXCHANGE_SYMBOL_INFO_FIELDS = {
     OrderSchema.margin: {
-        Optional('leverage_brackets'): list,
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
+        'extra': {
+            Optional('leverage_brackets'): [
+                {
+                    'bracket': int,
+                    'initialLeverage': int,
+                    'maintMarginRatio': Use(float_valid),
+                    'cum': Use(float_valid),
+                    'notionalCap': int,
+                    'notionalFloor': int
+                }
+            ],
+            Optional('face_price_data'): {
+                'is_quanto': bool,
+                'is_inverse': bool,
+                'multiplier': int,
+                'underlying_multiplier': Or(None, int),
+            }
+        }
     },
     OrderSchema.exchange: {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
+        'extra': dict
     },
     OrderSchema.margin_coin: {
-        'leverage_brackets': list,
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
+        'extra': dict
     },
 }
 BASE_LEVERAGE_BRACKETS_FIELDS = {
@@ -208,18 +235,6 @@ BASE_LEVERAGE_BRACKETS_FIELDS = {
     'initialLeverage': int,
     'maintMarginRatio': Use(float_valid),
     'cum': Use(float_valid),
-}
-LEVERAGE_BRACKET_FIELDS = {
-    OrderSchema.margin: {
-        'notionalCap': int,
-        'notionalFloor': int,
-        **BASE_LEVERAGE_BRACKETS_FIELDS,
-    },
-    OrderSchema.margin_coin: {
-        'qtyCap': int,
-        'qtyFloor': int,
-        **BASE_LEVERAGE_BRACKETS_FIELDS,
-    },
 }
 
 CURRENCY_EXCHANGE_SYMBOL_FIELDS = {
@@ -234,13 +249,9 @@ SYMBOL_CURRENCY_FIELDS = {
 }
 
 WALLET_SUMMARY_FIELDS = {
-    'total_balance': dict,
-    'total_unrealised_pnl': dict,
-    'total_margin_balance': dict,
-}
-TOTAL_CROSS_AMOUNT_FIELDS = {
-    'btc': Use(float_valid),
-    'usd': Use(float_valid),
+    'total_balance': TOTAL_CROSS_AMOUNT_FIELDS,
+    'total_unrealised_pnl': TOTAL_CROSS_AMOUNT_FIELDS,
+    'total_margin_balance': TOTAL_CROSS_AMOUNT_FIELDS,
 }
 
 ALT_CURRENCY_COMMISSION_FIELDS = {
@@ -292,6 +303,26 @@ WS_MESSAGE_HEADER_FIELDS = {
     'act': str,
     'd': list,
 }
+WS_WALLET_MESSAGE_HEADER_FIELDS = {
+    'acc': str,
+    'tb': str,
+    'sch': Use(schema_valid),
+    'act': str,
+    'd': dict,
+    'ex': Or(None, dict),
+}
+
+WS_WALLET_BALANCE_FIELDS = {
+    'cur': str,
+    'bl': Use(float_valid),
+    'wbl': Use(float_valid),
+    'upnl': Use(float_valid),
+    'mbl': Use(float_valid),
+    'mm': Use(float_valid),
+    'im': Use(float_valid),
+    'am': Use(float_valid),
+    't': str
+}
 
 WS_MESSAGE_DATA_FIELDS = {
     'order': {
@@ -328,7 +359,11 @@ WS_MESSAGE_DATA_FIELDS = {
         'vl': float,
         'ep': Or(None, float),
         'mp': Or(None, float),
-        'upnl': dict,
+        'upnl': {
+            'base': Or(None, float),
+            'usd': Or(None, float),
+            'btc': Or(None, float),
+        },
         'lvrp': Use(leverage_type_valid),
         'lvr': Use(float_valid),
         'lp': Or(None, float),
@@ -349,14 +384,12 @@ WS_MESSAGE_DATA_FIELDS = {
         'tm': Use(iso_datetime_valid),
         's': str,
         'ss': Or(None, str),
-        'ssch': Or(None, Use(schema_valid)),
         'p': float,
         'p24': float,
         'dt': float,
-        'fp': float,
+        'fp': Or(None, float),
         'bip': float,
         'asp': float,
-        're': bool,
         'v24': Use(float_valid),
         'mp': float,
         'hip': float,
@@ -368,6 +401,7 @@ WS_MESSAGE_DATA_FIELDS = {
         'vt': Use(float_valid),
         'crt': Or(None, Use(datetime_valid)),
         'mlvr': Use(float_valid),
+        'wa': Or(None, str),
     },
     'trade': {
         'tm': Use(iso_datetime_valid),
@@ -378,50 +412,12 @@ WS_MESSAGE_DATA_FIELDS = {
         'p': Use(float_valid)
     },
     'wallet': {
-        'bls': list,
-        'tbl': dict,
-        'tupnl': dict,
-        'tmbl': dict,
-        'ex': Or(None, dict)
-    }
-}
-
-WS_POSITION_CROSS_AMOUNT_FIELDS = {
-    'base': Or(None, float),
-    'usd': Or(None, float),
-    'btc': Or(None, float),
-}
-
-WS_WALLET_BALANCE_FIELDS = {
-    'cur': str,
-    'bl': Use(float_valid),
-    'wbl': Use(float_valid),
-    'upnl': Use(float_valid),
-    'mbl': Use(float_valid),
-    'mm': Use(float_valid),
-    'im': Use(float_valid),
-    'am': Use(float_valid),
-    't': str
-}
-
-WS_WALLET_EXTRA_FIELDS = {
-    OrderSchema.margin_cross: {
-        'bls': list,
-        'tre': bool,
-        'trse': bool,
-        'bore': bool,
-        'mlvl': Use(float_valid),
-        'tbor': dict,
-        'tist': dict
-    },
-    OrderSchema.margin: {
-        'bls': list,
-        'tre': bool,
-        'tbor': dict,
-        'tist': dict
-    },
-    OrderSchema.margin_coin: {
-        'tre': bool
+        'bls': [
+            WS_WALLET_BALANCE_FIELDS
+        ],
+        'tbl': TOTAL_CROSS_AMOUNT_FIELDS,
+        'tupnl': TOTAL_CROSS_AMOUNT_FIELDS,
+        'tmbl': TOTAL_CROSS_AMOUNT_FIELDS,
     }
 }
 
@@ -429,4 +425,28 @@ WS_WALLET_EXTRA_BALANCE_FIELDS = {
     'cur': str,
     'bor': Use(float_valid),
     'ist': Use(float_valid)
+}
+WS_WALLET_EXTRA_FIELDS = {
+    OrderSchema.margin_cross: {
+        'bls': [
+            WS_WALLET_EXTRA_BALANCE_FIELDS
+        ],
+        'tre': bool,
+        'trse': bool,
+        'bore': bool,
+        'mlvl': Use(float_valid),
+        'tbor': TOTAL_CROSS_AMOUNT_FIELDS,
+        'tist': TOTAL_CROSS_AMOUNT_FIELDS
+    },
+    OrderSchema.margin: {
+        'bls': [
+            WS_WALLET_EXTRA_BALANCE_FIELDS
+        ],
+        'tre': bool,
+        'tbor': TOTAL_CROSS_AMOUNT_FIELDS,
+        'tist': TOTAL_CROSS_AMOUNT_FIELDS
+    },
+    OrderSchema.margin_coin: {
+        'tre': bool
+    }
 }

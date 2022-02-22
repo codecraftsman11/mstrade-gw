@@ -302,7 +302,6 @@ DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT = {
                         'fp': 50244.8,
                         'bip': 50245.94,
                         'asp': 50245.97,
-                        're': False,
                         'v24': 1024.217484,
                         'mp': 50244.8,
                         'hip': 120000.0,
@@ -313,9 +312,9 @@ DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT = {
                         'tck': 0.01,
                         'vt': 1e-06,
                         'ss': 'btcusd',
-                        'ssch': 'exchange',
                         'crt': '2021-09-06T09:51:21.271836',
                         'mlvr': None,
+                        'wa': None,
                     }
                 ],
             }
@@ -338,7 +337,6 @@ DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT = {
                         'fp': 49174.26,
                         'bip': 0.0,
                         'asp': 0.0,
-                        're': False,
                         'v24': 1941684.425,
                         'mp': 0.0,
                         'hip': 53900.0,
@@ -349,9 +347,9 @@ DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT = {
                         'tck': 0.01,
                         'vt': 0.001,
                         'ss': 'btcusd',
-                        'ssch': OrderSchema.margin,
                         'crt': '2021-09-06T09:51:21.272746',
                         'mlvr': 125.0,
+                        'wa': 'USDT',
                     }
                 ],
             }
@@ -374,7 +372,6 @@ DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT = {
                         'fp': 0.0020319049718682757,
                         'bip': 0.0,
                         'asp': 0.0,
-                        're': True,
                         'v24': 342444.0,
                         'mp': 0.0,
                         'hip': 55487.2,
@@ -385,9 +382,9 @@ DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT = {
                         'tck': 0.1,
                         'vt': 1.0,
                         'ss': 'btcusd',
-                        'ssch': 'margin_coin',
                         'crt': '2021-09-06T09:51:21.288366',
                         'mlvr': 125.0,
+                        'wa': 'BTC',
                     }
                 ],
             }
@@ -665,7 +662,6 @@ DEFAULT_SYMBOL_GET_DATA_RESULT = {
                         'fp': 49155.42,
                         'bip': 49152.96,
                         'asp': 49152.97,
-                        're': False,
                         'v24': 1038.524591,
                         'mp': 49155.42,
                         'hip': 120000.0,
@@ -676,9 +672,9 @@ DEFAULT_SYMBOL_GET_DATA_RESULT = {
                         'tck': 0.01,
                         'vt': 1e-06,
                         'ss': 'btcusd',
-                        'ssch': 'exchange',
                         'crt': '2021-09-06T09:51:21.271836',
                         'mlvr': None,
+                        'wa': None,
                     }
                 ],
             }
@@ -701,7 +697,6 @@ DEFAULT_SYMBOL_GET_DATA_RESULT = {
                         'fp': 49173.66,
                         'bip': 0.0,
                         'asp': 0.0,
-                        're': False,
                         'v24': 1941684.405,
                         'mp': 0.0,
                         'hip': 53900.0,
@@ -712,9 +707,9 @@ DEFAULT_SYMBOL_GET_DATA_RESULT = {
                         'tck': 0.01,
                         'vt': 0.001,
                         'ss': 'btcusd',
-                        'ssch': OrderSchema.margin,
                         'crt': '2021-09-06T09:51:21.272746',
                         'mlvr': 125.0,
+                        'wa': 'USDT',
                     }
                 ],
             }
@@ -737,7 +732,6 @@ DEFAULT_SYMBOL_GET_DATA_RESULT = {
                         'fp': 0.00203190084323885,
                         'bip': 0.0,
                         'asp': 0.0,
-                        're': True,
                         'v24': 342441.0,
                         'mp': 0.0,
                         'hip': 55487.2,
@@ -748,9 +742,9 @@ DEFAULT_SYMBOL_GET_DATA_RESULT = {
                         'tck': 0.1,
                         'vt': 1.0,
                         'ss': 'btcusd',
-                        'ssch': 'margin_coin',
                         'crt': '2021-09-06T09:51:21.288366',
                         'mlvr': 125.0,
+                        'wa': 'BTC',
                     }
                 ],
             }

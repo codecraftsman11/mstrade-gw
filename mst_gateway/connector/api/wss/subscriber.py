@@ -1,7 +1,6 @@
 from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from typing import TYPE_CHECKING
-from mst_gateway.exceptions import QueryError
 
 
 if TYPE_CHECKING:
@@ -15,6 +14,7 @@ class Subscriber:
     general_subscribe_available = True
     detail_subscribe_available = True
     is_close_connection = True
+    rest_client = None
 
     def __init__(self):
         pass
