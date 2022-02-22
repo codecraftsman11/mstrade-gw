@@ -557,7 +557,7 @@ class BinanceRestApi(StockRestApi):
             self._handler.get_isolated_margin_assets_balance, utils.load_margin_cross_asset_balance),
             OrderSchema.margin: (self._handler.get_futures_assets_balance, utils.load_margin_cross_asset_balance),
             OrderSchema.margin_coin: (
-                self._handler.get_margin_coin_assets_balance, utils.load_margin_coin_asset_balance
+                self._handler.get_futures_coin_assets_balance, utils.load_margin_coin_asset_balance
             ),
         }
         validate_schema(schema, schema_handlers)
@@ -695,7 +695,7 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.exchange: self._handler.get_trade_level,
             OrderSchema.margin_cross: self._handler.get_trade_level,
             OrderSchema.margin: self._handler.futures_trade_level,
-            OrderSchema.margin_coin: self._handler.margin_coin_trade_level,
+            OrderSchema.margin_coin: self._handler.futures_coin_trade_level,
         }
         validate_schema(schema, schema_handlers)
         data = self._binance_api(schema_handlers[schema.lower()])
@@ -763,7 +763,7 @@ class BinanceRestApi(StockRestApi):
     def get_leverage(self, schema: str, symbol: str, **kwargs) -> tuple:
         schema_handlers = {
             OrderSchema.margin: self._handler.futures_position_information,
-            OrderSchema.margin_coin: self._handler.margin_coin_position_information,
+            OrderSchema.margin_coin: self._handler.futures_coin_position_information,
         }
         validate_schema(schema, schema_handlers)
         data = self._binance_api(schema_handlers[schema.lower()], symbol=utils.symbol2stock(symbol))
@@ -804,7 +804,7 @@ class BinanceRestApi(StockRestApi):
             schema_handlers = {
                 OrderSchema.margin: (self._handler.futures_position_information, utils.load_margin_position),
                 OrderSchema.margin_coin: (
-                    self._handler.margin_coin_position_information, utils.load_margin_coin_position
+                    self._handler.futures_coin_position_information, utils.load_margin_coin_position
                 )
             }
             response = self._binance_api(schema_handlers[schema][0], symbol=symbol.upper())
@@ -832,7 +832,7 @@ class BinanceRestApi(StockRestApi):
             schema_handlers = {
                 OrderSchema.margin: (self._handler.futures_position_information, utils.load_margin_position_list),
                 OrderSchema.margin_coin: (
-                    self._handler.margin_coin_position_information, utils.load_margin_coin_position_list
+                    self._handler.futures_coin_position_information, utils.load_margin_coin_position_list
                 )
             }
             data = self._binance_api(schema_handlers[schema][0])

@@ -2,7 +2,8 @@ import time
 from typing import Dict
 from binance.client import AsyncClient as BaseAsyncClient, Client as BaseClient
 from binance.exceptions import BinanceRequestException
-from mst_gateway.connector.api.types.order import OrderSchema
+
+from mst_gateway.connector.api import OrderSchema
 from mst_gateway.connector.api.stocks.binance import utils
 
 
@@ -106,11 +107,11 @@ class Client(BaseClient):
         params['type'] = 2
         return self._request_margin_api('post', 'futures/transfer', True, data=params)
 
-    def transfer_spot_to_margin_coin(self, **params):
+    def transfer_spot_to_futures_coin(self, **params):
         params['type'] = 3
         return self._request_margin_api('post', 'futures/transfer', True, data=params)
 
-    def transfer_margin_coin_to_spot(self, **params):
+    def transfer_futures_coin_to_spot(self, **params):
         params['type'] = 4
         return self._request_margin_api('post', 'futures/transfer', True, data=params)
 
@@ -250,7 +251,7 @@ class Client(BaseClient):
         result = self._request('get', uri, signed)
         return result.get('data', [])
 
-    def margin_coin_trade_level(self, **params):
+    def futures_coin_trade_level(self, **params):
         """
         :returns: API response
 
@@ -400,7 +401,7 @@ class Client(BaseClient):
             return res
         return []
 
-    def get_margin_coin_assets_balance(self, **params):
+    def get_futures_coin_assets_balance(self, **params):
         res = self.futures_coin_account_balance(**params)
         if res:
             return res
@@ -556,7 +557,7 @@ class Client(BaseClient):
         """
         return self._request_margin_v2_api('get', 'futures/loan/wallet', signed=True, data=params)
 
-    def margin_coin_position_information(self, **params):
+    def futures_coin_position_information(self, **params):
         if symbol := params.pop('symbol', None):
             params['pair'] = utils.symbol2pair(symbol)
             return [position for position in super().futures_coin_position_information(**params)
@@ -715,10 +716,10 @@ def _method_map(func_name: str):
         'get_margin_assets_balance': OrderSchema.margin_cross,
         'transfer_spot_to_margin': OrderSchema.margin_cross,
         'transfer_spot_to_futures': OrderSchema.margin_cross,
-        'transfer_spot_to_margin_coin': OrderSchema.margin_cross,
+        'transfer_spot_to_futures_coin': OrderSchema.margin_cross,
         'transfer_margin_to_spot': OrderSchema.margin_cross,
         'transfer_futures_to_spot': OrderSchema.margin_cross,
-        'transfer_margin_coin_to_spot': OrderSchema.margin_cross,
+        'transfer_futures_coin_to_spot': OrderSchema.margin_cross,
         'create_margin_loan': OrderSchema.margin_cross,
         'create_futures_loan': OrderSchema.margin_cross,
         'repay_margin_loan': OrderSchema.margin_cross,
@@ -738,56 +739,54 @@ def _method_map(func_name: str):
         # margin_isolated
         'get_all_isolated_margin_symbols': OrderSchema.margin_isolated,
 
-
-        # futures
-        'futures_ping': 'futures',
-        'futures_ticker': 'futures',
-        'futures_orderbook_ticker': 'futures',
-        'futures_mark_price': 'futures',
-        'futures_exchange_info': 'futures',
-        'futures_leverage_bracket': 'futures',
-        'futures_klines': 'futures',
-        'futures_create_order': 'futures',
-        'futures_cancel_order': 'futures',
-        'futures_get_order': 'futures',
-        'futures_get_open_orders': 'futures',
-        'futures_get_all_orders': 'futures',
-        'futures_recent_trades': 'futures',
-        'futures_order_book': 'futures',
-        'futures_account_v2': 'futures',
-        'futures_loan_wallet': 'futures',
-        'futures_loan_configs': 'futures',
-        'get_futures_assets_balance': 'futures',
-        'futures_symbol_ticker': 'futures',
-        'futures_trade_level': 'futures',
-        'futures_funding_rate': 'futures',
-        'futures_position_information': 'futures',
-        'futures_change_margin_type': 'futures',
-        'futures_change_leverage': 'futures',
-
+        # margin
+        'futures_ping': OrderSchema.margin,
+        'futures_ticker': OrderSchema.margin,
+        'futures_orderbook_ticker': OrderSchema.margin,
+        'futures_mark_price': OrderSchema.margin,
+        'futures_exchange_info': OrderSchema.margin,
+        'futures_leverage_bracket': OrderSchema.margin,
+        'futures_klines': OrderSchema.margin,
+        'futures_create_order': OrderSchema.margin,
+        'futures_cancel_order': OrderSchema.margin,
+        'futures_get_order': OrderSchema.margin,
+        'futures_get_open_orders': OrderSchema.margin,
+        'futures_get_all_orders': OrderSchema.margin,
+        'futures_recent_trades': OrderSchema.margin,
+        'futures_order_book': OrderSchema.margin,
+        'futures_account_v2': OrderSchema.margin,
+        'futures_loan_wallet': OrderSchema.margin,
+        'futures_loan_configs': OrderSchema.margin,
+        'get_futures_assets_balance': OrderSchema.margin,
+        'futures_symbol_ticker': OrderSchema.margin,
+        'futures_trade_level': OrderSchema.margin,
+        'futures_funding_rate': OrderSchema.margin,
+        'futures_position_information': OrderSchema.margin,
+        'futures_change_margin_type': OrderSchema.margin,
+        'futures_change_leverage': OrderSchema.margin,
 
         # margin_coin
-        'margin_coin_ping': 'margin_coin',
-        'margin_coin_ticker': 'margin_coin',
-        'margin_coin_orderbook_ticker': 'margin_coin',
-        'margin_coin_mark_price': 'margin_coin',
-        'margin_coin_exchange_info': 'margin_coin',
-        'margin_coin_leverage_bracket': 'margin_coin',
-        'margin_coin_klines': 'margin_coin',
-        'margin_coin_create_order': 'margin_coin',
-        'margin_coin_cancel_order': 'margin_coin',
-        'margin_coin_get_order': 'margin_coin',
-        'margin_coin_get_open_orders': 'margin_coin',
-        'margin_coin_get_all_orders': 'margin_coin',
-        'margin_coin_recent_trades': 'margin_coin',
-        'margin_coin_order_book': 'margin_coin',
-        'margin_coin_account': 'margin_coin',
-        'get_margin_coin_assets_balance': 'margin_coin',
-        'margin_coin_symbol_ticker': 'margin_coin',
-        'margin_coin_trade_level': 'margin_coin',
-        'margin_coin_funding_rate': 'margin_coin',
-        'margin_coin_position_information': 'margin_coin',
-        'margin_coin_change_margin_type': 'margin_coin',
-        'margin_coin_change_leverage': 'margin_coin',
+        'futures_coin_ping': OrderSchema.margin_coin,
+        'futures_coin_ticker': OrderSchema.margin_coin,
+        'futures_coin_orderbook_ticker': OrderSchema.margin_coin,
+        'futures_coin_mark_price': OrderSchema.margin_coin,
+        'futures_coin_exchange_info': OrderSchema.margin_coin,
+        'futures_coin_leverage_bracket': OrderSchema.margin_coin,
+        'futures_coin_klines': OrderSchema.margin_coin,
+        'futures_coin_create_order': OrderSchema.margin_coin,
+        'futures_coin_cancel_order': OrderSchema.margin_coin,
+        'futures_coin_get_order': OrderSchema.margin_coin,
+        'futures_coin_get_open_orders': OrderSchema.margin_coin,
+        'futures_coin_get_all_orders': OrderSchema.margin_coin,
+        'futures_coin_recent_trades': OrderSchema.margin_coin,
+        'futures_coin_order_book': OrderSchema.margin_coin,
+        'futures_coin_account': OrderSchema.margin_coin,
+        'get_futures_coin_assets_balance': OrderSchema.margin_coin,
+        'futures_coin_symbol_ticker': OrderSchema.margin_coin,
+        'futures_coin_trade_level': OrderSchema.margin_coin,
+        'futures_coin_funding_rate': OrderSchema.margin_coin,
+        'futures_coin_position_information': OrderSchema.margin_coin,
+        'futures_coin_change_margin_type': OrderSchema.margin_coin,
+        'futures_coin_change_leverage': OrderSchema.margin_coin,
     }
     return hash_map.get(func_name)
