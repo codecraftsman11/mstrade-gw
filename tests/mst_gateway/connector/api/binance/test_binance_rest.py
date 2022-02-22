@@ -59,8 +59,8 @@ def get_symbol(schema):
 def get_order_price(rest: BinanceRestApi, schema, symbol, side) -> float:
     symbol = rest.get_symbol(symbol, schema)
     if side == BUY:
-        return round(symbol.get('bid_price') / 1.1, 1)
-    return round(symbol.get('ask_price') * 1.1, 1)
+        return round(symbol.get('bid_price') / 1.05, 0)
+    return round(symbol.get('ask_price') * 1.05, 0)
 
 
 def create_default_order(rest: BinanceRestApi, schema):

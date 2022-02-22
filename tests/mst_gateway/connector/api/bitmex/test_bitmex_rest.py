@@ -111,10 +111,8 @@ def get_order_price(rest: BitmexRestApi, schema: str,
         return price
     symbol = rest.get_symbol(schema=schema, symbol=symbol)
     if side == BUY:
-        price = round(symbol.get('bid_price') / 1.0, 1)
-    if side == SELL:
-        price = round(symbol.get('ask_price') * 1.0, 1)
-    return price
+        return round(symbol.get('bid_price') / 1.05, 0)
+    return round(symbol.get('ask_price') * 1.05, 0)
 
 
 def get_symbol(schema: str) -> Optional[str]:
