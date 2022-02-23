@@ -45,9 +45,10 @@ class BinanceWssApi(StockWssApi):
                  throttle_storage=None,
                  schema='exchange',
                  state_storage=None,
+                 ratelimit_client=None,
                  register_state=True):
         super().__init__(name, account_name, url, test, auth, logger, options, throttle_rate,
-                         throttle_storage, schema, state_storage, register_state)
+                         throttle_storage, schema, state_storage, register_state, ratelimit_client)
         self.listen_key = None
 
     async def _refresh_key(self):
