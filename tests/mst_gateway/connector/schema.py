@@ -117,7 +117,7 @@ WALLET_FIELDS = {
 }
 
 WALLET_EXTRA_FIELDS = {
-    OrderSchema.margin2: {
+    OrderSchema.margin_cross: {
         'balances': [
             {
                 'currency': str,
@@ -132,7 +132,7 @@ WALLET_EXTRA_FIELDS = {
         'total_borrowed': TOTAL_CROSS_AMOUNT_FIELDS,
         'total_interest': TOTAL_CROSS_AMOUNT_FIELDS,
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'balances': [
             {
                 'currency': str,
@@ -144,20 +144,20 @@ WALLET_EXTRA_FIELDS = {
         'total_borrowed': TOTAL_CROSS_AMOUNT_FIELDS,
         'total_interest': TOTAL_CROSS_AMOUNT_FIELDS,
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'trade_enabled': bool
     }
 }
 
 WALLET_EXTRA_DATA_FIELDS = {
-    OrderSchema.margin2: {
+    OrderSchema.margin_cross: {
         'currency': str,
         'borrowed': Use(float_valid),
         'interest': Use(float_valid),
         'interest_rate': Use(float_valid),
         'available_borrow': Use(float_valid)
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'currency': str,
         'borrowed': Use(float_valid),
         'interest': Use(float_valid),
@@ -200,10 +200,20 @@ BASE_EXCHANGE_SYMBOL_INFO_FIELDS = {
 }
 
 EXCHANGE_SYMBOL_INFO_FIELDS = {
-    OrderSchema.margin1: {
+    OrderSchema.margin: {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
         'extra': {
-            'face_price_data': {
+            Optional('leverage_brackets'): [
+                {
+                    'bracket': int,
+                    'initialLeverage': int,
+                    'maintMarginRatio': Use(float_valid),
+                    'cum': Use(float_valid),
+                    'notionalCap': int,
+                    'notionalFloor': int
+                }
+            ],
+            Optional('face_price_data'): {
                 'is_quanto': bool,
                 'is_inverse': bool,
                 'multiplier': int,
@@ -215,43 +225,16 @@ EXCHANGE_SYMBOL_INFO_FIELDS = {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
         'extra': dict
     },
-    OrderSchema.margin2: {
+    OrderSchema.margin_coin: {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
         'extra': dict
     },
-    OrderSchema.futures: {
-        **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
-        'extra': {
-            'leverage_brackets': [
-                {
-                    'bracket': int,
-                    'initialLeverage': int,
-                    'maintMarginRatio': Use(float_valid),
-                    'cum': Use(float_valid),
-                    'notionalCap': int,
-                    'notionalFloor': int
-                }
-            ]
-        }
-    },
-    OrderSchema.futures_coin: {
-        **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
-        'extra': {
-            'face_price_data': {
-                'contract_size': int
-            },
-            'leverage_brackets': [
-                {
-                    'bracket': int,
-                    'initialLeverage': int,
-                    'maintMarginRatio': Use(float_valid),
-                    'cum': Use(float_valid),
-                    'qtyCap': int,
-                    'qtyFloor': int
-                }
-            ]
-        }
-    }
+}
+BASE_LEVERAGE_BRACKETS_FIELDS = {
+    'bracket': int,
+    'initialLeverage': int,
+    'maintMarginRatio': Use(float_valid),
+    'cum': Use(float_valid),
 }
 
 CURRENCY_EXCHANGE_SYMBOL_FIELDS = {
@@ -444,7 +427,7 @@ WS_WALLET_EXTRA_BALANCE_FIELDS = {
     'ist': Use(float_valid)
 }
 WS_WALLET_EXTRA_FIELDS = {
-    OrderSchema.margin2: {
+    OrderSchema.margin_cross: {
         'bls': [
             WS_WALLET_EXTRA_BALANCE_FIELDS
         ],
@@ -455,7 +438,7 @@ WS_WALLET_EXTRA_FIELDS = {
         'tbor': TOTAL_CROSS_AMOUNT_FIELDS,
         'tist': TOTAL_CROSS_AMOUNT_FIELDS
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'bls': [
             WS_WALLET_EXTRA_BALANCE_FIELDS
         ],
@@ -463,7 +446,7 @@ WS_WALLET_EXTRA_FIELDS = {
         'tbor': TOTAL_CROSS_AMOUNT_FIELDS,
         'tist': TOTAL_CROSS_AMOUNT_FIELDS
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'tre': bool
     }
 }

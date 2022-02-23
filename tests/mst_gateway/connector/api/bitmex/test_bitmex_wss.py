@@ -23,14 +23,14 @@ BITMEX_SYMBOL = 'XBTUSD'
 
 def rest_params(name):
     name_map = {
-        'tbitmex': (True, cfg.BITMEX_TESTNET_AUTH_KEYS, [OrderSchema.margin1])
+        'tbitmex': (True, cfg.BITMEX_AUTH_KEYS, [OrderSchema.margin])
     }
     return name_map[name]
 
 
 def wss_params(name):
     name_map = {
-        'tbitmex': (True, cfg.BITMEX_TESTNET_AUTH_KEYS, OrderSchema.margin1)
+        'tbitmex': (True, cfg.BITMEX_AUTH_KEYS, OrderSchema.margin)
     }
     return name_map[name]
 
@@ -181,11 +181,11 @@ class TestBitmexWssApi:
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
         'wss, subscr_name, default_data', [
-            ('tbitmex', 'trade', test_data.DEFAULT_TRADE_DATA[OrderSchema.margin1]),
-            ('tbitmex', 'symbol', test_data.DEFAULT_SYMBOL_DATA[OrderSchema.margin1]),
-            ('tbitmex', 'order_book', test_data.DEFAULT_ORDER_BOOK_DATA[OrderSchema.margin1]),
-            ('tbitmex', 'order', test_data.DEFAULT_ORDER_DATA[OrderSchema.margin1]),
-            ('tbitmex', 'position', test_data.DEFAULT_POSITION_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'trade', test_data.DEFAULT_TRADE_DATA[OrderSchema.margin]),
+            ('tbitmex', 'symbol', test_data.DEFAULT_SYMBOL_DATA[OrderSchema.margin]),
+            ('tbitmex', 'order_book', test_data.DEFAULT_ORDER_BOOK_DATA[OrderSchema.margin]),
+            ('tbitmex', 'order', test_data.DEFAULT_ORDER_DATA[OrderSchema.margin]),
+            ('tbitmex', 'position', test_data.DEFAULT_POSITION_DATA[OrderSchema.margin]),
         ],
         indirect=['wss']
     )
@@ -205,7 +205,7 @@ class TestBitmexWssApi:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        'wss, default_data', [('tbitmex', test_data.DEFAULT_QUOTE_BIN_DATA[OrderSchema.margin1])],
+        'wss, default_data', [('tbitmex', test_data.DEFAULT_QUOTE_BIN_DATA[OrderSchema.margin])],
         indirect=['wss']
     )
     async def test_get_quote_bin_data(self, wss: BitmexWssApi, default_data: list):
@@ -232,12 +232,12 @@ class TestBitmexWssApi:
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
         'wss, subscr_name, default_data', [
-            ('tbitmex', 'trade', test_data.DEFAULT_TRADE_DATA[OrderSchema.margin1]),
-            ('tbitmex', 'quote_bin', test_data.DEFAULT_QUOTE_BIN_DATA[OrderSchema.margin1]),
-            ('tbitmex', 'symbol', test_data.DEFAULT_SYMBOL_DATA[OrderSchema.margin1]),
-            ('tbitmex', 'order_book', test_data.DEFAULT_ORDER_BOOK_DATA[OrderSchema.margin1]),
-            ('tbitmex', 'order', test_data.DEFAULT_ORDER_DATA[OrderSchema.margin1]),
-            ('tbitmex', 'position', test_data.DEFAULT_POSITION_DATA[OrderSchema.margin1]),
+            ('tbitmex', 'trade', test_data.DEFAULT_TRADE_DATA[OrderSchema.margin]),
+            ('tbitmex', 'quote_bin', test_data.DEFAULT_QUOTE_BIN_DATA[OrderSchema.margin]),
+            ('tbitmex', 'symbol', test_data.DEFAULT_SYMBOL_DATA[OrderSchema.margin]),
+            ('tbitmex', 'order_book', test_data.DEFAULT_ORDER_BOOK_DATA[OrderSchema.margin]),
+            ('tbitmex', 'order', test_data.DEFAULT_ORDER_DATA[OrderSchema.margin]),
+            ('tbitmex', 'position', test_data.DEFAULT_POSITION_DATA[OrderSchema.margin]),
         ],
         indirect=['wss']
     )
@@ -272,7 +272,7 @@ class TestBitmexWssApi:
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
         'wss, subscr_name, default_data', [
-            ('tbitmex', 'wallet', test_data.DEFAULT_WALLET_DATA[OrderSchema.margin1])
+            ('tbitmex', 'wallet', test_data.DEFAULT_WALLET_DATA[OrderSchema.margin])
         ],
         indirect=['wss']
     )
@@ -293,8 +293,8 @@ class TestBitmexWssApi:
 
     @pytest.mark.parametrize(
         'wss, default_data, expect', [
-            ('tbitmex', test_data.DEFAULT_ORDER_DATA[OrderSchema.margin1],
-             test_data.DEFAULT_ORDER_SPLIT_DATA[OrderSchema.margin1])
+            ('tbitmex', test_data.DEFAULT_ORDER_DATA[OrderSchema.margin],
+             test_data.DEFAULT_ORDER_SPLIT_DATA[OrderSchema.margin])
         ],
         indirect=['wss']
     )
@@ -306,8 +306,8 @@ class TestBitmexWssApi:
 
     @pytest.mark.parametrize(
         'wss, default_data, expect', [
-            ('tbitmex', test_data.DEFAULT_TRADE_DATA[OrderSchema.margin1],
-             test_data.DEFAULT_TRADE_SPLIT_DATA[OrderSchema.margin1])
+            ('tbitmex', test_data.DEFAULT_TRADE_DATA[OrderSchema.margin],
+             test_data.DEFAULT_TRADE_SPLIT_DATA[OrderSchema.margin])
         ],
         indirect=['wss']
     )
@@ -320,10 +320,10 @@ class TestBitmexWssApi:
     @pytest.mark.parametrize(
         'wss, message, expect', [
             ('tbitmex', [{'message': '{"table": null}'}], [[{'table': None}]]),
-            ('tbitmex', test_data.DEFAULT_TRADE_DATA[OrderSchema.margin1],
-             test_data.DEFAULT_TRADE_SPLIT_DATA[OrderSchema.margin1]),
-            ('tbitmex', test_data.DEFAULT_ORDER_DATA[OrderSchema.margin1],
-             test_data.DEFAULT_ORDER_SPLIT_DATA[OrderSchema.margin1])
+            ('tbitmex', test_data.DEFAULT_TRADE_DATA[OrderSchema.margin],
+             test_data.DEFAULT_TRADE_SPLIT_DATA[OrderSchema.margin]),
+            ('tbitmex', test_data.DEFAULT_ORDER_DATA[OrderSchema.margin],
+             test_data.DEFAULT_ORDER_SPLIT_DATA[OrderSchema.margin])
         ],
         indirect=['wss']
     )

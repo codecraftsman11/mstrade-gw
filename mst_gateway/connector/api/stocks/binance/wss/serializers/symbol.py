@@ -21,7 +21,7 @@ class BinanceSymbolSerializer(BinanceSerializer):
         return utils.load_symbol_ws_data(self._wss_api.schema, item, state_data)
 
 
-class BinanceFuturesSymbolSerializer(BinanceSymbolSerializer):
+class BinanceMarginSymbolSerializer(BinanceSymbolSerializer):
 
     def __init__(self, wss_api: StockWssApi):
         super().__init__(wss_api)
@@ -48,4 +48,4 @@ class BinanceFuturesSymbolSerializer(BinanceSymbolSerializer):
             if (state_data := self._wss_api.get_state_data(_symbol)) is None:
                 return None
         item.update(dict(**self._book_ticker.get(_symbol, {}), mp=self._mark_prices.get(_symbol)))
-        return utils.load_futures_symbol_ws_data(self._wss_api.schema, item, state_data)
+        return utils.load_margin_symbol_ws_data(self._wss_api.schema, item, state_data)

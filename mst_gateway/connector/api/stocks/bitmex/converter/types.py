@@ -10,7 +10,7 @@ class BitmexOrderTypeConverter(BaseOrderTypeConverter):
     """ Order type converter for Bitmex """
 
     LOAD_TYPE_AND_EXECUTION_MAP = {
-        OrderSchema.margin1: {
+        OrderSchema.margin: {
             'Market': {'type': OrderType.market, 'execution': OrderExec.market},
             'Limit': {'type': OrderType.limit, 'execution': OrderExec.limit},
             'StopLimit': {'type': OrderType.stop_loss, 'execution': OrderExec.limit},

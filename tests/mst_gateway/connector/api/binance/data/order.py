@@ -5,8 +5,8 @@ DEFAULT_ORDER_SIDE = BUY
 DEFAULT_ORDER_OPPOSITE_SIDE = SELL
 DEFAULT_ORDER_VOLUME = {
     OrderSchema.exchange: 0.001,
-    OrderSchema.futures: 0.001,
-    OrderSchema.futures_coin: 1.0,
+    OrderSchema.margin: 0.001,
+    OrderSchema.margin_coin: 1.0,
 }
 DEFAULT_ORDER_OPTIONS = {
     'ttl': OrderTTL.GTC,
@@ -28,29 +28,29 @@ DEFAULT_ORDER = {
         'type': OrderType.limit,
         'volume': DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'active': False,
         'execution': OrderExec.limit,
         'filled_volume': 0.0,
-        'schema': OrderSchema.futures,
+        'schema': OrderSchema.margin,
         'side': DEFAULT_ORDER_SIDE,
         'stop': 0.0,
         'symbol': 'BTCUSDT',
         'system_symbol': 'btcusd',
         'type': OrderType.limit,
-        'volume': DEFAULT_ORDER_VOLUME[OrderSchema.futures],
+        'volume': DEFAULT_ORDER_VOLUME[OrderSchema.margin],
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'active': False,
         'execution': OrderExec.limit,
         'filled_volume': 0.0,
-        'schema': OrderSchema.futures_coin,
+        'schema': OrderSchema.margin_coin,
         'side': DEFAULT_ORDER_SIDE,
         'stop': 0.0,
         'symbol': 'BTCUSD_PERP',
         'system_symbol': 'btcusd',
         'type': OrderType.limit,
-        'volume': DEFAULT_ORDER_VOLUME[OrderSchema.futures_coin],
+        'volume': DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
     },
 }
 
@@ -90,7 +90,7 @@ DEFAULT_ORDER_MESSAGE = {
         'Y': '0.00000000',
         'Q': '0.00000000',
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'e': 'ORDER_TRADE_UPDATE',
         'T': 1639058196458,
         'E': 1639058196460,
@@ -126,7 +126,7 @@ DEFAULT_ORDER_MESSAGE = {
             'ss': 0,
         },
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'e': 'ORDER_TRADE_UPDATE',
         'T': 1639058394216,
         'E': 1639058394219,
@@ -206,7 +206,7 @@ DEFAULT_ORDER_LOOKUP_TABLE_RESULT = {
             }
         ],
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'table': 'ORDER_TRADE_UPDATE',
         'action': 'update',
         'data': [
@@ -248,7 +248,7 @@ DEFAULT_ORDER_LOOKUP_TABLE_RESULT = {
             }
         ],
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'table': 'ORDER_TRADE_UPDATE',
         'action': 'update',
         'data': [
@@ -336,7 +336,7 @@ DEFAULT_ORDER_SPLIT_MESSAGE_RESULT = {
             ],
         }
     ],
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'table': 'ORDER_TRADE_UPDATE',
             'action': 'insert',
@@ -377,7 +377,7 @@ DEFAULT_ORDER_SPLIT_MESSAGE_RESULT = {
             ],
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'table': 'ORDER_TRADE_UPDATE',
             'action': 'insert',
@@ -452,12 +452,12 @@ DEFAULT_ORDER_GET_DATA_RESULT = {
             }
         }
     ],
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'order': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'order',
-                'sch': 'futures',
+                'sch': OrderSchema.margin,
                 'act': 'insert',
                 'd': [
                     {
@@ -483,12 +483,12 @@ DEFAULT_ORDER_GET_DATA_RESULT = {
             }
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'order': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'order',
-                'sch': 'futures_coin',
+                'sch': 'margin_coin',
                 'act': 'insert',
                 'd': [
                     {

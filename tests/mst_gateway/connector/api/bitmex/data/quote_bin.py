@@ -1,14 +1,14 @@
 from mst_gateway.connector.api import OrderSchema
 
 DEFAULT_QUOTE_BIN_DATA = {
-    OrderSchema.margin1: [
+    OrderSchema.margin: [
         {
             "message": '{"table":"tradeBin1m","action":"partial","data":[{"timestamp":"2021-12-28T13:04:59.000Z","symbol":"XBTUSD","open":49120.5,"high":49120.5,"low":49120.5,"close":49120.5,"trades":2,"volume":200,"vwap":49120.5,"lastSize":100,"turnover":407162,"homeNotional":0.00407162,"foreignNotional":200}]}',
             "expect": {
                 "quote_bin": {
                     "acc": "tbitmex",
                     "tb": "quote_bin",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "partial",
                     "d": [
                         {
@@ -41,7 +41,7 @@ DEFAULT_QUOTE_BIN_DATA = {
                 "quote_bin": {
                     "acc": "tbitmex",
                     "tb": "quote_bin",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "partial",
                     "d": [
                         {
@@ -64,7 +64,7 @@ DEFAULT_QUOTE_BIN_DATA = {
                 "quote_bin": {
                     "acc": "tbitmex",
                     "tb": "quote_bin",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "update",
                     "d": [
                         {
@@ -87,7 +87,7 @@ DEFAULT_QUOTE_BIN_DATA = {
                 "quote_bin": {
                     "acc": "tbitmex",
                     "tb": "quote_bin",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "update",
                     "d": [
                         {
@@ -110,7 +110,7 @@ DEFAULT_QUOTE_BIN_DATA = {
                 "quote_bin": {
                     "acc": "tbitmex",
                     "tb": "quote_bin",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "update",
                     "d": [
                         {
@@ -133,7 +133,7 @@ DEFAULT_QUOTE_BIN_DATA = {
                 "quote_bin": {
                     "acc": "tbitmex",
                     "tb": "quote_bin",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "update",
                     "d": [
                         {
@@ -166,7 +166,7 @@ DEFAULT_QUOTE_BIN_DATA = {
                 "quote_bin": {
                     "acc": "tbitmex",
                     "tb": "quote_bin",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "update",
                     "d": [
                         {
@@ -189,7 +189,7 @@ DEFAULT_QUOTE_BIN_DATA = {
                 "quote_bin": {
                     "acc": "tbitmex",
                     "tb": "quote_bin",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "update",
                     "d": [
                         {
@@ -212,7 +212,7 @@ DEFAULT_QUOTE_BIN_DATA = {
                 "quote_bin": {
                     "acc": "tbitmex",
                     "tb": "quote_bin",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "update",
                     "d": [
                         {

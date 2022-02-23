@@ -21,7 +21,7 @@ BITMEX_SYMBOL = 'XBTUSD'
 
 def rest_params(name):
     name_map = {
-        'tbitmex': (True, cfg.BITMEX_TESTNET_AUTH_KEYS, [OrderSchema.margin1])
+        'tbitmex': (True, cfg.BITMEX_AUTH_KEYS, [OrderSchema.margin])
     }
     return name_map[name]
 
@@ -111,20 +111,18 @@ def get_order_price(rest: BitmexRestApi, schema: str,
         return price
     symbol = rest.get_symbol(schema=schema, symbol=symbol)
     if side == BUY:
-        price = round(symbol.get('bid_price') / 1.0, 1)
-    if side == SELL:
-        price = round(symbol.get('ask_price') * 1.0, 1)
-    return price
+        return round(symbol.get('bid_price') / 1.05, 0)
+    return round(symbol.get('ask_price') * 1.05, 0)
 
 
 def get_symbol(schema: str) -> Optional[str]:
-    if schema == OrderSchema.margin1:
+    if schema == OrderSchema.margin:
         return data.SYMBOL
     return None
 
 
 def get_asset(schema: str) -> Optional[str]:
-    if schema == OrderSchema.margin1:
+    if schema == OrderSchema.margin:
         return data.ASSET
     return None
 
@@ -183,7 +181,7 @@ class TestBitmexRestApi:
         assert face_price == calc_face_price
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_list_quote_bins(self, rest: BitmexRestApi, schema: str):
@@ -194,7 +192,7 @@ class TestBitmexRestApi:
         assert len(quote_bins) == 100
 
     @pytest.mark.parametrize(
-        'rest_compress, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest_compress, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest_compress'],
     )
     def test_list_quote_bins_compress(self, rest_compress: BitmexRestApi, schema: str):
@@ -203,7 +201,7 @@ class TestBitmexRestApi:
             assert quote_bin_schema.validate(quote_bin) == quote_bin
 
     @pytest.mark.parametrize(
-        'rest_keepalive, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest_keepalive, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest_keepalive'],
     )
     def test_list_quote_bins_keepalive(self, rest_keepalive: BitmexRestApi, schema: str):
@@ -212,7 +210,7 @@ class TestBitmexRestApi:
             assert quote_bin_schema.validate(quote_bin) == quote_bin
 
     @pytest.mark.parametrize(
-        'rest_keepalive_compress, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest_keepalive_compress, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest_keepalive_compress'],
     )
     def test_list_quote_bins_keepalive(self, rest_keepalive_compress: BitmexRestApi, schema: str):
@@ -221,7 +219,7 @@ class TestBitmexRestApi:
             assert quote_bin_schema.validate(quote_bin) == quote_bin
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_list_order_book(self, rest: BitmexRestApi, schema: str):
@@ -232,8 +230,8 @@ class TestBitmexRestApi:
 
     @pytest.mark.parametrize(
         'rest, schema, side', [
-            ('tbitmex', OrderSchema.margin1, BUY),
-            ('tbitmex', OrderSchema.margin1, SELL),
+            ('tbitmex', OrderSchema.margin, BUY),
+            ('tbitmex', OrderSchema.margin, SELL),
         ],
         indirect=['rest'],
     )
@@ -246,17 +244,17 @@ class TestBitmexRestApi:
             assert ob_schema.validate(ob_item) == ob_item
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_list_trades(self, rest: BitmexRestApi, schema: str):
         tl_schema = Schema(fields.TRADE_FIELDS)
-        lt_items = rest.list_trades(schema=OrderSchema.margin1, symbol=BITMEX_SYMBOL)
+        lt_items = rest.list_trades(schema=OrderSchema.margin, symbol=BITMEX_SYMBOL)
         for lt_item in lt_items:
             assert tl_schema.validate(lt_item) == lt_item
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest']
     )
     def test_get_wallet(self, rest: BitmexRestApi, schema: str):
@@ -272,7 +270,7 @@ class TestBitmexRestApi:
             assert Schema(fields.WALLET_EXTRA_FIELDS[schema]).validate(extra_data) == extra_data
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_get_wallet_summary(self, rest: BitmexRestApi, schema: str):
@@ -280,7 +278,7 @@ class TestBitmexRestApi:
         assert Schema(fields.WALLET_SUMMARY_FIELDS).validate(wallet_summary) == wallet_summary
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_get_wallet_detail(self, rest: BitmexRestApi, schema: str):
@@ -288,7 +286,7 @@ class TestBitmexRestApi:
         assert Schema(fields.WALLET_BALANCE_FIELDS).validate(wallet_detail) == wallet_detail
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_get_wallet_extra_data(self, rest: BitmexRestApi, schema):
@@ -297,14 +295,14 @@ class TestBitmexRestApi:
             assert Schema(fields.WALLET_EXTRA_DATA_FIELDS[schema]).validate(wallet_extra) == wallet_extra
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_ping(self, rest: BitmexRestApi, schema: str):
         assert rest.ping(schema=schema)
 
     @pytest.mark.parametrize(
-        'rest, schemas', [('tbitmex', [OrderSchema.margin1])],
+        'rest, schemas', [('tbitmex', [OrderSchema.margin])],
         indirect=['rest'],
     )
     def test_get_api_key_permission(self, rest: BitmexRestApi, schemas: list):
@@ -313,7 +311,7 @@ class TestBitmexRestApi:
             assert permissions[schema]
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_get_assets_balance(self, rest: BitmexRestApi, schema: str):
@@ -323,7 +321,7 @@ class TestBitmexRestApi:
             assert asset_balance_schema.validate({a: b}) == {a: b}
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_wallet_transfer(self, rest: BitmexRestApi, schema: str):
@@ -331,7 +329,7 @@ class TestBitmexRestApi:
             rest.wallet_transfer(from_wallet='', to_wallet='', asset=get_asset(schema), amount=data.DEFAULT_AMOUNT)
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_wallet_borrow(self, rest: BitmexRestApi, schema: str):
@@ -339,7 +337,7 @@ class TestBitmexRestApi:
             rest.wallet_borrow(schema=schema, asset=data.ASSET, amount=data.DEFAULT_AMOUNT)
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_wallet_repay(self, rest: BitmexRestApi, schema: str):
@@ -347,7 +345,7 @@ class TestBitmexRestApi:
             rest.wallet_repay(schema=schema, asset=data.ASSET, amount=data.DEFAULT_AMOUNT)
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_get_symbol(self, rest: BitmexRestApi, schema: str):
@@ -356,7 +354,7 @@ class TestBitmexRestApi:
         assert symbol_schema.validate(symbol) == symbol
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_list_symbols(self, rest: BitmexRestApi, schema: str):
@@ -365,7 +363,7 @@ class TestBitmexRestApi:
             assert symbol_schema.validate(symbol) == symbol
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_get_exchange_symbol_info(self, rest: BitmexRestApi, schema: str):
@@ -375,7 +373,7 @@ class TestBitmexRestApi:
             assert exchange_symbol_schema.validate(exchange_symbol) == exchange_symbol
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_currency_exchange_symbols(self, rest: BitmexRestApi, schema: str):
@@ -385,7 +383,7 @@ class TestBitmexRestApi:
             assert currency_exchange_symbol_schema.validate(symbol_data) == symbol_data
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_get_symbols_currencies(self, rest: BitmexRestApi, schema: str):
@@ -395,7 +393,7 @@ class TestBitmexRestApi:
             assert symbol_currency_schema.validate(symbol) == symbol
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_list_order_commissions(self, rest: BitmexRestApi, schema: str):
@@ -405,7 +403,7 @@ class TestBitmexRestApi:
             assert orders_commissions_schema.validate(commission) == commission
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_get_vip_level(self, rest: BitmexRestApi, schema: str):
@@ -419,7 +417,7 @@ class TestBitmexRestApi:
 
     @pytest.mark.parametrize(
         'rest, schema, period_hour, period_multiplier', [
-            ('tbitmex', OrderSchema.margin1, 8, 1)
+            ('tbitmex', OrderSchema.margin, 8, 1)
         ],
         indirect=['rest'],
     )
@@ -436,7 +434,7 @@ class TestBitmexRestApi:
 
     @pytest.mark.parametrize(
         'rest, schema, period_hour, period_multiplier', [
-            ('tbitmex', OrderSchema.margin1, 8, 1)
+            ('tbitmex', OrderSchema.margin, 8, 1)
         ],
         indirect=['rest'],
     )
@@ -452,7 +450,7 @@ class TestBitmexRestApi:
             )).timestamp() * 1000)
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_get_leverage(self, rest: BitmexRestApi, schema: str):
@@ -463,8 +461,8 @@ class TestBitmexRestApi:
 
     @pytest.mark.parametrize(
         'rest, schema, leverage_type, leverage, expect', [
-            ('tbitmex', OrderSchema.margin1, LeverageType.isolated, 90, (LeverageType.isolated, 90)),
-            ('tbitmex', OrderSchema.margin1, LeverageType.cross, 100, (LeverageType.cross, 100)),
+            ('tbitmex', OrderSchema.margin, LeverageType.isolated, 90, (LeverageType.isolated, 90)),
+            ('tbitmex', OrderSchema.margin, LeverageType.cross, 100, (LeverageType.cross, 100)),
         ],
         indirect=['rest'],
     )
@@ -475,7 +473,7 @@ class TestBitmexRestApi:
         assert leverage_data == expect
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_get_position_state(self, rest: BitmexRestApi, schema: str):
@@ -485,10 +483,10 @@ class TestBitmexRestApi:
     @pytest.mark.parametrize(
         'rest, schema, side, volume, price, wallet_balance, wallet_detail, funding_rate, taker_fee, leverage_type, '
         'leverage, expect', [
-            ('tbitmex', OrderSchema.margin1, BUY, 100.0, 57000.0, 0.0012, data.WALLET_DATA[OrderSchema.margin1],
+            ('tbitmex', OrderSchema.margin, BUY, 100.0, 57000.0, 0.0012, data.WALLET_DATA[OrderSchema.margin],
              0.0001, 0.05, LeverageType.cross, 100, 34060.3729073
              ),
-            ('tbitmex', OrderSchema.margin1, BUY, 100.0, 57000.0, 0.0012, data.WALLET_DATA[OrderSchema.margin1],
+            ('tbitmex', OrderSchema.margin, BUY, 100.0, 57000.0, 0.0012, data.WALLET_DATA[OrderSchema.margin],
              0.0001, 0.05, LeverageType.isolated, 100, 56971.57118598),
         ],
         indirect=['rest'],
@@ -508,49 +506,49 @@ class TestBitmexRestApi:
 class TestOrderBitmexRestApi:
     @pytest.mark.parametrize(
         'rest, schema, side, order_type, expect', [
-            ('tbitmex', OrderSchema.margin1, BUY, OrderType.market, {
+            ('tbitmex', OrderSchema.margin, BUY, OrderType.market, {
                 'execution': OrderExec.market,
-                'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin1],
-                'schema': OrderSchema.margin1,
+                'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'schema': OrderSchema.margin,
                 'side': BUY,
                 'stop': 0.0,
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.market,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin1]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
             }),
-            ('tbitmex', OrderSchema.margin1, SELL, OrderType.market, {
+            ('tbitmex', OrderSchema.margin, SELL, OrderType.market, {
                 'execution': OrderExec.market,
-                'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin1],
-                'schema': OrderSchema.margin1,
+                'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'schema': OrderSchema.margin,
                 'side': SELL,
                 'stop': 0.0,
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.market,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin1]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
             }),
-            ('tbitmex', OrderSchema.margin1, BUY, OrderType.limit, {
+            ('tbitmex', OrderSchema.margin, BUY, OrderType.limit, {
                 'execution': OrderExec.limit,
                 'filled_volume': 0.0,
-                'schema': OrderSchema.margin1,
+                'schema': OrderSchema.margin,
                 'side': BUY,
                 'stop': 0.0,
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.limit,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin1]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
             }),
-            ('tbitmex', OrderSchema.margin1, SELL, OrderType.limit, {
+            ('tbitmex', OrderSchema.margin, SELL, OrderType.limit, {
                 'execution': OrderExec.limit,
                 'filled_volume': 0.0,
-                'schema': OrderSchema.margin1,
+                'schema': OrderSchema.margin,
                 'side': SELL,
                 'stop': 0.0,
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.limit,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin1]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
             }),
         ],
         indirect=['rest'],
@@ -567,7 +565,7 @@ class TestOrderBitmexRestApi:
         rest.cancel_all_orders(schema)
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_get_order(self, rest: BitmexRestApi, schema):
@@ -580,7 +578,7 @@ class TestOrderBitmexRestApi:
         rest.cancel_all_orders(schema)
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_list_orders(self, rest: BitmexRestApi, schema: str):
@@ -596,16 +594,16 @@ class TestOrderBitmexRestApi:
 
     @pytest.mark.parametrize(
         'rest, schema, expect', [
-            ('tbitmex', OrderSchema.margin1, {
+            ('tbitmex', OrderSchema.margin, {
                 'execution': OrderExec.market,
-                'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin1] * 2,
-                'schema': OrderSchema.margin1,
+                'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin] * 2,
+                'schema': OrderSchema.margin,
                 'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
                 'stop': 0.0,
                 'symbol': order_data.DEFAULT_SYMBOL,
                 'system_symbol': order_data.DEFAULT_SYSTEM_SYMBOL,
                 'type': OrderType.market,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin1] * 2,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin] * 2,
             }),
         ],
         indirect=['rest'],
@@ -623,7 +621,7 @@ class TestOrderBitmexRestApi:
         rest.close_all_orders(order['symbol'], schema)
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_cancel_order(self, rest: BitmexRestApi, schema: str):
@@ -635,7 +633,7 @@ class TestOrderBitmexRestApi:
         assert order == order_data.DEFAULT_ORDER[schema]
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_cancel_all_orders(self, rest: BitmexRestApi, schema: str):
@@ -643,7 +641,7 @@ class TestOrderBitmexRestApi:
         assert rest.cancel_all_orders(schema)
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_close_order(self, rest: BitmexRestApi, schema: str):
@@ -652,7 +650,7 @@ class TestOrderBitmexRestApi:
         rest.cancel_all_orders(schema)
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_close_all_orders(self, rest: BitmexRestApi, schema: str):
@@ -661,7 +659,7 @@ class TestOrderBitmexRestApi:
         rest.cancel_all_orders(schema)
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_get_position(self, rest: BitmexRestApi, schema: str):
@@ -673,7 +671,7 @@ class TestOrderBitmexRestApi:
         rest.close_all_orders(schema=schema, symbol=order_data.DEFAULT_SYMBOL)
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin1)],
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
     def test_list_position(self, rest: BitmexRestApi, schema: str):

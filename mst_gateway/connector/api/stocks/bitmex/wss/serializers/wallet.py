@@ -32,7 +32,7 @@ class BitmexWalletSerializer(BitmexSerializer):
                 self._check_balances_data(balance, item)
         assets = ('btc', 'usd')
         fields = ('bl', 'upnl', 'mbl')
-        return load_wallet_data(item, self.exchange_rates, assets, fields, is_for_ws=True)
+        return load_wallet_data(item, self.exchange_rates, assets, fields, self._wss_api.driver, is_for_ws=True)
 
     def _key_map(self, key: str):
         _map = {

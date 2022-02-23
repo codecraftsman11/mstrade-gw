@@ -9,7 +9,6 @@ STORAGE_DATA = {
             'volume_tick': 1e-06,
             'max_leverage': None,
             'schema': OrderSchema.exchange,
-            'symbol_schema': OrderSchema.exchange,
             'expiration': None,
             'expiration_date': None,
             'created': '2021-09-06T09:51:21.271836',
@@ -20,14 +19,13 @@ STORAGE_DATA = {
             'wallet_asset': None,
         }
     },
-    f"{StateStorageKey.symbol}.tbinance.{OrderSchema.margin2}": {
+    f"{StateStorageKey.symbol}.tbinance.{OrderSchema.margin_cross}": {
         'btcusdt': {
             'tick': 0.01,
             'pair': ['BTC', 'USDT'],
             'volume_tick': 1e-06,
             'max_leverage': None,
-            'schema': OrderSchema.margin2,
-            'symbol_schema': OrderSchema.margin2,
+            'schema': OrderSchema.margin_cross,
             'expiration': None,
             'expiration_date': None,
             'created': '2021-09-06T09:51:21.271836',
@@ -38,14 +36,13 @@ STORAGE_DATA = {
             'wallet_asset': None,
         }
     },
-    f"{StateStorageKey.symbol}.tbinance.{OrderSchema.margin3}": {
+    f"{StateStorageKey.symbol}.tbinance.{OrderSchema.margin_isolated}": {
         'btcusdt': {
             'tick': 0.01,
             'pair': ['BTC', 'USDT'],
             'volume_tick': 1e-06,
             'max_leverage': None,
-            'schema': OrderSchema.margin3,
-            'symbol_schema': OrderSchema.margin3,
+            'schema': OrderSchema.margin_isolated,
             'expiration': None,
             'expiration_date': None,
             'created': '2021-09-06T09:51:21.271836',
@@ -56,14 +53,13 @@ STORAGE_DATA = {
             'wallet_asset': None,
         }
     },
-    f"{StateStorageKey.symbol}.tbinance.{OrderSchema.futures}": {
+    f"{StateStorageKey.symbol}.tbinance.{OrderSchema.margin}": {
         'btcusdt': {
             'tick': 0.01,
             'pair': ['BTC', 'USDT'],
             'volume_tick': 0.001,
             'max_leverage': 125.0,
-            'schema': OrderSchema.futures,
-            'symbol_schema': OrderSchema.futures,
+            'schema': OrderSchema.margin,
             'expiration': 'None',
             'expiration_date': 'None',
             'created': '2021-09-06T09:51:21.272746',
@@ -97,14 +93,13 @@ STORAGE_DATA = {
             'wallet_asset': 'USDT',
         }
     },
-    f"{StateStorageKey.symbol}.tbinance.{OrderSchema.futures_coin}": {
+    f"{StateStorageKey.symbol}.tbinance.{OrderSchema.margin_coin}": {
         'btcusd_perp': {
             'tick': 0.1,
             'pair': ['BTC', 'USD'],
             'volume_tick': 1.0,
             'max_leverage': 125.0,
-            'schema': OrderSchema.futures_coin,
-            'symbol_schema': OrderSchema.futures_coin,
+            'schema': OrderSchema.margin_coin,
             'expiration': 'None',
             'expiration_date': 'None',
             'created': '2021-09-06T09:51:21.288366',
@@ -148,7 +143,7 @@ STORAGE_DATA = {
         'leverage_type': LeverageType.isolated,
         'action': 'update',
     },
-    f"position.1.tbinance.{OrderSchema.margin2}.btcusdt": {
+    f"position.1.tbinance.{OrderSchema.margin_cross}.btcusdt": {
         'id': '1',
         'symbol': 'btcusdt',
         'side': BUY,
@@ -162,7 +157,7 @@ STORAGE_DATA = {
         'bnb': 547.9, 'btc': 48736.89, 'eth': 2757.89, 'ltc': 1095.94, 'trx': 0.09164,
          'xrp': 0.8234, 'usdt': 1, 'busd': 0.9843693856
     },
-    f"{StateStorageKey.exchange_rates}.tbinance.{OrderSchema.futures}": {
+    f"{StateStorageKey.exchange_rates}.tbinance.{OrderSchema.margin}": {
         'reef': 0.0202, 'usdt': 1, 'trx': 0.08882,
         'skl': 0.2362, 'qtum': 10.01,
         'iotx': 0.10816, 'ont': 0.7995, 'ksm': 341.4,
@@ -218,7 +213,7 @@ STORAGE_DATA = {
         'srm': 7.733, 'matic': 1.942,
         'c98': 2.19, 'busd': 1.5902205456,
         'ftt': 66.6302408606},
-    f"{StateStorageKey.exchange_rates}.tbinance.{OrderSchema.futures_coin}": {
+    f"{StateStorageKey.exchange_rates}.tbinance.{OrderSchema.margin_coin}": {
         'ltc': 265.0, 'usd': 1, 'bch211231': 450.0, 'usd211231': 1, 'gala': 0.59115,
         'ada211231': 2.6, 'sol': 145.087, 'btc220325': 62900.0, 'usd220325': 1,
         'sand': 2.5447, 'ftm': 2.7606, 'bch': 559.17, 'fil': 54.166, 'link': 27.32,

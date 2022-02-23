@@ -14,7 +14,7 @@ DEFAULT_TRADE_MESSAGE = {
         'm': False,
         'M': True,
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'e': 'trade',
         'E': 1638963971897,
         'T': 1638963971895,
@@ -25,7 +25,7 @@ DEFAULT_TRADE_MESSAGE = {
         'X': 'MARKET',
         'm': True,
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'e': 'trade',
         'E': 1638965335074,
         'T': 1638965335062,
@@ -57,7 +57,7 @@ DEFAULT_TRADE_LOOKUP_TABLE_RESULT = {
             }
         ],
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'table': 'trade',
         'action': 'update',
         'data': [
@@ -74,7 +74,7 @@ DEFAULT_TRADE_LOOKUP_TABLE_RESULT = {
             }
         ],
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'table': 'trade',
         'action': 'update',
         'data': [
@@ -114,7 +114,7 @@ DEFAULT_TRADE_SPLIT_MESSAGE_RESULT = {
             ],
         }
     ],
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'table': 'trade',
             'action': 'update',
@@ -133,7 +133,7 @@ DEFAULT_TRADE_SPLIT_MESSAGE_RESULT = {
             ],
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'table': 'trade',
             'action': 'update',
@@ -174,12 +174,12 @@ DEFAULT_TRADE_GET_DATA_RESULT = {
             }
         }
     ],
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'trade': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'trade',
-                'sch': 'futures',
+                'sch': OrderSchema.margin,
                 'act': 'insert',
                 'd': [
                     {
@@ -194,12 +194,12 @@ DEFAULT_TRADE_GET_DATA_RESULT = {
             }
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'trade': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'trade',
-                'sch': 'futures_coin',
+                'sch': 'margin_coin',
                 'act': 'insert',
                 'd': [
                     {

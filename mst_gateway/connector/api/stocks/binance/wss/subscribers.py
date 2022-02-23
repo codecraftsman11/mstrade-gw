@@ -144,7 +144,7 @@ class BinanceSymbolSubscriber(BinanceSubscriber):
     is_close_connection = False
 
 
-class BinanceFuturesSymbolSubscriber(BinanceSymbolSubscriber):
+class BinanceMarginSymbolSubscriber(BinanceSymbolSubscriber):
     subscriptions = ("!ticker@arr", "!bookTicker", "!markPrice@arr")
 
 
@@ -170,9 +170,9 @@ class BinanceWalletSubscriber(BinanceSubscriber):
     async def get_wallet_state(self, api: BinanceWssApi, client: AsyncClient):
         schema_handlers = {
             OrderSchema.exchange: (client.get_account, utils.load_ws_spot_wallet_data),
-            OrderSchema.margin2: (client.get_margin_account, utils.load_ws_margin_wallet_data),
-            OrderSchema.futures: (client.futures_account_v2, utils.load_ws_futures_wallet_data),
-            OrderSchema.futures_coin: (client.futures_coin_account, utils.load_ws_futures_coin_wallet_data),
+            OrderSchema.margin_cross: (client.get_margin_account, utils.load_ws_margin_cross_wallet_data),
+            OrderSchema.margin: (client.futures_account_v2, utils.load_ws_margin_cross_wallet_data),
+            OrderSchema.margin_coin: (client.futures_coin_account, utils.load_ws_margin_coin_wallet_data),
         }
         schema = api.schema
         kwargs = {
@@ -185,14 +185,14 @@ class BinanceWalletSubscriber(BinanceSubscriber):
             kwargs['currencies'] = await api.storage.get(f"{StateStorageKey.exchange_rates}.{api.name}.{schema}")
         except (GatewayError, BinanceAPIException):
             return None, None
-        if schema in (OrderSchema.margin2, OrderSchema.futures):
+        if schema in (OrderSchema.margin_cross, OrderSchema.margin):
             kwargs['extra_fields'] = ('bor', 'ist')
-        if schema in (OrderSchema.futures,):
+        if schema in (OrderSchema.margin,):
             try:
                 cross_collaterals = await client.futures_loan_wallet()
             except (GatewayError, BinanceAPIException):
                 cross_collaterals = {}
-            kwargs['cross_collaterals'] = utils.load_futures_cross_collaterals_data(cross_collaterals)
+            kwargs['cross_collaterals'] = utils.load_margin_cross_collaterals_data(cross_collaterals)
         wallet_data = schema_handlers[schema][1](**kwargs)
         wallet_state = self.mapping_wallet_data(wallet_data)
         return wallet_data, wallet_state
@@ -274,7 +274,7 @@ class BinancePositionSubscriber(BinanceSubscriber):
         }
 
 
-class BinanceFuturesPositionSubscriber(BinancePositionSubscriber):
+class BinanceMarginPositionSubscriber(BinancePositionSubscriber):
     subscriptions = ("!markPrice@arr",)
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
@@ -288,7 +288,7 @@ class BinanceFuturesPositionSubscriber(BinancePositionSubscriber):
                 account_info = await client.futures_account_v2()
                 leverage_brackets = await client.futures_leverage_bracket()
                 return {
-                    'position_state': utils.load_futures_positions_state(account_info),
+                    'position_state': utils.load_margin_positions_state(account_info),
                     'leverage_brackets': utils.load_leverage_brackets_as_dict(leverage_brackets),
                     'exchange_rates': exchange_rates,
                 }
@@ -296,7 +296,7 @@ class BinanceFuturesPositionSubscriber(BinancePositionSubscriber):
                 raise QueryError(f"Init partial state error: {e}")
 
 
-class BinanceFuturesCoinPositionSubscriber(BinanceFuturesPositionSubscriber):
+class BinanceMarginCoinPositionSubscriber(BinanceMarginPositionSubscriber):
 
     async def request_positions(self, api: BinanceWssApi):
         while True:
@@ -316,7 +316,7 @@ class BinanceFuturesCoinPositionSubscriber(BinanceFuturesPositionSubscriber):
                 exchange_rates = await api.storage.get(
                     f"{StateStorageKey.exchange_rates}.{api.name}.{api.schema}")
                 return {
-                    'position_state': utils.load_futures_coin_positions_state(account_info, state_data),
+                    'position_state': utils.load_margin_coin_positions_state(account_info, state_data),
                     'leverage_brackets': utils.load_leverage_brackets_as_dict(leverage_brackets),
                     'exchange_rates': exchange_rates,
                 }

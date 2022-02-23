@@ -5,10 +5,10 @@ BINANCE_MAX_ORDER_BOOK_LIMIT = 1000
 
 BINANCE_WALLET_TYPES = [
     api.OrderSchema.exchange,
-    api.OrderSchema.margin2,
-    api.OrderSchema.margin3,
-    api.OrderSchema.futures,
-    api.OrderSchema.futures_coin,
+    api.OrderSchema.margin_cross,
+    api.OrderSchema.margin_isolated,
+    api.OrderSchema.margin,
+    api.OrderSchema.margin_coin,
 ]
 
 BINANCE_ORDER_SIDE_BUY = 'BUY'
@@ -58,7 +58,7 @@ DEFAULT_PARAMETERS = [
 
 PARAMETERS_BY_ORDER_TYPE_MAP = {
 
-    api.OrderSchema.futures_coin: {
+    api.OrderSchema.margin_coin: {
         'MARKET': {
             'params': [
                 *DEFAULT_PARAMETERS,
@@ -79,7 +79,7 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         },
     },
 
-    api.OrderSchema.futures: {
+    api.OrderSchema.margin: {
         'MARKET': {
             'params': [
                 *DEFAULT_PARAMETERS,
@@ -118,7 +118,7 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         },
     },
 
-    api.OrderSchema.margin2: {
+    api.OrderSchema.margin_cross: {
         'MARKET': {
             'params': [
                 *DEFAULT_PARAMETERS,
@@ -140,7 +140,7 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         }
     },
 
-    api.OrderSchema.margin3: {
+    api.OrderSchema.margin_isolated: {
         'MARKET': {
             'params': [
                 *DEFAULT_PARAMETERS,

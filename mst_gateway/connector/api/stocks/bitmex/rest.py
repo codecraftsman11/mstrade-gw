@@ -8,7 +8,7 @@ from .lib import (
     bitmex_connector, APIKeyAuthenticator, SwaggerClient
 )
 from mst_gateway.calculator import BitmexFinFactory
-from mst_gateway.connector.api.types import OrderSchema
+from mst_gateway.connector.api.types import OrderSchema, ExchangeDrivers
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
 from mst_gateway.connector.api.utils.utils import load_wallet_summary
 from . import utils, var
@@ -38,6 +38,7 @@ class BitmexFactory:
 
 
 class BitmexRestApi(StockRestApi):
+    driver = ExchangeDrivers.bitmex
     name = 'bitmex'
     fin_factory = BitmexFinFactory()
 
@@ -123,7 +124,7 @@ class BitmexRestApi(StockRestApi):
 
     def get_api_key_permissions(self, schemas: list,  **kwargs) -> dict:
         default_schemas = [
-            OrderSchema.margin1,
+            OrderSchema.margin,
         ]
         permissions = {schema: False for schema in schemas if schema in default_schemas}
         try:
@@ -133,17 +134,17 @@ class BitmexRestApi(StockRestApi):
         return utils.load_api_key_permissions(all_api_keys, self.auth.get('api_key'), permissions.keys())
 
     def get_wallet(self, **kwargs) -> dict:
-        schema = kwargs.pop('schema', OrderSchema.margin1).lower()
+        schema = kwargs.pop('schema', OrderSchema.margin).lower()
         assets = kwargs.pop('assets', ('btc', 'usd'))
         fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance'))
-        if schema == OrderSchema.margin1:
+        if schema == OrderSchema.margin:
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
             currencies = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}")
-            return utils.load_wallet_data(data, currencies, assets, fields)
+            return utils.load_wallet_data(data, currencies, assets, fields, self.driver)
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
-        if schema == OrderSchema.margin1:
+        if schema == OrderSchema.margin:
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
             return utils.load_wallet_detail_data(data, asset)
         raise ConnectorError(f"Invalid schema {schema}.")
@@ -155,7 +156,7 @@ class BitmexRestApi(StockRestApi):
         return {}
 
     def get_assets_balance(self, schema: str, **kwargs) -> dict:
-        if schema == OrderSchema.margin1:
+        if schema == OrderSchema.margin:
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
             return utils.load_wallet_asset_balance(data)
         raise ConnectorError(f"Invalid schema {schema}.")
@@ -175,7 +176,7 @@ class BitmexRestApi(StockRestApi):
         if not instruments:
             return dict()
         state_data = self.storage.get(
-            f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin1}".lower()
+            f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin}".lower()
         ).get(utils.stock2symbol(symbol), dict())
         return utils.load_symbol_data(instruments[0], state_data)
 
@@ -193,7 +194,7 @@ class BitmexRestApi(StockRestApi):
         return symbols
 
     def get_exchange_symbol_info(self, schema: str) -> list:
-        if schema == OrderSchema.margin1:
+        if schema == OrderSchema.margin:
             data, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive)
             return utils.load_exchange_symbol_info(data)
         raise ConnectorError(f"Invalid schema {schema}.")
@@ -212,7 +213,7 @@ class BitmexRestApi(StockRestApi):
 
         data, _ = self._bitmex_api(self._handler.Order.Order_new, **params)
         state_data = self.storage.get(
-            f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin1}"
+            f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin}"
         ).get(symbol.lower(), dict())
         return utils.load_order_data(data, state_data)
 
@@ -245,7 +246,7 @@ class BitmexRestApi(StockRestApi):
                 raise NotFoundError(error)
             raise ConnectorError(error)
         state_data = self.storage.get(
-            f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin1}"
+            f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin}"
         ).get(data[0]['symbol'].lower(), dict())
         return utils.load_order_data(data[0], state_data)
 
@@ -259,7 +260,7 @@ class BitmexRestApi(StockRestApi):
         if not data:
             return None
         state_data = self.storage.get(
-            f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin1}"
+            f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin}"
         ).get(data[0]['symbol'].lower(), dict())
         return utils.load_order_data(data[0], state_data)
 
@@ -286,7 +287,7 @@ class BitmexRestApi(StockRestApi):
                                      reverse=True,
                                      **options)
         state_data = self.storage.get(
-            f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin1}"
+            f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin}"
         ).get(symbol.lower(), dict())
         return [utils.load_order_data(data, state_data) for data in orders]
 
@@ -355,23 +356,23 @@ class BitmexRestApi(StockRestApi):
         return utils.load_symbols_currencies(instruments, self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}"))
 
     def get_wallet_summary(self, schema: str, **kwargs) -> dict:
-        if schema == OrderSchema.margin1:
+        if schema == OrderSchema.margin:
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
             balances = [utils.load_wallet_detail_data(data)]
             fields = ('balance', 'unrealised_pnl', 'margin_balance')
             exchange_rates = self.storage.get(f"{StateStorageKey.exchange_rates}.{self.name}.{schema}")
             assets = kwargs.get('assets', ('btc', 'usd'))
-            return load_wallet_summary(schema, balances, fields, exchange_rates, assets)
+            return load_wallet_summary(self.driver, schema, balances, fields, exchange_rates, assets)
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def list_order_commissions(self, schema: str) -> list:
-        if schema == OrderSchema.margin1:
+        if schema == OrderSchema.margin:
             commissions, _ = self._bitmex_api(self._handler.User.User_getCommission)
             return utils.load_commissions(commissions)
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_vip_level(self, schema: str) -> str:
-        if schema == OrderSchema.margin1:
+        if schema == OrderSchema.margin:
             try:
                 trading_volume, _ = self._bitmex_api(self._handler.User.User_getTradingVolume)
                 trading_volume = trading_volume[0].get('advUsd')
@@ -381,7 +382,7 @@ class BitmexRestApi(StockRestApi):
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_funding_rates(self, symbol: str, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
-        if schema.lower() == OrderSchema.margin1:
+        if schema.lower() == OrderSchema.margin:
             funding_rates, _ = self._bitmex_api(
                 symbol=utils.symbol2stock(symbol),
                 method=self._handler.Funding.Funding_get,
@@ -392,7 +393,7 @@ class BitmexRestApi(StockRestApi):
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def list_funding_rates(self, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
-        if schema == OrderSchema.margin1:
+        if schema == OrderSchema.margin:
             funding_rates, _ = self._bitmex_api(
                 method=self._handler.Funding.Funding_get,
                 startTime=datetime.now() - timedelta(hours=period_hour*period_multiplier, minutes=1),
@@ -402,7 +403,7 @@ class BitmexRestApi(StockRestApi):
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_leverage(self, schema: str, symbol: str, **kwargs) -> tuple:
-        if schema != OrderSchema.margin1:
+        if schema != OrderSchema.margin:
             raise ConnectorError(f"Invalid schema {schema}.")
         response, _ = self._bitmex_api(
             self._handler.Position.Position_get, filter=j_dumps({'symbol': utils.symbol2stock(symbol)})
@@ -419,7 +420,7 @@ class BitmexRestApi(StockRestApi):
 
     def change_leverage(self, schema: str, symbol: str, leverage_type: str,
                         leverage: Union[float, int], **kwargs) -> tuple:
-        if schema != OrderSchema.margin1:
+        if schema != OrderSchema.margin:
             raise ConnectorError(f"Invalid schema {schema}.")
         response, _ = self._bitmex_api(
             self._handler.Position.Position_updateLeverage, symbol=utils.symbol2stock(symbol),
@@ -428,7 +429,7 @@ class BitmexRestApi(StockRestApi):
         return utils.load_leverage(response)
 
     def get_position(self, schema: str, symbol: str, **kwargs) -> dict:
-        if schema != OrderSchema.margin1:
+        if schema != OrderSchema.margin:
             raise ConnectorError(f"Invalid schema {schema}.")
         response, _ = self._bitmex_api(
             self._handler.Position.Position_get, **{'filter': j_dumps({'symbol': symbol.upper()})}
@@ -442,7 +443,7 @@ class BitmexRestApi(StockRestApi):
         return {}
 
     def list_positions(self, schema: str, **kwargs) -> list:
-        if schema != OrderSchema.margin1:
+        if schema != OrderSchema.margin:
             raise ConnectorError(f"Invalid schema {schema}.")
         response, _ = self._bitmex_api(
             self._handler.Position.Position_get
@@ -450,7 +451,7 @@ class BitmexRestApi(StockRestApi):
         return utils.load_positions_list(response, schema)
 
     def get_positions_state(self, schema: str) -> dict:
-        if schema != OrderSchema.margin1:
+        if schema != OrderSchema.margin:
             raise ConnectorError(f"Invalid schema {schema}.")
         return {}
 
@@ -466,7 +467,7 @@ class BitmexRestApi(StockRestApi):
         **kwargs,
     ) -> dict:
         schema = schema.lower()
-        if schema != OrderSchema.margin1:
+        if schema != OrderSchema.margin:
             raise ConnectorError(f'Invalid schema {schema}.')
         return {
             'liquidation_price': self.fin_factory.calc_liquidation_price(

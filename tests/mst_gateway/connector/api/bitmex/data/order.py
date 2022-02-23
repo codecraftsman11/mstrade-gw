@@ -2,24 +2,24 @@ from mst_gateway.connector.api import BUY, SELL, OrderSchema, OrderExec, OrderTy
 
 DEFAULT_SYMBOL = "XBTUSD"
 DEFAULT_SYSTEM_SYMBOL = "btcusd"
-DEFAULT_SCHEMA = OrderSchema.margin1
+DEFAULT_SCHEMA = OrderSchema.margin
 DEFAULT_ORDER_TYPE = OrderType.limit
 DEFAULT_ORDER_SIDE = BUY
 DEFAULT_ORDER_OPPOSITE_SIDE = SELL
 DEFAULT_ORDER_VOLUME = {
-    OrderSchema.margin1: 100
+    OrderSchema.margin: 100
 }
 DEFAULT_ORDER_OPTIONS = {}
 
 DEFAULT_ORDER_DATA = {
-    OrderSchema.margin1: [
+    OrderSchema.margin: [
         {
             'message': '{"table":"execution","action":"insert","data":[{"execID":"a651bf3c-4410-bee5-adc3-323d87781bbb","orderID":"cf8a2c91-464a-4618-a05f-fb7a57f9a67d","clOrdID":"","clOrdLinkID":"","account":379441,"symbol":"XBTUSD","side":"Buy","lastQty":null,"lastPx":null,"underlyingLastPx":null,"lastMkt":"","lastLiquidityInd":"","simpleOrderQty":null,"orderQty":100,"price":48844.5,"displayQty":null,"stopPx":null,"pegOffsetValue":null,"pegPriceType":"","currency":"USD","settlCurrency":"XBt","execType":"New","ordType":"Market","timeInForce":"ImmediateOrCancel","execInst":"","contingencyType":"","exDestination":"XBME","ordStatus":"New","triggered":"","workingIndicator":true,"ordRejReason":"","simpleLeavesQty":null,"leavesQty":100,"simpleCumQty":null,"cumQty":0,"avgPx":null,"commission":null,"tradePublishIndicator":"","multiLegReportingType":"SingleSecurity","text":"Submission from testnet.bitmex.com","trdMatchID":"00000000-0000-0000-0000-000000000000","execCost":null,"execComm":null,"homeNotional":null,"foreignNotional":null,"transactTime":"2021-12-21T08:17:02.423Z","timestamp":"2021-12-21T08:17:02.423Z"},{"execID":"eec99810-7a4f-e4b7-9669-e0b5b4189b00","orderID":"cf8a2c91-464a-4618-a05f-fb7a57f9a67d","clOrdID":"","clOrdLinkID":"","account":379441,"symbol":"XBTUSD","side":"Buy","lastQty":100,"lastPx":48844.5,"underlyingLastPx":null,"lastMkt":"XBME","lastLiquidityInd":"RemovedLiquidity","simpleOrderQty":null,"orderQty":100,"price":48844.5,"displayQty":null,"stopPx":null,"pegOffsetValue":null,"pegPriceType":"","currency":"USD","settlCurrency":"XBt","execType":"Trade","ordType":"Market","timeInForce":"ImmediateOrCancel","execInst":"","contingencyType":"","exDestination":"XBME","ordStatus":"Filled","triggered":"","workingIndicator":false,"ordRejReason":"","simpleLeavesQty":null,"leavesQty":0,"simpleCumQty":null,"cumQty":100,"avgPx":48844.5,"commission":0.0005,"tradePublishIndicator":"PublishTrade","multiLegReportingType":"SingleSecurity","text":"Submission from testnet.bitmex.com","trdMatchID":"9c910adc-7935-1962-cef3-61c80f931ff7","execCost":-204731,"execComm":102,"homeNotional":0.00204731,"foreignNotional":-100,"transactTime":"2021-12-21T08:17:02.423Z","timestamp":"2021-12-21T08:17:02.423Z"}]}',
             'expect': {
                 "order": {
                     "acc": "tbitmex",
                     "tb": "order",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "insert",
                     "d": [
                         {
@@ -68,7 +68,7 @@ DEFAULT_ORDER_DATA = {
                 "order": {
                     "acc": "tbitmex",
                     "tb": "order",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "insert",
                     "d": [
                         {
@@ -116,7 +116,7 @@ DEFAULT_ORDER_DATA = {
 }
 
 DEFAULT_ORDER_SPLIT_DATA = {
-    OrderSchema.margin1: [
+    OrderSchema.margin: [
         [
             {
                 "table": "execution",
@@ -345,15 +345,15 @@ DEFAULT_ORDER_SPLIT_DATA = {
 }
 
 DEFAULT_ORDER = {
-    OrderSchema.margin1: {
+    OrderSchema.margin: {
         'execution': OrderExec.limit,
         'filled_volume': 0.0,
-        'schema': OrderSchema.margin1,
+        'schema': OrderSchema.margin,
         'side': DEFAULT_ORDER_SIDE,
         'stop': 0.0,
         'symbol': DEFAULT_SYMBOL,
         'system_symbol': DEFAULT_SYSTEM_SYMBOL,
         'type': OrderType.limit,
-        'volume': DEFAULT_ORDER_VOLUME[OrderSchema.margin1],
+        'volume': DEFAULT_ORDER_VOLUME[OrderSchema.margin],
     }
 }
