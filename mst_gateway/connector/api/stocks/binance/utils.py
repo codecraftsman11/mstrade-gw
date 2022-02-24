@@ -1099,9 +1099,16 @@ def _load_total_wallet_summary_list(summary, fields, is_for_ws=False):
     return total
 
 
-def _serialize_leverage_brackets(data: list) -> list:
+def _serialize_leverage_brackets(brackets: list) -> list:
     pattern = re.compile(r'(?=[A-Z])')
-    return [{pattern.sub('_', k).lower(): v for k, v in d.items()} for d in data]
+    leverage_brackets = list()
+    for bracket in brackets:
+        _bracket = dict()
+        for k, v in bracket.items():
+            _k = pattern.sub('_', k).lower()
+            _bracket[_k] = v
+        leverage_brackets.append(_bracket)
+    return leverage_brackets
 
 
 def load_leverage_brackets_as_dict(data: list) -> dict:
