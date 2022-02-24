@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timezone
 from typing import Union, Optional
 from mst_gateway.connector import api
@@ -1098,8 +1099,13 @@ def _load_total_wallet_summary_list(summary, fields, is_for_ws=False):
     return total
 
 
+def _serialize_leverage_brackets(data: list) -> list:
+    pattern = re.compile(r'(?=[A-Z])')
+    return [{pattern.sub('_', k).lower(): v for k, v in d.items()} for d in data]
+
+
 def load_leverage_brackets_as_dict(data: list) -> dict:
-    return {d['symbol'].lower(): d['brackets'] for d in data if d.get('brackets')}
+    return {d['symbol'].lower(): _serialize_leverage_brackets(d['brackets']) for d in data if d.get('brackets')}
 
 
 def load_total_wallet_summary(total: dict, summary: dict, assets: Union[list, tuple], fields: Union[list, tuple]):

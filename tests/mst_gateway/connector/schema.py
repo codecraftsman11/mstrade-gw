@@ -199,18 +199,22 @@ BASE_EXCHANGE_SYMBOL_INFO_FIELDS = {
     'wallet_asset': Or(None, str),
 }
 
+BASE_LEVERAGE_BRACKETS_FIELDS = {
+    'bracket': int,
+    'initial_leverage': int,
+    'maint_margin_ratio': Use(float_valid),
+    'cum': Use(float_valid),
+}
+
 EXCHANGE_SYMBOL_INFO_FIELDS = {
     OrderSchema.margin: {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
         'extra': {
             Optional('leverage_brackets'): [
                 {
-                    'bracket': int,
-                    'initialLeverage': int,
-                    'maintMarginRatio': Use(float_valid),
-                    'cum': Use(float_valid),
-                    'notionalCap': int,
-                    'notionalFloor': int
+                    **BASE_LEVERAGE_BRACKETS_FIELDS,
+                    'notional_cap': int,
+                    'notional_floor': int
                 }
             ],
             Optional('face_price_data'): {
@@ -229,12 +233,6 @@ EXCHANGE_SYMBOL_INFO_FIELDS = {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
         'extra': dict
     },
-}
-BASE_LEVERAGE_BRACKETS_FIELDS = {
-    'bracket': int,
-    'initialLeverage': int,
-    'maintMarginRatio': Use(float_valid),
-    'cum': Use(float_valid),
 }
 
 CURRENCY_EXCHANGE_SYMBOL_FIELDS = {
