@@ -19,9 +19,8 @@ class Client(BaseClient):
         self.ratelimit = ratelimit_service
         self.key = api_key
 
-
     def _generate_hashed_uid(self, key):
-        return sha256(key.encode('utf-8')).hexdigest().lower()
+        return sha256(key.encode('utf-8')).hexdigest()
 
     def _get_request_kwargs(self, method, signed: bool, force_params: bool = False, **kwargs) -> Dict:
         # set default requests timeout
@@ -58,19 +57,15 @@ class Client(BaseClient):
 
         return kwargs
 
-
     def _request(self, method, uri: str, signed: bool, force_params: bool = False, **kwargs) -> Dict:
-        with ThreadPoolExecutor() as pool:
-            key = self._generate_hashed_uid(self.key)
-            result = pool.submit(asyncio.run, self.ratelimit.create_reservation(
-                                     source='core', method=method, url=uri, hashed_uid=key, max_send_time={'seconds': 10, 'nanos': 15}
-                                 )).result()
-        print(f'IN REQUEST {result}')
+        key = self._generate_hashed_uid(self.key)
+        result = self.ratelimit.create_reservation(
+                                     method=method, url=uri, hashed_uid=key,
+                                 )
         kwargs.setdefault('data', {}).setdefault('requests_params', {})['proxies'] = result
         kwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
         self.response = getattr(self.session, method)(uri, **kwargs)
         return self._handle_response(self.response)
-
 
     def get_schema_by_method(self, func_name):
         return _method_map(func_name) or f"binance_{int(self.testnet)}"

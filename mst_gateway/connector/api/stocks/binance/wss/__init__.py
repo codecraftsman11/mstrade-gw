@@ -67,6 +67,7 @@ class BinanceWssApi(StockWssApi):
     async def _generate_auth_url(self):
         self.listen_key = await self._generate_listen_key()
         self._url = f"{self._url}/{self.listen_key}"
+        print(f'URL IS {self._url}')
 
     async def _generate_listen_key(self):
         with rest.BinanceRestApi(
@@ -82,6 +83,8 @@ class BinanceWssApi(StockWssApi):
                 elif self.schema == OrderSchema.futures_coin:
                     key = bin_client.handler.futures_coin_stream_get_listen_key()
                 else:
+                    import traceback
+                    traceback.print_exc()
                     raise ConnectorError(f"Invalid schema {self.schema}.")
             except Exception as e:
                 raise ConnectorError(e)
