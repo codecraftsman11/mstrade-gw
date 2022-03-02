@@ -80,8 +80,8 @@ class BinanceFinFactory(FinFactory):
             _prefix = 'notional'
             _value = kwargs.get('notional_value')
         for lb in leverage_brackets:
-            if _value is not None and lb[f'{_prefix}Floor'] <= abs(_value) < lb[f'{_prefix}Cap']:
-                maint_margin_rate = lb['maintMarginRatio']
+            if _value is not None and lb[f"{_prefix}_floor"] <= abs(_value) < lb[f"{_prefix}_cap"]:
+                maint_margin_rate = lb['maint_margin_ratio']
                 maint_amount = lb['cum']
         return maint_margin_rate, maint_amount
 
