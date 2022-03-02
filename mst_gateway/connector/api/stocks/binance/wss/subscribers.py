@@ -289,7 +289,7 @@ class BinanceMarginPositionSubscriber(BinancePositionSubscriber):
                 leverage_brackets = await client.futures_leverage_bracket()
                 return {
                     'position_state': utils.load_margin_positions_state(account_info),
-                    'leverage_brackets': utils.load_leverage_brackets_as_dict(leverage_brackets),
+                    'leverage_brackets': utils.load_margin_leverage_brackets_as_dict(leverage_brackets),
                     'exchange_rates': exchange_rates,
                 }
             except Exception as e:
@@ -317,7 +317,7 @@ class BinanceMarginCoinPositionSubscriber(BinanceMarginPositionSubscriber):
                     f"{StateStorageKey.exchange_rates}.{api.name}.{api.schema}")
                 return {
                     'position_state': utils.load_margin_coin_positions_state(account_info, state_data),
-                    'leverage_brackets': utils.load_leverage_brackets_as_dict(leverage_brackets),
+                    'leverage_brackets': utils.load_margin_coin_leverage_brackets_as_dict(leverage_brackets),
                     'exchange_rates': exchange_rates,
                 }
             except Exception as e:

@@ -139,8 +139,8 @@ def _load_margin_exchange_symbol_info(raw_data: list, leverage_data: dict, schem
                 extra['face_price_data'] = {'contract_size': face_price_data}
             leverage_brackets = leverage_data.get(_symbol.lower(), [])
             extra['leverage_brackets'] = leverage_brackets
-            if leverage_brackets and leverage_brackets[0].get('initialLeverage'):
-                max_leverage = to_float(leverage_brackets[0]['initialLeverage'])
+            if leverage_brackets and leverage_brackets[0].get('initial_leverage'):
+                max_leverage = to_float(leverage_brackets[0]['initial_leverage'])
 
             symbol_list.append(
                 {
@@ -1099,20 +1099,36 @@ def _load_total_wallet_summary_list(summary, fields, is_for_ws=False):
     return total
 
 
-def _serialize_leverage_brackets(brackets: list) -> list:
-    pattern = re.compile(r'(?=[A-Z])')
-    leverage_brackets = list()
-    for bracket in brackets:
-        _bracket = dict()
-        for k, v in bracket.items():
-            _k = pattern.sub('_', k).lower()
-            _bracket[_k] = v
-        leverage_brackets.append(_bracket)
-    return leverage_brackets
+def load_margin_leverage_brackets_as_dict(data: list) -> dict:
+    result = {}
+    for d in data:
+        result.setdefault(d['symbol'].lower(), [])
+        for bracket in d.get('brackets', []):
+            result[d['symbol'].lower()].append({
+                'bracket': bracket['bracket'],
+                'initial_leverage': bracket['initialLeverage'],
+                'notional_cap': bracket['notionalCap'],
+                'notional_floor': bracket['notionalFloor'],
+                'maint_margin_ratio': bracket['maintMarginRatio'],
+                'cum': bracket['cum']
+            })
+    return result
 
 
-def load_leverage_brackets_as_dict(data: list) -> dict:
-    return {d['symbol'].lower(): _serialize_leverage_brackets(d['brackets']) for d in data if d.get('brackets')}
+def load_margin_coin_leverage_brackets_as_dict(data: list) -> dict:
+    result = {}
+    for d in data:
+        result.setdefault(d['symbol'].lower(), [])
+        for bracket in d.get('brackets', []):
+            result[d['symbol'].lower()].append({
+                'bracket': bracket['bracket'],
+                'initial_leverage': bracket['initialLeverage'],
+                'qty_cap': bracket['qtyCap'],
+                'qty_floor': bracket['qtyFloor'],
+                'maint_margin_ratio': bracket['maintMarginRatio'],
+                'cum': bracket['cum']
+            })
+    return result
 
 
 def load_total_wallet_summary(total: dict, summary: dict, assets: Union[list, tuple], fields: Union[list, tuple]):

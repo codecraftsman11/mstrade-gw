@@ -214,7 +214,7 @@ class TestBinanceRestApi:
         indirect=['rest'],
     )
     def test_get_exchange_symbol_info(self, rest: BinanceRestApi, schema):
-        exchange_symbol_schema = Schema(fields.EXCHANGE_SYMBOL_INFO_FIELDS[schema])
+        exchange_symbol_schema = Schema(fields.EXCHANGE_BINANCE_SYMBOL_INFO_FIELDS[schema])
         exchange_symbols = rest.get_exchange_symbol_info(schema=schema)
         for exchange_symbol in exchange_symbols:
             assert exchange_symbol_schema.validate(exchange_symbol) == exchange_symbol

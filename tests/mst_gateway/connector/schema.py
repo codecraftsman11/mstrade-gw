@@ -199,41 +199,64 @@ BASE_EXCHANGE_SYMBOL_INFO_FIELDS = {
     'wallet_asset': Or(None, str),
 }
 
-BASE_LEVERAGE_BRACKETS_FIELDS = {
-    'bracket': int,
-    'initial_leverage': int,
-    'maint_margin_ratio': Use(float_valid),
-    'cum': Use(float_valid),
-}
-
-EXCHANGE_SYMBOL_INFO_FIELDS = {
+EXCHANGE_BITMEX_SYMBOL_INFO_FIELDS = {
     OrderSchema.margin: {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
         'extra': {
-            Optional('leverage_brackets'): [
-                {
-                    **BASE_LEVERAGE_BRACKETS_FIELDS,
-                    'notional_cap': int,
-                    'notional_floor': int
-                }
-            ],
-            Optional('face_price_data'): {
+            'face_price_data': {
                 'is_quanto': bool,
                 'is_inverse': bool,
                 'multiplier': int,
                 'underlying_multiplier': Or(None, int),
             }
         }
-    },
+    }
+}
+
+EXCHANGE_BINANCE_SYMBOL_INFO_FIELDS = {
     OrderSchema.exchange: {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
         'extra': dict
     },
-    OrderSchema.margin_coin: {
+    OrderSchema.margin_cross: {
         **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
         'extra': dict
     },
+    OrderSchema.margin: {
+        **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
+        'extra': {
+            'leverage_brackets': [
+                {
+                    'bracket': int,
+                    'initial_leverage': int,
+                    'notional_cap': int,
+                    'notional_floor': int,
+                    'maint_margin_ratio': Use(float_valid),
+                    'cum': Use(float_valid)
+                }
+            ]
+        }
+    },
+    OrderSchema.margin_coin: {
+        **BASE_EXCHANGE_SYMBOL_INFO_FIELDS,
+        'extra': {
+            'leverage_brackets': [
+                {
+                    'bracket': int,
+                    'initial_leverage': int,
+                    'qty_cap': int,
+                    'qty_floor': int,
+                    'maint_margin_ratio': Use(float_valid),
+                    'cum': Use(float_valid)
+                }
+            ],
+            'face_price_data': {
+                'contract_size': int
+            }
+        }
+    },
 }
+
 
 CURRENCY_EXCHANGE_SYMBOL_FIELDS = {
     'symbol': str,

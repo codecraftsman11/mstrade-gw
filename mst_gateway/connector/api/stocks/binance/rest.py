@@ -193,17 +193,19 @@ class BinanceRestApi(StockRestApi):
                     self._handler.futures_exchange_info,
                     self._handler.futures_leverage_bracket,
                     utils.load_margin_exchange_symbol_info,
+                    utils.load_margin_leverage_brackets_as_dict
                 ),
                 OrderSchema.margin_coin: (
                     self._handler.futures_coin_exchange_info,
                     self._handler.futures_coin_leverage_bracket,
                     utils.load_margin_coin_exchange_symbol_info,
+                    utils.load_margin_coin_leverage_brackets_as_dict
                 ),
             }
             data = self._binance_api(schema_handlers[schema][0])
             leverage_data = self._binance_api(schema_handlers[schema][1])
             return schema_handlers[schema][2](
-                data.get('symbols', []), utils.load_leverage_brackets_as_dict(leverage_data)
+                data.get('symbols', []), schema_handlers[schema][3](leverage_data)
             )
         raise ConnectorError(f"Invalid schema {schema}.")
 
