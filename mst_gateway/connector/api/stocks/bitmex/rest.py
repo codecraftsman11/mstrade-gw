@@ -26,14 +26,14 @@ class BitmexFactory:
     TBITMEX_SWAGGER = None  # type: SwaggerClient
 
     @classmethod
-    def make_client(cls, test):
+    def make_client(cls, test, api_key=None, ratelimit_client=None):
         if test:
             if not cls.TBITMEX_SWAGGER:
-                cls.TBITMEX_SWAGGER = bitmex_connector(test=test)
+                cls.TBITMEX_SWAGGER = bitmex_connector(api_key=api_key, test=test, ratelimit_client=ratelimit_client)
             return cls.TBITMEX_SWAGGER
         else:
             if not cls.BITMEX_SWAGGER:
-                cls.BITMEX_SWAGGER = bitmex_connector(test=test)
+                cls.BITMEX_SWAGGER = bitmex_connector(api_key=api_key, test=test, ratelimit_client=ratelimit_client)
             return cls.BITMEX_SWAGGER
 
 
@@ -44,7 +44,7 @@ class BitmexRestApi(StockRestApi):
     def _connect(self, **kwargs):
         self._keepalive = bool(kwargs.get('keepalive', False))
         self._compress = bool(kwargs.get('compress', False))
-        return BitmexFactory.make_client(test=self.test)
+        return BitmexFactory.make_client(api_key=self.auth.get("api_key"), test=self.test, ratelimit_client=self.ratelimit)
 
     @property
     def _authenticator(self):

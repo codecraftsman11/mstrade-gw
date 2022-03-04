@@ -1,8 +1,13 @@
+import six
 import time
 import json
 import hmac
 import hashlib
 import logging
+import typing
+import requests
+from six import iteritems
+from hashlib import sha256
 from urllib import parse
 from bravado.client import (
     construct_request,
@@ -10,11 +15,17 @@ from bravado.client import (
     CallableOperation as BaseCallableOperation,
     SwaggerClient as BaseSwaggerClient, inject_headers_for_remote_refs
 )
-from bravado.requests_client import Authenticator, RequestsClient
-from bravado.warning import warn_for_deprecated_op
+from bravado_core.operation import Operation
 from bravado.config import RequestConfig
 from bravado.swagger_model import Loader
+from bravado.http_future import HttpFuture
+from bravado.requests_client import (
+    Authenticator, RequestsClient as BaseRequestsClient,
+    RequestsFutureAdapter as BaseRequestsFutureAdapter,
+    RequestsResponseAdapter,
+)
 
+from bravado.warning import warn_for_deprecated_op
 
 log = logging.getLogger(__name__)
 
@@ -224,7 +235,134 @@ class SwaggerClient(BaseSwaggerClient):
         return ResourceDecorator(resource, self.__also_return_response)
 
 
-def bitmex_connector(test=True, config=None, api_key=None, api_secret=None):
+class RequestsFutureAdapter(BaseRequestsFutureAdapter):
+    def __init__(
+            self,
+            session,  # type: requests.Session
+            request,  # type: requests.Request
+            misc_options,  # type: typing.Mapping[str, typing.Any]
+            key=None,
+            ratelimit_client=None
+    ):
+        super(RequestsFutureAdapter, self).__init__(session, request, misc_options)
+        if ratelimit_client is not None:
+            self.ratelimit = ratelimit_client
+        self.key = key
+
+    def _generate_hashed_uid(self, key):
+        return sha256(key.encode('utf-8')).hexdigest()
+
+    def result(self, timeout=None):
+        # type: (typing.Optional[float]) -> requests.Response
+        """Blocking call to wait for API response
+
+        :param timeout: timeout in seconds to wait for response. Defaults to
+            None to wait indefinitely.
+        :type timeout: float
+        :return: raw response from the server
+        :rtype: dict
+        """
+        request = self.request
+        hashed_key = self._generate_hashed_uid(self.key)
+        proxies = self.ratelimit.create_reservation(
+            method=request.method, url=request.url, hashed_uid=hashed_key,
+        )
+        # Ensure that all the headers are converted to strings.
+        # This is need to workaround https://github.com/requests/requests/issues/3491
+        request.headers = {
+            k: str(v) if not isinstance(v, six.binary_type) else v
+            for k, v in iteritems(request.headers)
+        }
+        prepared_request = self.session.prepare_request(request)
+        settings = self.session.merge_environment_settings(
+            prepared_request.url,
+            proxies=proxies,
+            # proxies={},
+            stream=None,
+            verify=self.misc_options['ssl_verify'],
+            cert=self.misc_options['ssl_cert'],
+        )
+        response = self.session.send(
+            prepared_request,
+            timeout=self.build_timeout(timeout),
+            allow_redirects=self.misc_options['follow_redirects'],
+            **settings
+        )
+        return response
+
+class RequestsClient(BaseRequestsClient):
+    if getattr(typing, 'TYPE_CHECKING', False):
+        T = typing.TypeVar('T')
+
+    def __init__(
+        self,
+        ssl_verify=True,  # type: bool
+        ssl_cert=None,  # type:  typing.Any
+        future_adapter_class=RequestsFutureAdapter,  # type: typing.Type[RequestsFutureAdapter]
+        response_adapter_class=RequestsResponseAdapter,  # type: typing.Type[RequestsResponseAdapter]
+        key=None,
+        ratelimit_client=None
+    ):
+        # type: (...) -> None
+        """
+        :param ssl_verify: Set to False to disable SSL certificate validation. Provide the path to a
+            CA bundle if you need to use a custom one.
+        :param ssl_cert: Provide a client-side certificate to use. Either a sequence of strings pointing
+            to the certificate (1) and the private key (2), or a string pointing to the combined certificate
+            and key.
+        :param future_adapter_class: Custom future adapter class,
+            should be a subclass of :class:`RequestsFutureAdapter`
+        :param response_adapter_class: Custom response adapter class,
+            should be a subclass of :class:`RequestsResponseAdapter`
+        """
+        self.session = requests.Session()
+        self.authenticator = None  # type: typing.Optional[Authenticator]
+        self.ssl_verify = ssl_verify
+        self.ssl_cert = ssl_cert
+        self.future_adapter_class = future_adapter_class
+        self.response_adapter_class = response_adapter_class
+        self.key = key
+        if ratelimit_client is not None:
+            self.ratelimit = ratelimit_client
+
+    def request(
+        self,
+        request_params,  # type: typing.MutableMapping[str, typing.Any]
+        operation=None,  # type: typing.Optional[Operation]
+        request_config=None,  # type: typing.Optional[RequestConfig]
+    ):
+        # type: (...) -> HttpFuture[T]
+        """
+        :param request_params: complete request data.
+        :type request_params: dict
+        :param operation: operation that this http request is for. Defaults
+            to None - in which case, we're obviously just retrieving a Swagger
+            Spec.
+        :type operation: :class:`bravado_core.operation.Operation`
+        :param RequestConfig request_config: per-request configuration
+
+        :returns: HTTP Future object
+        :rtype: :class: `bravado_core.http_future.HttpFuture`
+        """
+        sanitized_params, misc_options = self.separate_params(request_params)
+        requests_future = self.future_adapter_class(
+            self.session,
+            self.authenticated_request(sanitized_params),
+            misc_options,
+            self.key,
+            self.ratelimit
+        )
+
+        return HttpFuture(
+            requests_future,
+            self.response_adapter_class,
+            operation,
+            request_config,
+        )
+
+
+
+def bitmex_connector(test=True, config=None, api_key=None, api_secret=None, ratelimit_client=None):
     if config is None:
         # See full config options at http://bravado.readthedocs.io/en/latest/configuration.html
         config = {
@@ -242,8 +380,8 @@ def bitmex_connector(test=True, config=None, api_key=None, api_secret=None):
         host = 'https://www.bitmex.com'
 
     spec_uri = host + '/api/explorer/swagger.json'
-
-    request_client = RequestsClient()
+    request_client = RequestsClient(key=api_key, ratelimit_client=ratelimit_client, future_adapter_class=RequestsFutureAdapter)
+    # request_client = RequestsClient()
     request_client.authenticator = APIKeyAuthenticator(host, api_key, api_secret)
     return SwaggerClient.from_url(spec_uri, config=config, http_client=request_client)
 

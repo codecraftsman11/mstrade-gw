@@ -1,10 +1,8 @@
-import asyncio
 from hashlib import sha256
-from concurrent.futures import ThreadPoolExecutor
 import time
 from typing import Dict, Optional
 from binance.client import AsyncClient as BaseAsyncClient, Client as BaseClient
-from binance.exceptions import BinanceRequestException, BinanceAPIException
+from binance.exceptions import BinanceRequestException
 from mst_gateway.connector.api.stocks.binance import utils
 
 
@@ -58,9 +56,9 @@ class Client(BaseClient):
         return kwargs
 
     def _request(self, method, uri: str, signed: bool, force_params: bool = False, **kwargs) -> Dict:
-        key = self._generate_hashed_uid(self.key)
+        hashed_key = self._generate_hashed_uid(self.key)
         result = self.ratelimit.create_reservation(
-                                     method=method, url=uri, hashed_uid=key,
+                                     method=method, url=uri, hashed_uid=hashed_key,
                                  )
         kwargs.setdefault('data', {}).setdefault('requests_params', {})['proxies'] = result
         kwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
