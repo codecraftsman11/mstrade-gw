@@ -8,3 +8,27 @@ class StateStorageKey(ClassWithAttributes):
     funding_rates = 'data:funding_rates'
     throttling = 'throttling'
     state = 'state'
+
+
+THROTTLE_LIMITS = {
+    'tbinance': {
+        'ws': 30,
+        'rest': 1000,
+        'order': 100
+    },
+    'binance': {
+        'ws': 60,
+        'rest': 1000,
+        'order': 100
+    },
+    'tbitmex': {
+        'ws': 50,
+        'rest': 100,
+        'order': 10
+    },
+    'bitmex': {
+        'ws': 50,
+        'rest': 100,
+        'order': 10
+    }
+}

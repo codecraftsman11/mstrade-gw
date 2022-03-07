@@ -12,22 +12,13 @@ class ThrottleWss(BaseAsyncStorage):
 
     async def set(self, key, limit: int, **kwargs) -> None:
         key = self.generate_hash_key(key)
-        timeout = kwargs.get("timeout", self._timeout)
-
         history = await self.get(key)
         history.insert(0, int(limit))
-        if self.is_dict:
-            self._storage[key] = history
-        else:
-            await self._storage.set_async(key, history, timeout=timeout)
+        self._storage[key] = history
 
     async def get(self, key) -> list:
         key = self.generate_hash_key(key)
-        if self.is_dict:
-            result = self._storage.get(key)
-        else:
-            result = await self._storage.get_async(key)
-
+        result = self._storage.get(key)
         if isinstance(result, list):
             return result
         return []

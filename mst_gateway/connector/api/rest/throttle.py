@@ -10,25 +10,13 @@ class ThrottleRest(BaseSyncStorage):
         return f"{StateStorageKey.throttling}:{super().generate_hash_key(key)}"
 
     def set(self, key, limit: int, reset: int, scope: str, **kwargs) -> None:
-        timeout = kwargs.get("timeout", self._timeout)
         key = self.generate_hash_key(key)
         _value = {scope: [limit, reset]}
-        if self.is_dict:
-            self._set_dict(key, _value)
-        else:
-            _tmp = self._storage.get(key)
-            if isinstance(_tmp, dict):
-                _tmp.update(_value)
-                self._storage.set(key, _tmp, timeout=timeout)
-            else:
-                self._storage.set(key, _value, timeout=timeout)
+        self._set_dict(key, _value)
 
     def get(self, key) -> dict:
         key = self.generate_hash_key(key)
-        if self.is_dict:
-            result = self._get_dict(key)
-        else:
-            result = self._storage.get(key)
+        result = self._get_dict(key)
         if isinstance(result, dict):
             return result
         return {'rest': [0, None]}

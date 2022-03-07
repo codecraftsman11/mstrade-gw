@@ -12,6 +12,7 @@ from .throttle import ThrottleWss
 from .. import errors
 from ..utils import parse_message
 from ...base import Connector
+from ....storage.var import THROTTLE_LIMITS
 
 
 class StockWssApi(Connector):
@@ -52,10 +53,8 @@ class StockWssApi(Connector):
         self._error = errors.ERROR_OK
         self._subscriptions = {}
         self._router = self.__class__.router_class(self)
-        self._throttle_rate = throttle_rate
+        self._throttle_rate = THROTTLE_LIMITS.get(self.name, {}).get('ws', None)
         self.auth_connect = False
-        if throttle_storage is not None:
-            self.throttle = ThrottleWss(throttle_storage)
         self.schema = schema
         if state_storage is not None:
             self.storage = AsyncStateStorage(state_storage)

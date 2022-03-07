@@ -26,6 +26,7 @@ from bravado.requests_client import (
 )
 
 from bravado.warning import warn_for_deprecated_op
+from .....exceptions import RateLimitServiceError
 
 log = logging.getLogger(__name__)
 
@@ -267,6 +268,8 @@ class RequestsFutureAdapter(BaseRequestsFutureAdapter):
         proxies = self.ratelimit.create_reservation(
             method=request.method, url=request.url, hashed_uid=hashed_key,
         )
+        if proxies is None:
+            raise RateLimitServiceError('Ratelimit service Error')
         # Ensure that all the headers are converted to strings.
         # This is need to workaround https://github.com/requests/requests/issues/3491
         request.headers = {

@@ -4,6 +4,7 @@ from typing import Dict, Optional
 from binance.client import AsyncClient as BaseAsyncClient, Client as BaseClient
 from binance.exceptions import BinanceRequestException
 from mst_gateway.connector.api.stocks.binance import utils
+from .....exceptions import RateLimitServiceError
 
 
 class Client(BaseClient):
@@ -60,6 +61,8 @@ class Client(BaseClient):
         result = self.ratelimit.create_reservation(
                                      method=method, url=uri, hashed_uid=hashed_key,
                                  )
+        if result is None:
+            raise RateLimitServiceError('Ratelimit service Error')
         kwargs.setdefault('data', {}).setdefault('requests_params', {})['proxies'] = result
         kwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
         self.response = getattr(self.session, method)(uri, **kwargs)

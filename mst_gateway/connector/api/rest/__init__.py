@@ -14,6 +14,7 @@ from .. import (
 )
 from .throttle import ThrottleRest
 from mst_gateway.exceptions import RecoverableError
+from ....storage.var import THROTTLE_LIMITS
 
 
 class StockRestApi(Connector):
@@ -23,16 +24,14 @@ class StockRestApi(Connector):
     name = 'Base'
 
     def __init__(self, name: str = None, auth: dict = None, test: bool = True, logger: Logger = None,
-                 throttle_storage=None, throttle_limit: int = None, state_storage=None, ratelimit_client=None):
+                 state_storage=None, ratelimit_client=None):
         if name is not None:
             self.name = name.lower()
         self.test = test
         self._keepalive: bool = False
         self._compress: bool = False
         self._error: tuple = ERROR_OK
-        if throttle_storage is not None:
-            self.throttle = ThrottleRest(storage=throttle_storage)
-        self._throttle_limit = throttle_limit
+        self._throttle_limit = THROTTLE_LIMITS.get(self.name, {}).get('rest', None)
         if state_storage is not None:
             self.storage = StateStorage(storage=state_storage)
         if ratelimit_client is not None:

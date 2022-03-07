@@ -67,7 +67,6 @@ class BinanceWssApi(StockWssApi):
     async def _generate_auth_url(self):
         self.listen_key = await self._generate_listen_key()
         self._url = f"{self._url}/{self.listen_key}"
-        print(f'URL IS {self._url}')
 
     async def _generate_listen_key(self):
         with rest.BinanceRestApi(
