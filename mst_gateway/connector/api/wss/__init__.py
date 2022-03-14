@@ -9,13 +9,14 @@ from binance.client import AsyncClient
 from .router import Router
 from .subscriber import Subscriber
 from .throttle import ThrottleWss
-from .. import errors
+from .. import errors, OrderSchema
 from ..utils import parse_message
 from ...base import Connector
 
 
 class StockWssApi(Connector):
     __metaclass__ = ABCMeta
+    driver = "base"
     router_class = Router
     subscribers: Dict[str, Subscriber] = {}
     auth_subscribers: Dict[str, Subscriber] = {}
@@ -35,7 +36,7 @@ class StockWssApi(Connector):
                  auth: dict = None,
                  logger: Logger = None,
                  options: dict = None,
-                 schema='margin1',
+                 schema=OrderSchema.margin,
                  state_storage=None,
                  ratelimit_client=None,
                  register_state=True):

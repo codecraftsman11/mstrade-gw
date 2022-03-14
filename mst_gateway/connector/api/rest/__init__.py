@@ -17,6 +17,7 @@ from mst_gateway.exceptions import RecoverableError
 
 
 class StockRestApi(Connector):
+    driver = 'base'
     throttle = ThrottleRest()
     storage = StateStorage()
     fin_factory = FinFactory()

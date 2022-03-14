@@ -1,14 +1,14 @@
 from mst_gateway.connector.api import OrderSchema
 
 DEFAULT_POSITION_DATA = {
-    OrderSchema.margin1: [
+    OrderSchema.margin: [
         {
             'message': '{"table":"position","action":"partial","data":[{"account":379441,"symbol":"XBTUSD","currency":"XBt","underlying":"XBT","quoteCurrency":"USD","commission":0.0005,"initMarginReq":0.01,"maintMarginReq":0.0035,"riskLimit":20000000000,"leverage":100,"crossMargin":true,"deleveragePercentile":null,"rebalancedPnl":286,"prevRealisedPnl":-74,"prevUnrealisedPnl":0,"prevClosePrice":47090.75,"openingTimestamp":"2021-12-18T21:00:00.000Z","openingQty":0,"openingCost":0,"openingComm":0,"openOrderBuyQty":0,"openOrderBuyCost":0,"openOrderBuyPremium":0,"openOrderSellQty":0,"openOrderSellCost":0,"openOrderSellPremium":0,"execBuyQty":200,"execBuyCost":425677,"execSellQty":200,"execSellCost":425539,"execQty":0,"execCost":-138,"execComm":424,"currentTimestamp":"2021-12-18T21:47:29.045Z","currentQty":0,"currentCost":-138,"currentComm":424,"realisedCost":-138,"unrealisedCost":0,"grossOpenCost":0,"grossOpenPremium":0,"grossExecCost":0,"isOpen":false,"markPrice":null,"markValue":0,"riskValue":0,"homeNotional":0,"foreignNotional":0,"posState":"","posCost":0,"posCost2":0,"posCross":0,"posInit":0,"posComm":0,"posLoss":0,"posMargin":0,"posMaint":0,"posAllowance":0,"taxableMargin":0,"initMargin":0,"maintMargin":0,"sessionMargin":0,"targetExcessMargin":0,"varMargin":0,"realisedGrossPnl":138,"realisedTax":0,"realisedPnl":-286,"unrealisedGrossPnl":0,"longBankrupt":0,"shortBankrupt":0,"taxBase":0,"indicativeTaxRate":null,"indicativeTax":0,"unrealisedTax":0,"unrealisedPnl":0,"unrealisedPnlPcnt":0,"unrealisedRoePcnt":0,"simpleQty":null,"simpleCost":null,"simpleValue":null,"simplePnl":null,"simplePnlPcnt":null,"avgCostPrice":null,"avgEntryPrice":null,"breakEvenPrice":null,"marginCallPrice":null,"liquidationPrice":null,"bankruptPrice":null,"timestamp":"2021-12-18T21:47:29.045Z","lastPrice":null,"lastValue":0}]}',
             'expect': {
                 "position": {
                     "acc": "tbitmex",
                     "tb": "position",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "partial",
                     "d": [
                         {
@@ -39,7 +39,7 @@ DEFAULT_POSITION_DATA = {
                 "position": {
                     "acc": "tbitmex",
                     "tb": "position",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "update",
                     "d": [
                         {
@@ -70,7 +70,7 @@ DEFAULT_POSITION_DATA = {
                 "position": {
                     "acc": "tbitmex",
                     "tb": "position",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "update",
                     "d": [
                         {
@@ -101,7 +101,7 @@ DEFAULT_POSITION_DATA = {
                 "position": {
                     "acc": "tbitmex",
                     "tb": "position",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "update",
                     "d": [
                         {

@@ -2,7 +2,7 @@
 from .order import BinanceOrderSerializer
 from .order_book import BinanceOrderBookSerializer
 from .quote import BinanceQuoteBinSerializer
-from .symbol import BinanceSymbolSerializer, BinanceFuturesSymbolSerializer
+from .symbol import BinanceSymbolSerializer, BinanceMarginSymbolSerializer
 from .trade import BinanceTradeSerializer
-from .wallet import BinanceWalletSerializer, BinanceFuturesWalletSerializer
-from .position import BinancePositionSerializer, BinanceFuturesPositionSerializer, BinanceFuturesCoinPositionSerializer
+from .wallet import BinanceWalletSerializer, BinanceMarginWalletSerializer
+from .position import BinancePositionSerializer, BinanceMarginPositionSerializer, BinanceMarginCoinPositionSerializer

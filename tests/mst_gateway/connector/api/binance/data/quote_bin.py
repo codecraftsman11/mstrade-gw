@@ -25,7 +25,7 @@ DEFAULT_QUOTE_BIN_MESSAGE = {
             'B': '0',
         },
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'e': 'kline',
         'E': 1638966178990,
         's': 'BTCUSDT',
@@ -49,7 +49,7 @@ DEFAULT_QUOTE_BIN_MESSAGE = {
             'B': '0',
         },
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'e': 'kline',
         'E': 1638966273261,
         's': 'BTCUSD_PERP',
@@ -105,7 +105,7 @@ DEFAULT_QUOTE_BIN_LOOKUP_TABLE_RESULT = {
             }
         ],
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'table': 'kline',
         'action': 'update',
         'data': [
@@ -135,7 +135,7 @@ DEFAULT_QUOTE_BIN_LOOKUP_TABLE_RESULT = {
             }
         ],
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'table': 'kline',
         'action': 'update',
         'data': [
@@ -199,7 +199,7 @@ DEFAULT_QUOTE_BIN_SPLIT_MESSAGE_RESULT = {
             ],
         }
     ],
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'table': 'kline',
             'action': 'update',
@@ -231,7 +231,7 @@ DEFAULT_QUOTE_BIN_SPLIT_MESSAGE_RESULT = {
             ],
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'table': 'kline',
             'action': 'update',
@@ -287,12 +287,12 @@ DEFAULT_QUOTE_BIN_GET_DATA_RESULT = {
             }
         }
     ],
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'quote_bin': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'quote_bin',
-                'sch': 'futures',
+                'sch': OrderSchema.margin,
                 'act': 'update',
                 'd': [
                     {
@@ -309,12 +309,12 @@ DEFAULT_QUOTE_BIN_GET_DATA_RESULT = {
             }
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'quote_bin': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'quote_bin',
-                'sch': 'futures_coin',
+                'sch': 'margin_coin',
                 'act': 'update',
                 'd': [
                     {

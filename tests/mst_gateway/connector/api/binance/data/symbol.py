@@ -1,40 +1,48 @@
 from mst_gateway.connector.api.types import OrderSchema
 
 DEFAULT_LEVERAGE_BRACKETS = {
-    OrderSchema.futures: [
-        {'bracket': 1, 'initialLeverage': 125, 'notionalCap': 50000, 'notionalFloor': 0,
-         'maintMarginRatio': 0.004, 'cum': 0.0},
-        {'bracket': 2, 'initialLeverage': 100, 'notionalCap': 250000, 'notionalFloor': 50000,
-         'maintMarginRatio': 0.005, 'cum': 50.0},
-        {'bracket': 3, 'initialLeverage': 50, 'notionalCap': 1000000, 'notionalFloor': 250000,
-         'maintMarginRatio': 0.01, 'cum': 1300.0},
-        {'bracket': 4, 'initialLeverage': 20, 'notionalCap': 10000000, 'notionalFloor': 1000000,
-         'maintMarginRatio': 0.025, 'cum': 16300.0},
-        {'bracket': 5, 'initialLeverage': 10, 'notionalCap': 20000000, 'notionalFloor': 10000000,
-         'maintMarginRatio': 0.05, 'cum': 266300.0},
-        {'bracket': 6, 'initialLeverage': 5, 'notionalCap': 50000000, 'notionalFloor': 20000000,
-         'maintMarginRatio': 0.1, 'cum': 1266300.0},
-        {'bracket': 7, 'initialLeverage': 4, 'notionalCap': 100000000, 'notionalFloor': 50000000,
-         'maintMarginRatio': 0.125, 'cum': 2516300.0},
-        {'bracket': 8, 'initialLeverage': 3, 'notionalCap': 200000000, 'notionalFloor': 100000000,
-         'maintMarginRatio': 0.15, 'cum': 5016300.0},
-        {'bracket': 9, 'initialLeverage': 2, 'notionalCap': 300000000, 'notionalFloor': 200000000,
-         'maintMarginRatio': 0.25, 'cum': 25016300.0},
-        {'bracket': 10, 'initialLeverage': 1, 'notionalCap': 9223372036854775807, 'notionalFloor': 300000000,
-         'maintMarginRatio': 0.5, 'cum': 100016300.0}],
-    OrderSchema.futures_coin: [
-        {'bracket': 1, 'initialLeverage': 125, 'qtyCap': 5, 'qtyFloor': 0, 'maintMarginRatio': 0.004, 'cum': 0.0},
-        {'bracket': 2, 'initialLeverage': 100, 'qtyCap': 10, 'qtyFloor': 5, 'maintMarginRatio': 0.005, 'cum': 0.005},
-        {'bracket': 3, 'initialLeverage': 50, 'qtyCap': 20, 'qtyFloor': 10, 'maintMarginRatio': 0.01, 'cum': 0.055},
-        {'bracket': 4, 'initialLeverage': 20, 'qtyCap': 50, 'qtyFloor': 20, 'maintMarginRatio': 0.025, 'cum': 0.355},
-        {'bracket': 5, 'initialLeverage': 10, 'qtyCap': 100, 'qtyFloor': 50, 'maintMarginRatio': 0.05, 'cum': 1.605},
-        {'bracket': 6, 'initialLeverage': 5, 'qtyCap': 200, 'qtyFloor': 100, 'maintMarginRatio': 0.1, 'cum': 6.605},
-        {'bracket': 7, 'initialLeverage': 4, 'qtyCap': 400, 'qtyFloor': 200, 'maintMarginRatio': 0.125, 'cum': 11.605},
-        {'bracket': 8, 'initialLeverage': 3, 'qtyCap': 1000, 'qtyFloor': 400, 'maintMarginRatio': 0.15, 'cum': 21.605},
-        {'bracket': 9, 'initialLeverage': 2, 'qtyCap': 1500, 'qtyFloor': 1000, 'maintMarginRatio': 0.25,
+    OrderSchema.margin: [
+        {'bracket': 1, 'initial_leverage': 125, 'notional_cap': 50000, 'notional_floor': 0,
+         'maint_margin_ratio': 0.004, 'cum': 0.0},
+        {'bracket': 2, 'initial_leverage': 100, 'notional_cap': 250000, 'notional_floor': 50000,
+         'maint_margin_ratio': 0.005, 'cum': 50.0},
+        {'bracket': 3, 'initial_leverage': 50, 'notional_cap': 1000000, 'notional_floor': 250000,
+         'maint_margin_ratio': 0.01, 'cum': 1300.0},
+        {'bracket': 4, 'initial_leverage': 20, 'notional_cap': 10000000, 'notional_floor': 1000000,
+         'maint_margin_ratio': 0.025, 'cum': 16300.0},
+        {'bracket': 5, 'initial_leverage': 10, 'notional_cap': 20000000, 'notional_floor': 10000000,
+         'maint_margin_ratio': 0.05, 'cum': 266300.0},
+        {'bracket': 6, 'initial_leverage': 5, 'notional_cap': 50000000, 'notional_floor': 20000000,
+         'maint_margin_ratio': 0.1, 'cum': 1266300.0},
+        {'bracket': 7, 'initial_leverage': 4, 'notional_cap': 100000000, 'notional_floor': 50000000,
+         'maint_margin_ratio': 0.125, 'cum': 2516300.0},
+        {'bracket': 8, 'initial_leverage': 3, 'notional_cap': 200000000, 'notional_floor': 100000000,
+         'maint_margin_ratio': 0.15, 'cum': 5016300.0},
+        {'bracket': 9, 'initial_leverage': 2, 'notional_cap': 300000000, 'notional_floor': 200000000,
+         'maint_margin_ratio': 0.25, 'cum': 25016300.0},
+        {'bracket': 10, 'initial_leverage': 1, 'notional_cap': 9223372036854775807, 'notional_floor': 300000000,
+         'maint_margin_ratio': 0.5, 'cum': 100016300.0}],
+    OrderSchema.margin_coin: [
+        {'bracket': 1, 'initial_leverage': 125, 'qty_cap': 5, 'qty_floor': 0, 'maint_margin_ratio': 0.004,
+         'cum': 0.0},
+        {'bracket': 2, 'initial_leverage': 100, 'qty_cap': 10, 'qty_floor': 5, 'maint_margin_ratio': 0.005,
+         'cum': 0.005},
+        {'bracket': 3, 'initial_leverage': 50, 'qty_cap': 20, 'qty_floor': 10, 'maint_margin_ratio': 0.01,
+         'cum': 0.055},
+        {'bracket': 4, 'initial_leverage': 20, 'qty_cap': 50, 'qty_floor': 20, 'maint_margin_ratio': 0.025,
+         'cum': 0.355},
+        {'bracket': 5, 'initial_leverage': 10, 'qty_cap': 100, 'qty_floor': 50, 'maint_margin_ratio': 0.05,
+         'cum': 1.605},
+        {'bracket': 6, 'initial_leverage': 5, 'qty_cap': 200, 'qty_floor': 100, 'maint_margin_ratio': 0.1,
+         'cum': 6.605},
+        {'bracket': 7, 'initial_leverage': 4, 'qty_cap': 400, 'qty_floor': 200, 'maint_margin_ratio': 0.125,
+         'cum': 11.605},
+        {'bracket': 8, 'initial_leverage': 3, 'qty_cap': 1000, 'qty_floor': 400, 'maint_margin_ratio': 0.15,
+         'cum': 21.605},
+        {'bracket': 9, 'initial_leverage': 2, 'qty_cap': 1500, 'qty_floor': 1000, 'maint_margin_ratio': 0.25,
          'cum': 121.605},
-        {'bracket': 10, 'initialLeverage': 1, 'qtyCap': 9223372036854775807, 'qtyFloor': 1500, 'maintMarginRatio': 0.5,
-         'cum': 496.605}]
+        {'bracket': 10, 'initial_leverage': 1, 'qty_cap': 9223372036854775807, 'qty_floor': 1500,
+         'maint_margin_ratio': 0.5, 'cum': 496.605}]
 }
 
 
@@ -64,7 +72,7 @@ DEFAULT_SYMBOL_DETAIL_MESSAGE = {
         'L': 459561,
         'n': 83207,
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'e': '24hrTicker',
         'E': 1638964455555,
         's': 'BTCUSDT',
@@ -84,7 +92,7 @@ DEFAULT_SYMBOL_DETAIL_MESSAGE = {
         'L': 217094660,
         'n': 116540,
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'e': '24hrTicker',
         'E': 1638965331103,
         's': 'BTCUSD_PERP',
@@ -138,7 +146,7 @@ DEFAULT_SYMBOL_DETAIL_LOOKUP_TABLE_RESULT = {
             }
         ],
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'table': '24hrTicker',
         'action': 'update',
         'data': [
@@ -164,7 +172,7 @@ DEFAULT_SYMBOL_DETAIL_LOOKUP_TABLE_RESULT = {
             }
         ],
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'table': '24hrTicker',
         'action': 'update',
         'data': [
@@ -226,7 +234,7 @@ DEFAULT_SYMBOL_DETAIL_SPLIT_MESSAGE_RESULT = {
             ],
         }
     ],
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'table': '24hrTicker',
             'action': 'update',
@@ -254,7 +262,7 @@ DEFAULT_SYMBOL_DETAIL_SPLIT_MESSAGE_RESULT = {
             ],
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'table': '24hrTicker',
             'action': 'update',
@@ -320,12 +328,12 @@ DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT = {
             }
         }
     ],
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'symbol': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'symbol',
-                'sch': 'futures',
+                'sch': OrderSchema.margin,
                 'act': 'update',
                 'd': [
                     {
@@ -355,12 +363,12 @@ DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT = {
             }
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'symbol': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'symbol',
-                'sch': 'futures_coin',
+                'sch': 'margin_coin',
                 'act': 'update',
                 'd': [
                     {
@@ -420,7 +428,7 @@ DEFAULT_SYMBOL_MESSAGE = {
             'n': 85219,
         }
     ],
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'e': '24hrTicker',
             'E': 1638964453905,
@@ -442,7 +450,7 @@ DEFAULT_SYMBOL_MESSAGE = {
             'n': 116538,
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'e': '24hrTicker',
             'E': 1638965329255,
@@ -498,7 +506,7 @@ DEFAULT_SYMBOL_LOOKUP_TABLE_RESULT = {
             }
         ],
     },
-    OrderSchema.futures: {
+    OrderSchema.margin: {
         'table': '24hrTicker',
         'action': 'update',
         'data': [
@@ -524,7 +532,7 @@ DEFAULT_SYMBOL_LOOKUP_TABLE_RESULT = {
             }
         ],
     },
-    OrderSchema.futures_coin: {
+    OrderSchema.margin_coin: {
         'table': '24hrTicker',
         'action': 'update',
         'data': [
@@ -586,7 +594,7 @@ DEFAULT_SYMBOL_SPLIT_MESSAGE_RESULT = {
             ],
         }
     ],
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'table': '24hrTicker',
             'action': 'update',
@@ -614,7 +622,7 @@ DEFAULT_SYMBOL_SPLIT_MESSAGE_RESULT = {
             ],
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'table': '24hrTicker',
             'action': 'update',
@@ -680,12 +688,12 @@ DEFAULT_SYMBOL_GET_DATA_RESULT = {
             }
         }
     ],
-    OrderSchema.futures: [
+    OrderSchema.margin: [
         {
             'symbol': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'symbol',
-                'sch': 'futures',
+                'sch': OrderSchema.margin,
                 'act': 'update',
                 'd': [
                     {
@@ -715,12 +723,12 @@ DEFAULT_SYMBOL_GET_DATA_RESULT = {
             }
         }
     ],
-    OrderSchema.futures_coin: [
+    OrderSchema.margin_coin: [
         {
             'symbol': {
-                'acc': 'tbinance.tbinance_futures',
+                'acc': 'tbinance.tbinance_margin',
                 'tb': 'symbol',
-                'sch': 'futures_coin',
+                'sch': 'margin_coin',
                 'act': 'update',
                 'd': [
                     {

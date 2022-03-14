@@ -9,7 +9,6 @@ STORAGE_DATA = {
             'volume_tick': 1e-06,
             'max_leverage': None,
             'schema': OrderSchema.exchange,
-            'symbol_schema': OrderSchema.exchange,
             'expiration': None,
             'expiration_date': None,
             'created': '2021-09-06T09:51:21.271836',
@@ -20,14 +19,13 @@ STORAGE_DATA = {
             'wallet_asset': None,
         }
     },
-    f"{StateStorageKey.symbol}.tbinance.{OrderSchema.margin2}": {
+    f"{StateStorageKey.symbol}.tbinance.{OrderSchema.margin_cross}": {
         'btcusdt': {
             'tick': 0.01,
             'pair': ['BTC', 'USDT'],
             'volume_tick': 1e-06,
             'max_leverage': None,
-            'schema': OrderSchema.margin2,
-            'symbol_schema': OrderSchema.margin2,
+            'schema': OrderSchema.margin_cross,
             'expiration': None,
             'expiration_date': None,
             'created': '2021-09-06T09:51:21.271836',
@@ -38,14 +36,13 @@ STORAGE_DATA = {
             'wallet_asset': None,
         }
     },
-    f"{StateStorageKey.symbol}.tbinance.{OrderSchema.margin3}": {
+    f"{StateStorageKey.symbol}.tbinance.{OrderSchema.margin_isolated}": {
         'btcusdt': {
             'tick': 0.01,
             'pair': ['BTC', 'USDT'],
             'volume_tick': 1e-06,
             'max_leverage': None,
-            'schema': OrderSchema.margin3,
-            'symbol_schema': OrderSchema.margin3,
+            'schema': OrderSchema.margin_isolated,
             'expiration': None,
             'expiration_date': None,
             'created': '2021-09-06T09:51:21.271836',
@@ -56,39 +53,38 @@ STORAGE_DATA = {
             'wallet_asset': None,
         }
     },
-    f"{StateStorageKey.symbol}.tbinance.{OrderSchema.futures}": {
+    f"{StateStorageKey.symbol}.tbinance.{OrderSchema.margin}": {
         'btcusdt': {
             'tick': 0.01,
             'pair': ['BTC', 'USDT'],
             'volume_tick': 0.001,
             'max_leverage': 125.0,
-            'schema': OrderSchema.futures,
-            'symbol_schema': OrderSchema.futures,
+            'schema': OrderSchema.margin,
             'expiration': 'None',
             'expiration_date': 'None',
             'created': '2021-09-06T09:51:21.272746',
             'extra': {
                 'leverage_brackets': [
-                    {'bracket': 1, 'initialLeverage': 125, 'notionalCap': 50000, 'notionalFloor': 0,
-                     'maintMarginRatio': 0.004, 'cum': 0.0},
-                    {'bracket': 2, 'initialLeverage': 100, 'notionalCap': 250000, 'notionalFloor': 50000,
-                     'maintMarginRatio': 0.005, 'cum': 50.0},
-                    {'bracket': 3, 'initialLeverage': 50, 'notionalCap': 1000000, 'notionalFloor': 250000,
-                     'maintMarginRatio': 0.01, 'cum': 1300.0},
-                    {'bracket': 4, 'initialLeverage': 20, 'notionalCap': 10000000, 'notionalFloor': 1000000,
-                     'maintMarginRatio': 0.025, 'cum': 16300.0},
-                    {'bracket': 5, 'initialLeverage': 10, 'notionalCap': 20000000, 'notionalFloor': 10000000,
-                     'maintMarginRatio': 0.05, 'cum': 266300.0},
-                    {'bracket': 6, 'initialLeverage': 5, 'notionalCap': 50000000, 'notionalFloor': 20000000,
-                     'maintMarginRatio': 0.1, 'cum': 1266300.0},
-                    {'bracket': 7, 'initialLeverage': 4, 'notionalCap': 100000000, 'notionalFloor': 50000000,
-                     'maintMarginRatio': 0.125, 'cum': 2516300.0},
-                    {'bracket': 8, 'initialLeverage': 3, 'notionalCap': 200000000, 'notionalFloor': 100000000,
-                     'maintMarginRatio': 0.15, 'cum': 5016300.0},
-                    {'bracket': 9, 'initialLeverage': 2, 'notionalCap': 300000000, 'notionalFloor': 200000000,
-                     'maintMarginRatio': 0.25, 'cum': 25016300.0},
-                    {'bracket': 10, 'initialLeverage': 1, 'notionalCap': 9223372036854775807,
-                     'notionalFloor': 300000000, 'maintMarginRatio': 0.5, 'cum': 100016300.0}
+                    {'bracket': 1, 'initial_leverage': 125, 'notional_cap': 50000, 'notional_floor': 0,
+                     'maint_margin_ratio': 0.004, 'cum': 0.0},
+                    {'bracket': 2, 'initial_leverage': 100, 'notional_cap': 250000, 'notional_floor': 50000,
+                     'maint_margin_ratio': 0.005, 'cum': 50.0},
+                    {'bracket': 3, 'initial_leverage': 50, 'notional_cap': 1000000, 'notional_floor': 250000,
+                     'maint_margin_ratio': 0.01, 'cum': 1300.0},
+                    {'bracket': 4, 'initial_leverage': 20, 'notional_cap': 10000000, 'notional_floor': 1000000,
+                     'maint_margin_ratio': 0.025, 'cum': 16300.0},
+                    {'bracket': 5, 'initial_leverage': 10, 'notional_cap': 20000000, 'notional_floor': 10000000,
+                     'maint_margin_ratio': 0.05, 'cum': 266300.0},
+                    {'bracket': 6, 'initial_leverage': 5, 'notional_cap': 50000000, 'notional_floor': 20000000,
+                     'maint_margin_ratio': 0.1, 'cum': 1266300.0},
+                    {'bracket': 7, 'initial_leverage': 4, 'notional_cap': 100000000, 'notional_floor': 50000000,
+                     'maint_margin_ratio': 0.125, 'cum': 2516300.0},
+                    {'bracket': 8, 'initial_leverage': 3, 'notional_cap': 200000000, 'notional_floor': 100000000,
+                     'maint_margin_ratio': 0.15, 'cum': 5016300.0},
+                    {'bracket': 9, 'initial_leverage': 2, 'notional_cap': 300000000, 'notional_floor': 200000000,
+                     'maint_margin_ratio': 0.25, 'cum': 25016300.0},
+                    {'bracket': 10, 'initial_leverage': 1, 'notional_cap': 9223372036854775807,
+                     'notional_floor': 300000000, 'maint_margin_ratio': 0.5, 'cum': 100016300.0}
                 ],
             },
             'system_symbol': 'btcusd',
@@ -97,40 +93,39 @@ STORAGE_DATA = {
             'wallet_asset': 'USDT',
         }
     },
-    f"{StateStorageKey.symbol}.tbinance.{OrderSchema.futures_coin}": {
+    f"{StateStorageKey.symbol}.tbinance.{OrderSchema.margin_coin}": {
         'btcusd_perp': {
             'tick': 0.1,
             'pair': ['BTC', 'USD'],
             'volume_tick': 1.0,
             'max_leverage': 125.0,
-            'schema': OrderSchema.futures_coin,
-            'symbol_schema': OrderSchema.futures_coin,
+            'schema': OrderSchema.margin_coin,
             'expiration': 'None',
             'expiration_date': 'None',
             'created': '2021-09-06T09:51:21.288366',
             'extra': {
                 'face_price_data': {'contract_size': 100},
                 'leverage_brackets': [
-                    {'bracket': 1, 'initialLeverage': 125, 'qtyCap': 5, 'qtyFloor': 0,
-                     'maintMarginRatio': 0.004, 'cum': 0.0},
-                    {'bracket': 2, 'initialLeverage': 100, 'qtyCap': 10, 'qtyFloor': 5,
-                     'maintMarginRatio': 0.005, 'cum': 0.005},
-                    {'bracket': 3, 'initialLeverage': 50, 'qtyCap': 20, 'qtyFloor': 10,
-                     'maintMarginRatio': 0.01, 'cum': 0.055},
-                    {'bracket': 4, 'initialLeverage': 20, 'qtyCap': 50, 'qtyFloor': 20,
-                     'maintMarginRatio': 0.025, 'cum': 0.355},
-                    {'bracket': 5, 'initialLeverage': 10, 'qtyCap': 100, 'qtyFloor': 50,
-                     'maintMarginRatio': 0.05, 'cum': 1.605},
-                    {'bracket': 6, 'initialLeverage': 5, 'qtyCap': 200, 'qtyFloor': 100,
-                     'maintMarginRatio': 0.1, 'cum': 6.605},
-                    {'bracket': 7, 'initialLeverage': 4, 'qtyCap': 400, 'qtyFloor': 200,
-                     'maintMarginRatio': 0.125, 'cum': 11.605},
-                    {'bracket': 8, 'initialLeverage': 3, 'qtyCap': 1000, 'qtyFloor': 400,
-                     'maintMarginRatio': 0.15, 'cum': 21.605},
-                    {'bracket': 9, 'initialLeverage': 2, 'qtyCap': 1500, 'qtyFloor': 1000,
-                     'maintMarginRatio': 0.25, 'cum': 121.605},
-                    {'bracket': 10, 'initialLeverage': 1, 'qtyCap': 9223372036854775807, 'qtyFloor': 1500,
-                     'maintMarginRatio': 0.5, 'cum': 496.605}]
+                    {'bracket': 1, 'initial_leverage': 125, 'qty_cap': 5, 'qty_floor': 0,
+                     'maint_margin_ratio': 0.004, 'cum': 0.0},
+                    {'bracket': 2, 'initial_leverage': 100, 'qty_cap': 10, 'qty_floor': 5,
+                     'maint_margin_ratio': 0.005, 'cum': 0.005},
+                    {'bracket': 3, 'initial_leverage': 50, 'qty_cap': 20, 'qty_floor': 10,
+                     'maint_margin_ratio': 0.01, 'cum': 0.055},
+                    {'bracket': 4, 'initial_leverage': 20, 'qty_cap': 50, 'qty_floor': 20,
+                     'maint_margin_ratio': 0.025, 'cum': 0.355},
+                    {'bracket': 5, 'initial_leverage': 10, 'qty_cap': 100, 'qty_floor': 50,
+                     'maint_margin_ratio': 0.05, 'cum': 1.605},
+                    {'bracket': 6, 'initial_leverage': 5, 'qty_cap': 200, 'qty_floor': 100,
+                     'maint_margin_ratio': 0.1, 'cum': 6.605},
+                    {'bracket': 7, 'initial_leverage': 4, 'qty_cap': 400, 'qty_floor': 200,
+                     'maint_margin_ratio': 0.125, 'cum': 11.605},
+                    {'bracket': 8, 'initial_leverage': 3, 'qty_cap': 1000, 'qty_floor': 400,
+                     'maint_margin_ratio': 0.15, 'cum': 21.605},
+                    {'bracket': 9, 'initial_leverage': 2, 'qty_cap': 1500, 'qty_floor': 1000,
+                     'maint_margin_ratio': 0.25, 'cum': 121.605},
+                    {'bracket': 10, 'initial_leverage': 1, 'qty_cap': 9223372036854775807, 'qty_floor': 1500,
+                     'maint_margin_ratio': 0.5, 'cum': 496.605}]
             },
             'system_symbol': 'btcusd',
             'symbol': 'btcusd_perp',
@@ -148,7 +143,7 @@ STORAGE_DATA = {
         'leverage_type': LeverageType.isolated,
         'action': 'update',
     },
-    f"position.1.tbinance.{OrderSchema.margin2}.btcusdt": {
+    f"position.1.tbinance.{OrderSchema.margin_cross}.btcusdt": {
         'id': '1',
         'symbol': 'btcusdt',
         'side': BUY,
@@ -162,7 +157,7 @@ STORAGE_DATA = {
         'bnb': 547.9, 'btc': 48736.89, 'eth': 2757.89, 'ltc': 1095.94, 'trx': 0.09164,
          'xrp': 0.8234, 'usdt': 1, 'busd': 0.9843693856
     },
-    f"{StateStorageKey.exchange_rates}.tbinance.{OrderSchema.futures}": {
+    f"{StateStorageKey.exchange_rates}.tbinance.{OrderSchema.margin}": {
         'reef': 0.0202, 'usdt': 1, 'trx': 0.08882,
         'skl': 0.2362, 'qtum': 10.01,
         'iotx': 0.10816, 'ont': 0.7995, 'ksm': 341.4,
@@ -218,7 +213,7 @@ STORAGE_DATA = {
         'srm': 7.733, 'matic': 1.942,
         'c98': 2.19, 'busd': 1.5902205456,
         'ftt': 66.6302408606},
-    f"{StateStorageKey.exchange_rates}.tbinance.{OrderSchema.futures_coin}": {
+    f"{StateStorageKey.exchange_rates}.tbinance.{OrderSchema.margin_coin}": {
         'ltc': 265.0, 'usd': 1, 'bch211231': 450.0, 'usd211231': 1, 'gala': 0.59115,
         'ada211231': 2.6, 'sol': 145.087, 'btc220325': 62900.0, 'usd220325': 1,
         'sand': 2.5447, 'ftm': 2.7606, 'bch': 559.17, 'fil': 54.166, 'link': 27.32,

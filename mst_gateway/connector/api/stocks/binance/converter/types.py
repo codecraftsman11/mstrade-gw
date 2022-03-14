@@ -10,7 +10,7 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
     """ Order type converter for Binance """
 
     LOAD_TYPE_AND_EXECUTION_MAP = {
-        OrderSchema.margin2: {
+        OrderSchema.margin_cross: {
             'LIMIT': {'type': OrderType.limit, 'execution': OrderExec.limit},
             'MARKET': {'type': OrderType.market, 'execution': OrderExec.market},
             'STOP_LOSS_LIMIT': {'type': OrderType.stop_loss, 'execution': OrderExec.limit},
@@ -19,7 +19,7 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
             # 'TAKE_PROFIT': {'type': OrderType.take_profit, 'execution': OrderExec.market},
             # 'LIMIT_MAKER': {'type': OrderType.limit, 'execution': OrderExec.limit}
         },
-        OrderSchema.margin3: {
+        OrderSchema.margin_isolated: {
             'LIMIT': {'type': OrderType.limit, 'execution': OrderExec.limit},
             'MARKET': {'type': OrderType.market, 'execution': OrderExec.market},
             'STOP_LOSS_LIMIT': {'type': OrderType.stop_loss, 'execution': OrderExec.limit},
@@ -37,7 +37,7 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
             # 'TAKE_PROFIT': {'type': OrderType.take_profit, 'execution': OrderExec.market},
             # 'LIMIT_MAKER': {'type': OrderType.limit, 'execution': OrderExec.limit}
         },
-        OrderSchema.futures: {
+        OrderSchema.margin: {
             'LIMIT': {'type': OrderType.limit, 'execution': OrderExec.limit},
             'MARKET': {'type': OrderType.market, 'execution': OrderExec.market},
             'STOP': {'type': OrderType.stop_loss, 'execution': OrderExec.limit},
@@ -46,7 +46,7 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
             # 'TAKE_PROFIT_MARKET': {'type': OrderType.take_profit, 'execution': OrderExec.market},
             # 'TRAILING_STOP_MARKET': {'type': OrderType.trailing_stop, 'execution': OrderExec.market},
         },
-        OrderSchema.futures_coin: {
+        OrderSchema.margin_coin: {
             'LIMIT': {'type': OrderType.limit, 'execution': OrderExec.limit},
             'MARKET': {'type': OrderType.market, 'execution': OrderExec.market},
             'STOP': {'type': OrderType.stop_loss, 'execution': OrderExec.limit},

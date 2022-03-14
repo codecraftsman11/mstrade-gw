@@ -35,13 +35,13 @@ class BinanceWalletSerializer(BinanceSerializer):
         assets = ('btc', 'usd')
         if self._wss_api.schema == OrderSchema.exchange:
             fields = ('bl', 'upnl', 'mbl')
-            return utils.ws_spot_wallet(
-                item, self._wss_api.schema, self.wallet_state, self.exchange_rates, fields, assets)
-        elif self._wss_api.schema == OrderSchema.margin2:
+            return utils.ws_spot_wallet(item, self._wss_api.driver, self._wss_api.schema, self.wallet_state,
+                                        self.exchange_rates, fields, assets)
+        elif self._wss_api.schema == OrderSchema.margin_cross:
             fields = ('bl', 'upnl', 'mbl')
             extra_fields = ('ist', 'bor')
-            return utils.ws_margin_wallet(item, self._wss_api.schema, self.wallet_state, self.exchange_rates,
-                                          fields, extra_fields, assets)
+            return utils.ws_margin_cross_wallet(item, self._wss_api.driver, self._wss_api.schema, self.wallet_state,
+                                                self.exchange_rates, fields, extra_fields, assets)
 
     async def _append_item(self, data: list, message: dict, item: dict):
         valid_item = await self._load_data(message, item)
@@ -64,7 +64,7 @@ class BinanceWalletSerializer(BinanceSerializer):
         }
 
 
-class BinanceFuturesWalletSerializer(BinanceWalletSerializer):
+class BinanceMarginWalletSerializer(BinanceWalletSerializer):
 
     def is_item_valid(self, message: dict, item) -> bool:
         return message['table'] == 'ACCOUNT_UPDATE' and self.subscription in self._wss_api.subscriptions
@@ -72,11 +72,11 @@ class BinanceFuturesWalletSerializer(BinanceWalletSerializer):
     def _wallet_list(self, item):
         assets = ('btc', 'usd')
         fields = ('bl', 'upnl', 'mbl')
-        if self._wss_api.schema == OrderSchema.futures_coin:
+        if self._wss_api.schema == OrderSchema.margin_coin:
             extra_fields = []
-            return utils.ws_futures_coin_wallet(item, self._wss_api.schema, self.wallet_state, self.exchange_rates,
-                                                fields, extra_fields, assets)
+            return utils.ws_margin_coin_wallet(item, self._wss_api.driver, self._wss_api.schema, self.wallet_state,
+                                               self.exchange_rates, fields, extra_fields, assets)
         else:
             extra_fields = ('ist', 'bor')
-            return utils.ws_futures_wallet(item, self._wss_api.schema, self.wallet_state, self.exchange_rates,
-                                           fields, extra_fields, assets)
+            return utils.ws_margin_wallet(item, self._wss_api.driver, self._wss_api.schema, self.wallet_state,
+                                          self.exchange_rates, fields, extra_fields, assets)

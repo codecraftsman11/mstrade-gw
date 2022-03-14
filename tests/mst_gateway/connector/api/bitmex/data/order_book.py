@@ -1,14 +1,14 @@
 from mst_gateway.connector.api import OrderSchema
 
 DEFAULT_ORDER_BOOK_DATA = {
-    OrderSchema.margin1: [
+    OrderSchema.margin: [
         {
             'message': '{"table":"orderBookL2_25","action":"partial","data":[{"symbol":"XBTUSD","id":15595080250,"side":"Sell","size":99400,"price":49197.5},{"symbol":"XBTUSD","id":15595348050,"side":"Buy","size":5000,"price":46435}]}',
             'expect': {
                 "order_book": {
                     "acc": "tbitmex",
                     "tb": "order_book",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "partial",
                     "d": [
                         {
@@ -37,7 +37,7 @@ DEFAULT_ORDER_BOOK_DATA = {
                 "order_book": {
                     "acc": "tbitmex",
                     "tb": "order_book",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "insert",
                     "d": [
                         {
@@ -58,7 +58,7 @@ DEFAULT_ORDER_BOOK_DATA = {
                 "order_book": {
                     "acc": "tbitmex",
                     "tb": "order_book",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "update",
                     "d": [
                         {
@@ -79,7 +79,7 @@ DEFAULT_ORDER_BOOK_DATA = {
                 "order_book": {
                     "acc": "tbitmex",
                     "tb": "order_book",
-                    "sch": "margin1",
+                    "sch": OrderSchema.margin,
                     "act": "delete",
                     "d": [
                         {

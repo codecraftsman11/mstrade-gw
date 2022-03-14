@@ -6,12 +6,12 @@ from mst_gateway.connector import api
 class BinanceFinFactory(FinFactory):
 
     @classmethod
-    def _is_futures_coin(cls, **kwargs) -> bool:
-        return kwargs.get('schema', '').lower() == api.OrderSchema.futures_coin
+    def _is_margin_coin(cls, **kwargs) -> bool:
+        return kwargs.get('schema', '').lower() == api.OrderSchema.margin_coin
 
     @classmethod
     def calc_face_price(cls, price: float, **kwargs) -> Optional[float]:
-        if cls._is_futures_coin(**kwargs):
+        if cls._is_margin_coin(**kwargs):
             if contract_size := kwargs.get('contract_size'):
                 try:
                     return contract_size / price
@@ -21,7 +21,7 @@ class BinanceFinFactory(FinFactory):
 
     @classmethod
     def calc_price(cls, face_price: float, **kwargs) -> Optional[float]:
-        if cls._is_futures_coin(**kwargs):
+        if cls._is_margin_coin(**kwargs):
             if contract_size := kwargs.get('contract_size'):
                 try:
                     return contract_size / face_price
@@ -45,7 +45,7 @@ class BinanceFinFactory(FinFactory):
         try:
             quantity = abs(volume)
             direction = cls.direction_by_side(side)
-            if cls._is_futures_coin(**kwargs):
+            if cls._is_margin_coin(**kwargs):
                 liquidation_price = (quantity * maint_margin_rate + direction * quantity) / (
                     (wallet_balance - maint_margin_sum + unrealised_pnl_sum + maint_amount) / (
                         contract_size + direction *
@@ -73,15 +73,15 @@ class BinanceFinFactory(FinFactory):
     def filter_leverage_brackets(cls, leverage_brackets: list, **kwargs) -> tuple:
         maint_margin_rate = None
         maint_amount = None
-        if cls._is_futures_coin(**kwargs):
+        if cls._is_margin_coin(**kwargs):
             _prefix = 'qty'
             _value = kwargs.get('volume')
         else:
             _prefix = 'notional'
             _value = kwargs.get('notional_value')
         for lb in leverage_brackets:
-            if _value is not None and lb[f'{_prefix}Floor'] <= abs(_value) < lb[f'{_prefix}Cap']:
-                maint_margin_rate = lb['maintMarginRatio']
+            if _value is not None and lb[f"{_prefix}_floor"] <= abs(_value) < lb[f"{_prefix}_cap"]:
+                maint_margin_rate = lb['maint_margin_ratio']
                 maint_amount = lb['cum']
         return maint_margin_rate, maint_amount
 
@@ -101,7 +101,7 @@ class BinanceFinFactory(FinFactory):
     def calc_notional_value(cls, volume: float, mark_price: float, **kwargs) -> Optional[float]:
         try:
             quantity = abs(volume)
-            if cls._is_futures_coin(**kwargs):
+            if cls._is_margin_coin(**kwargs):
                 contract_size = kwargs.get('contract_size')
                 return quantity * contract_size / mark_price
             return quantity * mark_price
@@ -112,7 +112,7 @@ class BinanceFinFactory(FinFactory):
     def calc_maint_margin(cls, volume: float, mark_price: float, maint_amount: float, maint_margin_rate: float,
                           **kwargs) -> Optional[float]:
         try:
-            if cls._is_futures_coin(**kwargs):
+            if cls._is_margin_coin(**kwargs):
                 contract_size = kwargs.get('contract_size')
                 return abs(volume) * contract_size * (maint_margin_rate / mark_price) - maint_amount
             return cls.calc_notional_value(volume, mark_price) * maint_margin_rate - maint_amount
@@ -154,7 +154,7 @@ class BinanceFinFactory(FinFactory):
     @classmethod
     def calc_unrealised_pnl_by_side(cls, entry_price: float, mark_price: float, volume: float, side: int,
                                     **kwargs) -> Optional[float]:
-        if cls._is_futures_coin(**kwargs):
+        if cls._is_margin_coin(**kwargs):
             try:
                 contract_size = kwargs.get('contract_size')
                 return abs(volume) * cls.direction_by_side(side) * contract_size * (1 / entry_price - 1 / mark_price)
@@ -165,7 +165,7 @@ class BinanceFinFactory(FinFactory):
     @classmethod
     def calc_unrealised_pnl_by_direction(cls, entry_price: float, mark_price: float, volume: float, direction: int,
                                          **kwargs) -> Optional[float]:
-        if cls._is_futures_coin(**kwargs):
+        if cls._is_margin_coin(**kwargs):
             contract_size = kwargs.get('contract_size')
             try:
                 return abs(volume) * direction * contract_size * (1 / entry_price - 1 / mark_price)
@@ -175,7 +175,7 @@ class BinanceFinFactory(FinFactory):
 
     @classmethod
     def calc_mark_price(cls, volume: float, entry_price: float, unrealised_pnl: float, **kwargs) -> Optional[float]:
-        if cls._is_futures_coin(**kwargs):
+        if cls._is_margin_coin(**kwargs):
             contract_size = kwargs.get('contract_size')
             try:
                 return 1 / (1 / entry_price - (
