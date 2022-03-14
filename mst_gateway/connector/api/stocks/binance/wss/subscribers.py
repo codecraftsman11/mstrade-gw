@@ -171,7 +171,7 @@ class BinanceWalletSubscriber(BinanceSubscriber):
         schema_handlers = {
             OrderSchema.exchange: (client.get_account, utils.load_ws_spot_wallet_data),
             OrderSchema.margin_cross: (client.get_margin_account, utils.load_ws_margin_cross_wallet_data),
-            OrderSchema.margin: (client.futures_account_v2, utils.load_ws_margin_cross_wallet_data),
+            OrderSchema.margin: (client.futures_account_v2, utils.load_ws_margin_wallet_data),
             OrderSchema.margin_coin: (client.futures_coin_account, utils.load_ws_margin_coin_wallet_data),
         }
         schema = api.schema
