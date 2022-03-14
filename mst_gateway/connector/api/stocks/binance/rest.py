@@ -443,7 +443,7 @@ class BinanceRestApi(StockRestApi):
         currencies = self.storage.get(f"{StateStorageKey.exchange_rates}.{self.name}.{schema}")
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl')
-            return utils.load_ws_spot_wallet_data(data, currencies, assets, fields, self.driver, schema)
+            return utils.load_ws_spot_wallet_data(data)
         return utils.load_spot_wallet_data(data, currencies, assets, fields, self.driver, schema)
 
     def _cross_margin_wallet(self, schema: str, **kwargs):
@@ -456,8 +456,7 @@ class BinanceRestApi(StockRestApi):
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl')
             extra_fields = ('bor', 'ist')
-            return utils.load_ws_margin_cross_wallet_data(data, currencies, assets, fields, extra_fields, self.driver,
-                                                          schema)
+            return utils.load_ws_margin_cross_wallet_data(data)
         return utils.load_margin_cross_wallet_data(data, currencies, assets, fields, extra_fields, self.driver, schema)
 
     def _isolated_margin_wallet(self, schema: str, **kwargs):
@@ -471,8 +470,7 @@ class BinanceRestApi(StockRestApi):
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl')
             extra_fields = ('bor', 'ist')
-            return utils.load_ws_margin_cross_wallet_data(data, currencies, assets, fields, extra_fields, self.driver,
-                                                          schema)
+            return utils.load_ws_margin_cross_wallet_data(data)
         return utils.load_margin_isolated_wallet_data(data, currencies, assets, fields, extra_fields, self.driver,
                                                       schema)
 
@@ -490,8 +488,7 @@ class BinanceRestApi(StockRestApi):
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl')
             extra_fields = ('bor', 'ist')
-            return utils.load_ws_margin_wallet_data(data, currencies, assets, fields, extra_fields,
-                                                    cross_collaterals.get('crossCollaterals', []), self.driver, schema)
+            return utils.load_ws_margin_wallet_data(data, cross_collaterals.get('crossCollaterals', []))
         return utils.load_margin_wallet_data(data, currencies, assets, fields, extra_fields,
                                              cross_collaterals.get('crossCollaterals', []), self.driver, schema)
 
@@ -503,7 +500,7 @@ class BinanceRestApi(StockRestApi):
         currencies = self.storage.get(f"{StateStorageKey.exchange_rates}.{self.name}.{schema}")
         if is_for_ws:
             fields = ('bl', 'upnl', 'mbl')
-            return utils.load_ws_margin_coin_wallet_data(data, currencies, assets, fields, self.driver, schema)
+            return utils.load_ws_margin_coin_wallet_data(data)
         return utils.load_margin_coin_wallet_data(data, currencies, assets, fields, self.driver, schema)
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
