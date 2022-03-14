@@ -12,7 +12,6 @@ from .throttle import ThrottleWss
 from .. import errors
 from ..utils import parse_message
 from ...base import Connector
-from ....storage.var import THROTTLE_LIMITS
 
 
 class StockWssApi(Connector):
@@ -36,8 +35,6 @@ class StockWssApi(Connector):
                  auth: dict = None,
                  logger: Logger = None,
                  options: dict = None,
-                 throttle_rate: int = 30,
-                 throttle_storage=None,
                  schema='margin1',
                  state_storage=None,
                  ratelimit_client=None,
@@ -53,7 +50,6 @@ class StockWssApi(Connector):
         self._error = errors.ERROR_OK
         self._subscriptions = {}
         self._router = self.__class__.router_class(self)
-        self._throttle_rate = THROTTLE_LIMITS.get(self.name, {}).get('ws', None)
         self.auth_connect = False
         self.schema = schema
         if state_storage is not None:
@@ -213,7 +209,7 @@ class StockWssApi(Connector):
     async def open(self, **kwargs):
         throttle_valid = await self.throttle.validate(
             key=dict(name=self.name, url=self._url),
-            rate=self._throttle_rate
+            rate=self.throttle.ws_limit
         )
         if not throttle_valid:
             raise ConnectionError

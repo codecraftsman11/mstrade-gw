@@ -6,8 +6,7 @@ from .router import BitmexWssRouter
 from .utils import is_auth_ok, make_cmd
 from .. import var
 from ..lib import bitmex_signature
-from ....wss import StockWssApi
-
+from ....wss import StockWssApi, ThrottleWss
 
 BITMEX_WSS_DEFAULT_TIMEOUT = 5
 
@@ -30,6 +29,7 @@ class BitmexWssApi(StockWssApi):
     }
 
     router_class = BitmexWssRouter
+    throttle = ThrottleWss(ws_limit=var.BITMEX_THROTTLE_LIMITS.get('ws'))
 
     async def _connect(self, **kwargs):
         kwargs['ws_options'] = {

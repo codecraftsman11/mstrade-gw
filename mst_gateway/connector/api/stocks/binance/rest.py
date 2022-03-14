@@ -16,11 +16,15 @@ from . import utils, var
 from ...rest import StockRestApi
 from ...utils import load_wallet_summary
 from .....exceptions import GatewayError, ConnectorError, RecoverableError, NotFoundError
+from ...rest.throttle import ThrottleRest
 
 
 class BinanceRestApi(StockRestApi):
     name = 'binance'
     fin_factory = BinanceFinFactory()
+    throttle = ThrottleRest(rest_limit=var.BINANCE_THROTTLE_LIMITS.get('order'),
+                            order_limit=var.BINANCE_THROTTLE_LIMITS.get('order')
+                            )
 
     def throttle_hash_name(self, name=None):
         return sha256(f"{self.name}.{self._handler.get_schema_by_method(name)}".lower().encode('utf-8')).hexdigest()
@@ -903,9 +907,9 @@ class BinanceRestApi(StockRestApi):
         return {'liquidation_price': liquidation_price}
 
     def _binance_api(self, method: callable, **kwargs):
-        _throttle_hash_name = self.throttle_hash_name(method.__name__)
-        self.validate_throttling(_throttle_hash_name)
-
+        if not self.ratelimit:
+            _throttle_hash_name = self.throttle_hash_name(method.__name__)
+            self.validate_throttling(_throttle_hash_name)
 
         try:
             resp = method(**kwargs)
@@ -929,7 +933,7 @@ class BinanceRestApi(StockRestApi):
             self.logger.error(f"Binance api error. Detail: {exc}")
             raise ConnectorError("Binance api error.")
         finally:
-            if self.handler.response:
+            if self.handler.response and not self.ratelimit:
                 self.throttle.set(
                     key=_throttle_hash_name,
                     **self.__get_limit_header(self.handler.response.headers)

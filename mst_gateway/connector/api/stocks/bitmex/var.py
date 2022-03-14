@@ -1,6 +1,12 @@
 from mst_gateway.connector import api
 
 
+BITMEX_THROTTLE_LIMITS = {
+    'ws': 50,
+    'rest': 100,
+    'order': 10
+}
+
 BITMEX_MAX_QUOTE_BINS_COUNT = 750
 
 BITMEX_BUY = "Buy"

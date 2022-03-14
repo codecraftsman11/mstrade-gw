@@ -6,6 +6,11 @@ from mst_gateway.storage import BaseSyncStorage, StateStorageKey
 class ThrottleRest(BaseSyncStorage):
     _timeout = 60
 
+    def __init__(self, rest_limit: int = 100, order_limit: int = 100, storage=None, timeout: Optional[int] = None) -> None:
+        self.rest_limit = rest_limit
+        self.order_limit = order_limit
+        super(ThrottleRest, self).__init__(storage, timeout)
+
     def generate_hash_key(self, key: (str, list, tuple, dict)) -> str:
         return f"{StateStorageKey.throttling}:{super().generate_hash_key(key)}"
 

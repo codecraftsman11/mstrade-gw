@@ -57,13 +57,14 @@ class Client(BaseClient):
         return kwargs
 
     def _request(self, method, uri: str, signed: bool, force_params: bool = False, **kwargs) -> Dict:
-        hashed_key = self._generate_hashed_uid(self.key)
-        result = self.ratelimit.create_reservation(
-                                     method=method, url=uri, hashed_uid=hashed_key,
-                                 )
-        if result is None:
-            raise RateLimitServiceError('Ratelimit service Error')
-        kwargs.setdefault('data', {}).setdefault('requests_params', {})['proxies'] = result
+        if self.ratelimit:
+            hashed_key = self._generate_hashed_uid(self.key)
+            proxies = self.ratelimit.create_reservation(
+                                         method=method, url=uri, hashed_uid=hashed_key,
+                                     )
+            if proxies is None:
+                raise RateLimitServiceError('Ratelimit service Error')
+            kwargs.setdefault('data', {}).setdefault('requests_params', {})['proxies'] = proxies
         kwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
         self.response = getattr(self.session, method)(uri, **kwargs)
         return self._handle_response(self.response)

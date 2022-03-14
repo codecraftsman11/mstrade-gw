@@ -14,7 +14,6 @@ from .. import (
 )
 from .throttle import ThrottleRest
 from mst_gateway.exceptions import RecoverableError
-from ....storage.var import THROTTLE_LIMITS
 
 
 class StockRestApi(Connector):
@@ -31,11 +30,9 @@ class StockRestApi(Connector):
         self._keepalive: bool = False
         self._compress: bool = False
         self._error: tuple = ERROR_OK
-        self._throttle_limit = THROTTLE_LIMITS.get(self.name, {}).get('rest', None)
         if state_storage is not None:
             self.storage = StateStorage(storage=state_storage)
-        if ratelimit_client is not None:
-            self.ratelimit = ratelimit_client
+        self.ratelimit = ratelimit_client
         super().__init__(auth, logger)
 
     def throttle_hash_name(self, name=None):
@@ -44,7 +41,7 @@ class StockRestApi(Connector):
         return super().throttle_hash_name(name)
 
     def validate_throttling(self, hash_name: str):
-        reset_time = self.throttle.validate(hash_name, self._throttle_limit)
+        reset_time = self.throttle.validate(hash_name, self.throttle.rest_limit)
         if reset_time:
             raise RecoverableError(
                 f"Request was throttled. Expected available in {reset_time - int(time())} seconds."

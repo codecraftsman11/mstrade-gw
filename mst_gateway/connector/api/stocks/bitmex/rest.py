@@ -17,6 +17,7 @@ from ...rest import StockRestApi
 from .... import api
 from .....exceptions import ConnectorError, RecoverableError, NotFoundError
 from .....utils import j_dumps
+from ...rest.throttle import ThrottleRest
 
 
 class BitmexFactory:
@@ -40,6 +41,9 @@ class BitmexFactory:
 class BitmexRestApi(StockRestApi):
     name = 'bitmex'
     fin_factory = BitmexFinFactory()
+    throttle = ThrottleRest(rest_limit=var.BITMEX_THROTTLE_LIMITS.get('order'),
+                            order_limit=var.BITMEX_THROTTLE_LIMITS.get('order')
+                            )
 
     def _connect(self, **kwargs):
         self._keepalive = bool(kwargs.get('keepalive', False))
@@ -482,8 +486,9 @@ class BitmexRestApi(StockRestApi):
             )}
 
     def _bitmex_api(self, method: callable, **kwargs):
-        _throttle_hash_name = self.throttle_hash_name()
-        self.validate_throttling(_throttle_hash_name)
+        if not self.ratelimit:
+            _throttle_hash_name = self.throttle_hash_name()
+            self.validate_throttling(_throttle_hash_name)
 
         headers = {}
         if self._keepalive:
@@ -496,20 +501,21 @@ class BitmexRestApi(StockRestApi):
                 _request_options={'headers': headers},
                 **kwargs
             ).response()
-
-            self.throttle.set(
-                key=_throttle_hash_name,
-                limit=(int(resp.incoming_response.headers.get('X-RateLimit-Limit', 0)) -
-                       int(resp.incoming_response.headers.get('X-RateLimit-Remaining', 0))),
-                reset=int(resp.incoming_response.headers.get('X-RateLimit-Reset', 0)),
-                scope='rest'
-            )
+            if not self.ratelimit:
+                self.throttle.set(
+                    key=_throttle_hash_name,
+                    limit=(int(resp.incoming_response.headers.get('X-RateLimit-Limit', 0)) -
+                           int(resp.incoming_response.headers.get('X-RateLimit-Remaining', 0))),
+                    reset=int(resp.incoming_response.headers.get('X-RateLimit-Reset', 0)),
+                    scope='rest'
+                )
             return resp.result, resp.metadata
         except HTTPError as exc:
-            self.throttle.set(
-                key=_throttle_hash_name,
-                **self.__get_limit_header(exc.response.headers)
-            )
+            if not self.ratelimit:
+                self.throttle.set(
+                    key=_throttle_hash_name,
+                    **self.__get_limit_header(exc.response.headers)
+                )
 
             message = exc.message
             if not message and isinstance(exc.swagger_result, dict):

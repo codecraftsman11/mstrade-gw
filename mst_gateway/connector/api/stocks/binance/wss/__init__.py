@@ -9,7 +9,7 @@ from .utils import is_auth_ok, make_cmd
 from .. import rest
 from ..utils import to_float, remap_futures_coin_position_request_data
 from .... import OrderSchema
-from ....wss import StockWssApi
+from ....wss import StockWssApi, ThrottleWss
 from .. import var
 
 
@@ -32,6 +32,7 @@ class BinanceWssApi(StockWssApi):
 
     router_class = BinanceWssRouter
     refresh_key_time = 1800
+    throttle = ThrottleWss(ws_limit=var.BINANCE_THROTTLE_LIMITS.get('ws'))
 
     def __init__(self,
                  name: str = None,
@@ -41,14 +42,12 @@ class BinanceWssApi(StockWssApi):
                  auth: dict = None,
                  logger: Logger = None,
                  options: dict = None,
-                 throttle_rate: int = 30,
-                 throttle_storage=None,
                  schema='exchange',
                  state_storage=None,
                  ratelimit_client=None,
                  register_state=True):
-        super().__init__(name, account_name, url, test, auth, logger, options, throttle_rate,
-                         throttle_storage, schema, state_storage, register_state, ratelimit_client)
+        super().__init__(name, account_name, url, test, auth, logger, options,
+                         schema, state_storage, register_state, ratelimit_client)
         self.listen_key = None
 
     async def _refresh_key(self):
@@ -82,8 +81,6 @@ class BinanceWssApi(StockWssApi):
                 elif self.schema == OrderSchema.futures_coin:
                     key = bin_client.handler.futures_coin_stream_get_listen_key()
                 else:
-                    import traceback
-                    traceback.print_exc()
                     raise ConnectorError(f"Invalid schema {self.schema}.")
             except Exception as e:
                 raise ConnectorError(e)

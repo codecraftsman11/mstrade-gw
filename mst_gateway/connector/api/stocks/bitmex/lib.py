@@ -264,12 +264,14 @@ class RequestsFutureAdapter(BaseRequestsFutureAdapter):
         :rtype: dict
         """
         request = self.request
-        hashed_key = self._generate_hashed_uid(self.key)
-        proxies = self.ratelimit.create_reservation(
-            method=request.method, url=request.url, hashed_uid=hashed_key,
-        )
-        if proxies is None:
-            raise RateLimitServiceError('Ratelimit service Error')
+        proxies = {}
+        if self.ratelimit:
+            hashed_key = self._generate_hashed_uid(self.key)
+            proxies = self.ratelimit.create_reservation(
+                method=request.method, url=request.url, hashed_uid=hashed_key,
+            )
+            if proxies is None:
+                raise RateLimitServiceError('Ratelimit service Error')
         # Ensure that all the headers are converted to strings.
         # This is need to workaround https://github.com/requests/requests/issues/3491
         request.headers = {
@@ -280,7 +282,6 @@ class RequestsFutureAdapter(BaseRequestsFutureAdapter):
         settings = self.session.merge_environment_settings(
             prepared_request.url,
             proxies=proxies,
-            # proxies={},
             stream=None,
             verify=self.misc_options['ssl_verify'],
             cert=self.misc_options['ssl_cert'],
