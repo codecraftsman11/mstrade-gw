@@ -40,7 +40,6 @@ def rest(request, _debug) -> BitmexRestApi:
     with BitmexRestApi(
             name=api_name,
             auth=auth,
-            throttle_limit=90,
             state_storage=deepcopy(data.STORAGE_DATA),
             logger=_debug['logger']
     ) as api:
