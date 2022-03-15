@@ -55,8 +55,7 @@ class StockWssApi(Connector):
         self.schema = schema
         if state_storage is not None:
             self.storage = AsyncStateStorage(state_storage)
-        if ratelimit_client is not None:
-            self.ratelimit = ratelimit_client
+        self.ratelimit = ratelimit_client
         self.register_state = register_state
         super().__init__(auth, logger)
         self.__init_partial_state_data()

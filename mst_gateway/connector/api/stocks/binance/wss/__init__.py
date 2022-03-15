@@ -48,7 +48,8 @@ class BinanceWssApi(StockWssApi):
                  ratelimit_client=None,
                  register_state=True):
         super().__init__(name, account_name, url, test, auth, logger, options,
-                         schema, state_storage, register_state, ratelimit_client)
+                         schema, state_storage, ratelimit_client, register_state)
+
         self.listen_key = None
 
     async def _refresh_key(self):
@@ -74,16 +75,18 @@ class BinanceWssApi(StockWssApi):
         ) as bin_client:
             try:
                 if self.schema == OrderSchema.exchange:
-                    key = await bin_client.stream_get_listen_key()
+                    key = bin_client.handler.stream_get_listen_key()
                 elif self.schema == OrderSchema.margin_cross:
-                    key = await bin_client.margin_stream_get_listen_key()
+                    key = bin_client.handler.margin_stream_get_listen_key()
                 elif self.schema == OrderSchema.margin:
-                    key = await bin_client.futures_stream_get_listen_key()
+                    key = bin_client.handler.futures_stream_get_listen_key()
                 elif self.schema == OrderSchema.margin_coin:
-                    key = await bin_client.futures_coin_stream_get_listen_key()
+                    key = bin_client.handler.futures_coin_stream_get_listen_key()
                 else:
                     raise ConnectorError(f"Invalid schema {self.schema}.")
             except Exception as e:
+                import traceback
+                traceback.print_exc()
                 raise ConnectorError(e)
             if not key:
                 raise ConnectorError(f"Binance api error. Details: Invalid listen key")
@@ -219,11 +222,11 @@ class BinanceMarginWssApi(BinanceWssApi):
                  logger: Logger = None,
                  options: dict = None,
                  schema=OrderSchema.margin,
-                 ratelimit_client=None,
                  state_storage=None,
+                 ratelimit_client=None,
                  register_state=True):
         super().__init__(name, account_name, url, test, auth, logger, options,
-                        schema, ratelimit_client, state_storage, register_state)
+                        schema, state_storage, ratelimit_client, register_state)
 
     def __split_message_map(self, key: str) -> Optional[callable]:
         _map = {
