@@ -245,13 +245,9 @@ class RequestsFutureAdapter(BaseRequestsFutureAdapter):
             key=None,
             ratelimit_client=None
     ):
-        super(RequestsFutureAdapter, self).__init__(session, request, misc_options)
-        if ratelimit_client is not None:
-            self.ratelimit = ratelimit_client
+        self.ratelimit = ratelimit_client
         self.key = key
-
-    def _generate_hashed_uid(self, key):
-        return sha256(key.encode('utf-8')).hexdigest()
+        super(RequestsFutureAdapter, self).__init__(session, request, misc_options)
 
     def result(self, timeout=None):
         # type: (typing.Optional[float]) -> requests.Response
@@ -294,6 +290,11 @@ class RequestsFutureAdapter(BaseRequestsFutureAdapter):
         )
         return response
 
+    @staticmethod
+    def _generate_hashed_uid(key):
+        return sha256(key.encode('utf-8')).hexdigest()
+
+
 class RequestsClient(BaseRequestsClient):
     if getattr(typing, 'TYPE_CHECKING', False):
         T = typing.TypeVar('T')
@@ -326,8 +327,7 @@ class RequestsClient(BaseRequestsClient):
         self.future_adapter_class = future_adapter_class
         self.response_adapter_class = response_adapter_class
         self.key = key
-        if ratelimit_client is not None:
-            self.ratelimit = ratelimit_client
+        self.ratelimit = ratelimit_client
 
     def request(
         self,
@@ -365,7 +365,6 @@ class RequestsClient(BaseRequestsClient):
         )
 
 
-
 def bitmex_connector(test=True, config=None, api_key=None, api_secret=None, ratelimit_client=None):
     if config is None:
         # See full config options at http://bravado.readthedocs.io/en/latest/configuration.html
@@ -385,7 +384,6 @@ def bitmex_connector(test=True, config=None, api_key=None, api_secret=None, rate
 
     spec_uri = host + '/api/explorer/swagger.json'
     request_client = RequestsClient(key=api_key, ratelimit_client=ratelimit_client, future_adapter_class=RequestsFutureAdapter)
-    # request_client = RequestsClient()
     request_client.authenticator = APIKeyAuthenticator(host, api_key, api_secret)
     return SwaggerClient.from_url(spec_uri, config=config, http_client=request_client)
 
