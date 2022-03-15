@@ -436,46 +436,31 @@ class BinanceRestApi(StockRestApi):
         return schema_handlers[schema](schema=schema, **kwargs)
 
     def _spot_wallet(self, schema: str, **kwargs):
-        is_for_ws = kwargs.pop('is_for_ws', False)
         assets = kwargs.pop('assets', ('btc', 'usd'))
         fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance'))
         data = self._binance_api(self._handler.get_account, **kwargs)
         currencies = self.storage.get(f"{StateStorageKey.exchange_rates}.{self.name}.{schema}")
-        if is_for_ws:
-            fields = ('bl', 'upnl', 'mbl')
-            return utils.load_ws_spot_wallet_data(data)
         return utils.load_spot_wallet_data(data, currencies, assets, fields, self.driver, schema)
 
     def _cross_margin_wallet(self, schema: str, **kwargs):
-        is_for_ws = kwargs.pop('is_for_ws', False)
         assets = kwargs.pop('assets', ('btc', 'usd'))
         fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance'))
         extra_fields = kwargs.pop('extra_fields', ('borrowed', 'interest'))
         data = self._binance_api(self._handler.get_margin_account, **kwargs)
         currencies = self.storage.get(f"{StateStorageKey.exchange_rates}.{self.name}.{schema}")
-        if is_for_ws:
-            fields = ('bl', 'upnl', 'mbl')
-            extra_fields = ('bor', 'ist')
-            return utils.load_ws_margin_cross_wallet_data(data)
         return utils.load_margin_cross_wallet_data(data, currencies, assets, fields, extra_fields, self.driver, schema)
 
     def _isolated_margin_wallet(self, schema: str, **kwargs):
         # TODO: refactor by new structures
-        is_for_ws = kwargs.pop('is_for_ws', False)
         assets = kwargs.pop('assets', ('btc', 'usd'))
         fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance'))
         extra_fields = kwargs.pop('extra_fields', ('borrowed', 'interest'))
         data = self._binance_api(self._handler.get_isolated_margin_account, **kwargs)
         currencies = self.storage.get(f"{StateStorageKey.exchange_rates}.{self.name}.{schema}")
-        if is_for_ws:
-            fields = ('bl', 'upnl', 'mbl')
-            extra_fields = ('bor', 'ist')
-            return utils.load_ws_margin_cross_wallet_data(data)
         return utils.load_margin_isolated_wallet_data(data, currencies, assets, fields, extra_fields, self.driver,
                                                       schema)
 
     def _margin_wallet(self, schema: str, **kwargs):
-        is_for_ws = kwargs.pop('is_for_ws', False)
         assets = kwargs.pop('assets', ('btc', 'usd'))
         fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance'))
         extra_fields = kwargs.pop('extra_fields', ('borrowed', 'interest'))
@@ -485,22 +470,14 @@ class BinanceRestApi(StockRestApi):
         except ConnectorError:
             cross_collaterals = {}
         currencies = self.storage.get(f"{StateStorageKey.exchange_rates}.{self.name}.{schema}")
-        if is_for_ws:
-            fields = ('bl', 'upnl', 'mbl')
-            extra_fields = ('bor', 'ist')
-            return utils.load_ws_margin_wallet_data(data, cross_collaterals.get('crossCollaterals', []))
         return utils.load_margin_wallet_data(data, currencies, assets, fields, extra_fields,
                                              cross_collaterals.get('crossCollaterals', []), self.driver, schema)
 
     def _margin_coin_wallet(self, schema: str, **kwargs):
-        is_for_ws = kwargs.pop('is_for_ws', False)
         assets = kwargs.pop('assets', ('btc', 'usd'))
         fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance'))
         data = self._binance_api(self._handler.futures_coin_account, **kwargs)
         currencies = self.storage.get(f"{StateStorageKey.exchange_rates}.{self.name}.{schema}")
-        if is_for_ws:
-            fields = ('bl', 'upnl', 'mbl')
-            return utils.load_ws_margin_coin_wallet_data(data)
         return utils.load_margin_coin_wallet_data(data, currencies, assets, fields, self.driver, schema)
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
