@@ -24,8 +24,6 @@ class StockWssApi(Connector):
     TEST_URL = None
     throttle = ThrottleWss()
     storage = AsyncStateStorage()
-    partial_state_data = {}
-    __state_data = {}
 
     def __init__(self,
                  name: str = None,
@@ -59,6 +57,8 @@ class StockWssApi(Connector):
             self.storage = AsyncStateStorage(state_storage)
         self.register_state = register_state
         super().__init__(auth, logger)
+        self.__partial_state_data = {}
+        self.__state_data = {}
         self.__init_partial_state_data()
         self.__recv_callback = None
 
@@ -74,6 +74,10 @@ class StockWssApi(Connector):
     @property
     def subscriptions(self):
         return self._subscriptions
+
+    @property
+    def partial_state_data(self):
+        return self.__partial_state_data
 
     @property
     def state_data(self):
