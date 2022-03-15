@@ -152,13 +152,6 @@ class BinanceWalletSubscriber(BinanceSubscriber):
     subscription = "wallet"
     subscriptions = ()
 
-    async def subscribe_exchange_rates(self, api: BinanceWssApi):
-        redis = await api.storage.get_client()
-        state_channel = (await redis.subscribe(f"{StateStorageKey.exchange_rates}.{api.name}.{api.schema}"))[0]
-        while await state_channel.wait_message():
-            state_data = await state_channel.get_json()
-            api.partial_state_data[self.subscription].update({'exchange_rates': state_data})
-
     @classmethod
     def mapping_wallet_data(cls, wallet_data: dict) -> dict:
         wallet_state = deepcopy(wallet_data)
@@ -175,18 +168,11 @@ class BinanceWalletSubscriber(BinanceSubscriber):
             OrderSchema.margin_coin: (client.futures_coin_account, utils.load_ws_margin_coin_wallet_data),
         }
         schema = api.schema
-        kwargs = {
-            'schema': schema,
-            'assets': ('btc', 'usd'),
-            'fields': ('bl', 'upnl', 'mbl'),
-        }
+        kwargs = {}
         try:
             kwargs['raw_data'] = await schema_handlers[schema][0]()
-            kwargs['currencies'] = await api.storage.get(f"{StateStorageKey.exchange_rates}.{api.name}.{schema}")
         except (GatewayError, BinanceAPIException):
             return None, None
-        if schema in (OrderSchema.margin_cross, OrderSchema.margin):
-            kwargs['extra_fields'] = ('bor', 'ist')
         if schema in (OrderSchema.margin,):
             try:
                 cross_collaterals = await client.futures_loan_wallet()
@@ -217,13 +203,8 @@ class BinanceWalletSubscriber(BinanceSubscriber):
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
         self.rest_client = AsyncClient(api_key=api.auth.get('api_key'), api_secret=api.auth.get('api_secret'),
                                        testnet=api.test)
-        api.tasks.append(asyncio.create_task(self.subscribe_exchange_rates(api)))
         api.tasks.append(asyncio.create_task(self.subscribe_wallet_state(api, self.rest_client)))
-
-        exchange_rates = await api.storage.get(f"{StateStorageKey.exchange_rates}.{api.name}.{api.schema}")
-        return {
-            'exchange_rates': exchange_rates,
-        }
+        return {}
 
 
 class BinanceOrderSubscriber(BinanceSubscriber):

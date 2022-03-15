@@ -16,10 +16,6 @@ class BinanceWalletSerializer(BinanceSerializer):
         self._state_data = wss_api.partial_state_data[self.subscription]
 
     @property
-    def exchange_rates(self):
-        return self._state_data.get('exchange_rates', {})
-
-    @property
     def wallet_state(self):
         return self._state_data.get('wallet_state', {})
 
