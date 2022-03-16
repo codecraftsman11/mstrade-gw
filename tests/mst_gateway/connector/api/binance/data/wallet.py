@@ -249,9 +249,6 @@ DEFAULT_WALLET_GET_DATA_RESULT = {
                 'sch': 'exchange',
                 'act': 'update',
                 'd': {
-                    'tbl': {'btc': 1.21410462, 'usd': 59171.68341493},
-                    'tupnl': {'btc': 0.0, 'usd': 0.0},
-                    'tmbl': {'btc': 1.21410462, 'usd': 59171.68341493},
                     'bls': [
                         {
                             'cur': 'BTC',
@@ -289,9 +286,6 @@ DEFAULT_WALLET_GET_DATA_RESULT = {
                 'sch': OrderSchema.margin,
                 'act': 'update',
                 'd': {
-                    'tbl': {'btc': 0.20512901, 'usd': 9999.96949206},
-                    'tupnl': {'btc': 1.2e-07, 'usd': 0.005643},
-                    'tmbl': {'btc': 0.20512913, 'usd': 9999.97513506},
                     'bls': [
                         {
                             'cur': 'USDT',
@@ -346,8 +340,6 @@ DEFAULT_WALLET_GET_DATA_RESULT = {
                             'ist': 0.0
                         },
                     ],
-                    'tbor': {'btc': 0.0, 'usd': 0.0},
-                    'tist': {'btc': 0.0, 'usd': 0.0},
                     'tre': True
                 }
             }
@@ -361,9 +353,6 @@ DEFAULT_WALLET_GET_DATA_RESULT = {
                 'sch': 'margin_coin',
                 'act': 'update',
                 'd': {
-                    'tbl': {'btc': 12.8698925, 'usd': 627748.31160829},
-                    'tupnl': {'btc': 3e-08, 'usd': 0.00146329},
-                    'tmbl': {'btc': 12.86989253, 'usd': 627748.31307159},
                     'bls': [
                         {
                             'cur': 'BTC',
@@ -429,9 +418,6 @@ DEFAULT_WALLET_STATE = {
         'ex': None
     },
     OrderSchema.margin: {
-        'tbl': {'btc': 0.20512901, 'usd': 9999.96949206},
-        'tupnl': {'btc': 0.0, 'usd': 0.0},
-        'tmbl': {'btc': 0.20512913, 'usd': 9999.97513506},
         'bls': {
             'usdt': {
                 'cur': 'USDT',
@@ -485,15 +471,10 @@ DEFAULT_WALLET_STATE = {
                     'ist': 0.0
                 }
             },
-            'tbor': {'btc': 0.0, 'usd': 0.0},
-            'tist': {'btc': 0.0, 'usd': 0.0},
             'tre': True
         }
     },
     OrderSchema.margin_coin: {
-        'tbl': {'btc': 12.8698925, 'usd': 627748.31160829},
-        'tupnl': {'btc': 3e-08, 'usd': 0.00146329},
-        'tmbl': {'btc': 12.86989253, 'usd': 627748.31307159},
         'bls': {
             'btc': {
                 'cur': 'BTC',

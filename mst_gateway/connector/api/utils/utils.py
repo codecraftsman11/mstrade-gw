@@ -11,25 +11,19 @@ def to_exchange_asset(driver: str, schema: str, asset: str) -> str:
     return asset
 
 
-def get_summary_key(field: str, is_for_ws: bool = False) -> str:
-    return f't{field}' if is_for_ws else f'total_{field}'
-
-
-def init_summary(summary: dict, fields: iter, is_for_ws: bool = False) -> None:
+def init_summary(summary: dict, fields: iter) -> None:
     for f in fields:
-        _summary_key = get_summary_key(f, is_for_ws)
-        summary.setdefault(_summary_key, {})['usd'] = 0.0
+        summary.setdefault(f"total_{f}", {})['usd'] = 0.0
 
 
 def load_wallet_summary_in_usd(balances: list, fields: iter, exchange_rates: dict, is_for_ws: bool = False) -> dict:
     summary = {}
-    init_summary(summary, fields, is_for_ws)
+    init_summary(summary, fields)
     _currency_key = 'cur' if is_for_ws else 'currency'
     for b in balances:
         _price = exchange_rates.get(b[_currency_key].lower()) or 0.0
         for f in fields:
-            _summary_key = get_summary_key(f, is_for_ws)
-            summary[_summary_key]['usd'] += _price * (b.get(f) or 0.0)
+            summary[f"total_{f}"]['usd'] += _price * (b.get(f) or 0.0)
     return summary
 
 

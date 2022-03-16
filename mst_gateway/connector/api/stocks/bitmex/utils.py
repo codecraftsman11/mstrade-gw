@@ -487,23 +487,18 @@ def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
 
 def load_wallet_data(raw_data: dict, currencies: dict, assets: Union[tuple, list], fields: tuple, driver: str,
                      is_for_ws=False) -> dict:
+    wallet_data = dict()
     if is_for_ws:
-        bls_key = 'bls'
         balances = [load_ws_wallet_detail_data(raw_data)]
-        ex_key = 'ex'
-        extra_data = None
+        wallet_data['bls'] = balances
+        wallet_data['ex'] = None
     else:
-        bls_key = 'balances'
         balances = [load_wallet_detail_data(raw_data)]
-        ex_key = 'extra_data'
-        extra_data = None
-
-    balances_summary = load_wallet_summary(driver, OrderSchema.margin, balances, fields, currencies, assets, is_for_ws)
-    return {
-        bls_key: balances,
-        ex_key: extra_data,
-        **balances_summary,
-    }
+        wallet_data['balances'] = balances
+        wallet_data['extra_data'] = None
+        balances_summary = load_wallet_summary(driver, OrderSchema.margin, balances, fields, currencies, assets, is_for_ws)
+        wallet_data.update(**balances_summary)
+    return wallet_data
 
 
 def load_wallet_detail_data(raw_data: dict, asset: str = None) -> dict:
