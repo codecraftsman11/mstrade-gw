@@ -151,13 +151,6 @@ class BinanceWalletSubscriber(BinanceSubscriber):
     subscription = "wallet"
     subscriptions = ()
 
-    async def subscribe_exchange_rates(self, api: BinanceWssApi):
-        redis = await api.storage.get_client()
-        state_channel = (await redis.subscribe(f"{StateStorageKey.exchange_rates}.{api.name}.{api.schema}"))[0]
-        while await state_channel.wait_message():
-            state_data = await state_channel.get_json()
-            api.partial_state_data[self.subscription].update({'exchange_rates': state_data})
-
     @classmethod
     def mapping_wallet_data(cls, wallet_data: dict) -> dict:
         wallet_state = deepcopy(wallet_data)
@@ -170,22 +163,15 @@ class BinanceWalletSubscriber(BinanceSubscriber):
         schema_handlers = {
             OrderSchema.exchange: (client.handler.get_account, utils.load_ws_spot_wallet_data),
             OrderSchema.margin_cross: (client.handler.get_margin_account, utils.load_ws_margin_cross_wallet_data),
-            OrderSchema.margin: (client.handler.futures_account_v2, utils.load_ws_margin_cross_wallet_data),
+            OrderSchema.margin: (client.handler.futures_account_v2, utils.load_ws_margin_wallet_data),
             OrderSchema.margin_coin: (client.handler.futures_coin_account, utils.load_ws_margin_coin_wallet_data),
         }
         schema = api.schema
-        kwargs = {
-            'schema': schema,
-            'assets': ('btc', 'usd'),
-            'fields': ('bl', 'upnl', 'mbl'),
-        }
+        kwargs = {}
         try:
             kwargs['raw_data'] = schema_handlers[schema][0]()
-            kwargs['currencies'] = await api.storage.get(f"{StateStorageKey.exchange_rates}.{api.name}.{schema}")
         except (GatewayError, BinanceAPIException):
             return None, None
-        if schema in (OrderSchema.margin_cross, OrderSchema.margin):
-            kwargs['extra_fields'] = ('bor', 'ist')
         if schema in (OrderSchema.margin,):
             try:
                 cross_collaterals = await client._handler.futures_loan_wallet()
@@ -216,14 +202,8 @@ class BinanceWalletSubscriber(BinanceSubscriber):
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
         self.rest_client = rest.BinanceRestApi(auth=api.auth, test=api.test, ratelimit_client=api.ratelimit)
         self.rest_client.open()
-        api.tasks.append(asyncio.create_task(self.subscribe_exchange_rates(api)))
         api.tasks.append(asyncio.create_task(self.subscribe_wallet_state(api, self.rest_client)))
-
-
-        exchange_rates = await api.storage.get(f"{StateStorageKey.exchange_rates}.{api.name}.{api.schema}")
-        return {
-            'exchange_rates': exchange_rates,
-        }
+        return {}
 
 
 class BinanceOrderSubscriber(BinanceSubscriber):

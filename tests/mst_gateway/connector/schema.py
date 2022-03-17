@@ -435,10 +435,7 @@ WS_MESSAGE_DATA_FIELDS = {
     'wallet': {
         'bls': [
             WS_WALLET_BALANCE_FIELDS
-        ],
-        'tbl': TOTAL_CROSS_AMOUNT_FIELDS,
-        'tupnl': TOTAL_CROSS_AMOUNT_FIELDS,
-        'tmbl': TOTAL_CROSS_AMOUNT_FIELDS,
+        ]
     }
 }
 
@@ -455,17 +452,13 @@ WS_WALLET_EXTRA_FIELDS = {
         'tre': bool,
         'trse': bool,
         'bore': bool,
-        'mlvl': Use(float_valid),
-        'tbor': TOTAL_CROSS_AMOUNT_FIELDS,
-        'tist': TOTAL_CROSS_AMOUNT_FIELDS
+        'mlvl': Use(float_valid)
     },
     OrderSchema.margin: {
         'bls': [
             WS_WALLET_EXTRA_BALANCE_FIELDS
         ],
-        'tre': bool,
-        'tbor': TOTAL_CROSS_AMOUNT_FIELDS,
-        'tist': TOTAL_CROSS_AMOUNT_FIELDS
+        'tre': bool
     },
     OrderSchema.margin_coin: {
         'tre': bool

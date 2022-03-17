@@ -69,6 +69,16 @@ class BitmexWalletSubscriber(BitmexSubscriber):
             return True
         return await super()._subscribe(api)
 
+
+class BitmexOrderSubscriber(BitmexSubscriber):
+    subscription = "order"
+    subscriptions = ("execution",)
+
+
+class BitmexPositionSubscriber(BitmexSubscriber):
+    subscription = "position"
+    subscriptions = ("position",)
+
     async def subscribe_exchange_rates(self, api: BitmexWssApi):
         redis = await api.storage.get_client()
         state_channel = (await redis.subscribe(f"{StateStorageKey.exchange_rates}.{api.name}.{api.schema}"))[0]
@@ -81,13 +91,3 @@ class BitmexWalletSubscriber(BitmexSubscriber):
         api.tasks.append(asyncio.create_task(self.subscribe_exchange_rates(api)))
         exchange_rates = await api.storage.get(f"{StateStorageKey.exchange_rates}.{api.name}.{api.schema}")
         return {'exchange_rates': exchange_rates}
-
-
-class BitmexOrderSubscriber(BitmexSubscriber):
-    subscription = "order"
-    subscriptions = ("execution",)
-
-
-class BitmexPositionSubscriber(BitmexWalletSubscriber):
-    subscription = "position"
-    subscriptions = ("position",)
