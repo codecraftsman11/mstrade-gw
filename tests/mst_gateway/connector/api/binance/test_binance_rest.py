@@ -142,12 +142,6 @@ class TestBinanceRestApi:
     def test_get_wallet(self, rest: BinanceRestApi, schema):
         wallet = rest.get_wallet(schema=schema)
         assert Schema(fields.WALLET_FIELDS).validate(wallet) == wallet
-
-        total_cross_schema = Schema(fields.TOTAL_CROSS_AMOUNT_FIELDS)
-        for key in wallet.keys():
-            if key.startswith('total_'):
-                assert total_cross_schema.validate(wallet[key]) == wallet[key]
-
         if extra_data := wallet['extra_data']:
             assert Schema(fields.WALLET_EXTRA_FIELDS[schema]).validate(extra_data) == extra_data
 
