@@ -433,52 +433,32 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin_coin: self._margin_coin_wallet,
         }
         validate_schema(schema, schema_handlers)
-        return schema_handlers[schema](schema=schema, **kwargs)
+        return schema_handlers[schema](**kwargs)
 
-    def _spot_wallet(self, schema: str, **kwargs):
-        assets = kwargs.pop('assets', ('btc', 'usd'))
-        fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance'))
+    def _spot_wallet(self, **kwargs):
         data = self._binance_api(self._handler.get_account, **kwargs)
-        currencies = self.storage.get(f"{StateStorageKey.exchange_rates}.{self.name}.{schema}")
-        return utils.load_spot_wallet_data(data, currencies, assets, fields, self.driver, schema)
+        return utils.load_spot_wallet_data(data)
 
-    def _cross_margin_wallet(self, schema: str, **kwargs):
-        assets = kwargs.pop('assets', ('btc', 'usd'))
-        fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance'))
-        extra_fields = kwargs.pop('extra_fields', ('borrowed', 'interest'))
+    def _cross_margin_wallet(self, **kwargs):
         data = self._binance_api(self._handler.get_margin_account, **kwargs)
-        currencies = self.storage.get(f"{StateStorageKey.exchange_rates}.{self.name}.{schema}")
-        return utils.load_margin_cross_wallet_data(data, currencies, assets, fields, extra_fields, self.driver, schema)
+        return utils.load_margin_cross_wallet_data(data)
 
-    def _isolated_margin_wallet(self, schema: str, **kwargs):
+    def _isolated_margin_wallet(self, **kwargs):
         # TODO: refactor by new structures
-        assets = kwargs.pop('assets', ('btc', 'usd'))
-        fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance'))
-        extra_fields = kwargs.pop('extra_fields', ('borrowed', 'interest'))
         data = self._binance_api(self._handler.get_isolated_margin_account, **kwargs)
-        currencies = self.storage.get(f"{StateStorageKey.exchange_rates}.{self.name}.{schema}")
-        return utils.load_margin_isolated_wallet_data(data, currencies, assets, fields, extra_fields, self.driver,
-                                                      schema)
+        return utils.load_margin_isolated_wallet_data(data)
 
-    def _margin_wallet(self, schema: str, **kwargs):
-        assets = kwargs.pop('assets', ('btc', 'usd'))
-        fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance'))
-        extra_fields = kwargs.pop('extra_fields', ('borrowed', 'interest'))
+    def _margin_wallet(self, **kwargs):
         data = self._binance_api(self._handler.futures_account_v2, **kwargs)
         try:
             cross_collaterals = self._binance_api(self._handler.futures_loan_wallet, **kwargs)
         except ConnectorError:
             cross_collaterals = {}
-        currencies = self.storage.get(f"{StateStorageKey.exchange_rates}.{self.name}.{schema}")
-        return utils.load_margin_wallet_data(data, currencies, assets, fields, extra_fields,
-                                             cross_collaterals.get('crossCollaterals', []), self.driver, schema)
+        return utils.load_margin_wallet_data(data, cross_collaterals.get('crossCollaterals', []))
 
-    def _margin_coin_wallet(self, schema: str, **kwargs):
-        assets = kwargs.pop('assets', ('btc', 'usd'))
-        fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance'))
+    def _margin_coin_wallet(self, **kwargs):
         data = self._binance_api(self._handler.futures_coin_account, **kwargs)
-        currencies = self.storage.get(f"{StateStorageKey.exchange_rates}.{self.name}.{schema}")
-        return utils.load_margin_coin_wallet_data(data, currencies, assets, fields, self.driver, schema)
+        return utils.load_margin_coin_wallet_data(data)
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
         schema_handlers = {

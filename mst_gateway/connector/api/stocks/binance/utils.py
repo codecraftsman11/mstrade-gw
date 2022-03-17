@@ -358,14 +358,11 @@ def load_api_key_permissions(raw_data: dict, schemas: iter) -> dict:
     return {schema: schema_handlers.get(schema, False) for schema in schemas}
 
 
-def load_spot_wallet_data(raw_data: dict, currencies: dict,
-                          assets: Union[list, tuple], fields: Union[list, tuple], driver: str, schema: str) -> dict:
+def load_spot_wallet_data(raw_data: dict) -> dict:
     balances, _ = _spot_balance_data(raw_data.get('balances'))
-    balances_summary = load_wallet_summary(driver, schema, balances, fields, currencies, assets)
     return {
         'balances': balances,
-        'extra_data': None,
-        **balances_summary
+        'extra_data': None
     }
 
 
@@ -390,12 +387,8 @@ def load_spot_wallet_detail_data(raw_data: dict, asset: str) -> dict:
     raise ConnectorError(f"Invalid asset {asset}.")
 
 
-def load_margin_cross_wallet_data(raw_data: dict, currencies: dict,
-                            assets: Union[list, tuple], fields: Union[list, tuple],
-                            extra_fields: Union[list, tuple], driver: str, schema: str) -> dict:
+def load_margin_cross_wallet_data(raw_data: dict) -> dict:
     balances, extra_balances = _margin_cross_balance_data(raw_data.get('userAssets'))
-    balances_summary = load_wallet_summary(driver, schema, balances, fields, currencies, assets)
-    extra_balances_summary = load_wallet_summary(driver, schema, extra_balances, extra_fields, currencies, assets)
     return {
         'balances': balances,
         'extra_data': {
@@ -404,9 +397,7 @@ def load_margin_cross_wallet_data(raw_data: dict, currencies: dict,
             'borrow_enabled': raw_data.get('borrowEnabled'),
             'margin_level': to_float(raw_data.get('marginLevel')),
             'balances': extra_balances,
-            **extra_balances_summary
-        },
-        **balances_summary
+        }
     }
 
 
@@ -424,14 +415,10 @@ def load_ws_margin_cross_wallet_data(raw_data: dict) -> dict:
     }
 
 
-def load_margin_isolated_wallet_data(raw_data: dict, currencies: dict,
-                                     assets: Union[list, tuple], fields: Union[list, tuple],
-                                     extra_fields: Union[list, tuple], driver: str, schema: str) -> dict:
+def load_margin_isolated_wallet_data(raw_data: dict) -> dict:
     balances = margin_isolated_balance_data(raw_data.get('assets'))
-    balances_summary = load_wallet_summary(driver, schema, balances, fields, currencies, assets)
     return {
-        'balances': balances,
-        **balances_summary,
+        'balances': balances
     }
 
 
@@ -501,21 +488,15 @@ def _update_margin_extra_balances(balances: list, cross_collaterals: list) -> li
     return balances
 
 
-def load_margin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
-                             fields: Union[list, tuple], extra_fields: Union[list, tuple],
-                             cross_collaterals: list, driver: str, schema: str) -> dict:
+def load_margin_wallet_data(raw_data: dict, cross_collaterals: list) -> dict:
     balances, extra_balances = _margin_balance_data(raw_data.get('assets'))
     _update_margin_extra_balances(extra_balances, cross_collaterals)
-    balances_summary = load_wallet_summary(driver, schema, balances, fields, currencies, assets)
-    extra_balances_summary = load_wallet_summary(driver, schema, extra_balances, extra_fields, currencies, assets)
     return {
         'balances': balances,
         'extra_data': {
             'trade_enabled': raw_data.get('canTrade'),
             'balances': extra_balances,
-            **extra_balances_summary
-        },
-        **balances_summary
+        }
     }
 
 
@@ -540,16 +521,13 @@ def load_ws_margin_wallet_data(raw_data: dict, cross_collaterals: list) -> dict:
     }
 
 
-def load_margin_coin_wallet_data(raw_data: dict, currencies: dict, assets: Union[list, tuple],
-                                 fields: Union[list, tuple], driver: str, schema: str) -> dict:
+def load_margin_coin_wallet_data(raw_data: dict) -> dict:
     balances, _ = _margin_coin_balance_data(raw_data.get('assets'))
-    balances_summary = load_wallet_summary(driver, schema, balances, fields, currencies, assets)
     return {
         'balances': balances,
         'extra_data': {
             'trade_enabled': raw_data.get('canTrade'),
-        },
-        **balances_summary
+        }
     }
 
 
