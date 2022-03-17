@@ -164,8 +164,8 @@ class BinanceWalletSubscriber(BinanceSubscriber):
         schema_handlers = {
             OrderSchema.exchange: (client.get_account, utils.load_ws_spot_wallet_data),
             OrderSchema.margin_cross: (client.get_margin_account, utils.load_ws_margin_cross_wallet_data),
-            OrderSchema.margin: (client.futures_account_v2, utils.load_ws_margin_wallet_data),
-            OrderSchema.margin_coin: (client.futures_coin_account, utils.load_ws_margin_coin_wallet_data),
+            OrderSchema.margin: (client.futures_account_v2, utils.load_ws_futures_wallet_data),
+            OrderSchema.margin_coin: (client.futures_coin_account, utils.load_ws_futures_coin_wallet_data),
         }
         schema = api.schema
         kwargs = {}
@@ -269,8 +269,8 @@ class BinanceMarginPositionSubscriber(BinancePositionSubscriber):
                 account_info = await client.futures_account_v2()
                 leverage_brackets = await client.futures_leverage_bracket()
                 return {
-                    'position_state': utils.load_margin_positions_state(account_info),
-                    'leverage_brackets': utils.load_margin_leverage_brackets_as_dict(leverage_brackets),
+                    'position_state': utils.load_futures_positions_state(account_info),
+                    'leverage_brackets': utils.load_futures_leverage_brackets_as_dict(leverage_brackets),
                     'exchange_rates': exchange_rates,
                 }
             except Exception as e:
@@ -297,8 +297,8 @@ class BinanceMarginCoinPositionSubscriber(BinanceMarginPositionSubscriber):
                 exchange_rates = await api.storage.get(
                     f"{StateStorageKey.exchange_rates}.{api.name}.{api.schema}")
                 return {
-                    'position_state': utils.load_margin_coin_positions_state(account_info, state_data),
-                    'leverage_brackets': utils.load_margin_coin_leverage_brackets_as_dict(leverage_brackets),
+                    'position_state': utils.load_futures_coin_positions_state(account_info, state_data),
+                    'leverage_brackets': utils.load_futures_coin_leverage_brackets_as_dict(leverage_brackets),
                     'exchange_rates': exchange_rates,
                 }
             except Exception as e:

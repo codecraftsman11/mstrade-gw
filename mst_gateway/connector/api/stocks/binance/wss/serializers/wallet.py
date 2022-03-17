@@ -61,6 +61,6 @@ class BinanceMarginWalletSerializer(BinanceWalletSerializer):
 
     def _wallet_list(self, item):
         if self._wss_api.schema == OrderSchema.margin_coin:
-            return utils.ws_margin_coin_wallet(item, self.wallet_state)
+            return utils.ws_futures_coin_wallet(item, self.wallet_state)
         else:
-            return utils.ws_margin_wallet(item, self.wallet_state)
+            return utils.ws_futures_wallet(item, self.wallet_state)

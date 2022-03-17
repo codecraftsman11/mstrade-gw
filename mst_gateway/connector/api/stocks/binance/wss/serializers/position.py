@@ -103,7 +103,7 @@ class BinanceMarginPositionSerializer(BinancePositionSerializer):
                             entry_price=entry_price,
                             mark_price=mark_price,
                             unrealised_pnl=unrealised_pnl,
-                            leverage_type=utils.load_ws_margin_position_leverage_type(position.get('mt')),
+                            leverage_type=utils.load_ws_futures_position_leverage_type(position.get('mt')),
                             isolated_wallet_balance=utils.to_float(position.get('iw')),
                             cross_wallet_balance=_balances.get(_wallet_asset, {}).get('cross_wallet_balance'),
                             action=self.get_position_action(symbol, volume)
@@ -206,8 +206,8 @@ class BinanceMarginPositionSerializer(BinancePositionSerializer):
             entry_price, mark_price, volume, side,
             schema=self._wss_api.schema, symbol=symbol, contract_size=contract_size
         )
-        return utils.load_margin_position_ws_data(item, symbol_position_state, state_data, self.exchange_rates,
-                                                  self._wss_api.schema)
+        return utils.load_futures_position_ws_data(item, symbol_position_state, state_data, self.exchange_rates,
+                                                   self._wss_api.schema)
 
     @staticmethod
     def get_wallet_balance(leverage_type: str, isolated_balance: float, cross_balance: float) -> Optional[float]:
@@ -297,6 +297,6 @@ class BinanceMarginCoinPositionSerializer(BinanceMarginPositionSerializer):
                 if (state_data := self._wss_api.get_state_data(symbol)) is None:
                     return None
             symbol_position_state = self.get_position_state(self.position_state, symbol)
-            return utils.load_margin_position_ws_data(item, symbol_position_state, state_data, self.exchange_rates,
-                                                      self._wss_api.schema)
+            return utils.load_futures_position_ws_data(item, symbol_position_state, state_data, self.exchange_rates,
+                                                       self._wss_api.schema)
         return await super()._load_data(message, item)
