@@ -3,7 +3,6 @@ from typing import Dict, Union, Optional
 from datetime import datetime, timedelta
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
-from mst_gateway.connector.api.utils.utils import load_wallet_summary
 from mst_gateway.exceptions import ConnectorError
 from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
 from mst_gateway.utils import delta
@@ -485,20 +484,21 @@ def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
     return quote_bin
 
 
-def load_wallet_data(raw_data: dict, currencies: dict, assets: Union[tuple, list], fields: tuple, driver: str,
-                     is_for_ws=False) -> dict:
-    wallet_data = dict()
+def load_wallet_data(raw_data: dict, is_for_ws=False) -> dict:
     if is_for_ws:
+        bls_key = 'bls'
         balances = [load_ws_wallet_detail_data(raw_data)]
-        wallet_data['bls'] = balances
-        wallet_data['ex'] = None
+        ex_key = 'ex'
+        extra_data = None
     else:
+        bls_key = 'balances'
         balances = [load_wallet_detail_data(raw_data)]
-        wallet_data['balances'] = balances
-        wallet_data['extra_data'] = None
-        balances_summary = load_wallet_summary(driver, OrderSchema.margin, balances, fields, currencies, assets, is_for_ws)
-        wallet_data.update(**balances_summary)
-    return wallet_data
+        ex_key = 'extra_data'
+        extra_data = None
+    return {
+        bls_key: balances,
+        ex_key: extra_data
+    }
 
 
 def load_wallet_detail_data(raw_data: dict, asset: str = None) -> dict:
