@@ -7,7 +7,7 @@ from . import subscribers as subscr_class
 from .router import BinanceWssRouter, BinanceMarginWssRouter, BinanceMarginCoinWssRouter
 from .utils import is_auth_ok, make_cmd
 from ..lib import AsyncClient
-from ..utils import to_float, remap_margin_coin_position_request_data
+from ..utils import to_float, remap_futures_coin_position_request_data
 from .... import OrderSchema, ExchangeDrivers
 from ....wss import StockWssApi
 from .. import var
@@ -289,7 +289,7 @@ class BinanceMarginCoinWssApi(BinanceMarginWssApi):
         for position in message.pop('data', []):
             if position.get('positionSide', '') == var.BinancePositionSideMode.BOTH:
                 _messages.append(dict(**message, data=[
-                    remap_margin_coin_position_request_data(position)
+                    remap_futures_coin_position_request_data(position)
                 ]))
         return _messages
 
