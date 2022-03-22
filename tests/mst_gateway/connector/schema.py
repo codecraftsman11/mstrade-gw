@@ -110,9 +110,6 @@ WALLET_FIELDS = {
     'balances': [
         WALLET_BALANCE_FIELDS
     ],
-    'total_balance': TOTAL_CROSS_AMOUNT_FIELDS,
-    'total_unrealised_pnl': TOTAL_CROSS_AMOUNT_FIELDS,
-    'total_margin_balance': TOTAL_CROSS_AMOUNT_FIELDS,
     'extra_data': Or(None, dict)
 }
 
@@ -128,9 +125,7 @@ WALLET_EXTRA_FIELDS = {
         'trade_enabled': bool,
         'transfer_enabled': bool,
         'borrow_enabled': bool,
-        'margin_level': Use(float_valid),
-        'total_borrowed': TOTAL_CROSS_AMOUNT_FIELDS,
-        'total_interest': TOTAL_CROSS_AMOUNT_FIELDS,
+        'margin_level': Use(float_valid)
     },
     OrderSchema.margin: {
         'balances': [
@@ -140,9 +135,7 @@ WALLET_EXTRA_FIELDS = {
                 'interest': Use(float_valid),
             }
         ],
-        'trade_enabled': bool,
-        'total_borrowed': TOTAL_CROSS_AMOUNT_FIELDS,
-        'total_interest': TOTAL_CROSS_AMOUNT_FIELDS,
+        'trade_enabled': bool
     },
     OrderSchema.margin_coin: {
         'trade_enabled': bool

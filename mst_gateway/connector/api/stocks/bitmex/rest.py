@@ -139,12 +139,9 @@ class BitmexRestApi(StockRestApi):
 
     def get_wallet(self, **kwargs) -> dict:
         schema = kwargs.pop('schema', OrderSchema.margin).lower()
-        assets = kwargs.pop('assets', ('btc', 'usd'))
-        fields = kwargs.pop('fields', ('balance', 'unrealised_pnl', 'margin_balance'))
         if schema == OrderSchema.margin:
             data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
-            currencies = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}")
-            return utils.load_wallet_data(data, currencies, assets, fields, self.driver)
+            return utils.load_wallet_data(data)
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
