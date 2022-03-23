@@ -429,7 +429,6 @@ class BinanceRestApi(StockRestApi):
         return utils.load_order_book_data(data, symbol, side, split, offset, depth, state_data)
 
     def get_wallet(self, **kwargs) -> dict:
-
         schema = kwargs.pop('schema', '').lower()
         schema_handlers = {
             OrderSchema.exchange: self._spot_wallet,

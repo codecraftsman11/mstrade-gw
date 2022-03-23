@@ -42,7 +42,7 @@ class BitmexRestApi(StockRestApi):
     driver = ExchangeDrivers.bitmex
     name = 'bitmex'
     fin_factory = BitmexFinFactory()
-    throttle = ThrottleRest(rest_limit=var.BITMEX_THROTTLE_LIMITS.get('order'),
+    throttle = ThrottleRest(rest_limit=var.BITMEX_THROTTLE_LIMITS.get('rest'),
                             order_limit=var.BITMEX_THROTTLE_LIMITS.get('order')
                             )
 

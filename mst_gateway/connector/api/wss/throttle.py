@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Optional
-
 from mst_gateway.storage import BaseAsyncStorage
 from mst_gateway.storage.var import StateStorageKey
 
