@@ -276,7 +276,7 @@ class BinanceRestApi(StockRestApi):
         params = utils.generate_parameters_by_order_type(main_params, options, schema)
         data = self._binance_api(schema_handlers[schema.lower()], **params)
         state_data = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}").get(symbol.lower(), {})
-        return utils.load_order_data(data, state_data)
+        return utils.load_order_data(schema, data, state_data)
 
     def update_order(self, exchange_order_id: str, symbol: str,
                      schema: str, side: int, volume: float,
@@ -313,7 +313,7 @@ class BinanceRestApi(StockRestApi):
         })
         data = self._binance_api(schema_handlers[schema.lower()], **params)
         state_data = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}").get(symbol.lower(), {})
-        return utils.load_order_data(data, state_data)
+        return utils.load_order_data(schema, data, state_data)
 
     def get_order(self, exchange_order_id: str, symbol: str, schema: str):
         schema_handlers = {
@@ -331,14 +331,10 @@ class BinanceRestApi(StockRestApi):
         if not (data := self._binance_api(schema_handlers[schema.lower()], **params)):
             return None
         state_data = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}").get(symbol.lower(), {})
-        return utils.load_order_data(data, state_data)
+        return utils.load_order_data(schema, data, state_data)
 
-    def list_orders(self, schema: str,
-                    symbol: str = None,
-                    active_only: bool = True,
-                    count: int = None,
-                    offset: int = 0,
-                    options: dict = None) -> list:
+    def list_orders(self, schema: str, symbol: str = None, active_only: bool = True,
+                    count: int = None, offset: int = 0) -> list:
         schema_handlers = {
             OrderSchema.exchange: (self._handler.get_open_orders, self._handler.get_all_orders),
             OrderSchema.margin_cross: (self._handler.get_open_margin_orders, self._handler.get_all_margin_orders),
@@ -351,8 +347,7 @@ class BinanceRestApi(StockRestApi):
         }
         validate_schema(schema, schema_handlers)
         state_data = {}
-        if options is None:
-            options = {}
+        options = {}
         if count is not None:
             options['limit'] = count
         if symbol is not None:
@@ -361,9 +356,9 @@ class BinanceRestApi(StockRestApi):
         schema = schema.lower()
         if active_only:
             data = self._binance_api(schema_handlers[schema][0], **options)
-            return [utils.load_order_data(order, state_data) for order in reversed(data)]
+            return [utils.load_order_data(schema, order, state_data) for order in reversed(data)]
         data = self._binance_api(schema_handlers[schema][1], **options)
-        return [utils.load_order_data(order, state_data) for order in reversed(data)][offset:count]
+        return [utils.load_order_data(schema, order, state_data) for order in reversed(data)][offset:count]
 
     def list_trades(self, symbol: str, schema: str, **params) -> list:
         schema_handlers = {

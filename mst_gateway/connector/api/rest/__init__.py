@@ -125,8 +125,8 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def list_orders(self, schema: str, symbol: str, active_only: bool = True,
-                    count: int = None, offset: int = 0, options: dict = None) -> list:
+    def list_orders(self, schema: str, symbol: str = None, active_only: bool = True,
+                    count: int = None, offset: int = 0) -> list:
         raise NotImplementedError
 
     @abstractmethod

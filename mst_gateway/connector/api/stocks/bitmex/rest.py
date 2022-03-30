@@ -212,7 +212,7 @@ class BitmexRestApi(StockRestApi):
         state_data = self.storage.get(
             f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin}"
         ).get(symbol.lower(), dict())
-        return utils.load_order_data(data, state_data)
+        return utils.load_order_data(schema, data, state_data)
 
     def update_order(self, exchange_order_id: str, symbol: str,
                      schema: str, side: int, volume: float,
@@ -245,7 +245,7 @@ class BitmexRestApi(StockRestApi):
         state_data = self.storage.get(
             f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin}"
         ).get(data[0]['symbol'].lower(), dict())
-        return utils.load_order_data(data[0], state_data)
+        return utils.load_order_data(schema, data[0], state_data)
 
     def get_order(self, exchange_order_id: str, symbol: str,
                   schema: str) -> Optional[dict]:
@@ -259,34 +259,26 @@ class BitmexRestApi(StockRestApi):
         state_data = self.storage.get(
             f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin}"
         ).get(data[0]['symbol'].lower(), dict())
-        return utils.load_order_data(data[0], state_data)
+        return utils.load_order_data(schema, data[0], state_data)
 
-    def list_orders(self,
-                    schema: str,
-                    symbol: str,
-                    active_only: bool = True,
-                    count: int = None,
-                    offset: int = 0,
-                    options: dict = None) -> list:
-        if options is None:
-            options = {}
+    def list_orders(self, schema: str, symbol: str = None, active_only: bool = True,
+                    count: int = None, offset: int = 0) -> list:
+        state_data = {}
+        options = {'filter': {}}
+        if symbol:
+            options['filter']['symbol'] = symbol
+            state_data = self.storage.get(
+                f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin}"
+            ).get(symbol.lower(), dict())
         if active_only:
-            if 'filter' not in options:
-                options['filter'] = {}
             options['filter']['open'] = True
-            options['filter'] = j_dumps(options['filter'])
-        if count is not None:
+        if count:
             options['count'] = count
         if offset > 0:
             options['start'] = offset
-        orders, _ = self._bitmex_api(self._handler.Order.Order_getOrders,
-                                     symbol=utils.symbol2stock(symbol),
-                                     reverse=True,
-                                     **options)
-        state_data = self.storage.get(
-            f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin}"
-        ).get(symbol.lower(), dict())
-        return [utils.load_order_data(data, state_data) for data in orders]
+        options['filter'] = j_dumps(options['filter'])
+        orders, _ = self._bitmex_api(self._handler.Order.Order_getOrders, reverse=True, **options)
+        return [utils.load_order_data(schema, data, state_data) for data in orders]
 
     def list_trades(self, symbol: str, schema: str, **kwargs) -> list:
         trades, _ = self._bitmex_api(self._handler.Trade.Trade_get,

@@ -194,11 +194,13 @@ def load_order_side(order_side: str) -> int:
     return api.BUY
 
 
-def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
     order_time = to_date(raw_data.get('timestamp'))
+    order_type_and_exec = load_order_type_and_exec(schema, raw_data.get('ordType'))
     data = {
         'exchange_order_id': raw_data.get('orderID'),
         'symbol': raw_data.get('symbol'),
+        'schema': schema,
         'volume': to_int(raw_data.get('orderQty')),
         'filled_volume': to_int(raw_data.get('cumQty')),
         'stop': to_float(raw_data.get('stopPx')),
@@ -206,15 +208,11 @@ def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'price': to_float(raw_data.get('price')),
         'time': order_time,
         'active': bool(raw_data.get('ordStatus') != "New"),
-        'type': raw_data.get('ordType', '').lower(),
-        'execution': raw_data.get('ordType', '').lower(),
+        **order_type_and_exec,
     }
     if isinstance(state_data, dict):
-        order_type_and_exec = load_order_type_and_exec(state_data.get('schema'), raw_data.get('ordType'))
         data.update({
             'system_symbol': state_data.get('system_symbol'),
-            'schema': state_data.get('schema'),
-            **order_type_and_exec,
         })
     return data
 
