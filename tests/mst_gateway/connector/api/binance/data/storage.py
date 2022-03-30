@@ -133,7 +133,7 @@ STORAGE_DATA = {
             'wallet_asset': 'BTC',
         }
     },
-    f"position.1.tbinance.{OrderSchema.exchange}.btcusdt": {
+    f"{StateStorageKey.state}:position.1.tbinance.{OrderSchema.exchange}.btcusdt": {
         'id': '1',
         'symbol': 'btcusdt',
         'side': BUY,
@@ -143,7 +143,7 @@ STORAGE_DATA = {
         'leverage_type': LeverageType.isolated,
         'action': 'update',
     },
-    f"position.1.tbinance.{OrderSchema.margin_cross}.btcusdt": {
+    f"{StateStorageKey.state}:position.1.tbinance.{OrderSchema.margin_cross}.btcusdt": {
         'id': '1',
         'symbol': 'btcusdt',
         'side': BUY,
