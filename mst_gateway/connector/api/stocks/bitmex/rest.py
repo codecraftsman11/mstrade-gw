@@ -10,7 +10,6 @@ from .lib import (
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector.api.types import OrderSchema, ExchangeDrivers
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
-from mst_gateway.connector.api.utils.utils import load_wallet_summary
 from . import utils, var
 from .utils import binsize2timedelta
 from ...rest import StockRestApi
@@ -351,16 +350,6 @@ class BitmexRestApi(StockRestApi):
     def get_symbols_currencies(self, schema: str) -> dict:
         instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive)
         return utils.load_symbols_currencies(instruments, self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}"))
-
-    def get_wallet_summary(self, schema: str, **kwargs) -> dict:
-        if schema == OrderSchema.margin:
-            data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
-            balances = [utils.load_wallet_detail_data(data)]
-            fields = ('balance', 'unrealised_pnl', 'margin_balance')
-            exchange_rates = self.storage.get(f"{StateStorageKey.exchange_rates}.{self.name}.{schema}")
-            assets = kwargs.get('assets', ('btc', 'usd'))
-            return load_wallet_summary(self.driver, schema, balances, fields, exchange_rates, assets)
-        raise ConnectorError(f"Invalid schema {schema}.")
 
     def list_order_commissions(self, schema: str) -> list:
         if schema == OrderSchema.margin:

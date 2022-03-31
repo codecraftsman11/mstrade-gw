@@ -14,7 +14,6 @@ from mst_gateway.connector.api.stocks.binance.wss.serializers.position import Bi
 from .lib import Client
 from . import utils, var
 from ...rest import StockRestApi
-from ...utils import load_wallet_summary
 from .....exceptions import GatewayError, ConnectorError, RecoverableError, NotFoundError
 
 
@@ -613,37 +612,6 @@ class BinanceRestApi(StockRestApi):
         validate_schema(schema, schema_handlers)
         currency = self._binance_api(schema_handlers[schema.lower()])
         return utils.load_symbols_currencies(currency, self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}"))
-
-    def get_wallet_summary(self, schema: str, **kwargs) -> dict:
-        schema_handlers = {
-            OrderSchema.exchange: (
-                self._handler.get_account,
-                utils.load_spot_wallet_balances
-            ),
-            OrderSchema.margin_cross: (
-                self._handler.get_margin_account,
-                utils.load_margin_cross_wallet_balances
-            ),
-            OrderSchema.margin_isolated: (
-                self._handler.get_isolated_margin_account,
-                utils.load_margin_isolated_wallet_balances
-            ),
-            OrderSchema.margin: (
-                self._handler.futures_account_v2,
-                utils.load_future_wallet_balances
-            ),
-            OrderSchema.margin_coin: (
-                self._handler.futures_coin_account,
-                utils.load_futures_coin_wallet_balances
-            ),
-        }
-        validate_schema(schema, schema_handlers)
-        schema = schema.lower()
-        balances = schema_handlers[schema][1](self._binance_api(schema_handlers[schema][0]))
-        fields = ('balance', 'unrealised_pnl', 'margin_balance')
-        exchange_rates = self.storage.get(f"{StateStorageKey.exchange_rates}.{self.name}.{schema}")
-        assets = kwargs.get('assets', ('btc', 'usd'))
-        return load_wallet_summary(self.driver, schema, balances, fields, exchange_rates, assets)
 
     def list_order_commissions(self, schema: str) -> list:
         schema_handlers = {

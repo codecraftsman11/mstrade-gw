@@ -262,12 +262,6 @@ SYMBOL_CURRENCY_FIELDS = {
     'expiration': Or(None, str),
 }
 
-WALLET_SUMMARY_FIELDS = {
-    'total_balance': TOTAL_CROSS_AMOUNT_FIELDS,
-    'total_unrealised_pnl': TOTAL_CROSS_AMOUNT_FIELDS,
-    'total_margin_balance': TOTAL_CROSS_AMOUNT_FIELDS,
-}
-
 ALT_CURRENCY_COMMISSION_FIELDS = {
     'is_active': bool,
     'currency': str,
