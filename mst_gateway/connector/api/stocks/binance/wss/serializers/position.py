@@ -18,7 +18,6 @@ class BinancePositionSerializer(BinanceSerializer):
     def __init__(self, wss_api: BinanceWssApi):
         super().__init__(wss_api)
         self.position_state = wss_api.partial_state_data.get(self.subscription, {}).get('position_state', {})
-        self.exchange_rates = wss_api.partial_state_data.get(self.subscription, {}).get('exchange_rates', {})
         self._item_symbol = None
 
     @property
