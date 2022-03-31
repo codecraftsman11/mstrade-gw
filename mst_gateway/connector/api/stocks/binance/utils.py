@@ -1577,7 +1577,6 @@ def load_ws_futures_position_leverage_type(margin_type: Optional[str]) -> Option
 
 
 def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, state_data: Optional[dict]) -> dict:
-    unrealised_pnl = position_state_data['unrealised_pnl']
     data = {
         'tm': to_iso_datetime(raw_data.get('E')),
         's': position_state_data['symbol'].lower(),
@@ -1585,7 +1584,7 @@ def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, sta
         'vl': position_state_data['volume'],
         'ep': position_state_data['entry_price'],
         'mp': position_state_data['mark_price'],
-        'upnl': unrealised_pnl,
+        'upnl': position_state_data['unrealised_pnl'],
         'lvrp': position_state_data['leverage_type'],
         'lvr': position_state_data['leverage'],
         'lp': position_state_data['liquidation_price'],
