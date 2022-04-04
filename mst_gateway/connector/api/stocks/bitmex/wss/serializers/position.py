@@ -1,19 +1,12 @@
 from __future__ import annotations
-from typing import Optional, TYPE_CHECKING
+from typing import Optional
 from .base import BitmexSerializer
 from ... import utils
 from mst_gateway.connector.api.types.order import LeverageType
 
-if TYPE_CHECKING:
-    from ... import BitmexWssApi
-
 
 class BitmexPositionSerializer(BitmexSerializer):
     subscription = "position"
-
-    def __init__(self, wss_api: BitmexWssApi):
-        super().__init__(wss_api)
-        self.exchange_rates = wss_api.partial_state_data.get(self.subscription, {}).get('exchange_rates', {})
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
         return True
@@ -33,7 +26,7 @@ class BitmexPositionSerializer(BitmexSerializer):
             if item.get('liquidationPrice') is None:
                 item['liquidationPrice'] = state[0]['lp']
             if item.get('unrealisedPnl') is None:
-                item['unrealisedPnl'] = state[0]['upnl']['base']
+                item['unrealisedPnl'] = state[0]['upnl']
             if item.get('leverage') is None:
                 item['leverage'] = state[0]['lvr']
             if item.get('crossMargin') is None:
@@ -45,4 +38,4 @@ class BitmexPositionSerializer(BitmexSerializer):
                 item['currentQty'] = state[0]['vl']
         else:
             item['state_volume'] = item.get('currentQty')
-        return utils.load_position_ws_data(item, state_data, self.exchange_rates)
+        return utils.load_position_ws_data(item, state_data)

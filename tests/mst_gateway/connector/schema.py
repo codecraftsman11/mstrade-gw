@@ -367,11 +367,7 @@ WS_MESSAGE_DATA_FIELDS = {
         'vl': float,
         'ep': Or(None, float),
         'mp': Or(None, float),
-        'upnl': {
-            'base': Or(None, float),
-            'usd': Or(None, float),
-            'btc': Or(None, float),
-        },
+        'upnl': Or(None, float),
         'lvrp': Use(leverage_type_valid),
         'lvr': Use(float_valid),
         'lp': Or(None, float),

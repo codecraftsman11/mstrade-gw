@@ -1525,10 +1525,7 @@ def load_ws_futures_position_leverage_type(margin_type: Optional[str]) -> Option
     return None
 
 
-def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, state_data: Optional[dict],
-                                  exchange_rates: dict, schema: str) -> dict:
-    expiration = None
-    unrealised_pnl = position_state_data['unrealised_pnl']
+def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, state_data: Optional[dict]) -> dict:
     data = {
         'tm': to_iso_datetime(raw_data.get('E')),
         's': position_state_data['symbol'].lower(),
@@ -1536,7 +1533,7 @@ def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, sta
         'vl': position_state_data['volume'],
         'ep': position_state_data['entry_price'],
         'mp': position_state_data['mark_price'],
-        'upnl': unrealised_pnl,
+        'upnl': position_state_data['unrealised_pnl'],
         'lvrp': position_state_data['leverage_type'],
         'lvr': position_state_data['leverage'],
         'lp': position_state_data['liquidation_price'],
@@ -1546,52 +1543,7 @@ def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, sta
         data.update({
             'ss': state_data.get('system_symbol')
         })
-        if exp := state_data.get('expiration', None):
-            expiration = exp
-    if schema == OrderSchema.margin_coin:
-        try:
-            asset = state_data.get('pair')[0].lower()
-        except (TypeError, IndexError, AttributeError):
-            asset = None
-        unrealised_pnl = load_ws_futures_coin_position_unrealised_pnl(unrealised_pnl, exchange_rates, asset, expiration)
-    else:
-        unrealised_pnl = load_ws_futures_position_unrealised_pnl(unrealised_pnl, exchange_rates, expiration)
-    data['upnl'] = unrealised_pnl
     return data
-
-
-def load_ws_futures_position_unrealised_pnl(base: float, exchange_rates: dict, expiration: Optional[str]) -> dict:
-    return {
-        'base': base,
-        'usd': base,
-        'btc': to_btc(base, exchange_rates)
-    }
-
-
-def load_ws_futures_coin_position_unrealised_pnl(
-        base: float, exchange_rates: dict, asset: str, expiration: Optional[str]) -> dict:
-    if expiration and (asset_to_usd := exchange_rates.get(f"{asset}{expiration}".lower())):
-        pass
-    else:
-        asset_to_usd = exchange_rates.get(asset.lower())
-
-    try:
-        usd = asset_to_usd * base
-    except TypeError:
-        usd = None
-    return {
-        'base': base,
-        'usd': usd,
-        'btc': to_btc(usd, exchange_rates)
-    }
-
-
-def to_btc(usd_value: float, exchange_rates: dict) -> Optional[float]:
-    btc_to_usd = exchange_rates.get('btc')
-    try:
-        return usd_value / btc_to_usd
-    except TypeError:
-        return None
 
 
 def load_position_leverage_type(position_data: dict) -> str:
@@ -1738,8 +1690,7 @@ def load_futures_coin_position_list(raw_data: list, schema: str) -> list:
     return load_futures_position_list(raw_data, schema)
 
 
-def load_exchange_position_ws_data(
-        raw_data: dict, position_state: dict, state_data: Optional[dict], exchange_rates: dict) -> dict:
+def load_exchange_position_ws_data(raw_data: dict, position_state: dict, state_data: Optional[dict]) -> dict:
     side = position_state['side']
     volume = to_float(position_state['volume'])
     mark_price = to_float(raw_data.get('c'))
@@ -1754,7 +1705,7 @@ def load_exchange_position_ws_data(
         'vl': volume,
         'ep': entry_price,
         'mp': mark_price,
-        'upnl': load_ws_position_unrealised_pnl(unrealised_pnl, state_data, exchange_rates),
+        'upnl': unrealised_pnl,
         'lvrp': position_state['leverage_type'],
         'lvr': to_float(position_state['leverage']),
         'lp': None,
@@ -1767,39 +1718,8 @@ def load_exchange_position_ws_data(
     return data
 
 
-def load_ws_position_unrealised_pnl(base: float, state_data: Optional[dict], exchange_rates: dict) -> dict:
-    btc_value = None
-    usd_value = None
-    unrealised_pnl = {
-        'base': base,
-        'usd': usd_value,
-        'btc': btc_value,
-    }
-    if isinstance(state_data, dict) and (pair := state_data.get('pair', [])):
-        quote_asset = pair[1]
-        usd_value = to_usd(base, quote_asset, exchange_rates, state_data.get('expiration', None))
-        unrealised_pnl['usd'] = usd_value
-        unrealised_pnl['btc'] = to_btc(usd_value, exchange_rates)
-    return unrealised_pnl
-
-
-def to_usd(base: float, asset: str, exchange_rates: dict, expiration: Optional[str]) -> Optional[float]:
-    if expiration and (asset_to_usd := exchange_rates.get(f"{asset}{expiration}".lower())):
-        pass
-    elif asset_to_usd := exchange_rates.get(asset.lower()):
-        pass
-    else:
-        asset_to_usd = 1
-
-    try:
-        return base * asset_to_usd
-    except TypeError:
-        return None
-
-
-def load_margin_cross_position_ws_data(
-        raw_data: dict, position_state: dict, state_data: Optional[dict], exchange_rates: dict) -> dict:
-    data = load_exchange_position_ws_data(raw_data, position_state, state_data, exchange_rates)
+def load_margin_cross_position_ws_data(raw_data: dict, position_state: dict, state_data: Optional[dict]) -> dict:
+    data = load_exchange_position_ws_data(raw_data, position_state, state_data)
     if not data['leverage_type']:
         data['lvrp'] = LeverageType.cross
     if not data['leverage']:
