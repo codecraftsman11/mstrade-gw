@@ -371,10 +371,6 @@ def load_ws_spot_wallet_data(raw_data: dict) -> dict:
     }
 
 
-def load_spot_wallet_balances(raw_data: dict) -> list:
-    return _spot_balance_data(raw_data.get('balances'))[0]
-
-
 def load_spot_wallet_detail_data(raw_data: dict, asset: str) -> dict:
     if not raw_data.get('balances'):
         return _mock_balance_data(asset)
@@ -417,14 +413,6 @@ def load_margin_isolated_wallet_data(raw_data: dict) -> dict:
     return {
         'balances': balances
     }
-
-
-def load_margin_cross_wallet_balances(raw_data: dict) -> list:
-    return _margin_cross_balance_data(raw_data.get('userAssets'))[0]
-
-
-def load_margin_isolated_wallet_balances(raw_data: dict) -> list:
-    return margin_isolated_balance_data(raw_data.get('assets'))
 
 
 def load_margin_cross_wallet_detail_data(raw_data: dict, asset: str) -> dict:
@@ -536,14 +524,6 @@ def load_ws_futures_coin_wallet_data(raw_data: dict) -> dict:
             'tre': raw_data.get('canTrade'),
         }
     }
-
-
-def load_future_wallet_balances(raw_data: dict) -> list:
-    return _futures_balance_data(raw_data.get('assets'))[0]
-
-
-def load_futures_coin_wallet_balances(raw_data: dict) -> list:
-    return _futures_balance_data(raw_data.get('assets'))[0]
 
 
 def load_futures_wallet_detail_data(raw_data: dict, asset: str) -> dict:
@@ -1018,24 +998,6 @@ def _ws_futures_coin_balance_data(balances: list):
     return result, None
 
 
-def _load_total_wallet_summary_list(summary, fields, is_for_ws=False):
-    total = dict()
-    for field in fields:
-        t_field = f'total_{field}'
-        if is_for_ws:
-            t_field = f't{field}'
-        total[t_field] = dict()
-        for k, v in summary.items():
-            if total[t_field].get(k):
-                total[t_field][k] += v[field]
-            else:
-                total[t_field][k] = v[field]
-    for f, asset in total.items():
-        for k, v in asset.items():
-            total[f][k] = round(v, 8)
-    return total
-
-
 def load_futures_leverage_brackets_as_dict(data: list) -> dict:
     result = {}
     for d in data:
@@ -1067,19 +1029,6 @@ def load_futures_coin_leverage_brackets_as_dict(data: list) -> dict:
             })
     return result
 
-
-def load_total_wallet_summary(total: dict, summary: dict, assets: Union[list, tuple], fields: Union[list, tuple]):
-    for schema in summary.keys():
-        for field in fields:
-            t_field = f'total_{field}'
-            if total.get(t_field) is None:
-                total[t_field] = dict()
-            for asset in assets:
-                if total[t_field].get(asset) is None:
-                    total[t_field][asset] = summary[schema][asset][field]
-                else:
-                    total[t_field][asset] += summary[schema][asset][field]
-    return total
 
 
 def load_currency_exchange_symbol(currency: Union[list, dict]) -> list:

@@ -267,14 +267,6 @@ class TestBitmexRestApi:
         'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
-    def test_get_wallet_summary(self, rest: BitmexRestApi, schema: str):
-        wallet_summary = rest.get_wallet_summary(schema)
-        assert Schema(fields.WALLET_SUMMARY_FIELDS).validate(wallet_summary) == wallet_summary
-
-    @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin)],
-        indirect=['rest'],
-    )
     def test_get_wallet_detail(self, rest: BitmexRestApi, schema: str):
         wallet_detail = rest.get_wallet_detail(schema=schema, asset=data.ASSET)
         assert Schema(fields.WALLET_BALANCE_FIELDS).validate(wallet_detail) == wallet_detail
