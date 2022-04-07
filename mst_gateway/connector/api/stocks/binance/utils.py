@@ -1707,7 +1707,7 @@ def load_exchange_position_ws_data(raw_data: dict, position_state: dict, state_d
         'mp': mark_price,
         'upnl': unrealised_pnl,
         'lvrp': position_state['leverage_type'],
-        'lvr': to_float(position_state['leverage']),
+        'lvr': position_state['leverage'],
         'lp': None,
         'act': 'update'
     }
@@ -1719,12 +1719,7 @@ def load_exchange_position_ws_data(raw_data: dict, position_state: dict, state_d
 
 
 def load_margin_cross_position_ws_data(raw_data: dict, position_state: dict, state_data: Optional[dict]) -> dict:
-    data = load_exchange_position_ws_data(raw_data, position_state, state_data)
-    if not data['leverage_type']:
-        data['lvrp'] = LeverageType.cross
-    if not data['leverage']:
-        data['lvr'] = 3
-    return data
+    return load_exchange_position_ws_data(raw_data, position_state, state_data)
 
 
 def load_futures_coin_position_request_leverage(margin_type: str) -> str:
