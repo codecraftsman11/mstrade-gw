@@ -271,8 +271,7 @@ def load_ws_position_action(state_volume: float, volume: float) -> str:
     return 'update'
 
 
-def load_position_ws_data(raw_data: dict, state_data: Optional[dict], exchange_rates: dict) -> dict:
-    expiration = None
+def load_position_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     state_volume = to_float(raw_data.get('state_volume'))
     volume = to_float(raw_data.get('currentQty'))
     side = load_position_side_by_volume(volume)
@@ -296,32 +295,7 @@ def load_position_ws_data(raw_data: dict, state_data: Optional[dict], exchange_r
         data.update({
             'ss': state_data.get('system_symbol')
         })
-        if exp := state_data.get('expiration', None):
-            expiration = exp
-    data['upnl'] = load_ws_position_unrealised_pnl(unrealised_pnl, exchange_rates, expiration)
     return data
-
-
-def load_ws_position_unrealised_pnl(base: Union[float, dict], exchange_rates: dict, expiration: Optional[str]) -> dict:
-    if expiration and (xbt_to_usd := exchange_rates.get(f"xbt{expiration}".lower())):
-        pass
-    else:
-        xbt_to_usd = exchange_rates.get('xbt')
-    if isinstance(base, float):
-        unrealised_pnl = {
-            'base': base,
-            'btc': base,
-            'usd': to_usd(base, xbt_to_usd)
-        }
-        return unrealised_pnl
-    return base
-
-
-def to_usd(xbt_value: float, coin_to_usd: float) -> Optional[float]:
-    try:
-        return xbt_value * coin_to_usd
-    except TypeError:
-        return None
 
 
 def load_user_data(raw_data: dict) -> dict:

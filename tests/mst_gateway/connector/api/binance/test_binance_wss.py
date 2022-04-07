@@ -494,7 +494,8 @@ class TestBinanceWssApi:
             leverage_brackets, position_state = get_position_partial_state_data(schema)
             if schema == OrderSchema.exchange:
                 position_state = {symbol.lower(): deepcopy(state_data.STORAGE_DATA[
-                    f"{subscr_name}.{wss.account_id}.{exchange}.{OrderSchema.exchange}.{symbol}".lower()
+                    f"{StateStorageKey.state}:{subscr_name}.{wss.account_id}.{exchange}.{OrderSchema.exchange}.{symbol}"
+                    f"".lower()
                 ])}
             wss.partial_state_data[subscr_name].update({
                 'position_state': position_state,

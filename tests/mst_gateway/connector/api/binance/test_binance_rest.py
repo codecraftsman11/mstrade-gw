@@ -304,16 +304,6 @@ class TestBinanceRestApi:
             assert symbol_schema.validate(symbol) == symbol
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange),
-                         ('tbinance_margin', OrderSchema.margin),
-                         ('tbinance_margin', OrderSchema.margin_coin)],
-        indirect=['rest'],
-    )
-    def test_get_wallet_summary(self, rest: BinanceRestApi, schema):
-        wallet_summary = rest.get_wallet_summary(schema)
-        assert Schema(fields.WALLET_SUMMARY_FIELDS).validate(wallet_summary) == wallet_summary
-
-    @pytest.mark.parametrize(
         'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross),
                          ('tbinance_margin', OrderSchema.margin), ('tbinance_margin', OrderSchema.margin_coin)],
         indirect=['rest'],
