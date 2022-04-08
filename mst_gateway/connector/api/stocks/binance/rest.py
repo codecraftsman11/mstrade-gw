@@ -829,6 +829,13 @@ class BinanceRestApi(StockRestApi):
             )
         return {'liquidation_price': liquidation_price}
 
+    def get_token_creation_date(self):
+        try:
+            data = self._binance_api(self._handler.get_api_key_permission)
+            return data.get('createTime')
+        except ConnectorError:
+            return None
+
     def _binance_api(self, method: callable, **kwargs):
         _throttle_hash_name = self.throttle_hash_name(method.__name__)
         self.validate_throttling(_throttle_hash_name)

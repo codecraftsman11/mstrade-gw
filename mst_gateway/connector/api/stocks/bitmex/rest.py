@@ -468,6 +468,9 @@ class BitmexRestApi(StockRestApi):
                 leverage=kwargs.get('leverage'),
             )}
 
+    def get_token_creation_date(self):
+        return None
+
     def _bitmex_api(self, method: callable, **kwargs):
         _throttle_hash_name = self.throttle_hash_name()
         self.validate_throttling(_throttle_hash_name)
