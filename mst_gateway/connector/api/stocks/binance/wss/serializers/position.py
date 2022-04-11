@@ -18,7 +18,6 @@ class BinancePositionSerializer(BinanceSerializer):
     def __init__(self, wss_api: BinanceWssApi):
         super().__init__(wss_api)
         self.position_state = wss_api.partial_state_data.get(self.subscription, {}).get('position_state', {})
-        self.exchange_rates = wss_api.partial_state_data.get(self.subscription, {}).get('exchange_rates', {})
         self._item_symbol = None
 
     @property
@@ -45,9 +44,9 @@ class BinancePositionSerializer(BinanceSerializer):
                 return None
         symbol_position_state = self.get_position_state(self.position_state, self._item_symbol)
         if self._wss_api.schema == OrderSchema.exchange:
-            return utils.load_exchange_position_ws_data(item, symbol_position_state, state_data, self.exchange_rates)
+            return utils.load_exchange_position_ws_data(item, symbol_position_state, state_data)
         if self._wss_api.schema == OrderSchema.margin_cross:
-            return utils.load_margin_cross_position_ws_data(item, symbol_position_state, state_data, self.exchange_rates)
+            return utils.load_margin_cross_position_ws_data(item, symbol_position_state, state_data)
         return None
 
 
@@ -206,8 +205,7 @@ class BinanceMarginPositionSerializer(BinancePositionSerializer):
             entry_price, mark_price, volume, side,
             schema=self._wss_api.schema, symbol=symbol, contract_size=contract_size
         )
-        return utils.load_futures_position_ws_data(item, symbol_position_state, state_data, self.exchange_rates,
-                                                   self._wss_api.schema)
+        return utils.load_futures_position_ws_data(item, symbol_position_state, state_data)
 
     @staticmethod
     def get_wallet_balance(leverage_type: str, isolated_balance: float, cross_balance: float) -> Optional[float]:
@@ -297,6 +295,5 @@ class BinanceMarginCoinPositionSerializer(BinanceMarginPositionSerializer):
                 if (state_data := self._wss_api.get_state_data(symbol)) is None:
                     return None
             symbol_position_state = self.get_position_state(self.position_state, symbol)
-            return utils.load_futures_position_ws_data(item, symbol_position_state, state_data, self.exchange_rates,
-                                                       self._wss_api.schema)
+            return utils.load_futures_position_ws_data(item, symbol_position_state, state_data)
         return await super()._load_data(message, item)

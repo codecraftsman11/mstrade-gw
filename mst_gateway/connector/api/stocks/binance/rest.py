@@ -14,7 +14,6 @@ from mst_gateway.connector.api.stocks.binance.wss.serializers.position import Bi
 from .lib import Client
 from . import utils, var
 from ...rest import StockRestApi
-from ...utils import load_wallet_summary
 from .....exceptions import GatewayError, ConnectorError, RecoverableError, NotFoundError
 from ...rest.throttle import ThrottleRest
 
@@ -619,37 +618,6 @@ class BinanceRestApi(StockRestApi):
         currency = self._binance_api(schema_handlers[schema.lower()])
         return utils.load_symbols_currencies(currency, self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}"))
 
-    def get_wallet_summary(self, schema: str, **kwargs) -> dict:
-        schema_handlers = {
-            OrderSchema.exchange: (
-                self._handler.get_account,
-                utils.load_spot_wallet_balances
-            ),
-            OrderSchema.margin_cross: (
-                self._handler.get_margin_account,
-                utils.load_margin_cross_wallet_balances
-            ),
-            OrderSchema.margin_isolated: (
-                self._handler.get_isolated_margin_account,
-                utils.load_margin_isolated_wallet_balances
-            ),
-            OrderSchema.margin: (
-                self._handler.futures_account_v2,
-                utils.load_future_wallet_balances
-            ),
-            OrderSchema.margin_coin: (
-                self._handler.futures_coin_account,
-                utils.load_futures_coin_wallet_balances
-            ),
-        }
-        validate_schema(schema, schema_handlers)
-        schema = schema.lower()
-        balances = schema_handlers[schema][1](self._binance_api(schema_handlers[schema][0]))
-        fields = ('balance', 'unrealised_pnl', 'margin_balance')
-        exchange_rates = self.storage.get(f"{StateStorageKey.exchange_rates}.{self.name}.{schema}")
-        assets = kwargs.get('assets', ('btc', 'usd'))
-        return load_wallet_summary(self.driver, schema, balances, fields, exchange_rates, assets)
-
     def list_order_commissions(self, schema: str) -> list:
         schema_handlers = {
             OrderSchema.exchange: self._handler.get_trade_level,
@@ -774,15 +742,16 @@ class BinanceRestApi(StockRestApi):
                 return {}
             return schema_handlers[schema][1](data, schema)
         if schema in (OrderSchema.exchange, OrderSchema.margin_cross):
-            data = self.storage.get(
-                f"position.{kwargs.get('account_id')}.{self.name}.{schema}.{symbol}".lower()
-            )
-            schema_handlers = {
-                OrderSchema.exchange: utils.load_exchange_position,
-                OrderSchema.margin_cross: utils.load_margin_cross_position,
-            }
-            symbol_data = self._binance_api(self._handler.get_ticker, symbol=symbol.upper())
-            return schema_handlers[schema](data, schema, symbol_data.get('lastPrice'))
+            if data := self.storage.get(
+                f"{StateStorageKey.state}:position.{kwargs.get('account_id')}.{self.name}.{schema}.{symbol}".lower()
+            ):
+                schema_handlers = {
+                    OrderSchema.exchange: utils.load_exchange_position,
+                    OrderSchema.margin_cross: utils.load_margin_cross_position,
+                }
+                symbol_data = self._binance_api(self._handler.get_ticker, symbol=symbol.upper())
+                return schema_handlers[schema](data, schema, symbol_data.get('lastPrice'))
+            return {}
 
     def list_positions(self, schema: str, **kwargs) -> list:
         validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin,
@@ -798,15 +767,16 @@ class BinanceRestApi(StockRestApi):
             data = self._binance_api(schema_handlers[schema][0])
             return schema_handlers[schema][1](data, schema)
         if schema in (OrderSchema.exchange, OrderSchema.margin_cross):
-            data = self.storage.get_pattern(
-                f"position.{kwargs.get('account_id')}.{self.name}.{schema}.*".lower()
-            )
-            schema_handlers = {
-                OrderSchema.exchange: utils.load_exchange_position_list,
-                OrderSchema.margin_cross: utils.load_margin_cross_position_list,
-            }
-            symbols_data = self._binance_api(self._handler.get_ticker)
-            return schema_handlers[schema](data, schema, symbols_data)
+            if data := self.storage.get_pattern(
+                f"{StateStorageKey.state}:position.{kwargs.get('account_id')}.{self.name}.{schema}.*".lower()
+            ):
+                schema_handlers = {
+                    OrderSchema.exchange: utils.load_exchange_position_list,
+                    OrderSchema.margin_cross: utils.load_margin_cross_position_list,
+                }
+                symbols_data = self._binance_api(self._handler.get_ticker)
+                return schema_handlers[schema](data, schema, symbols_data)
+            return []
 
     def get_positions_state(self, schema: str) -> dict:
         schema = schema.lower()
