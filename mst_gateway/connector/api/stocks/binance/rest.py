@@ -832,7 +832,7 @@ class BinanceRestApi(StockRestApi):
     def get_token_creation_date(self):
         try:
             data = self._binance_api(self._handler.get_api_key_permission)
-            return data.get('createTime')
+            return int(data.get('createTime') / 1e3)
         except ConnectorError:
             return None
 
