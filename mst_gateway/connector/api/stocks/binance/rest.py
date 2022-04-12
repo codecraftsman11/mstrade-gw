@@ -80,22 +80,22 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.exchange: (self._handler.get_ticker, self._spot_get_symbols_handler),
             OrderSchema.margin_cross: (self._handler.get_ticker, self._spot_get_symbols_handler),
             OrderSchema.margin_isolated: (self._handler.get_ticker, self._spot_get_symbols_handler),
-            OrderSchema.margin: (self._handler.futures_ticker, self._margin_get_symbols_handler),
-            OrderSchema.margin_coin: (self._handler.futures_coin_ticker, self._margin_get_symbols_handler),
-
+            OrderSchema.margin: (self._handler.futures_ticker, self._futures_get_symbols_handler),
+            OrderSchema.margin_coin: (self._handler.futures_coin_ticker, self._futures_get_symbols_handler),
         }
         validate_schema(schema, schema_handlers)
         schema = schema.lower()
         symbol = symbol.upper()
         data = self._binance_api(schema_handlers[schema][0], symbol=symbol)
-        state_data = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}").get(utils.stock2symbol(symbol), {})
+        state_data = self.storage.get(
+            f"{StateStorageKey.symbol}.{self.name}.{schema}").get(utils.stock2symbol(symbol), {})
         return schema_handlers[schema][1](schema, symbol, data, state_data)
 
     @staticmethod
     def _spot_get_symbols_handler(schema, symbol, data, state_data):
         return utils.load_symbol_data(schema, data, state_data)
 
-    def _margin_get_symbols_handler(self, schema, symbol, data, state_data):
+    def _futures_get_symbols_handler(self, schema, symbol, data, state_data):
         schema_handlers = {
             OrderSchema.margin: (
                 self._handler.futures_orderbook_ticker,
