@@ -14,7 +14,7 @@ class BinanceFinFactory(FinFactory):
         if cls._is_margin_coin(**kwargs):
             if contract_size := kwargs.get('contract_size'):
                 try:
-                    return contract_size / price
+                    return round(contract_size / price, 8)
                 except (TypeError, ZeroDivisionError):
                     return None
         return price
@@ -24,7 +24,7 @@ class BinanceFinFactory(FinFactory):
         if cls._is_margin_coin(**kwargs):
             if contract_size := kwargs.get('contract_size'):
                 try:
-                    return contract_size / face_price
+                    return round(contract_size / face_price, 8)
                 except (TypeError, ZeroDivisionError):
                     return None
         return face_price

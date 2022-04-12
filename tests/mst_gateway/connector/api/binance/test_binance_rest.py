@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from schema import Schema
 from mst_gateway.logging import init_logger
+from mst_gateway.calculator import BinanceFinFactory
 from mst_gateway.connector.api.stocks.binance.rest import BinanceRestApi
 from mst_gateway.connector.api.types import LeverageType, OrderExec, OrderSchema, OrderType, BUY, SELL
 from mst_gateway.exceptions import ConnectorError
@@ -87,6 +88,20 @@ def get_liquidation_kwargs(schema):
 
 
 class TestBinanceRestApi:
+
+    @pytest.mark.parametrize(
+        'rest, schema, price, face_price, kwargs', [
+            ('tbinance_spot', OrderSchema.exchange, 2757.02, 2757.02, {}),
+            ('tbinance_spot', OrderSchema.margin_cross, 2757.02, 2757.02, {}),
+            ('tbinance_margin', OrderSchema.margin, 38492.64, 38492.64, {}),
+            ('tbinance_margin', OrderSchema.margin_coin, 2757.02, 0.0036271, {'contract_size': 10}),
+            ('tbinance_margin', OrderSchema.margin_coin, 38492.64, 0.0025979, {'contract_size': 100})
+        ],
+        indirect=['rest'],
+    )
+    def test_calc_face_price(self, rest: BinanceRestApi, schema, price: float, face_price: float, kwargs: dict):
+        calc_face_price = BinanceFinFactory.calc_face_price(price, schema=schema, **kwargs)
+        assert face_price == calc_face_price
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross),
