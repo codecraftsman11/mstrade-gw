@@ -177,7 +177,7 @@ class TestBitmexRestApi:
         indirect=['rest'],
     )
     def test_calc_face_price(self, rest: BitmexRestApi, price: float, face_price: float, kwargs: dict):
-        calc_face_price = round(BitmexFinFactory.calc_face_price(price, **kwargs), 8)
+        calc_face_price = BitmexFinFactory.calc_face_price(price, **kwargs)
         assert face_price == calc_face_price
 
     @pytest.mark.parametrize(
