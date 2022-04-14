@@ -264,10 +264,6 @@ class StockRestApi(Connector):
     ) -> dict:
         raise NotImplementedError
 
-    @abstractmethod
-    def get_token_creation_date(self) -> Union[int, None]:
-        raise NotImplementedError
-
     def __setstate__(self, state):
         self.__dict__ = state
         self.open()

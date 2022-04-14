@@ -1,6 +1,6 @@
 import json
 from datetime import datetime, timedelta
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 from bravado.exception import HTTPError
 from requests.structures import CaseInsensitiveDict
 from mst_gateway.storage import StateStorageKey
@@ -121,7 +121,8 @@ class BitmexRestApi(StockRestApi):
         data, _ = self._bitmex_api(self._handler.User.User_get, **kwargs)
         return utils.load_user_data(data)
 
-    def get_api_key_permissions(self, schemas: list,  **kwargs) -> dict:
+    def get_api_key_permissions(self, schemas: list,  **kwargs) -> Tuple[dict, None]:
+        token_expiration = None
         default_schemas = [
             OrderSchema.margin,
         ]
@@ -129,8 +130,8 @@ class BitmexRestApi(StockRestApi):
         try:
             all_api_keys, _ = self._bitmex_api(self._handler.APIKey.APIKey_get)
         except ConnectorError:
-            return permissions
-        return utils.load_api_key_permissions(all_api_keys, self.auth.get('api_key'), permissions.keys())
+            return permissions, token_expiration
+        return utils.load_api_key_permissions(all_api_keys, self.auth.get('api_key'), permissions.keys()), token_expiration
 
     def get_wallet(self, **kwargs) -> dict:
         schema = kwargs.pop('schema', OrderSchema.margin).lower()
@@ -467,9 +468,6 @@ class BitmexRestApi(StockRestApi):
                 funding_rate=kwargs.get('funding_rate'),
                 leverage=kwargs.get('leverage'),
             )}
-
-    def get_token_creation_date(self):
-        return None
 
     def _bitmex_api(self, method: callable, **kwargs):
         _throttle_hash_name = self.throttle_hash_name()

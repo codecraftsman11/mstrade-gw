@@ -347,8 +347,8 @@ def load_user_data(raw_data: dict) -> dict:
 def load_api_key_permissions(raw_data: dict, schemas: iter) -> dict:
     schema_handlers = {
         OrderSchema.exchange: True,
-        OrderSchema.margin_cross: raw_data.get('enableMargin', False),
-        OrderSchema.margin_isolated: raw_data.get('enableMargin', False),
+        OrderSchema.margin_cross: raw_data.get('enableSpotAndMarginTrading', False),
+        OrderSchema.margin_isolated: raw_data.get('enableSpotAndMarginTrading', False),
         OrderSchema.margin: raw_data.get('enableFutures', False),
         OrderSchema.margin_coin: raw_data.get('enableFutures', False),
     }
