@@ -121,7 +121,7 @@ class BitmexRestApi(StockRestApi):
         data, _ = self._bitmex_api(self._handler.User.User_get, **kwargs)
         return utils.load_user_data(data)
 
-    def get_api_key_permissions(self, schemas: list,  **kwargs) -> Tuple[dict, None]:
+    def get_api_key_permissions(self, schemas: list,  **kwargs) -> Tuple[dict, Optional[int]]:
         token_expiration = None
         default_schemas = [
             OrderSchema.margin,
