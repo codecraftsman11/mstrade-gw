@@ -64,7 +64,6 @@ class BinanceRestApi(StockRestApi):
         ]
         permissions = {schema: False for schema in schemas if schema in default_schemas}
         if self.test:
-            print(f'WE ARE IN TEST')
             for schema in permissions:
                 try:
                     permissions[schema] = bool(self.get_wallet(schema=schema))
