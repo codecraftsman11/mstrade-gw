@@ -64,7 +64,7 @@ class BitmexFinFactory(FinFactory):
                 face_price = price / underlying_multiplier
         except (TypeError, ZeroDivisionError):
             face_price = None
-        return face_price
+        return round(face_price, 8)
 
     @classmethod
     def calc_price(cls, face_price: float, **kwargs) -> Optional[float]:
@@ -83,7 +83,7 @@ class BitmexFinFactory(FinFactory):
                 face_price = face_price * underlying_multiplier
         except (TypeError, ZeroDivisionError):
             return None
-        return face_price
+        return round(face_price, 8)
 
     @classmethod
     def side_by_direction(cls, direction: int) -> int:
