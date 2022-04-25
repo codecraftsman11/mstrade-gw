@@ -1,7 +1,7 @@
 from hashlib import sha256
 from uuid import uuid4
 from datetime import datetime, timedelta
-from typing import Union
+from typing import Union, Tuple, Optional
 from bravado.exception import HTTPError
 from binance.exceptions import BinanceAPIException, BinanceRequestException
 from mst_gateway.connector.api.utils import time2timestamp
@@ -53,7 +53,8 @@ class BinanceRestApi(StockRestApi):
             data = {'address': uuid4()}
         return utils.load_user_data(data)
 
-    def get_api_key_permissions(self, schemas: list, **kwargs) -> dict:
+    def get_api_key_permissions(self, schemas: list, **kwargs) -> Tuple[dict, Optional[int]]:
+        auth_expired = None
         default_schemas = [
             OrderSchema.exchange,
             OrderSchema.margin_cross,
@@ -68,12 +69,14 @@ class BinanceRestApi(StockRestApi):
                     permissions[schema] = bool(self.get_wallet(schema=schema))
                 except ConnectorError:
                     continue
-            return permissions
+            return permissions, auth_expired
         try:
             data = self._binance_api(self._handler.get_api_key_permission)
+            if expiration_timestamp := data.get('tradingAuthorityExpirationTime'):
+                auth_expired = int(expiration_timestamp / 1e3)
         except ConnectorError:
-            return permissions
-        return utils.load_api_key_permissions(data, permissions.keys())
+            return permissions, auth_expired
+        return utils.load_api_key_permissions(data, permissions.keys()), auth_expired
 
     def get_symbol(self, symbol, schema) -> dict:
         schema_handlers = {
