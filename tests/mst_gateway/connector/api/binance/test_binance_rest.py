@@ -147,7 +147,7 @@ class TestBinanceRestApi:
         indirect=['rest'],
     )
     def test_get_api_key_permissions(self, rest: BinanceRestApi, schemas, expect):
-        assert rest.get_api_key_permissions(schemas) == expect
+        assert rest.get_api_key_permissions(schemas)[0] == expect
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_margin', OrderSchema.margin),

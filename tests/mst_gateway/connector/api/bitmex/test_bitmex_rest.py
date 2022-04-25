@@ -293,7 +293,7 @@ class TestBitmexRestApi:
     def test_get_api_key_permission(self, rest: BitmexRestApi, schemas: list):
         permissions = rest.get_api_key_permissions(schemas=schemas)
         for schema in schemas:
-            assert permissions[schema]
+            assert permissions[0][schema]
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin)],
