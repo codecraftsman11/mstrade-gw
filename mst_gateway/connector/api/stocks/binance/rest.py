@@ -72,7 +72,8 @@ class BinanceRestApi(StockRestApi):
             return permissions, auth_expired
         try:
             data = self._binance_api(self._handler.get_api_key_permission)
-            auth_expired = int(data['tradingAuthorityExpirationTime'] / 1e3)
+            if expiration_timestamp := data.get('tradingAuthorityExpirationTime'):
+                auth_expired = int(expiration_timestamp / 1e3)
         except ConnectorError:
             return permissions, auth_expired
         return utils.load_api_key_permissions(data, permissions.keys()), auth_expired
