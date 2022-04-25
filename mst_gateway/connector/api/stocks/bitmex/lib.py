@@ -243,9 +243,9 @@ class RequestsFutureAdapter(BaseRequestsFutureAdapter):
             request,  # type: requests.Request
             misc_options,  # type: typing.Mapping[str, typing.Any]
             key=None,
-            ratelimit_client=None
+            ratelimit=None
     ):
-        self.ratelimit = ratelimit_client
+        self.ratelimit = ratelimit
         self.key = key
         super(RequestsFutureAdapter, self).__init__(session, request, misc_options)
 
@@ -263,7 +263,7 @@ class RequestsFutureAdapter(BaseRequestsFutureAdapter):
         proxies = {}
         if self.ratelimit:
             hashed_key = self._generate_hashed_uid(self.key)
-            proxies = self.ratelimit.create_reservation(
+            proxies = self.ratelimit.get_proxies(
                 method=request.method, url=request.url, hashed_uid=hashed_key,
             )
             if proxies is None:
@@ -306,7 +306,7 @@ class RequestsClient(BaseRequestsClient):
         future_adapter_class=RequestsFutureAdapter,  # type: typing.Type[RequestsFutureAdapter]
         response_adapter_class=RequestsResponseAdapter,  # type: typing.Type[RequestsResponseAdapter]
         key=None,
-        ratelimit_client=None
+        ratelimit=None
     ):
         # type: (...) -> None
         """
@@ -327,7 +327,7 @@ class RequestsClient(BaseRequestsClient):
         self.future_adapter_class = future_adapter_class
         self.response_adapter_class = response_adapter_class
         self.key = key
-        self.ratelimit = ratelimit_client
+        self.ratelimit = ratelimit
 
     def request(
         self,
@@ -365,7 +365,7 @@ class RequestsClient(BaseRequestsClient):
         )
 
 
-def bitmex_connector(test=True, config=None, api_key=None, api_secret=None, ratelimit_client=None):
+def bitmex_connector(test=True, config=None, api_key=None, api_secret=None, ratelimit=None):
     if config is None:
         # See full config options at http://bravado.readthedocs.io/en/latest/configuration.html
         config = {
@@ -383,7 +383,7 @@ def bitmex_connector(test=True, config=None, api_key=None, api_secret=None, rate
         host = 'https://www.bitmex.com'
 
     spec_uri = host + '/api/explorer/swagger.json'
-    request_client = RequestsClient(key=api_key, ratelimit_client=ratelimit_client, future_adapter_class=RequestsFutureAdapter)
+    request_client = RequestsClient(key=api_key, ratelimit=ratelimit, future_adapter_class=RequestsFutureAdapter)
     request_client.authenticator = APIKeyAuthenticator(host, api_key, api_secret)
     return SwaggerClient.from_url(spec_uri, config=config, http_client=request_client)
 

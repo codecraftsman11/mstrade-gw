@@ -200,7 +200,7 @@ class BinanceWalletSubscriber(BinanceSubscriber):
             await asyncio.sleep(30)
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
-        self.rest_client = rest.BinanceRestApi(auth=api.auth, test=api.test, ratelimit_client=api.ratelimit)
+        self.rest_client = rest.BinanceRestApi(auth=api.auth, test=api.test, ratelimit=api.ratelimit)
         self.rest_client.open()
         api.tasks.append(asyncio.create_task(self.subscribe_wallet_state(api, self.rest_client)))
         return {}
@@ -248,7 +248,7 @@ class BinanceMarginPositionSubscriber(BinancePositionSubscriber):
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
         with rest.BinanceRestApi(
-                auth=api.auth, test=api.test, ratelimit_client=api.ratelimit
+                auth=api.auth, test=api.test, ratelimit=api.ratelimit
         ) as client:
             try:
                 account_info = client.handler.futures_account_v2()
@@ -271,7 +271,7 @@ class BinanceMarginCoinPositionSubscriber(BinanceMarginPositionSubscriber):
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
         api.tasks.append(asyncio.create_task(self.request_positions(api)))
         with rest.BinanceRestApi(
-                auth=api.auth, test=api.test, ratelimit_client=api.ratelimit
+                auth=api.auth, test=api.test, ratelimit=api.ratelimit
         ) as client:
             try:
                 account_info = client.handler.futures_coin_account()

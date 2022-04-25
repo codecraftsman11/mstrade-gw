@@ -3,7 +3,6 @@ import time
 from typing import Dict, Optional
 from binance.client import AsyncClient as BaseAsyncClient, Client as BaseClient
 from binance.exceptions import BinanceRequestException
-
 from mst_gateway.connector.api import OrderSchema
 from mst_gateway.connector.api.stocks.binance import utils
 from .....exceptions import RateLimitServiceError
@@ -14,10 +13,10 @@ class Client(BaseClient):
     MARGIN_API_VERSION2 = 'v2'
 
     def __init__(self, api_key: Optional[str] = None, api_secret: Optional[str] = None,
-        requests_params: Dict[str, str] = None, tld: str = 'com',
-        testnet: bool = False, ratelimit_service=None):
-        super(Client, self).__init__(api_key, api_secret, requests_params, tld, testnet)
-        self.ratelimit = ratelimit_service
+                 requests_params: Dict[str, str] = None, tld: str = 'com',
+                 testnet: bool = False, ratelimit=None):
+        super().__init__(api_key, api_secret, requests_params, tld, testnet)
+        self.ratelimit = ratelimit
         self.key = api_key
 
     def _generate_hashed_uid(self, key):
@@ -61,9 +60,9 @@ class Client(BaseClient):
     def _request(self, method, uri: str, signed: bool, force_params: bool = False, **kwargs) -> Dict:
         if self.ratelimit:
             hashed_key = self._generate_hashed_uid(self.key)
-            proxies = self.ratelimit.create_reservation(
-                                         method=method, url=uri, hashed_uid=hashed_key,
-                                     )
+            proxies = self.ratelimit.get_proxies(
+                method=method, url=uri, hashed_uid=hashed_key,
+            )
             if proxies is None:
                 raise RateLimitServiceError('Ratelimit service Error')
             kwargs.setdefault('data', {}).setdefault('requests_params', {})['proxies'] = proxies

@@ -45,10 +45,10 @@ class BinanceWssApi(StockWssApi):
                  options: dict = None,
                  schema='exchange',
                  state_storage=None,
-                 ratelimit_client=None,
+                 ratelimit=None,
                  register_state=True):
         super().__init__(name, account_name, url, test, auth, logger, options,
-                         schema, state_storage, ratelimit_client, register_state)
+                         schema, state_storage, ratelimit, register_state)
 
         self.listen_key = None
 
@@ -71,7 +71,7 @@ class BinanceWssApi(StockWssApi):
 
     async def _generate_listen_key(self):
         with rest.BinanceRestApi(
-                auth=self.auth, test=self.test, ratelimit_client=self.ratelimit
+                auth=self.auth, test=self.test, ratelimit=self.ratelimit
         ) as bin_client:
             try:
                 if self.schema == OrderSchema.exchange:
@@ -85,8 +85,6 @@ class BinanceWssApi(StockWssApi):
                 else:
                     raise ConnectorError(f"Invalid schema {self.schema}.")
             except Exception as e:
-                import traceback
-                traceback.print_exc()
                 raise ConnectorError(e)
             if not key:
                 raise ConnectorError(f"Binance api error. Details: Invalid listen key")
@@ -223,10 +221,10 @@ class BinanceMarginWssApi(BinanceWssApi):
                  options: dict = None,
                  schema=OrderSchema.margin,
                  state_storage=None,
-                 ratelimit_client=None,
+                 ratelimit=None,
                  register_state=True):
         super().__init__(name, account_name, url, test, auth, logger, options,
-                        schema, state_storage, ratelimit_client, register_state)
+                         schema, state_storage, ratelimit, register_state)
 
     def __split_message_map(self, key: str) -> Optional[callable]:
         _map = {

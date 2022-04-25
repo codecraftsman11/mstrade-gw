@@ -36,7 +36,7 @@ class StockWssApi(Connector):
                  options: dict = None,
                  schema=OrderSchema.margin,
                  state_storage=None,
-                 ratelimit_client=None,
+                 ratelimit=None,
                  register_state=True):
 
         self.test = test
@@ -53,7 +53,7 @@ class StockWssApi(Connector):
         self.schema = schema
         if state_storage is not None:
             self.storage = AsyncStateStorage(state_storage)
-        self.ratelimit = ratelimit_client
+        self.ratelimit = ratelimit
         self.register_state = register_state
         super().__init__(auth, logger)
         self.__partial_state_data = {}
@@ -388,5 +388,6 @@ class StockWssApi(Connector):
     def __getstate__(self):
         self.storage.storage = {}
         self.throttle.storage = {}
+        self.ratelimit = None
         state = self.__dict__.copy()
         return state
