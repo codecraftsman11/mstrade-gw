@@ -13,6 +13,7 @@ from mst_gateway.connector.api.utils.rest import validate_exchange_order_id, val
 from mst_gateway.connector.api.stocks.binance.wss.serializers.position import BinanceMarginPositionSerializer
 from .lib import Client
 from . import utils, var
+from .utils import to_date
 from ...rest import StockRestApi
 from .....exceptions import GatewayError, ConnectorError, RecoverableError, NotFoundError, RateLimitServiceError
 from ...rest.throttle import ThrottleRest
@@ -77,7 +78,7 @@ class BinanceRestApi(StockRestApi):
         try:
             data = self._binance_api(self._handler.get_api_key_permission)
             if expiration_timestamp := data.get('tradingAuthorityExpirationTime'):
-                auth_expired = int(expiration_timestamp / 1e3)
+                auth_expired = to_date(expiration_timestamp)
         except ConnectorError:
             return permissions, auth_expired
         return utils.load_api_key_permissions(data, permissions.keys()), auth_expired
