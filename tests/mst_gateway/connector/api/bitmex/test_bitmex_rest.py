@@ -284,13 +284,18 @@ class TestBitmexRestApi:
         assert rest.ping(schema=schema)
 
     @pytest.mark.parametrize(
-        'rest, schemas', [('tbitmex', [OrderSchema.margin])],
+        'rest, schemas, expect', [
+            ('tbitmex', [OrderSchema.margin], (
+                 {
+                     OrderSchema.margin: True,
+                 },
+                 None
+            )),
+        ],
         indirect=['rest'],
     )
-    def test_get_api_key_permission(self, rest: BitmexRestApi, schemas: list):
-        permissions = rest.get_api_key_permissions(schemas=schemas)
-        for schema in schemas:
-            assert permissions[0][schema]
+    def test_get_api_key_permissions(self, rest: BitmexRestApi, schemas, expect):
+        assert rest.get_api_key_permissions(schemas) == expect
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin)],
