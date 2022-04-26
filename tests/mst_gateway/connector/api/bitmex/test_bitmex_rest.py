@@ -57,7 +57,6 @@ def rest_compress(request, _debug) -> BitmexRestApi:
     with BitmexRestApi(
             name=api_name,
             auth=auth,
-            throttle_limit=30,
             state_storage=deepcopy(data.STORAGE_DATA),
             logger=_debug['logger']
     ) as api:
@@ -75,7 +74,6 @@ def rest_keepalive(request, _debug) -> BitmexRestApi:
     with BitmexRestApi(
             name=api_name,
             auth=auth,
-            throttle_limit=30,
             state_storage=deepcopy(data.STORAGE_DATA),
             logger=_debug['logger']
     ) as api:
@@ -93,7 +91,6 @@ def rest_keepalive_compress(request) -> BitmexRestApi:
     with BitmexRestApi(
             name=api_name,
             auth=auth,
-            throttle_limit=30,
             state_storage=deepcopy(data.STORAGE_DATA)
     ) as api:
         api.open(keepalive=True, compress=True)

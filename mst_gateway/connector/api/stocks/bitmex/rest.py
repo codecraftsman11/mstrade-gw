@@ -42,8 +42,7 @@ class BitmexRestApi(StockRestApi):
     name = 'bitmex'
     fin_factory = BitmexFinFactory()
     throttle = ThrottleRest(rest_limit=var.BITMEX_THROTTLE_LIMITS.get('rest'),
-                            order_limit=var.BITMEX_THROTTLE_LIMITS.get('order')
-                            )
+                            order_limit=var.BITMEX_THROTTLE_LIMITS.get('order'))
 
     def _connect(self, **kwargs):
         self._keepalive = bool(kwargs.get('keepalive', False))
