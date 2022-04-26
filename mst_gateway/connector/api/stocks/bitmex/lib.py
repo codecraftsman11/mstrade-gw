@@ -162,30 +162,6 @@ def refactor_swagger_spec(spec_dict: dict):
         spec_dict['definitions']['APIKey']['properties']['permissions']['items'] = {'type': 'string'}
     except KeyError:
         pass
-    # User.User_getTradingVolume
-    """
-    # fix Expected type to be dict for value [{'advUsd': 35.56772094280636}] to unmarshal to a <class 'dict'>.Was <class 'list'> instead.
-    'TradingVolume': {
-        'description': '30 days USD average trading volume',
-        'properties': {
-            'advUsd': {
-                'type': 'number',
-                'format': 'double'
-            }
-        },
-        'required': [
-            'advUsd'
-        ],
-        'type': 'object'
-    }
-    """
-    try:
-        spec_dict['definitions']['TradingVolume']['properties'].pop('advUsd', None)
-        spec_dict['definitions']['TradingVolume'].pop('required', None)
-        spec_dict['definitions']['TradingVolume']['type'] = 'array'
-        spec_dict['definitions']['TradingVolume']['items'] = {}
-    except (KeyError, AttributeError):
-        pass
     return spec_dict
 
 
