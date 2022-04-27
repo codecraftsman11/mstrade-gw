@@ -13,14 +13,18 @@ from mst_gateway.connector.api.utils.rest import validate_exchange_order_id, val
 from mst_gateway.connector.api.stocks.binance.wss.serializers.position import BinanceMarginPositionSerializer
 from .lib import Client
 from . import utils, var
+from .utils import to_date
 from ...rest import StockRestApi
-from .....exceptions import GatewayError, ConnectorError, RecoverableError, NotFoundError
+from .....exceptions import GatewayError, ConnectorError, RecoverableError, NotFoundError, RateLimitServiceError
+from ...rest.throttle import ThrottleRest
 
 
 class BinanceRestApi(StockRestApi):
     driver = ExchangeDrivers.binance
     name = 'binance'
     fin_factory = BinanceFinFactory()
+    throttle = ThrottleRest(rest_limit=var.BINANCE_THROTTLE_LIMITS.get('rest'),
+                            order_limit=var.BINANCE_THROTTLE_LIMITS.get('order'))
 
     def throttle_hash_name(self, name=None):
         return sha256(f"{self.name}.{self._handler.get_schema_by_method(name)}".lower().encode('utf-8')).hexdigest()
@@ -28,7 +32,8 @@ class BinanceRestApi(StockRestApi):
     def _connect(self, **kwargs):
         return Client(api_key=self._auth.get('api_key'),
                       api_secret=self._auth.get('api_secret'),
-                      testnet=self.test)
+                      testnet=self.test,
+                      ratelimit=self.ratelimit)
 
     def ping(self, schema: str) -> bool:
         schema_handlers = {
@@ -73,7 +78,7 @@ class BinanceRestApi(StockRestApi):
         try:
             data = self._binance_api(self._handler.get_api_key_permission)
             if expiration_timestamp := data.get('tradingAuthorityExpirationTime'):
-                auth_expired = int(expiration_timestamp / 1e3)
+                auth_expired = to_date(expiration_timestamp)
         except ConnectorError:
             return permissions, auth_expired
         return utils.load_api_key_permissions(data, permissions.keys()), auth_expired
@@ -833,8 +838,8 @@ class BinanceRestApi(StockRestApi):
         return {'liquidation_price': liquidation_price}
 
     def _binance_api(self, method: callable, **kwargs):
-        _throttle_hash_name = self.throttle_hash_name(method.__name__)
-        self.validate_throttling(_throttle_hash_name)
+        if not self.ratelimit:
+            self.validate_throttling(self.throttle_hash_name(method.__name__))
 
         try:
             resp = method(**kwargs)
@@ -854,13 +859,15 @@ class BinanceRestApi(StockRestApi):
             raise ConnectorError(message)
         except BinanceRequestException as exc:
             raise ConnectorError(f"Binance api error. Details: {exc.message}")
+        except RateLimitServiceError as exc:
+            raise ConnectorError(exc)
         except Exception as exc:
             self.logger.error(f"Binance api error. Detail: {exc}")
             raise ConnectorError("Binance api error.")
         finally:
-            if self.handler.response:
+            if self.handler.response and not self.ratelimit:
                 self.throttle.set(
-                    key=_throttle_hash_name,
+                    key=self.throttle_hash_name(method.__name__),
                     **self.__get_limit_header(self.handler.response.headers)
                 )
 

@@ -39,7 +39,7 @@ def _debug(caplog):
 def rest(request, _debug) -> BinanceRestApi:
     param = request.param
     auth, available_schemas = rest_params(param)
-    with BinanceRestApi(test=True, name='tbinance', auth=auth, throttle_limit=120,
+    with BinanceRestApi(test=True, name='tbinance', auth=auth,
                         state_storage=deepcopy(state_data.STORAGE_DATA),
                         logger=_debug['logger']) as api:
         api.open()
@@ -128,26 +128,32 @@ class TestBinanceRestApi:
     @pytest.mark.parametrize(
         'rest, schemas, expect', [
             ('tbinance_spot', [OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin_isolated,
-                               OrderSchema.margin, OrderSchema.margin_coin], {
-                 OrderSchema.exchange: True,
-                 OrderSchema.margin_cross: False,
-                 OrderSchema.margin_isolated: False,
-                 OrderSchema.margin: False,
-                 OrderSchema.margin_coin: False,
-             }),
+                               OrderSchema.margin, OrderSchema.margin_coin], (
+                {
+                    OrderSchema.exchange: True,
+                    OrderSchema.margin_cross: False,
+                    OrderSchema.margin_isolated: False,
+                    OrderSchema.margin: False,
+                    OrderSchema.margin_coin: False,
+                },
+                None
+            )),
             ('tbinance_margin', [OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin_isolated,
-                                  OrderSchema.margin, OrderSchema.margin_coin], {
-                 OrderSchema.exchange: False,
-                 OrderSchema.margin_cross: False,
-                 OrderSchema.margin_isolated: False,
-                 OrderSchema.margin: True,
-                 OrderSchema.margin_coin: True,
-             }),
+                                 OrderSchema.margin, OrderSchema.margin_coin], (
+                {
+                    OrderSchema.exchange: False,
+                    OrderSchema.margin_cross: False,
+                    OrderSchema.margin_isolated: False,
+                    OrderSchema.margin: True,
+                    OrderSchema.margin_coin: True,
+                },
+                None
+            )),
         ],
         indirect=['rest'],
     )
     def test_get_api_key_permissions(self, rest: BinanceRestApi, schemas, expect):
-        assert rest.get_api_key_permissions(schemas)[0] == expect
+        assert rest.get_api_key_permissions(schemas) == expect
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_margin', OrderSchema.margin),

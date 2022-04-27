@@ -1,5 +1,12 @@
 from .... import api
 
+
+BINANCE_THROTTLE_LIMITS = {
+    'ws': 60,
+    'rest': 1000,
+    'order': 100
+}
+
 BINANCE_MAX_QUOTE_BINS_COUNT = 1000
 BINANCE_MAX_ORDER_BOOK_LIMIT = 1000
 

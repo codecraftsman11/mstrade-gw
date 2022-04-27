@@ -6,10 +6,10 @@ from websockets import client
 from . import subscribers as subscr_class
 from .router import BinanceWssRouter, BinanceMarginWssRouter, BinanceMarginCoinWssRouter
 from .utils import is_auth_ok, make_cmd
-from ..lib import AsyncClient
+from .. import rest
+from ....wss import StockWssApi, ThrottleWss
 from ..utils import to_float, remap_futures_coin_position_request_data
 from .... import OrderSchema, ExchangeDrivers
-from ....wss import StockWssApi
 from .. import var
 
 
@@ -33,6 +33,7 @@ class BinanceWssApi(StockWssApi):
 
     router_class = BinanceWssRouter
     refresh_key_time = 1800
+    throttle = ThrottleWss(ws_limit=var.BINANCE_THROTTLE_LIMITS.get('ws'))
 
     def __init__(self,
                  name: str = None,
@@ -42,13 +43,13 @@ class BinanceWssApi(StockWssApi):
                  auth: dict = None,
                  logger: Logger = None,
                  options: dict = None,
-                 throttle_rate: int = 30,
-                 throttle_storage=None,
                  schema='exchange',
                  state_storage=None,
+                 ratelimit=None,
                  register_state=True):
-        super().__init__(name, account_name, url, test, auth, logger, options, throttle_rate,
-                         throttle_storage, schema, state_storage, register_state)
+        super().__init__(name, account_name, url, test, auth, logger, options,
+                         schema, state_storage, ratelimit, register_state)
+
         self.listen_key = None
 
     async def _refresh_key(self):
@@ -69,18 +70,18 @@ class BinanceWssApi(StockWssApi):
         self._url = f"{self._url}/{self.listen_key}"
 
     async def _generate_listen_key(self):
-        async with AsyncClient(
-                api_key=self.auth.get('api_key'), api_secret=self.auth.get('api_secret'), testnet=self.test
+        with rest.BinanceRestApi(
+                auth=self.auth, test=self.test, ratelimit=self.ratelimit
         ) as bin_client:
             try:
                 if self.schema == OrderSchema.exchange:
-                    key = await bin_client.stream_get_listen_key()
+                    key = bin_client.handler.stream_get_listen_key()
                 elif self.schema == OrderSchema.margin_cross:
-                    key = await bin_client.margin_stream_get_listen_key()
+                    key = bin_client.handler.margin_stream_get_listen_key()
                 elif self.schema == OrderSchema.margin:
-                    key = await bin_client.futures_stream_get_listen_key()
+                    key = bin_client.handler.futures_stream_get_listen_key()
                 elif self.schema == OrderSchema.margin_coin:
-                    key = await bin_client.futures_coin_stream_get_listen_key()
+                    key = bin_client.handler.futures_coin_stream_get_listen_key()
                 else:
                     raise ConnectorError(f"Invalid schema {self.schema}.")
             except Exception as e:
@@ -218,13 +219,12 @@ class BinanceMarginWssApi(BinanceWssApi):
                  auth: dict = None,
                  logger: Logger = None,
                  options: dict = None,
-                 throttle_rate: int = 30,
-                 throttle_storage=None,
                  schema=OrderSchema.margin,
                  state_storage=None,
+                 ratelimit=None,
                  register_state=True):
-        super().__init__(name, account_name, url, test, auth, logger, options, throttle_rate,
-                         throttle_storage, schema, state_storage, register_state)
+        super().__init__(name, account_name, url, test, auth, logger, options,
+                         schema, state_storage, ratelimit, register_state)
 
     def __split_message_map(self, key: str) -> Optional[callable]:
         _map = {
