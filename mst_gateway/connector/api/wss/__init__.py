@@ -5,6 +5,7 @@ from typing import Dict, Optional, Union
 import websockets
 from copy import deepcopy
 from mst_gateway.storage import AsyncStateStorage, StateStorageKey
+from binance.client import AsyncClient
 from .router import Router
 from .subscriber import Subscriber
 from .throttle import ThrottleWss
@@ -33,11 +34,11 @@ class StockWssApi(Connector):
                  auth: dict = None,
                  logger: Logger = None,
                  options: dict = None,
-                 throttle_rate: int = 30,
-                 throttle_storage=None,
                  schema=OrderSchema.margin,
                  state_storage=None,
+                 ratelimit=None,
                  register_state=True):
+
         self.test = test
         self.tasks = list()
         if name is not None:
@@ -48,13 +49,11 @@ class StockWssApi(Connector):
         self._error = errors.ERROR_OK
         self._subscriptions = {}
         self._router = self.__class__.router_class(self)
-        self._throttle_rate = throttle_rate
         self.auth_connect = False
-        if throttle_storage is not None:
-            self.throttle = ThrottleWss(throttle_storage)
         self.schema = schema
         if state_storage is not None:
             self.storage = AsyncStateStorage(state_storage)
+        self.ratelimit = ratelimit
         self.register_state = register_state
         super().__init__(auth, logger)
         self.__partial_state_data = {}
@@ -104,7 +103,7 @@ class StockWssApi(Connector):
 
     async def __cleanup_subscribers(self):
         for sub in [*self.subscribers.values(), *self.auth_subscribers.values()]:
-            if sub.rest_client:
+            if sub.rest_client and isinstance(sub.rest_client, AsyncClient):
                 await sub.rest_client.close_connection()
 
     async def get_data(self, message: dict) -> Dict[str, Dict]:
@@ -214,7 +213,7 @@ class StockWssApi(Connector):
     async def open(self, **kwargs):
         throttle_valid = await self.throttle.validate(
             key=dict(name=self.name, url=self._url),
-            rate=self._throttle_rate
+            rate=self.throttle.ws_limit
         )
         if not throttle_valid:
             raise ConnectionError
@@ -389,5 +388,6 @@ class StockWssApi(Connector):
     def __getstate__(self):
         self.storage.storage = {}
         self.throttle.storage = {}
+        self.ratelimit = None
         state = self.__dict__.copy()
         return state

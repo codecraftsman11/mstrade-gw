@@ -23,6 +23,7 @@ setup(
         'bravado==11.0.3',
         'websockets==8.1',
         'python-binance==1.0.10',
+        'pysocks==1.7.1',
         'aiohttp==3.7.4.post0'
     ],
     extras_require={

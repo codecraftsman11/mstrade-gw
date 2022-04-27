@@ -38,7 +38,7 @@ def load_symbol_data(schema: str, raw_data: Optional[dict], state_data: Optional
     }
     if isinstance(state_data, dict):
         face_price_data = state_data.get('extra', {}).get('face_price_data', {})
-        face_price = BinanceFinFactory.calc_face_price(price, **face_price_data)
+        face_price = BinanceFinFactory.calc_face_price(price, schema=schema, **face_price_data)
         data.update({
             'face_price': face_price,
             'expiration': state_data.get('expiration'),
@@ -344,9 +344,9 @@ def load_user_data(raw_data: dict) -> dict:
 
 def load_api_key_permissions(raw_data: dict, schemas: iter) -> dict:
     schema_handlers = {
-        OrderSchema.exchange: True,
-        OrderSchema.margin_cross: raw_data.get('enableMargin', False),
-        OrderSchema.margin_isolated: raw_data.get('enableMargin', False),
+        OrderSchema.exchange: raw_data.get('enableSpotAndMarginTrading', False),
+        OrderSchema.margin_cross: raw_data.get('enableSpotAndMarginTrading', False),
+        OrderSchema.margin_isolated: raw_data.get('enableSpotAndMarginTrading', False),
         OrderSchema.margin: raw_data.get('enableFutures', False),
         OrderSchema.margin_coin: raw_data.get('enableFutures', False),
     }

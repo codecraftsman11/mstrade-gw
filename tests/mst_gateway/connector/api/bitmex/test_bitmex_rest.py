@@ -40,7 +40,6 @@ def rest(request, _debug) -> BitmexRestApi:
     with BitmexRestApi(
             name=api_name,
             auth=auth,
-            throttle_limit=90,
             state_storage=deepcopy(data.STORAGE_DATA),
             logger=_debug['logger']
     ) as api:
@@ -58,7 +57,6 @@ def rest_compress(request, _debug) -> BitmexRestApi:
     with BitmexRestApi(
             name=api_name,
             auth=auth,
-            throttle_limit=30,
             state_storage=deepcopy(data.STORAGE_DATA),
             logger=_debug['logger']
     ) as api:
@@ -76,7 +74,6 @@ def rest_keepalive(request, _debug) -> BitmexRestApi:
     with BitmexRestApi(
             name=api_name,
             auth=auth,
-            throttle_limit=30,
             state_storage=deepcopy(data.STORAGE_DATA),
             logger=_debug['logger']
     ) as api:
@@ -94,7 +91,6 @@ def rest_keepalive_compress(request) -> BitmexRestApi:
     with BitmexRestApi(
             name=api_name,
             auth=auth,
-            throttle_limit=30,
             state_storage=deepcopy(data.STORAGE_DATA)
     ) as api:
         api.open(keepalive=True, compress=True)
@@ -177,7 +173,7 @@ class TestBitmexRestApi:
         indirect=['rest'],
     )
     def test_calc_face_price(self, rest: BitmexRestApi, price: float, face_price: float, kwargs: dict):
-        calc_face_price = round(BitmexFinFactory.calc_face_price(price, **kwargs), 8)
+        calc_face_price = BitmexFinFactory.calc_face_price(price, **kwargs)
         assert face_price == calc_face_price
 
     @pytest.mark.parametrize(
@@ -288,13 +284,18 @@ class TestBitmexRestApi:
         assert rest.ping(schema=schema)
 
     @pytest.mark.parametrize(
-        'rest, schemas', [('tbitmex', [OrderSchema.margin])],
+        'rest, schemas, expect', [
+            ('tbitmex', [OrderSchema.margin], (
+                 {
+                     OrderSchema.margin: True,
+                 },
+                 None
+            )),
+        ],
         indirect=['rest'],
     )
-    def test_get_api_key_permission(self, rest: BitmexRestApi, schemas: list):
-        permissions = rest.get_api_key_permissions(schemas=schemas)
-        for schema in schemas:
-            assert permissions[schema]
+    def test_get_api_key_permissions(self, rest: BitmexRestApi, schemas, expect):
+        assert rest.get_api_key_permissions(schemas) == expect
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin)],

@@ -1,15 +1,74 @@
+from hashlib import sha256
 import time
-from typing import Dict
+from typing import Dict, Optional
 from binance.client import AsyncClient as BaseAsyncClient, Client as BaseClient
 from binance.exceptions import BinanceRequestException
-
 from mst_gateway.connector.api import OrderSchema
 from mst_gateway.connector.api.stocks.binance import utils
+from .....exceptions import RateLimitServiceError
 
 
 class Client(BaseClient):
     MARGIN_TESTNET_URL = 'https://testnet.binance.vision/sapi'  # margin api does not exist
     MARGIN_API_VERSION2 = 'v2'
+
+    def __init__(self, api_key: Optional[str] = None, api_secret: Optional[str] = None,
+                 requests_params: Dict[str, str] = None, tld: str = 'com',
+                 testnet: bool = False, ratelimit=None):
+        super().__init__(api_key, api_secret, requests_params, tld, testnet)
+        self.ratelimit = ratelimit
+        self.key = api_key
+
+    def _generate_hashed_uid(self, key):
+        return sha256(key.encode('utf-8')).hexdigest()
+
+    def _get_request_kwargs(self, method, signed: bool, force_params: bool = False, **kwargs) -> Dict:
+        # set default requests timeout
+        kwargs['timeout'] = 10
+
+        # add our global requests params
+        if self._requests_params:
+            kwargs.update(self._requests_params)
+
+        data = kwargs.get('data', None)
+        if data and isinstance(data, dict):
+            kwargs['data'] = data
+
+        # find any requests params passed and apply them
+        if data and 'requests_params' in data:
+            # merge requests params into kwargs
+            kwargs.update(kwargs['data']['requests_params'])
+            del (kwargs['data']['requests_params'])
+
+        if signed:
+            # generate signature
+            kwargs['data']['timestamp'] = int(time.time() * 1000 + self.timestamp_offset)
+            kwargs['data']['signature'] = self._generate_signature(kwargs['data'])
+
+        # sort get and post params to match signature order
+        if data:
+            # sort post params and remove any arguments with values of None
+            kwargs['data'] = self._order_params(kwargs['data'])
+
+        # if get request assign data array to params value for requests lib
+        if data and (method == 'get' or force_params):
+            kwargs['params'] = '&'.join('%s=%s' % (data[0], data[1]) for data in kwargs['data'])
+            del(kwargs['data'])
+
+        return kwargs
+
+    def _request(self, method, uri: str, signed: bool, force_params: bool = False, **kwargs) -> Dict:
+        if self.ratelimit:
+            hashed_key = self._generate_hashed_uid(self.key)
+            proxies = self.ratelimit.get_proxies(
+                method=method, url=uri, hashed_uid=hashed_key,
+            )
+            if proxies is None:
+                raise RateLimitServiceError('Ratelimit service Error')
+            kwargs.setdefault('data', {}).setdefault('requests_params', {})['proxies'] = proxies
+        kwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
+        self.response = getattr(self.session, method)(uri, **kwargs)
+        return self._handle_response(self.response)
 
     def get_schema_by_method(self, func_name):
         return _method_map(func_name) or f"binance_{int(self.testnet)}"

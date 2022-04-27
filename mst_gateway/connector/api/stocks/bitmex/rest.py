@@ -1,6 +1,6 @@
 import json
 from datetime import datetime, timedelta
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 from bravado.exception import HTTPError
 from requests.structures import CaseInsensitiveDict
 from mst_gateway.storage import StateStorageKey
@@ -14,8 +14,9 @@ from . import utils, var
 from .utils import binsize2timedelta
 from ...rest import StockRestApi
 from .... import api
-from .....exceptions import ConnectorError, RecoverableError, NotFoundError
+from .....exceptions import ConnectorError, RecoverableError, NotFoundError, RateLimitServiceError
 from .....utils import j_dumps
+from ...rest.throttle import ThrottleRest
 
 
 class BitmexFactory:
@@ -25,14 +26,14 @@ class BitmexFactory:
     TBITMEX_SWAGGER = None  # type: SwaggerClient
 
     @classmethod
-    def make_client(cls, test):
+    def make_client(cls, test, api_key=None, ratelimit=None):
         if test:
             if not cls.TBITMEX_SWAGGER:
-                cls.TBITMEX_SWAGGER = bitmex_connector(test=test)
+                cls.TBITMEX_SWAGGER = bitmex_connector(api_key=api_key, test=test, ratelimit=ratelimit)
             return cls.TBITMEX_SWAGGER
         else:
             if not cls.BITMEX_SWAGGER:
-                cls.BITMEX_SWAGGER = bitmex_connector(test=test)
+                cls.BITMEX_SWAGGER = bitmex_connector(api_key=api_key, test=test, ratelimit=ratelimit)
             return cls.BITMEX_SWAGGER
 
 
@@ -40,11 +41,14 @@ class BitmexRestApi(StockRestApi):
     driver = ExchangeDrivers.bitmex
     name = 'bitmex'
     fin_factory = BitmexFinFactory()
+    throttle = ThrottleRest(rest_limit=var.BITMEX_THROTTLE_LIMITS.get('rest'),
+                            order_limit=var.BITMEX_THROTTLE_LIMITS.get('order'))
 
     def _connect(self, **kwargs):
         self._keepalive = bool(kwargs.get('keepalive', False))
         self._compress = bool(kwargs.get('compress', False))
-        return BitmexFactory.make_client(test=self.test)
+        return BitmexFactory.make_client(
+            api_key=self.auth.get("api_key"), test=self.test, ratelimit=self.ratelimit)
 
     @property
     def _authenticator(self):
@@ -121,7 +125,8 @@ class BitmexRestApi(StockRestApi):
         data, _ = self._bitmex_api(self._handler.User.User_get, **kwargs)
         return utils.load_user_data(data)
 
-    def get_api_key_permissions(self, schemas: list,  **kwargs) -> dict:
+    def get_api_key_permissions(self, schemas: list,  **kwargs) -> Tuple[dict, Optional[int]]:
+        auth_expired = None
         default_schemas = [
             OrderSchema.margin,
         ]
@@ -129,8 +134,8 @@ class BitmexRestApi(StockRestApi):
         try:
             all_api_keys, _ = self._bitmex_api(self._handler.APIKey.APIKey_get)
         except ConnectorError:
-            return permissions
-        return utils.load_api_key_permissions(all_api_keys, self.auth.get('api_key'), permissions.keys())
+            return permissions, auth_expired
+        return utils.load_api_key_permissions(all_api_keys, self.auth.get('api_key'), permissions.keys()), auth_expired
 
     def get_wallet(self, **kwargs) -> dict:
         schema = kwargs.pop('schema', OrderSchema.margin).lower()
@@ -461,8 +466,8 @@ class BitmexRestApi(StockRestApi):
             )}
 
     def _bitmex_api(self, method: callable, **kwargs):
-        _throttle_hash_name = self.throttle_hash_name()
-        self.validate_throttling(_throttle_hash_name)
+        if not self.ratelimit:
+            self.validate_throttling(self.throttle_hash_name())
 
         headers = {}
         if self._keepalive:
@@ -475,20 +480,21 @@ class BitmexRestApi(StockRestApi):
                 _request_options={'headers': headers},
                 **kwargs
             ).response()
-
-            self.throttle.set(
-                key=_throttle_hash_name,
-                limit=(int(resp.incoming_response.headers.get('X-RateLimit-Limit', 0)) -
-                       int(resp.incoming_response.headers.get('X-RateLimit-Remaining', 0))),
-                reset=int(resp.incoming_response.headers.get('X-RateLimit-Reset', 0)),
-                scope='rest'
-            )
+            if not self.ratelimit:
+                self.throttle.set(
+                    key=self.throttle_hash_name(),
+                    limit=(int(resp.incoming_response.headers.get('X-RateLimit-Limit', 0)) -
+                           int(resp.incoming_response.headers.get('X-RateLimit-Remaining', 0))),
+                    reset=int(resp.incoming_response.headers.get('X-RateLimit-Reset', 0)),
+                    scope='rest'
+                )
             return resp.result, resp.metadata
         except HTTPError as exc:
-            self.throttle.set(
-                key=_throttle_hash_name,
-                **self.__get_limit_header(exc.response.headers)
-            )
+            if not self.ratelimit:
+                self.throttle.set(
+                    key=self.throttle_hash_name(),
+                    **self.__get_limit_header(exc.response.headers)
+                )
 
             message = exc.message
             if not message and isinstance(exc.swagger_result, dict):
@@ -502,6 +508,8 @@ class BitmexRestApi(StockRestApi):
             elif status_code == 404:
                 raise NotFoundError(full_message)
             raise ConnectorError(full_message)
+        except RateLimitServiceError as exc:
+            raise ConnectorError(exc)
         except Exception as exc:
             self.logger.error(f"Bitmex api error. Details: {exc}")
             raise ConnectorError("Bitmex api error.")
