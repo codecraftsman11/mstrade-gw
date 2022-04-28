@@ -221,9 +221,9 @@ EXCHANGE_BINANCE_SYMBOL_INFO_FIELDS = {
             'leverage_brackets': [
                 {
                     'bracket': int,
-                    'initial_leverage': int,
-                    'notional_cap': int,
-                    'notional_floor': int,
+                    'initial_leverage': Use(float_valid),
+                    'notional_cap': Use(float_valid),
+                    'notional_floor': Use(float_valid),
                     'maint_margin_ratio': Use(float_valid),
                     'cum': Use(float_valid)
                 }
@@ -236,9 +236,9 @@ EXCHANGE_BINANCE_SYMBOL_INFO_FIELDS = {
             'leverage_brackets': [
                 {
                     'bracket': int,
-                    'initial_leverage': int,
-                    'qty_cap': int,
-                    'qty_floor': int,
+                    'initial_leverage': Use(float_valid),
+                    'qty_cap': Use(float_valid),
+                    'qty_floor': Use(float_valid),
                     'maint_margin_ratio': Use(float_valid),
                     'cum': Use(float_valid)
                 }
