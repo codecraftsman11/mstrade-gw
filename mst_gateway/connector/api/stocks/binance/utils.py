@@ -1003,11 +1003,11 @@ def load_futures_leverage_brackets_as_dict(data: list) -> dict:
         for bracket in d.get('brackets', []):
             result[d['symbol'].lower()].append({
                 'bracket': bracket['bracket'],
-                'initial_leverage': bracket['initialLeverage'],
-                'notional_cap': bracket['notionalCap'],
-                'notional_floor': bracket['notionalFloor'],
-                'maint_margin_ratio': bracket['maintMarginRatio'],
-                'cum': bracket['cum']
+                'initial_leverage': to_float(bracket['initialLeverage']),
+                'notional_cap': to_float(bracket['notionalCap']),
+                'notional_floor': to_float(bracket['notionalFloor']),
+                'maint_margin_ratio': to_float(bracket['maintMarginRatio']),
+                'cum': to_float(bracket['cum'])
             })
     return result
 
@@ -1019,14 +1019,13 @@ def load_futures_coin_leverage_brackets_as_dict(data: list) -> dict:
         for bracket in d.get('brackets', []):
             result[d['symbol'].lower()].append({
                 'bracket': bracket['bracket'],
-                'initial_leverage': bracket['initialLeverage'],
-                'qty_cap': bracket['qtyCap'],
-                'qty_floor': bracket['qtyFloor'],
-                'maint_margin_ratio': bracket['maintMarginRatio'],
-                'cum': bracket['cum']
+                'initial_leverage': to_float(bracket['initialLeverage']),
+                'qty_cap': to_float(bracket['qtyCap']),
+                'qty_floor': to_float(bracket['qtyFloor']),
+                'maint_margin_ratio': to_float(bracket['maintMarginRatio']),
+                'cum': to_float(bracket['cum'])
             })
     return result
-
 
 
 def load_currency_exchange_symbol(currency: Union[list, dict]) -> list:
