@@ -311,28 +311,26 @@ def load_quote_bin_data(raw_data: list, state_data: Optional[dict]) -> dict:
     return data
 
 
-def load_order_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
     _time_field = raw_data.get('time') or raw_data.get('transactTime') or raw_data.get('updateTime')
     _time = to_date(_time_field) or datetime.now()
+    order_type_and_exec = load_order_type_and_exec(schema, raw_data.get('type').upper())
     data = {
         'time': _time,
         'exchange_order_id': str(raw_data.get('orderId')),
         'symbol': raw_data.get('symbol'),
+        'schema': schema,
         'volume': to_float(raw_data.get('origQty')),
         'filled_volume': to_float(raw_data.get('cumQty')),
         'stop': to_float(raw_data.get('stopPrice')),
         'side': load_order_side(raw_data.get('side')),
         'price': to_float(raw_data.get('price')),
         'active': raw_data.get('status') != "NEW",
-        'type': raw_data.get('type'),
-        'execution': raw_data.get('type'),
+        **order_type_and_exec
     }
     if isinstance(state_data, dict):
-        order_type_and_exec = load_order_type_and_exec(state_data.get('schema'), raw_data.get('type').upper())
         data.update({
             'system_symbol': state_data.get('system_symbol'),
-            'schema': state_data.get('schema'),
-            **order_type_and_exec
         })
     return data
 
