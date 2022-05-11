@@ -115,6 +115,7 @@ class CallableOperation(BaseCallableOperation):
 
         http_client = self.operation.swagger_spec.http_client
         setattr(http_client, 'authenticator', op_kwargs.pop('authenticator', None))
+        setattr(http_client, 'ratelimit', op_kwargs.pop('ratelimit', None))
         # Get per-request config
         request_options = op_kwargs.pop('_request_options', {})
         request_config = RequestConfig(request_options, self.also_return_response)
