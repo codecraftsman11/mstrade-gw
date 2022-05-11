@@ -477,6 +477,7 @@ class BitmexRestApi(StockRestApi):
         try:
             resp = method(
                 authenticator=self._authenticator,
+                ratelimit=self.ratelimit,
                 _request_options={'headers': headers},
                 **kwargs
             ).response()
