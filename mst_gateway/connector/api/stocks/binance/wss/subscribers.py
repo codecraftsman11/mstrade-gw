@@ -5,8 +5,7 @@ from asyncio import CancelledError
 from typing import TYPE_CHECKING, Optional
 from websockets.exceptions import ConnectionClosedError
 from mst_gateway.connector.api.types import OrderSchema
-from mst_gateway.exceptions import QueryError, GatewayError
-from binance.exceptions import BinanceAPIException
+from mst_gateway.exceptions import QueryError, GatewayError, BinanceAPIException
 from .. import utils
 from ....wss.subscriber import Subscriber
 from ......storage.var import StateStorageKey
@@ -163,8 +162,8 @@ class BinanceWalletSubscriber(BinanceSubscriber):
         schema_handlers = {
             OrderSchema.exchange: (client.handler.get_account, utils.load_ws_spot_wallet_data),
             OrderSchema.margin_cross: (client.handler.get_margin_account, utils.load_ws_margin_cross_wallet_data),
-            OrderSchema.margin: (client.handler.futures_account_v2, utils.load_ws_futures_wallet_data),
-            OrderSchema.margin_coin: (client.handler.futures_coin_account, utils.load_ws_futures_coin_wallet_data),
+            OrderSchema.margin: (client.handler.get_futures_account, utils.load_ws_futures_wallet_data),
+            OrderSchema.margin_coin: (client.handler.get_futures_coin_account, utils.load_ws_futures_coin_wallet_data),
         }
         schema = api.schema
         kwargs = {}
@@ -174,7 +173,7 @@ class BinanceWalletSubscriber(BinanceSubscriber):
             return None, None
         if schema in (OrderSchema.margin,):
             try:
-                cross_collaterals = await client._handler.futures_loan_wallet()
+                cross_collaterals = await client._handler.get_futures_loan_wallet()
             except (GatewayError, BinanceAPIException):
                 cross_collaterals = {}
             kwargs['cross_collaterals'] = utils.load_margin_cross_collaterals_data(cross_collaterals)
@@ -251,8 +250,8 @@ class BinanceMarginPositionSubscriber(BinancePositionSubscriber):
                 auth=api.auth, test=api.test, ratelimit=api.ratelimit
         ) as client:
             try:
-                account_info = client.handler.futures_account_v2()
-                leverage_brackets = client.handler.futures_leverage_bracket()
+                account_info = client.handler.get_futures_account()
+                leverage_brackets = client.handler.get_futures_leverage_bracket()
                 return {
                     'position_state': utils.load_futures_positions_state(account_info),
                     'leverage_brackets': utils.load_futures_leverage_brackets_as_dict(leverage_brackets),
@@ -274,9 +273,9 @@ class BinanceMarginCoinPositionSubscriber(BinanceMarginPositionSubscriber):
                 auth=api.auth, test=api.test, ratelimit=api.ratelimit
         ) as client:
             try:
-                account_info = client.handler.futures_coin_account()
+                account_info = client.handler.get_futures_coin_account()
                 state_data = await api.storage.get(f"{StateStorageKey.symbol}.{api.name}.{api.schema}")
-                leverage_brackets = client.handler.futures_coin_leverage_bracket()
+                leverage_brackets = client.handler.get_futures_coin_leverage_bracket()
                 return {
                     'position_state': utils.load_futures_coin_positions_state(account_info, state_data),
                     'leverage_brackets': utils.load_futures_coin_leverage_brackets_as_dict(leverage_brackets),
