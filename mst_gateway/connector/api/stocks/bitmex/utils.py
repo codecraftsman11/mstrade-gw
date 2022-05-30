@@ -120,8 +120,8 @@ def load_exchange_symbol_info(raw_data: list) -> list:
     symbol_list = []
     for d in raw_data:
         wallet_asset = d.get('settlCurrency').upper()
-        # TODO: support bitmex USDT
-        if wallet_asset == 'USDT' or not wallet_asset:
+        # TODO: support bitmex USDT, bitmex spot
+        if wallet_asset != 'XBT':
             continue
 
         symbol = d.get('symbol')
