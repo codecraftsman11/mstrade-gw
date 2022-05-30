@@ -20,7 +20,8 @@ setup(
     long_description=README,
     url='ssh://belka158@bitbucket.org/mstrade_dev/mst-gateway.git',
     install_requires=[
-        'bravado==11.0.3',
+        'httpx==0.22.0',
+        'httpx[socks]==0.22.0',
         'websockets==8.1',
         'python-binance==1.0.10',
         'pysocks==1.7.1',
