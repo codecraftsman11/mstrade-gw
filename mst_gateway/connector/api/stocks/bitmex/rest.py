@@ -7,13 +7,13 @@ from mst_gateway.storage import StateStorageKey
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector.api.types import OrderSchema, ExchangeDrivers
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
+from mst_gateway.connector.api.stocks.bitmex.lib import BitmexApiClient
+from mst_gateway.connector.api.stocks.bitmex.lib.exceptions import BitmexAPIException, BitmexRequestException
 from . import utils, var
-from .client import BitmexApiClient
 from .utils import binsize2timedelta
 from ...rest import StockRestApi
 from .... import api
-from .....exceptions import ConnectorError, RecoverableError, NotFoundError, RateLimitServiceError, BitmexAPIException, \
-    BitmexRequestException
+from .....exceptions import ConnectorError, RecoverableError, NotFoundError, RateLimitServiceError
 from .....utils import j_dumps
 from ...rest.throttle import ThrottleRest
 
