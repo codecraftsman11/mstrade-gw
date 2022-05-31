@@ -135,7 +135,8 @@ class BaseBitmexApiClient:
         path = f"/api/{self.version}/{path}"
         parsed_url = parse.urlparse(path)
         params = parse.urlencode(params)
-        return f"{parsed_url.path}?{params}"
+        prepared_path = f"{parsed_url.path}?{params}" if params else parsed_url.path
+        return prepared_path
 
     def _handle_response(self, response: httpx.Response) -> dict:
         if not (200 <= response.status_code < 300):
