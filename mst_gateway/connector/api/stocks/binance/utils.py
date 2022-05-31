@@ -83,7 +83,7 @@ def load_exchange_symbol_info(raw_data: list, schema: str, valid_symbols: list =
                 'system_base_asset': system_base_asset,
                 'system_quote_asset': system_quote_asset,
                 'base_asset_precision': d.get('baseAssetPrecision'),
-                'quote_asset_precision': d.get('quotePrecision'),
+                'quote_asset_precision': d.get('quoteAssetPrecision'),
                 'expiration': None,
                 'expiration_date': None,
                 'pair': [d.get('baseAsset').upper(), d.get('quoteAsset').upper()],
