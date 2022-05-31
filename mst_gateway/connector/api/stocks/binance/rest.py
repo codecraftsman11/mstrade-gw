@@ -4,14 +4,14 @@ from uuid import uuid4
 from datetime import datetime, timedelta
 from typing import Union, Tuple, Optional
 from bravado.exception import HTTPError
-from mst_gateway.exceptions import BinanceAPIException, BinanceRequestException
 from mst_gateway.connector.api.utils import time2timestamp
 from mst_gateway.storage import StateStorageKey
 from mst_gateway.calculator import BinanceFinFactory
 from mst_gateway.connector.api.types import OrderSchema, OrderType, ExchangeDrivers
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id, validate_schema
+from mst_gateway.connector.api.stocks.binance.lib.exceptions import BinanceApiException, BinanceRequestException
+from mst_gateway.connector.api.stocks.binance.lib.sync_client import BinanceApiClient
 from mst_gateway.connector.api.stocks.binance.wss.serializers.position import BinanceMarginPositionSerializer
-from mst_gateway.connector.api.stocks.binance.client import BinanceAPIClient
 from . import utils, var
 from .utils import to_date
 from ...rest import StockRestApi
@@ -34,7 +34,7 @@ class BinanceRestApi(StockRestApi):
         return sha256(self.auth.get('api_key').encode('utf-8')).hexdigest()
 
     def _connect(self, **kwargs):
-        return BinanceAPIClient(api_key=self._auth.get('api_key'),
+        return BinanceApiClient(api_key=self._auth.get('api_key'),
                                 api_secret=self._auth.get('api_secret'),
                                 testnet=self.test)
 
@@ -850,7 +850,7 @@ class BinanceRestApi(StockRestApi):
             if exc.status_code in (418, 429) or int(exc.status_code) >= 500:
                 raise RecoverableError(message)
             raise ConnectorError(message)
-        except BinanceAPIException as exc:
+        except BinanceApiException as exc:
             message = f"Binance api error. Details: {exc.code}, {exc.message}"
             if int(exc.code) == 0:
                 raise ConnectorError(f"Binance api error. Details: {exc.code}, 504 Gateway Timeout")
