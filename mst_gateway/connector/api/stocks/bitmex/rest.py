@@ -432,7 +432,8 @@ class BitmexRestApi(StockRestApi):
             )}
 
     def _bitmex_api(self, method: callable, **kwargs):
-        rest_method, url = self.handler.get_method_url(method.__name__)
+        rest_method, path = self.handler.get_method_path(method.__name__)
+        url = self.handler.create_url(path, False, **kwargs)
         if not self.ratelimit:
             self.validate_throttling(self.throttle_hash_name(url))
         else:
