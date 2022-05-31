@@ -120,7 +120,7 @@ def load_exchange_symbol_info(raw_data: list, assets_config: list) -> list:
     symbol_list = []
     for d in raw_data:
         wallet_asset = d.get('settlCurrency').upper()
-        # TODO: support bitmex USDT, bitmex spot
+        # TODO: support bitmex USDT, ETH and spot schema
         if wallet_asset != 'XBT':
             continue
 
@@ -135,6 +135,8 @@ def load_exchange_symbol_info(raw_data: list, assets_config: list) -> list:
         tick = to_float(d.get('tickSize'))
         volume_tick = to_float(d.get('lotSize'))
         max_leverage = 100 if d.get('initMargin', 0) <= 0 else 1 / d['initMargin']
+
+        # TODO: support other wallet calc
         face_price_data = {
             'is_quanto': d.get('isQuanto'),
             'is_inverse': d.get('isInverse'),
