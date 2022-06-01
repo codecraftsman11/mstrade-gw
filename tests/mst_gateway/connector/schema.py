@@ -182,6 +182,8 @@ BASE_EXCHANGE_SYMBOL_INFO_FIELDS = {
     'quote_asset': str,
     'system_base_asset': str,
     'system_quote_asset': str,
+    'base_asset_precision': int,
+    'quote_asset_precision': int,
     'pair': Use(pair_valid),
     'system_pair': Use(pair_valid),
     'tick': Use(float_valid),

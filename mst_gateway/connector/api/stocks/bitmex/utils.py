@@ -1,5 +1,5 @@
 import re
-from typing import Dict, Union, Optional
+from typing import Dict, Union, Optional, Tuple
 from datetime import datetime, timedelta
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
@@ -116,12 +116,12 @@ def load_funding_rates(funding_rates: list) -> list:
     ]
 
 
-def load_exchange_symbol_info(raw_data: list) -> list:
+def load_exchange_symbol_info(raw_data: list, assets_config: list) -> list:
     symbol_list = []
     for d in raw_data:
         wallet_asset = d.get('settlCurrency').upper()
-        # TODO: support bitmex USDT
-        if wallet_asset == 'USDT' or not wallet_asset:
+        # TODO: support bitmex USDT, ETH and spot schema
+        if wallet_asset != 'XBT':
             continue
 
         symbol = d.get('symbol')
@@ -130,10 +130,13 @@ def load_exchange_symbol_info(raw_data: list) -> list:
         quote_asset, expiration = _quote_asset(symbol, base_asset, quote_currency)
         system_base_asset = to_system_asset(base_asset)
         system_quote_asset = to_system_asset(quote_asset)
+        base_asset_precision, quote_asset_precision = load_assets_precision(base_asset, quote_asset, assets_config)
         system_symbol = symbol.lower().replace('xbt', 'btc')
         tick = to_float(d.get('tickSize'))
         volume_tick = to_float(d.get('lotSize'))
         max_leverage = 100 if d.get('initMargin', 0) <= 0 else 1 / d['initMargin']
+
+        # TODO: support other wallet calc
         face_price_data = {
             'is_quanto': d.get('isQuanto'),
             'is_inverse': d.get('isInverse'),
@@ -148,6 +151,8 @@ def load_exchange_symbol_info(raw_data: list) -> list:
                 'quote_asset': quote_asset,
                 'system_base_asset': system_base_asset,
                 'system_quote_asset': system_quote_asset,
+                'base_asset_precision': base_asset_precision,
+                'quote_asset_precision': quote_asset_precision,
                 'expiration': expiration,
                 'expiration_date': to_date(d.get('expiry')),
                 'pair': [base_asset.upper(), quote_asset.upper()],
@@ -168,6 +173,19 @@ def _quote_asset(symbol, base_asset, quote_currency) -> tuple:
     if re.search(r'\d{2}$', symbol):
         return quote_currency, quote_asset[-3:]
     return quote_asset, None
+
+
+def load_assets_precision(base_asset: str, quote_asset: str, assets_config: list) -> Tuple[int, int]:
+    base_asset_precision = 8
+    quote_asset_precision = 8
+    for asset_conf in assets_config:
+        asset = asset_conf.get('asset', '').lower()
+        scale = int(asset_conf.get('scale', 8))
+        if asset == base_asset.lower():
+            base_asset_precision = scale
+        if asset == quote_asset.lower():
+            quote_asset_precision = scale
+    return base_asset_precision, quote_asset_precision
 
 
 def store_order_type(order_type: str) -> str:
