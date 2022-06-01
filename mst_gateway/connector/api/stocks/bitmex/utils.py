@@ -1,6 +1,6 @@
 import re
 from typing import Dict, Union, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
 from mst_gateway.exceptions import ConnectorError
@@ -558,9 +558,9 @@ def to_date(token: Union[datetime, str]) -> Optional[datetime]:
     if not token:
         return None
     if isinstance(token, datetime):
-        return token
+        return token.replace(tzinfo=timezone.utc)
     try:
-        return datetime.strptime(token.split('Z')[0], api.DATETIME_FORMAT)
+        return datetime.strptime(token.split('Z')[0], api.DATETIME_FORMAT).replace(tzinfo=timezone.utc)
     except (ValueError, TypeError, IndexError):
         return None
 
