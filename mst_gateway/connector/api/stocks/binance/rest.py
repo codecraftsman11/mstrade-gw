@@ -759,7 +759,7 @@ class BinanceRestApi(StockRestApi):
         if schema == OrderSchema.margin_coin:
             symbol = utils.symbol2stock(symbol)
             res = self._binance_api(self._handler.get_futures_coin_position_info, pair=utils.symbol2pair(symbol))
-            data = [position for position in res[0] if position.get('symbol', '').lower() == symbol.lower()]
+            data = [position for position in res if position.get('symbol', '').lower() == symbol.lower()]
             try:
                 return utils.load_futures_position(data[0], schema)
             except IndexError:
