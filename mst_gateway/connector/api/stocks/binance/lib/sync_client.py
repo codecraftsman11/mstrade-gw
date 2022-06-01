@@ -31,9 +31,7 @@ class BinanceApiClient(BaseBinanceApiClient):
         client = httpx.Client(headers=self._get_headers(),
                               proxies=kwargs.pop('proxies', None),
                               timeout=kwargs.pop('timeout', None))
-        # print('kwargs', kwargs)
         request_kwargs = self.get_request_kwargs(method, signed, force_params, **kwargs)
-        # print('request_kwargs ', request_kwargs)
         request = client.build_request(method, url, **request_kwargs)
         self.response = client.send(request)
         client.close()
