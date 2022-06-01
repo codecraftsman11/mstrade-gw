@@ -197,7 +197,8 @@ class BitmexRestApi(StockRestApi):
     def get_exchange_symbol_info(self, schema: str) -> list:
         if schema == OrderSchema.margin:
             data, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive)
-            return utils.load_exchange_symbol_info(data)
+            assets_config, _ = self._bitmex_api(self._handler.Wallet.Wallet_getAssetsConfig)
+            return utils.load_exchange_symbol_info(data, assets_config)
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def create_order(self, symbol: str, schema: str, side: int, volume: float,
