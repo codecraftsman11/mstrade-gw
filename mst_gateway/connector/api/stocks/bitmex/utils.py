@@ -1,6 +1,8 @@
 import re
 from typing import Dict, Union, Optional, Tuple
 from datetime import datetime, timedelta
+from typing import Dict, Union, Optional
+from datetime import datetime, timedelta, timezone
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
 from mst_gateway.exceptions import ConnectorError

@@ -433,12 +433,13 @@ class BitmexRestApi(StockRestApi):
             )}
 
     def _bitmex_api(self, method: callable, **kwargs):
-        rest_method, url = self.handler.get_method_url(method.__name__)
+        rest_method, path = self.handler.get_method_path(method.__name__)
+        ratelimit_url, throttle_url = self._get_ratelimit_throttle_urls(path, **kwargs)
         if not self.ratelimit:
-            self.validate_throttling(self.throttle_hash_name(url))
+            self.validate_throttling(self.throttle_hash_name(throttle_url))
         else:
             kwargs['proxies'] = self.ratelimit.get_proxies(
-                method=rest_method, url=url, hashed_uid=self._generate_hashed_uid()
+                method=rest_method, url=ratelimit_url, hashed_uid=self._generate_hashed_uid()
             )
         headers = {}
         if self._keepalive:
@@ -478,6 +479,13 @@ class BitmexRestApi(StockRestApi):
         except Exception as exc:
             self.logger.error(f"Bitmex api error. Details: {exc}")
             raise ConnectorError("Bitmex api error.")
+
+    def _get_ratelimit_throttle_urls(self, path: str, **kwargs) -> Tuple[str, str]:
+        url = self.handler.create_url(path, False, **kwargs)
+        throttle_url = url
+        if parsed_url := url.split('?', 2):
+            throttle_url = parsed_url[0]
+        return url, throttle_url
 
     def _generate_hashed_uid(self):
         return sha256(self.auth.get("api_key").encode('utf-8')).hexdigest()
