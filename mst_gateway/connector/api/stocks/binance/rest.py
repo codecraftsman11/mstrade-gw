@@ -862,11 +862,10 @@ class BinanceRestApi(StockRestApi):
         if not self.ratelimit:
             self.validate_throttling(self.throttle_hash_name(url))
         else:
-            requests_kwargs = self.handler.request_kwargs(rest_method, signed, force_params, data=kwargs)
-            if params := requests_kwargs.get('params'):
-                url = f"{url}?{params}"
+            request_kwargs = self.handler.request_kwargs(rest_method, signed, force_params, data=kwargs)
+            request_url = f"{url}?{request_kwargs['params']}" if request_kwargs.get('params') else url
             kwargs['proxies'] = self.ratelimit.get_proxies(
-                method=rest_method, url=url, hashed_uid=self._generate_hashed_uid()
+                method=rest_method, url=request_url, hashed_uid=self._generate_hashed_uid()
             )
         try:
             resp = method(**kwargs)
