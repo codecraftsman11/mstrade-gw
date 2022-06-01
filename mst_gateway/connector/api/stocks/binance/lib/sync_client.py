@@ -13,8 +13,8 @@ class BinanceApiClient(BaseBinanceApiClient):
                 del(request_kwargs['data'][k])
 
         if signed:
-            res = self.get_server_time()
-            request_kwargs.setdefault('data', {})['timestamp'] = res['serverTime']
+            resp = self.get_server_time()
+            request_kwargs.setdefault('data', {})['timestamp'] = resp['serverTime']
             request_kwargs['data']['signature'] = self.generate_signature(request_kwargs['data'])
 
         if request_kwargs.get('data'):
@@ -43,28 +43,28 @@ class BinanceApiClient(BaseBinanceApiClient):
 
     def stream_get_listen_key(self, **kwargs) -> str:
         method, url, signed, force_params = self.get_method_info('stream_get_listen_key')
-        res = self._request(method, url, signed, force_params, data=kwargs)
-        return res['listenKey']
+        resp = self._request(method, url, signed, force_params, data=kwargs)
+        return resp['listenKey']
 
     def margin_stream_get_listen_key(self, **kwargs) -> str:
         method, url, signed, force_params = self.get_method_info('margin_stream_get_listen_key')
-        res = self._request(method, url, signed, force_params, data=kwargs)
-        return res['listenKey']
+        resp = self._request(method, url, signed, force_params, data=kwargs)
+        return resp['listenKey']
 
     def isolated_margin_stream_get_listen_key(self, **kwargs) -> str:
         method, url, signed, force_params = self.get_method_info('isolated_margin_stream_get_listen_key')
-        res = self._request(method, url, signed, force_params, data=kwargs)
-        return res['listenKey']
+        resp = self._request(method, url, signed, force_params, data=kwargs)
+        return resp['listenKey']
 
     def futures_stream_get_listen_key(self, **kwargs) -> str:
         method, url, signed, force_params = self.get_method_info('futures_stream_get_listen_key')
-        res = self._request(method, url, signed, force_params, data=kwargs)
-        return res['listenKey']
+        resp = self._request(method, url, signed, force_params, data=kwargs)
+        return resp['listenKey']
 
     def futures_coin_stream_get_listen_key(self, **kwargs) -> str:
         method, url, signed, force_params = self.get_method_info('futures_coin_stream_get_listen_key')
-        res = self._request(method, url, signed, force_params, data=kwargs)
-        return res['listenKey']
+        resp = self._request(method, url, signed, force_params, data=kwargs)
+        return resp['listenKey']
 
     def ping(self, **kwargs) -> dict:
         method, url, signed, force_params = self.get_method_info('ping')
@@ -376,33 +376,33 @@ class BinanceApiClient(BaseBinanceApiClient):
 
     def get_public_interest_rate(self, **kwargs) -> List[dict]:
         method, url, signed, force_params = self.get_method_info('get_public_interest_rate')
-        res = self._request(method, url, signed, force_params, data=kwargs)
-        return res.get('data', [])
+        resp = self._request(method, url, signed, force_params, data=kwargs)
+        return resp.get('data', [])
 
     def get_trade_level(self, **kwargs) -> List[dict]:
         method, url, signed, force_params = self.get_method_info('get_trade_level')
-        res = self._request(method, url, signed, force_params, data=kwargs)
-        return res.get('data', [])
+        resp = self._request(method, url, signed, force_params, data=kwargs)
+        return resp.get('data', [])
 
     def get_margin_trade_level(self, **kwargs) -> List[dict]:
         method, url, signed, force_params = self.get_method_info('get_margin_trade_level')
-        res = self._request(method, url, signed, force_params, data=kwargs)
-        return res.get('data', [])
+        resp = self._request(method, url, signed, force_params, data=kwargs)
+        return resp.get('data', [])
 
     def get_isolated_margin_trade_level(self, **kwargs) -> List[dict]:
         method, url, signed, force_params = self.get_method_info('get_isolated_margin_trade_level')
-        res = self._request(method, url, signed, force_params, data=kwargs)
-        return res.get('data', [])
+        resp = self._request(method, url, signed, force_params, data=kwargs)
+        return resp.get('data', [])
 
     def get_futures_trade_level(self, **kwargs) -> List[dict]:
         method, url, signed, force_params = self.get_method_info('get_futures_trade_level')
-        res = self._request(method, url, signed, force_params, data=kwargs)
-        return res.get('data', [])
+        resp = self._request(method, url, signed, force_params, data=kwargs)
+        return resp.get('data', [])
 
     def get_futures_coin_trade_level(self, **kwargs) -> List[dict]:
         method, url, signed, force_params = self.get_method_info('get_futures_coin_trade_level')
-        res = self._request(method, url, signed, force_params, data=kwargs)
-        return res.get('data', [])
+        resp = self._request(method, url, signed, force_params, data=kwargs)
+        return resp.get('data', [])
 
     def get_api_key_permission(self, **kwargs) -> dict:
         method, url, signed, force_params = self.get_method_info('get_api_key_permission')
@@ -442,18 +442,18 @@ class BinanceApiClient(BaseBinanceApiClient):
 
     def get_assets_balance(self, **kwargs) -> List[dict]:
         method, url, signed, force_params = self.get_method_info('get_assets_balance')
-        res = self._request(method, url, signed, force_params, data=kwargs)
-        return res.get('balances', [])
+        resp = self._request(method, url, signed, force_params, data=kwargs)
+        return resp.get('balances', [])
 
     def get_margin_assets_balance(self, **kwargs) -> List[dict]:
         method, url, signed, force_params = self.get_method_info('get_margin_assets_balance')
-        res = self._request(method, url, signed, force_params, data=kwargs)
-        return res.get('userAssets', [])
+        resp = self._request(method, url, signed, force_params, data=kwargs)
+        return resp.get('userAssets', [])
 
     def get_isolated_margin_assets_balance(self, **kwargs) -> List[dict]:
         method, url, signed, force_params = self.get_method_info('get_isolated_margin_assets_balance')
-        res = self._request(method, url, signed, force_params, data=kwargs)
-        return self._isolated_margin_assets_balance(res)
+        resp = self._request(method, url, signed, force_params, data=kwargs)
+        return self._isolated_margin_assets_balance(resp)
 
     def get_futures_assets_balance(self, **kwargs) -> List[dict]:
         method, url, signed, force_params = self.get_method_info('get_futures_assets_balance')

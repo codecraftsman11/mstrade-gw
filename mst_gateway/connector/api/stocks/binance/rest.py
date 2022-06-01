@@ -713,8 +713,8 @@ class BinanceRestApi(StockRestApi):
             data = self._binance_api(self._handler.get_futures_position_info, symbol=utils.symbol2stock(symbol))
         elif schema == OrderSchema.margin_coin:
             symbol = utils.symbol2stock(symbol)
-            res = self._binance_api(self._handler.get_futures_coin_position_info, pair=utils.symbol2pair(symbol))
-            data = [position for position in res if position.get('symbol', '').lower() == symbol.lower()]
+            resp = self._binance_api(self._handler.get_futures_coin_position_info, pair=utils.symbol2pair(symbol))
+            data = [position for position in resp if position.get('symbol', '').lower() == symbol.lower()]
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
         return utils.load_leverage(data)
@@ -751,15 +751,15 @@ class BinanceRestApi(StockRestApi):
                                  OrderSchema.margin_coin))
         schema = schema.lower()
         if schema == OrderSchema.margin:
-            res = self._binance_api(self._handler.get_futures_position_info, symbol=utils.symbol2stock(symbol))
+            resp = self._binance_api(self._handler.get_futures_position_info, symbol=utils.symbol2stock(symbol))
             try:
-                return utils.load_futures_position(res[0], schema)
+                return utils.load_futures_position(resp[0], schema)
             except IndexError:
                 return {}
         if schema == OrderSchema.margin_coin:
             symbol = utils.symbol2stock(symbol)
-            res = self._binance_api(self._handler.get_futures_coin_position_info, pair=utils.symbol2pair(symbol))
-            data = [position for position in res if position.get('symbol', '').lower() == symbol.lower()]
+            resp = self._binance_api(self._handler.get_futures_coin_position_info, pair=utils.symbol2pair(symbol))
+            data = [position for position in resp if position.get('symbol', '').lower() == symbol.lower()]
             try:
                 return utils.load_futures_position(data[0], schema)
             except IndexError:
@@ -862,7 +862,7 @@ class BinanceRestApi(StockRestApi):
         if not self.ratelimit:
             self.validate_throttling(self.throttle_hash_name(url))
         else:
-            request_kwargs = self.handler.request_kwargs(rest_method, signed, force_params, data=kwargs)
+            request_kwargs = self.handler.get_request_kwargs(rest_method, signed, force_params, data=kwargs)
             request_url = f"{url}?{request_kwargs['params']}" if request_kwargs.get('params') else url
             kwargs['proxies'] = self.ratelimit.get_proxies(
                 method=rest_method, url=request_url, hashed_uid=self._generate_hashed_uid()
