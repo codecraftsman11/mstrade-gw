@@ -16,10 +16,9 @@ class AsyncBitmexApiClient(BaseBitmexApiClient):
         optional_headers = params.pop('headers', None)
         proxies = params.pop('proxies', None)
         timeout = params.pop('timeout', None)
-        path = self._prepared_path if self._prepared_path else self._prepare_path(path, params)
-        headers = self._get_headers(method, path, optional_headers)
+        url = self.create_url(path, **params).geturl()
+        headers = self._get_headers(method, url, optional_headers)
         async with httpx.AsyncClient(headers=headers, proxies=proxies, timeout=timeout) as client:
-            url = self._request_url if self._request_url else self.create_url(path, True)
             request = client.build_request(method, url)
             self.response = await client.send(request)
         return self._handle_response(self.response)

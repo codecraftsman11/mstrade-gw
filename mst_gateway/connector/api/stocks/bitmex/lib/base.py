@@ -101,24 +101,36 @@ class BaseBitmexApiClient:
             'get_wallet_assets': (self.GET, 'wallet/assets'),
             'get_wallet_networks': (self.GET, 'wallet/networks')
         }
-        if method_url := method_map.get(method_name):
-            return method_url
+        if method_path := method_map.get(method_name):
+            return method_path
         raise BitmexRequestException('Unknown method')
 
-    def create_url(self, path: str, for_request: bool, **kwargs) -> str:
-        if for_request:
-            return f"{self.base_url}{path}"
-        self._prepared_path = self._prepare_path(path, kwargs)
-        self._request_url = f"{self.base_url}{self._prepared_path}"
-        return self._request_url
+    def create_url(self, path: str, **params) -> parse.ParseResult:
+        params = parse.urlencode(params)
+        url = f"{self.base_url}/api/{self.version}/{path}?{params}"
+        return parse.urlparse(url)
 
+    # Generates an API signature.
+    # A signature is HMAC_SHA256(secret, verb + path + nonce + data), hex encoded.
+    # Verb must be uppercased, url is relative, nonce must be an increasing 64-bit integer
+    # and the data, if present, must be JSON without whitespace between keys.
     @staticmethod
-    def generate_signature(api_secret, verb: str, path: str, expires: Union[str, int]):
-        message = bytes(verb.upper() + path + str(expires), 'utf-8')
-        signature = hmac.new(bytes(api_secret, 'utf-8'), message, digestmod=hashlib.sha256).hexdigest()
+    def generate_signature(api_secret: str, verb: str, url: str, nonce: Union[str, int], postdict=None):
+        """Given an API secret key and data, create a BitMEX-compatible signature."""
+        data = ''
+        if postdict:
+            # separators remove spaces from json
+            # BitMEX expects signatures from JSON built without spaces
+            data = json.dumps(postdict, separators=(',', ':'))
+        parsed_url = parse.urlparse(url)
+        path = parsed_url.path
+        if query := parsed_url.query:
+            path = path + '?' + query
+        message = (verb + path + str(nonce) + data).encode('utf-8')
+        signature = hmac.new(api_secret.encode('utf-8'), message, digestmod=hashlib.sha256).hexdigest()
         return signature
 
-    def _get_headers(self, method: str, path: str, optional_headers: Optional[dict]) -> httpx.Headers:
+    def _get_headers(self, method: str, url: str, optional_headers: Optional[dict]) -> httpx.Headers:
         headers = {
             "Accept": "application/json"
         }
@@ -126,17 +138,10 @@ class BaseBitmexApiClient:
             expires = str(int(time.time() + 5))
             headers['api-expires'] = expires
             headers['api-key'] = self.api_key
-            headers['api-signature'] = self.generate_signature(self.api_secret, method, path, expires)
+            headers['api-signature'] = self.generate_signature(self.api_secret, method, url, expires)
         if isinstance(optional_headers, dict):
             headers.update(optional_headers)
         return httpx.Headers(headers)
-
-    def _prepare_path(self, path: str, params: dict) -> str:
-        path = f"/api/{self.version}/{path}"
-        parsed_url = parse.urlparse(path)
-        params = parse.urlencode(params)
-        prepared_path = f"{parsed_url.path}?{params}" if params else parsed_url.path
-        return prepared_path
 
     def _handle_response(self, response: httpx.Response) -> dict:
         if not (200 <= response.status_code < 300):
