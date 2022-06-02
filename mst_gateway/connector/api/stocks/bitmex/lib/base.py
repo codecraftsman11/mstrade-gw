@@ -24,8 +24,6 @@ class BaseBitmexApiClient:
         self.api_secret = api_secret
         self.version = version if isinstance(version, str) else self.V1
         self.base_url = self.API_TESTNET_URL if testnet else self.API_URL
-        self._prepared_path = None
-        self._request_url = None
 
     def get_method_path(self, method_name: str) -> Tuple[str, str]:
         method_map = {
