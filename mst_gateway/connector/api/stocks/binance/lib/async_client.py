@@ -33,9 +33,8 @@ class AsyncBinanceApiClient(BaseBinanceApiClient):
                                    timeout=kwargs['data'].pop('timeout', None))
         request_kwargs = await self.get_request_kwargs(method, signed, force_params, **kwargs)
         request = client.build_request(method, url, **request_kwargs)
-        self.response = await client.send(request)
-        await client.aclose()
-        return self._handle_response(self.response)
+        response = await client.send(request)
+        return self._handle_response(response)
 
     async def get_server_time(self, **kwargs) -> dict:
         method, url, signed, force_params = self.get_method_info('get_server_time')
