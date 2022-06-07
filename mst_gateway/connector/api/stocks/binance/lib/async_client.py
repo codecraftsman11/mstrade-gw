@@ -8,23 +8,21 @@ class AsyncBinanceApiClient(BaseBinanceApiClient):
 
     async def get_request_kwargs(self, method, signed: bool = False, force_params: bool = False, **kwargs) -> dict:
         request_kwargs = deepcopy(kwargs)
-        for k, v in dict(request_kwargs.get('data', {})).items():
-            if v is None:
-                del(request_kwargs['data'][k])
+        data = request_kwargs.get('data')
 
         if signed:
             resp = await self.get_server_time()
             request_kwargs.setdefault('data', {})['timestamp'] = resp['serverTime']
             request_kwargs['data']['signature'] = self.generate_signature(request_kwargs['data'])
 
-        if request_kwargs.get('data'):
-            if method.upper() == self.GET.upper() or force_params:
-                request_kwargs['params'] = '&'.join(f"{k}={v}" for k, v in request_kwargs['data'].items())
-                del(request_kwargs['data'])
-        else:
-            del(request_kwargs['data'])
+        if data:
+            request_kwargs['data'] = self._order_params(kwargs['data'])
 
-        return request_kwargs
+        if data and (method.upper() == self.GET.upper() or force_params):
+            kwargs['params'] = '&'.join('%s=%s' % (data[0], data[1]) for data in kwargs['data'])
+            del (kwargs['data'])
+
+        return kwargs
 
     async def _request(self, method: str, url: str, signed: bool = False, force_params: bool = False,
                        **kwargs) -> Union[dict, List[dict], List[list]]:

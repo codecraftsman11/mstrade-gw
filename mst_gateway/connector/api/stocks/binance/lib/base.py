@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import httpx
+from operator import itemgetter
 from typing import List, Optional, Tuple
 from .exceptions import BinanceApiException, BinanceRequestException
 
@@ -150,17 +151,17 @@ class BaseBinanceApiClient:
             'get_isolated_margin_account': (self.GET, f"{margin_api_url}/{self.V1}/margin/isolated/account", True, False),
             'get_futures_account': (self.GET, f"{futures_api_url}/{self.V2}/account", True, True),
             'get_futures_coin_account': (self.GET, f"{futures_coin_api_url}/{self.V1}/account", True, True),
-            'get_futures_account_balance': (self.GET, f"{futures_api_url}/{self.V1}/balance", True, True),
+            'get_futures_account_balance': (self.GET, f"{futures_api_url}/{self.V2}/balance", True, True),
             'get_futures_coin_account_balance': (self.GET, f"{futures_coin_api_url}/{self.V1}/balance", True, True),
             'get_assets_balance': (self.GET, f"{api_url}/{self.V3}/account", True, False),
             'get_margin_assets_balance': (self.GET, f"{margin_api_url}/{self.V1}/margin/account", True, False),
             'get_isolated_margin_assets_balance': (self.GET, f"{margin_api_url}/{self.V1}/margin/account", True, False),
-            'get_futures_assets_balance': (self.GET, f"{futures_api_url}/{self.V1}/balance", True, True),
+            'get_futures_assets_balance': (self.GET, f"{futures_api_url}/{self.V2}/balance", True, True),
             'get_futures_coin_assets_balance': (self.GET, f"{futures_coin_api_url}/{self.V1}/balance", True, True),
             'get_bnb_burn': (self.GET, f"{margin_api_url}/{self.V1}/bnbBurn", True, False),
             'transfer_spot_to_margin': (self.POST, f"{margin_api_url}/{self.V1}/margin/transfer", True, False),
             'transfer_spot_to_isolated_margin': (self.POST, f"{margin_api_url}/{self.V1}/margin/isolated/transfer", True, False),
-            'transfer_spot_to_futures': (self.POST, f"{margin_api_url}/{self.V3}/futures/transfer", True, False),
+            'transfer_spot_to_futures': (self.POST, f"{margin_api_url}/{self.V1}/futures/transfer", True, False),
             'transfer_spot_to_futures_coin': (self.POST, f"{margin_api_url}/{self.V1}/futures/transfer", True, False),
             'transfer_margin_to_spot': (self.POST, f"{margin_api_url}/{self.V1}/margin/transfer", True, False),
             'transfer_isolated_margin_to_spot': (self.POST, f"{margin_api_url}/{self.V1}/margin/isolated/transfer", True, False),
@@ -181,7 +182,8 @@ class BaseBinanceApiClient:
         raise BinanceRequestException('Unknown method')
 
     def generate_signature(self, data: dict) -> str:
-        query_string = '&'.join(f"{k}={v}" for k, v in data.items())
+        ordered_data = self._order_params(data)
+        query_string = '&'.join(f"{k}={v}" for k, v in ordered_data)
         m = hmac.new(self._api_secret.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256)
         return m.hexdigest()
 
@@ -194,6 +196,20 @@ class BaseBinanceApiClient:
         if self._api_key:
             headers['X-MBX-APIKEY'] = self._api_key
         return httpx.Headers(headers)
+
+    def _order_params(self, data: dict) -> List[Tuple[str, str]]:
+        data = dict(filter(lambda el: el[1] is not None, data.items()))
+        has_signature = False
+        params = []
+        for key, value in data.items():
+            if key == 'signature':
+                has_signature = True
+            else:
+                params.append((key, str(value)))
+        params.sort(key=itemgetter(0))
+        if has_signature:
+            params.append(('signature', data['signature']))
+        return params
 
     def _handle_response(self, response: httpx.Response) -> dict:
         if not (200 <= response.status_code < 300):
@@ -221,3 +237,11 @@ class BaseBinanceApiClient:
                 else:
                     assets[asset] = b
         return list(assets.values())
+
+    def get_ratelimit_url(self, rest_method: str, url: str, **kwargs) -> str:
+        params = '&'.join(f"{k}={v}" for k, v in kwargs.items() if k in (
+            'limit',
+            'symbol',
+            'symbols',
+        ) and rest_method.upper() == self.GET.upper())
+        return f"{url}?{params}" if params else url
