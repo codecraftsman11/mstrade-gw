@@ -446,6 +446,7 @@ class BitmexRestApi(StockRestApi):
             headers['Connection'] = "keep-alive"
         if self._compress:
             headers['Accept-Encoding'] = "deflate, gzip;q=1.0, *;q=0.5"
+        kwargs['headers'] = headers
         try:
             resp = method(**kwargs)
             if not self.ratelimit:
