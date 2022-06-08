@@ -6,19 +6,21 @@ from .base import BaseBinanceApiClient
 class BinanceApiClient(BaseBinanceApiClient):
 
     def _get_request_kwargs(self, method: str, signed: bool = False, force_params: bool = False, **kwargs) -> dict:
-        data = kwargs.get('data')
+        for k, v in dict(kwargs.get('data', {})).items():
+            if v is None:
+                del(kwargs['data'][k])
 
         if signed:
-            resp = self.get_server_time()
-            kwargs.setdefault('data', {})['timestamp'] = resp['serverTime']
+            res = self.get_server_time()
+            kwargs.setdefault('data', {})['timestamp'] = res['serverTime']
             kwargs['data']['signature'] = self.generate_signature(kwargs['data'])
 
-        if data:
-            kwargs['data'] = self._order_params(kwargs['data'])
-
-        if data and (method.upper() == self.GET.upper() or force_params):
-            kwargs['params'] = '&'.join('%s=%s' % (data[0], data[1]) for data in kwargs['data'])
-            del (kwargs['data'])
+        if kwargs.get('data'):
+            if method.upper() == self.GET.upper() or force_params:
+                kwargs['params'] = '&'.join(f"{k}={v}" for k, v in kwargs['data'].items())
+                del(kwargs['data'])
+        else:
+            del(kwargs['data'])
 
         return kwargs
 

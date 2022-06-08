@@ -201,8 +201,7 @@ class BaseBinanceApiClient:
         return parse.urlparse(f"{url}?{params}" if params else url)
 
     def generate_signature(self, data: dict) -> str:
-        ordered_data = self._order_params(data)
-        query_string = '&'.join(f"{k}={v}" for k, v in ordered_data)
+        query_string = '&'.join(f"{k}={v}" for k, v in data.items())
         m = hmac.new(self._api_secret.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256)
         return m.hexdigest()
 
@@ -213,20 +212,6 @@ class BaseBinanceApiClient:
         if self._api_key:
             headers['X-MBX-APIKEY'] = self._api_key
         return httpx.Headers(headers)
-
-    def _order_params(self, data: dict) -> List[Tuple[str, str]]:
-        data = dict(filter(lambda el: el[1] is not None, data.items()))
-        has_signature = False
-        params = []
-        for key, value in data.items():
-            if key == 'signature':
-                has_signature = True
-            else:
-                params.append((key, str(value)))
-        params.sort(key=itemgetter(0))
-        if has_signature:
-            params.append(('signature', data['signature']))
-        return params
 
     def _handle_response(self) -> dict:
         if self.response:
