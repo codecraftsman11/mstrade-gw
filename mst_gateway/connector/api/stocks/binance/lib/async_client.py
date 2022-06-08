@@ -7,7 +7,7 @@ class AsyncBinanceApiClient(BaseBinanceApiClient):
 
     async def _get_request_kwargs(self, method: str, signed: bool = False, force_params: bool = False,
                                   **kwargs) -> dict:
-        for k, v in dict(kwargs.get('data', {})).items():
+        for k, v in kwargs['data'].items():
             if v is None:
                 del(kwargs['data'][k])
 
@@ -16,9 +16,9 @@ class AsyncBinanceApiClient(BaseBinanceApiClient):
             kwargs.setdefault('data', {})['timestamp'] = res['serverTime']
             kwargs['data']['signature'] = self.generate_signature(kwargs['data'])
 
-        if kwargs.get('data'):
+        if kwargs['data']:
             if method.upper() == self.GET.upper() or force_params:
-                kwargs['params'] = '&'.join(f"{k}={v}" for k, v in kwargs['data'].items())
+                kwargs['params'] = httpx.QueryParams(**kwargs['data'])
                 del(kwargs['data'])
         else:
             del(kwargs['data'])

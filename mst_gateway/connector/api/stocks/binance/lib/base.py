@@ -1,9 +1,7 @@
 import hashlib
 import hmac
 import httpx
-from operator import itemgetter
 from typing import List, Optional, Tuple
-from urllib import parse
 from .exceptions import BinanceApiException, BinanceRequestException
 
 
@@ -192,13 +190,13 @@ class BaseBinanceApiClient:
         raise BinanceRequestException('Unknown method')
 
     @classmethod
-    def get_ratelimit_url(cls, url: str, **kwargs) -> parse.ParseResult:
+    def get_ratelimit_url(cls, url: str, **kwargs) -> httpx.URL:
         params = '&'.join(f"{k}={v}" for k, v in kwargs.items() if k in (
             'limit',
             'symbol',
             'symbols'
         ))
-        return parse.urlparse(f"{url}?{params}" if params else url)
+        return httpx.URL(f"{url}?{params}" if params else url)
 
     def generate_signature(self, data: dict) -> str:
         query_string = '&'.join(f"{k}={v}" for k, v in data.items())
