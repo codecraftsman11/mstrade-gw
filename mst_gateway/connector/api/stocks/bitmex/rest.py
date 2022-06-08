@@ -8,12 +8,12 @@ from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector.api.types import OrderSchema, ExchangeDrivers
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
 from mst_gateway.connector.api.stocks.bitmex.lib import BitmexApiClient
-from mst_gateway.connector.api.stocks.bitmex.lib.exceptions import BitmexAPIException, BitmexRequestException
+from mst_gateway.connector.api.stocks.bitmex.lib.exceptions import BitmexAPIException
 from . import utils, var
 from .utils import binsize2timedelta
 from ...rest import StockRestApi
 from .... import api
-from .....exceptions import ConnectorError, RecoverableError, NotFoundError, RateLimitServiceError
+from .....exceptions import ConnectorError, RecoverableError, NotFoundError
 from .....utils import j_dumps
 from ...rest.throttle import ThrottleRest
 
@@ -434,13 +434,18 @@ class BitmexRestApi(StockRestApi):
 
     def _bitmex_api(self, method: callable, **kwargs):
         rest_method, path = self.handler.get_method_path(method.__name__)
-        url = self.handler.create_url(path, **kwargs)
+        if not rest_method:
+            raise ConnectorError("Bitmex request method error.")
         if not self.ratelimit:
             self.validate_throttling(self.throttle_hash_name())
         else:
-            kwargs['proxies'] = self.ratelimit.get_proxies(
+            url = self.handler.create_url(path, **kwargs)
+            proxies = self.ratelimit.get_proxies(
                 method=rest_method, url=url.geturl(), hashed_uid=self._generate_hashed_uid()
             )
+            if not proxies:
+                raise ConnectorError('Ratelimit service error.')
+            kwargs['proxies'] = proxies
         headers = {}
         if self._keepalive:
             headers['Connection'] = "keep-alive"
@@ -449,34 +454,30 @@ class BitmexRestApi(StockRestApi):
         kwargs['headers'] = headers
         try:
             resp = method(**kwargs)
+            data = self.handler.handle_response(resp)
             if not self.ratelimit:
                 self.throttle.set(
                     key=self.throttle_hash_name(),
-                    limit=(int(self.handler.response.headers.get('X-RateLimit-Limit', 0)) -
-                           int(self.handler.response.headers.get('X-RateLimit-Remaining', 0))),
-                    reset=int(self.handler.response.headers.get('X-RateLimit-Reset', 0)),
+                    limit=(int(resp.headers.get('X-RateLimit-Limit', 0)) -
+                           int(resp.headers.get('X-RateLimit-Remaining', 0))),
+                    reset=int(resp.headers.get('X-RateLimit-Reset', 0)),
                     scope='rest'
                 )
-            return resp
+            return data
         except BitmexAPIException as exc:
             if not self.ratelimit:
                 self.throttle.set(
                     key=self.throttle_hash_name(),
-                    **self.__get_limit_header(self.handler.response.headers)
+                    **self.__get_limit_headers(exc.response.headers)
                 )
-            status_code = int(exc.status_code)
-            message = f"Bitmex api error. Details: {status_code}, {exc.message}"
-            if status_code == 429 or status_code >= 500:
+            message = f"Bitmex api error. Details: {exc.status_code}, {exc.message}"
+            if exc.status_code == 429 or exc.status_code >= 500:
                 raise RecoverableError(message)
-            elif status_code == 403:
+            elif exc.status_code == 403:
                 self.logger.critical(f"{self.__class__.__name__}: {exc}")
-            elif status_code == 404:
+            elif exc.status_code == 404:
                 raise NotFoundError(message)
             raise ConnectorError(message)
-        except BitmexRequestException as exc:
-            raise ConnectorError(exc)
-        except RateLimitServiceError as exc:
-            raise ConnectorError(exc)
         except Exception as exc:
             self.logger.error(f"Bitmex api error. Details: {exc}")
             raise ConnectorError("Bitmex api error.")
@@ -484,7 +485,7 @@ class BitmexRestApi(StockRestApi):
     def _generate_hashed_uid(self):
         return sha256(self.auth.get('api_key', '').encode('utf-8')).hexdigest()
 
-    def __get_limit_header(self, headers: httpx.Headers):
+    def __get_limit_headers(self, headers: httpx.Headers):
         limit_header = {
             'limit': 0,
             'reset': None,

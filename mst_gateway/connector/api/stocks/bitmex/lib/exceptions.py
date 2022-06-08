@@ -1,29 +1,23 @@
-import json
+import httpx
 
 
 class BitmexAPIException(Exception):
 
-    def __init__(self, response, status_code, text):
+    def __init__(self, response: httpx.Response):
         self.code = 0
         try:
-            json_res = json.loads(text)
-        except ValueError:
-            self.message = f"Invalid JSON error message from Bitmex: {response.text}"
+            json_res = response.json()
+        except Exception:
+            self.message = 'Invalid Bitmex response error message'
         else:
             self.code = json_res['error']['name']
             self.message = json_res['error']['message']
-        self.status_code = status_code
+        self.status_code = response.status_code
         self.response = response
-        self.request = getattr(response, 'request', None)
+        try:
+            self.request = response.request
+        except RuntimeError:
+            self.request = None
 
     def __str__(self):
-        return f"APIError({self.code}={self.message})"
-
-
-class BitmexRequestException(Exception):
-
-    def __init__(self, message):
-        self.message = message
-
-    def __str__(self):
-        return f"BitmexRequestException: {self.message}"
+        return f"APIError: {self.code}, {self.message}"

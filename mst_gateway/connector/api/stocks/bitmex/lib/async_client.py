@@ -12,249 +12,247 @@ class AsyncBitmexApiClient(BaseBitmexApiClient):
     def __init__(self, api_key: Optional[str], api_secret: Optional[str], testnet: bool = False, version=None):
         super().__init__(api_key, api_secret, version, testnet)
 
-    async def _request(self, method: str, path: str, **params) -> dict:
+    async def _request(self, method: str, path: str, **params) -> httpx.Response:
         optional_headers = params.pop('headers', None)
         proxies = params.pop('proxies', None)
         timeout = params.pop('timeout', None)
-        url = self.create_url(path, **params).geturl()
+        url = self.create_url(path, **params)
         headers = self._get_headers(method, url, optional_headers)
         async with httpx.AsyncClient(headers=headers, proxies=proxies, timeout=timeout) as client:
-            request = client.build_request(method, url)
-            self.response = await client.send(request)
-        return self._handle_response(self.response)
+            return await client.request(method, url)
 
     # ANNOUNCEMENT
-    async def get_announcement(self, **params) -> dict:
+    async def get_announcement(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'announcement', **params)
 
-    async def get_announcement_urgent(self, **params) -> dict:
+    async def get_announcement_urgent(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'announcement/urgent', **params)
 
     # API
-    async def get_api_keys(self, **params) -> dict:
+    async def get_api_keys(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'apiKey', **params)
 
     # CHAT
-    async def get_chat_pinned(self, **params) -> dict:
+    async def get_chat_pinned(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'chat/pinned', **params)
 
-    async def send_pinned_message_to_channel(self, **params) -> dict:
+    async def send_pinned_message_to_channel(self, **params) -> httpx.Response:
         return await self._request(self.POST, 'chat/pinned', **params)
 
-    async def remove_pinned_message_from_chat(self, **params) -> dict:
+    async def remove_pinned_message_from_chat(self, **params) -> httpx.Response:
         return await self._request(self.DELETE, 'chat/pinned', **params)
 
-    async def get_chat(self, **params) -> dict:
+    async def get_chat(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'chat', **params)
 
-    async def send_message_to_chat(self, **params) -> dict:
+    async def send_message_to_chat(self, **params) -> httpx.Response:
         return await self._request(self.POST, 'chat', **params)
 
-    async def get_available_channels(self, **params) -> dict:
+    async def get_available_channels(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'chat/channels', **params)
 
-    async def get_connected_user_to_chat(self, **params) -> dict:
+    async def get_connected_user_to_chat(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'chat/connected', **params)
 
     # EXECUTION
-    async def get_execution(self, **params) -> dict:
+    async def get_execution(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'execution', **params)
 
-    async def get_execution_trade_history(self, **params) -> dict:
+    async def get_execution_trade_history(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'execution/tradeHistory', **params)
 
     # FUNDING
-    async def get_funding(self, **params) -> dict:
+    async def get_funding(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'funding', **params)
 
     # INSTRUMENT
-    async def get_instrument(self, **params) -> dict:
+    async def get_instrument(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'instrument', **params)
 
-    async def get_instrument_active(self, **params) -> dict:
+    async def get_instrument_active(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'instrument/active', **params)
 
-    async def get_instrument_indices(self, **params) -> dict:
+    async def get_instrument_indices(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'instrument/indices', **params)
 
-    async def get_instrument_active_and_indices(self, **params) -> dict:
+    async def get_instrument_active_and_indices(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'instrument/activeAndIndices', **params)
 
-    async def get_instrument_active_intervals(self, **params) -> dict:
-        return await self._request(self.GET, 'instrument/activeIntervals')
+    async def get_instrument_active_intervals(self, **params) -> httpx.Response:
+        return await self._request(self.GET, 'instrument/activeIntervals', **params)
 
-    async def get_instrument_composite_index(self, **params) -> dict:
+    async def get_instrument_composite_index(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'instrument/compositeIndex', **params)
 
-    async def get_instrument_usd_volume(self, **params) -> dict:
+    async def get_instrument_usd_volume(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'instrument/usdVolume', **params)
 
     # INSURANCE
-    async def get_insurance(self, **params) -> dict:
+    async def get_insurance(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'insurance', **params)
 
     # LEADERBOARD
-    async def get_leaderboard(self, **params) -> dict:
+    async def get_leaderboard(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'leaderboard', **params)
 
-    async def get_leaderboard_name(self, **params) -> dict:
+    async def get_leaderboard_name(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'leaderboard/name', **params)
 
     # LIQUIDATION
-    async def get_liquidation(self, **params) -> dict:
+    async def get_liquidation(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'liquidation', **params)
 
     # NOTIFICATION
-    async def get_global_notification(self, **params) -> dict:
+    async def get_global_notification(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'globalNotification', **params)
 
     # ORDER
-    async def get_orders(self, **params) -> dict:
+    async def get_orders(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'order', **params)
 
-    async def create_order(self, **params) -> dict:
+    async def create_order(self, **params) -> httpx.Response:
         return await self._request(self.POST, 'order', **params)
 
-    async def update_order(self, **params) -> dict:
+    async def update_order(self, **params) -> httpx.Response:
         return await self._request(self.PUT, 'order', **params)
 
-    async def cancel_order(self, **params) -> dict:
+    async def cancel_order(self, **params) -> httpx.Response:
         return await self._request(self.DELETE, 'order', **params)
 
-    async def cancel_all_orders(self, **params) -> dict:
+    async def cancel_all_orders(self, **params) -> httpx.Response:
         return await self._request(self.DELETE, 'order/all', **params)
 
-    async def close_position(self, **params) -> dict:
+    async def close_position(self, **params) -> httpx.Response:
         return await self._request(self.POST, 'order/closePosition', **params)
 
-    async def cancel_orders_after(self, **params) -> dict:
+    async def cancel_orders_after(self, **params) -> httpx.Response:
         return await self._request(self.POST, 'order/cancelAllAfter', **params)
 
     # ORDERBOOK
-    async def get_order_book_l2(self, **params) -> dict:
+    async def get_order_book_l2(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'orderBook/L2', **params)
 
     # POSITION
-    async def get_position(self, **params) -> dict:
+    async def get_position(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'position', **params)
 
-    async def update_position_isolate(self, **params) -> dict:
+    async def update_position_isolate(self, **params) -> httpx.Response:
         return await self._request(self.POST, 'position/isolate', **params)
 
-    async def update_position_risk_limit(self, **params) -> dict:
+    async def update_position_risk_limit(self, **params) -> httpx.Response:
         return await self._request(self.POST, 'position/riskLimit', **params)
 
-    async def update_position_transfer_margin(self, **params) -> dict:
+    async def update_position_transfer_margin(self, **params) -> httpx.Response:
         return await self._request(self.POST, 'position/transferMargin', **params)
 
-    async def update_position_leverage(self, **params) -> dict:
+    async def update_position_leverage(self, **params) -> httpx.Response:
         return await self._request(self.POST, 'position/leverage', **params)
 
     # QUOTE
-    async def get_quote(self, **params) -> dict:
+    async def get_quote(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'quote', **params)
 
-    async def get_quote_bucketed(self, **params) -> dict:
+    async def get_quote_bucketed(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'quote/bucketed', **params)
 
     # SCHEMA
-    async def get_schema(self, **params) -> dict:
+    async def get_schema(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'schema', **params)
 
-    async def get_schema_websocket_help(self, **params) -> dict:
+    async def get_schema_websocket_help(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'schema/websocketHelp', **params)
 
     # SETTLEMENT
-    async def get_settlement(self, **params) -> dict:
+    async def get_settlement(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'settlement', **params)
 
     # STATS
-    async def get_stats(self, **params) -> dict:
+    async def get_stats(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'stats', **params)
 
-    async def get_stats_history(self, **params) -> dict:
+    async def get_stats_history(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'stats/history', **params)
 
-    async def get_status_history_usd(self, **params) -> dict:
+    async def get_status_history_usd(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'stats/historyUSD', **params)
 
     # TRADE
-    async def get_trade(self, **params) -> dict:
+    async def get_trade(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'trade', **params)
 
-    async def get_trade_bucketed(self, **params) -> dict:
+    async def get_trade_bucketed(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'trade/bucketed', **params)
 
     # USER
-    async def get_user_deposit_address(self, **params) -> dict:
+    async def get_user_deposit_address(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'user/depositAddress', **params)
 
-    async def get_user_wallet(self, **params) -> dict:
+    async def get_user_wallet(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'user/wallet', **params)
 
-    async def get_user_wallet_history(self, **params) -> dict:
+    async def get_user_wallet_history(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'user/walletHistory', **params)
 
-    async def get_user_wallet_summary(self, **params) -> dict:
+    async def get_user_wallet_summary(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'user/walletSummary', **params)
 
-    async def get_user_execution_history(self, **params) -> dict:
+    async def get_user_execution_history(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'user/executionHistory', **params)
 
-    async def get_user_withdrawal_fee(self, **params) -> dict:
+    async def get_user_withdrawal_fee(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'user/minWithdrawalFee', **params)
 
-    async def user_request_withdrawal(self, **params) -> dict:
+    async def user_request_withdrawal(self, **params) -> httpx.Response:
         return await self._request(self.POST, 'user/requestWithdrawal', **params)
 
-    async def user_cansel_withdrawal(self, **params) -> dict:
+    async def user_cansel_withdrawal(self, **params) -> httpx.Response:
         return await self._request(self.POST, 'user/cancelWithdrawal', **params)
 
-    async def user_confirm_withdrawal(self, **params) -> dict:
+    async def user_confirm_withdrawal(self, **params) -> httpx.Response:
         return await self._request(self.POST, 'user/confirmWithdrawal', **params)
 
-    async def user_confirm_email(self, **params) -> dict:
+    async def user_confirm_email(self, **params) -> httpx.Response:
         return await self._request(self.POST, 'user/confirmEmail', **params)
 
-    async def get_user_affiliate_status(self, **params) -> dict:
+    async def get_user_affiliate_status(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'user/affiliateStatus', **params)
 
-    async def user_check_referral_code(self, **params) -> dict:
+    async def user_check_referral_code(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'user/checkReferralCode', **params)
 
-    async def get_user_quote_fill_ratio(self, **params) -> dict:
+    async def get_user_quote_fill_ratio(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'user/quoteFillRatio', **params)
 
-    async def get_user_quote_value_ratio(self, **params) -> dict:
+    async def get_user_quote_value_ratio(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'user/quoteValueRatio', **params)
 
-    async def get_user_trading_volume(self, **params) -> dict:
+    async def get_user_trading_volume(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'user/tradingVolume', **params)
 
-    async def user_logout(self, **params) -> dict:
+    async def user_logout(self, **params) -> httpx.Response:
         return await self._request(self.POST, 'user/logout', **params)
 
-    async def user_preferences(self, **params) -> dict:
+    async def user_preferences(self, **params) -> httpx.Response:
         return await self._request(self.POST, 'user/preferences', **params)
 
-    async def get_user(self, **params) -> dict:
+    async def get_user(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'user', **params)
 
-    async def get_user_commission(self, **params) -> dict:
+    async def get_user_commission(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'user/commission', **params)
 
-    async def get_user_margin(self, **params) -> dict:
+    async def get_user_margin(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'user/margin', **params)
 
-    async def user_communication_token(self, **params) -> dict:
+    async def user_communication_token(self, **params) -> httpx.Response:
         return await self._request(self.POST, 'user/communicationToken', **params)
 
-    async def get_user_event(self, **params) -> dict:
+    async def get_user_event(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'userEvent', **params)
 
     # WALLET
-    async def get_wallet_assets(self, **params) -> dict:
+    async def get_wallet_assets(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'wallet/assets', **params)
 
-    async def get_wallet_networks(self, **params) -> dict:
+    async def get_wallet_networks(self, **params) -> httpx.Response:
         return await self._request(self.GET, 'wallet/networks', **params)

@@ -5,7 +5,7 @@ import time
 import httpx
 from urllib import parse
 from typing import Optional, Tuple, Union
-from .exceptions import BitmexAPIException, BitmexRequestException
+from .exceptions import BitmexAPIException
 
 
 class BaseBitmexApiClient:
@@ -99,14 +99,10 @@ class BaseBitmexApiClient:
             'get_wallet_assets': (self.GET, 'wallet/assets'),
             'get_wallet_networks': (self.GET, 'wallet/networks')
         }
-        if method_path := method_map.get(method_name):
-            return method_path
-        raise BitmexRequestException('Unknown method')
+        return method_map.get(method_name, (None, None))
 
-    def create_url(self, path: str, **params) -> parse.ParseResult:
-        params = parse.urlencode(params)
-        url = f"{self.base_url}/api/{self.version}/{path}?{params}"
-        return parse.urlparse(url)
+    def create_url(self, path: str, **params) -> httpx.URL:
+        return httpx.URL(f"{self.base_url}/api/{self.version}/{path}", params=params)
 
     # Generates an API signature.
     # A signature is HMAC_SHA256(secret, verb + path + nonce + data), hex encoded.
@@ -128,7 +124,7 @@ class BaseBitmexApiClient:
         signature = hmac.new(api_secret.encode('utf-8'), message, digestmod=hashlib.sha256).hexdigest()
         return signature
 
-    def _get_headers(self, method: str, url: str, optional_headers: Optional[dict]) -> httpx.Headers:
+    def _get_headers(self, method: str, url: httpx.URL, optional_headers: Optional[dict]) -> httpx.Headers:
         headers = {
             "Accept": "application/json"
         }
@@ -136,15 +132,13 @@ class BaseBitmexApiClient:
             expires = str(int(time.time() + 5))
             headers['api-expires'] = expires
             headers['api-key'] = self.api_key
-            headers['api-signature'] = self.generate_signature(self.api_secret, method, url, expires)
+            headers['api-signature'] = self.generate_signature(self.api_secret, method, str(url), expires)
         if isinstance(optional_headers, dict):
             headers.update(optional_headers)
         return httpx.Headers(headers)
 
-    def _handle_response(self, response: httpx.Response) -> dict:
+    @staticmethod
+    def handle_response(response: httpx.Response) -> dict:
         if not (200 <= response.status_code < 300):
-            raise BitmexAPIException(response, response.status_code, response.text)
-        try:
-            return response.json()
-        except ValueError:
-            raise BitmexRequestException(f"Invalid response: {response.text}")
+            raise BitmexAPIException(response)
+        return response.json()
