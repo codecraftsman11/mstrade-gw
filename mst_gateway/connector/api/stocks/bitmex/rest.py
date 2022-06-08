@@ -441,7 +441,7 @@ class BitmexRestApi(StockRestApi):
         else:
             url = self.handler.create_url(path, **kwargs)
             proxies = self.ratelimit.get_proxies(
-                method=rest_method, url=url.geturl(), hashed_uid=self._generate_hashed_uid()
+                method=rest_method, url=str(url), hashed_uid=self._generate_hashed_uid()
             )
             if not proxies:
                 raise ConnectorError('Ratelimit service error.')
