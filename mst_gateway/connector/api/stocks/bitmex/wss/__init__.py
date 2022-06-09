@@ -1,11 +1,11 @@
 import time
 from typing import Union, Optional
 from websockets import client
+from mst_gateway.connector.api.stocks.bitmex.lib.async_client import AsyncBitmexApiClient
 from . import subscribers as subscr_class
 from .router import BitmexWssRouter
 from .utils import is_auth_ok, make_cmd
 from .. import var
-from ..lib import bitmex_signature
 from ....wss import StockWssApi, ThrottleWss
 from ....types import ExchangeDrivers
 
@@ -51,9 +51,8 @@ class BitmexWssApi(StockWssApi):
             auth = self._auth
         wss = self.handler
         expires = int(time.time()) + self._options.get('timeout', BITMEX_WSS_DEFAULT_TIMEOUT)
-        signature = bitmex_signature(auth.get('api_secret', ""), "GET", "/realtime", expires)
-        await wss.send(make_cmd('authKeyExpires', [auth.get('api_key', ""), expires,
-                                                   signature]))
+        signature = AsyncBitmexApiClient.generate_signature(auth.get('api_secret', ""), "GET", "/realtime", expires)
+        await wss.send(make_cmd('authKeyExpires', [auth.get('api_key', ""), expires, signature]))
         self.auth_connect = is_auth_ok(await wss.recv())
         return self.auth_connect
 

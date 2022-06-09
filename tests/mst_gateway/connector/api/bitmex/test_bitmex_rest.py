@@ -353,7 +353,7 @@ class TestBitmexRestApi:
         'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
-    def test_get_exchange_symbol_info(self, rest: BitmexRestApi, schema: str):
+    def test_load_exchange_symbol_info(self, rest: BitmexRestApi, schema: str):
         exchange_symbol_schema = Schema(fields.EXCHANGE_BITMEX_SYMBOL_INFO_FIELDS[schema])
         exchange_symbols = rest.get_exchange_symbol_info(schema=schema)
         for exchange_symbol in exchange_symbols:

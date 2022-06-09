@@ -1,40 +1,21 @@
 import json
+import httpx
 from datetime import datetime, timedelta
+from hashlib import sha256
 from typing import Optional, Union, Tuple
-from bravado.exception import HTTPError
-from requests.structures import CaseInsensitiveDict
 from mst_gateway.storage import StateStorageKey
-from .lib import (
-    bitmex_connector, APIKeyAuthenticator, SwaggerClient
-)
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector.api.types import OrderSchema, ExchangeDrivers
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
+from mst_gateway.connector.api.stocks.bitmex.lib import BitmexApiClient
+from mst_gateway.connector.api.stocks.bitmex.lib.exceptions import BitmexAPIException
 from . import utils, var
 from .utils import binsize2timedelta
 from ...rest import StockRestApi
 from .... import api
-from .....exceptions import ConnectorError, RecoverableError, NotFoundError, RateLimitServiceError
+from .....exceptions import ConnectorError, RecoverableError, NotFoundError
 from .....utils import j_dumps
 from ...rest.throttle import ThrottleRest
-
-
-class BitmexFactory:
-    BASE_URL = "https://www.bitmex.com/api/v1"
-    TEST_URL = "https://testnet.bitmex.com/api/v1"
-    BITMEX_SWAGGER = None   # type: SwaggerClient
-    TBITMEX_SWAGGER = None  # type: SwaggerClient
-
-    @classmethod
-    def make_client(cls, test, api_key=None, ratelimit=None):
-        if test:
-            if not cls.TBITMEX_SWAGGER:
-                cls.TBITMEX_SWAGGER = bitmex_connector(api_key=api_key, test=test, ratelimit=ratelimit)
-            return cls.TBITMEX_SWAGGER
-        else:
-            if not cls.BITMEX_SWAGGER:
-                cls.BITMEX_SWAGGER = bitmex_connector(api_key=api_key, test=test, ratelimit=ratelimit)
-            return cls.BITMEX_SWAGGER
 
 
 class BitmexRestApi(StockRestApi):
@@ -47,21 +28,14 @@ class BitmexRestApi(StockRestApi):
     def _connect(self, **kwargs):
         self._keepalive = bool(kwargs.get('keepalive', False))
         self._compress = bool(kwargs.get('compress', False))
-        return BitmexFactory.make_client(
-            api_key=self.auth.get("api_key"), test=self.test, ratelimit=self.ratelimit)
 
-    @property
-    def _authenticator(self):
-        self._auth = self._auth if isinstance(self._auth, dict) else {}
-        return APIKeyAuthenticator(
-            host=BitmexFactory.TEST_URL if self.test else BitmexFactory.BASE_URL,
-            api_key=self._auth.get('api_key'),
-            api_secret=self._auth.get('api_secret')
-        )
+        return BitmexApiClient(api_key=self.auth.get('api_key'),
+                               api_secret=self.auth.get('api_secret'),
+                               testnet=self.test)
 
     def ping(self, schema: str) -> bool:
         try:
-            self._bitmex_api(self._handler.Instrument.Instrument_get, symbol=utils.symbol2stock('xbtusd'))
+            self._bitmex_api(self._handler.get_instrument, symbol=utils.symbol2stock('xbtusd'))
         except ConnectorError:
             return False
         return True
@@ -89,18 +63,19 @@ class BitmexRestApi(StockRestApi):
             kwargs['date_to'] += binsize2timedelta(binsize)
         if 'date_from' in kwargs:
             kwargs['date_from'] += binsize2timedelta(binsize)
-        quote_bins, _ = self._bitmex_api(self._handler.Trade.Trade_getBucketed,
-                                         symbol=utils.symbol2stock(symbol),
-                                         binSize=binsize,
-                                         reverse=True,
-                                         partial=True,
-                                         start=offset,
-                                         count=count,
-                                         **self._api_kwargs(kwargs))
+        quote_bins = self._bitmex_api(self._handler.get_trade_bucketed,
+                                      symbol=utils.symbol2stock(symbol),
+                                      binSize=binsize,
+                                      reverse=True,
+                                      partial=True,
+                                      start=offset,
+                                      count=count,
+                                      **self._api_kwargs(kwargs))
         return [utils.load_quote_bin_data(data, state_data, binsize=binsize) for data in quote_bins]
 
     def list_quote_bins(self, symbol, schema, binsize='1m', count=100, **kwargs) -> list:
-        kwargs['state_data'] = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}").get(symbol.lower(), {})
+        kwargs['state_data'] = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}").get(symbol.lower(),
+                                                                                                      {})
         pages = count // var.BITMEX_MAX_QUOTE_BINS_COUNT + 1
         pages_mod = count % var.BITMEX_MAX_QUOTE_BINS_COUNT or var.BITMEX_MAX_QUOTE_BINS_COUNT
         quote_bins = []
@@ -122,17 +97,17 @@ class BitmexRestApi(StockRestApi):
         return list(reversed(quote_bins))
 
     def get_user(self, **kwargs) -> dict:
-        data, _ = self._bitmex_api(self._handler.User.User_get, **kwargs)
+        data = self._bitmex_api(self._handler.get_user, **kwargs)
         return utils.load_user_data(data)
 
-    def get_api_key_permissions(self, schemas: list,  **kwargs) -> Tuple[dict, Optional[int]]:
+    def get_api_key_permissions(self, schemas: list, **kwargs) -> Tuple[dict, Optional[int]]:
         auth_expired = None
         default_schemas = [
             OrderSchema.margin,
         ]
         permissions = {schema: False for schema in schemas if schema in default_schemas}
         try:
-            all_api_keys, _ = self._bitmex_api(self._handler.APIKey.APIKey_get)
+            all_api_keys = self._bitmex_api(self._handler.get_api_keys)
         except ConnectorError:
             return permissions, auth_expired
         return utils.load_api_key_permissions(all_api_keys, self.auth.get('api_key'), permissions.keys()), auth_expired
@@ -140,13 +115,13 @@ class BitmexRestApi(StockRestApi):
     def get_wallet(self, **kwargs) -> dict:
         schema = kwargs.pop('schema', OrderSchema.margin).lower()
         if schema == OrderSchema.margin:
-            data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
+            data = self._bitmex_api(self._handler.get_user_margin, **kwargs)
             return utils.load_wallet_data(data)
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_wallet_detail(self, schema: str, asset: str, **kwargs) -> dict:
         if schema == OrderSchema.margin:
-            data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
+            data = self._bitmex_api(self._handler.get_user_margin, **kwargs)
             return utils.load_wallet_detail_data(data, asset)
         raise ConnectorError(f"Invalid schema {schema}.")
 
@@ -158,7 +133,7 @@ class BitmexRestApi(StockRestApi):
 
     def get_assets_balance(self, schema: str, **kwargs) -> dict:
         if schema == OrderSchema.margin:
-            data, _ = self._bitmex_api(self._handler.User.User_getMargin, **kwargs)
+            data = self._bitmex_api(self._handler.get_user_margin, **kwargs)
             return utils.load_wallet_asset_balance(data)
         raise ConnectorError(f"Invalid schema {schema}.")
 
@@ -172,8 +147,7 @@ class BitmexRestApi(StockRestApi):
         raise ConnectorError('Bitmex api error. Details: Invalid method.')
 
     def get_symbol(self, symbol, schema) -> dict:
-        instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_get,
-                                          symbol=utils.symbol2stock(symbol))
+        instruments = self._bitmex_api(self._handler.get_instrument, symbol=utils.symbol2stock(symbol))
         if not instruments:
             return dict()
         state_data = self.storage.get(
@@ -182,8 +156,7 @@ class BitmexRestApi(StockRestApi):
         return utils.load_symbol_data(instruments[0], state_data)
 
     def list_symbols(self, schema, **kwargs) -> list:
-        data, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive,
-                                   **kwargs)
+        data = self._bitmex_api(self._handler.get_instrument_active, **kwargs)
         state_data = self.storage.get(
             f"{StateStorageKey.symbol}.{self.name}.{schema}"
         )
@@ -196,8 +169,8 @@ class BitmexRestApi(StockRestApi):
 
     def get_exchange_symbol_info(self, schema: str) -> list:
         if schema == OrderSchema.margin:
-            data, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive)
-            assets_config, _ = self._bitmex_api(self._handler.Wallet.Wallet_getAssetsConfig)
+            data = self._bitmex_api(self._handler.get_instrument_active)
+            assets_config = self._bitmex_api(self._handler.get_wallet_assets)
             return utils.load_exchange_symbol_info(data, assets_config)
         raise ConnectorError(f"Invalid schema {schema}.")
 
@@ -212,8 +185,7 @@ class BitmexRestApi(StockRestApi):
             price=price
         )
         params = utils.generate_parameters_by_order_type(params, options)
-
-        data, _ = self._bitmex_api(self._handler.Order.Order_new, **params)
+        data = self._bitmex_api(self._handler.create_order, **params)
         state_data = self.storage.get(
             f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin}"
         ).get(symbol.lower(), dict())
@@ -232,7 +204,7 @@ class BitmexRestApi(StockRestApi):
                                  order_type, price, options=options)
 
     def cancel_all_orders(self, schema: str):
-        data, _ = self._bitmex_api(self._handler.Order.Order_cancelAll)
+        data = self._bitmex_api(self._handler.cancel_all_orders)
         return bool(data)
 
     def cancel_order(self, exchange_order_id: str, symbol: str, schema: str) -> dict:
@@ -240,7 +212,7 @@ class BitmexRestApi(StockRestApi):
         params = dict(exchange_order_id=exchange_order_id)
         params = utils.map_api_parameter_names(params)
 
-        data, _ = self._bitmex_api(self._handler.Order.Order_cancel, **params)
+        data = self._bitmex_api(self._handler.cancel_order, **params)
         if isinstance(data[0], dict) and data[0].get('error'):
             error = data[0].get('error')
             status = data[0].get('ordStatus')
@@ -256,9 +228,7 @@ class BitmexRestApi(StockRestApi):
                   schema: str) -> Optional[dict]:
         params = dict(exchange_order_id=exchange_order_id)
         params = utils.map_api_parameter_names(params)
-        data, _ = self._bitmex_api(self._handler.Order.Order_getOrders,
-                                   reverse=True,
-                                   filter=j_dumps(params))
+        data = self._bitmex_api(self._handler.get_orders, reverse=True, filter=j_dumps(params))
         if not data:
             return None
         state_data = self.storage.get(
@@ -282,14 +252,14 @@ class BitmexRestApi(StockRestApi):
         if offset > 0:
             options['start'] = offset
         options['filter'] = j_dumps(options['filter'])
-        orders, _ = self._bitmex_api(self._handler.Order.Order_getOrders, reverse=True, **options)
+        orders = self._bitmex_api(self._handler.get_orders, reverse=True, **options)
         return [utils.load_order_data(schema, data, state_data) for data in orders]
 
     def list_trades(self, symbol: str, schema: str, **kwargs) -> list:
-        trades, _ = self._bitmex_api(self._handler.Trade.Trade_get,
-                                     symbol=utils.symbol2stock(symbol),
-                                     reverse=True,
-                                     **self._api_kwargs(kwargs))
+        trades = self._bitmex_api(self._handler.get_trade,
+                                  symbol=utils.symbol2stock(symbol),
+                                  reverse=True,
+                                  **self._api_kwargs(kwargs))
         state_data = self.storage.get(
             f"{StateStorageKey.symbol}.{self.name}.{schema}"
         ).get(symbol.lower(), dict())
@@ -300,27 +270,27 @@ class BitmexRestApi(StockRestApi):
         return self.close_all_orders(order['symbol'], schema)
 
     def close_all_orders(self, symbol: str, schema: str) -> bool:
-        data, _ = self._bitmex_api(self._handler.Order.Order_closePosition,
-                                   symbol=utils.symbol2stock(symbol))
+        data = self._bitmex_api(self._handler.close_position, symbol=utils.symbol2stock(symbol))
         return bool(data)
 
     def get_order_book(
-        self,
-        symbol: str,
-        depth: int = None,
-        side: int = None,
-        split: bool = False,
-        offset: int = 0,
-        schema: str = None,
-        min_volume_buy: float = None,
-        min_volume_sell: float = None,
+            self,
+            symbol: str,
+            depth: int = None,
+            side: int = None,
+            split: bool = False,
+            offset: int = 0,
+            schema: str = None,
+            min_volume_buy: float = None,
+            min_volume_sell: float = None,
     ):
         ob_depth = depth or 0
         if ob_depth:
             ob_depth += offset
         _depth = ob_depth if min_volume_buy is None and min_volume_sell is None else 0
-        ob_items, _ = self._bitmex_api(
-            self._handler.OrderBook.OrderBook_getL2, symbol=utils.symbol2stock(symbol),
+        ob_items = self._bitmex_api(
+            self._handler.get_order_book_l2,
+            symbol=utils.symbol2stock(symbol),
             depth=_depth,
         )
         state_data = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}").get(symbol.lower(), dict())
@@ -337,28 +307,26 @@ class BitmexRestApi(StockRestApi):
 
     def currency_exchange_symbols(self, schema: str, symbol: str = None, **kwargs) -> list:
         if symbol:
-            instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_get,
-                                              symbol=utils.symbol2stock(symbol),
-                                              **kwargs)
+            instruments = self._bitmex_api(self._handler.get_instrument, symbol=utils.symbol2stock(symbol), **kwargs)
         else:
-            instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive,
-                                              **kwargs)
+            instruments = self._bitmex_api(self._handler.get_instrument_active, **kwargs)
         return utils.load_currency_exchange_symbol(instruments)
 
     def get_symbols_currencies(self, schema: str) -> dict:
-        instruments, _ = self._bitmex_api(self._handler.Instrument.Instrument_getActive)
-        return utils.load_symbols_currencies(instruments, self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}"))
+        instruments = self._bitmex_api(self._handler.get_instrument_active)
+        return utils.load_symbols_currencies(instruments,
+                                             self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}"))
 
     def list_order_commissions(self, schema: str) -> list:
         if schema == OrderSchema.margin:
-            commissions, _ = self._bitmex_api(self._handler.User.User_getCommission)
+            commissions = self._bitmex_api(self._handler.get_user_commission)
             return utils.load_commissions(commissions)
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def get_vip_level(self, schema: str) -> str:
         if schema == OrderSchema.margin:
             try:
-                trading_volume, _ = self._bitmex_api(self._handler.User.User_getTradingVolume)
+                trading_volume = self._bitmex_api(self._handler.get_user_trading_volume)
                 trading_volume = trading_volume[0].get('advUsd')
             except (IndexError, AttributeError):
                 trading_volume = 0
@@ -367,10 +335,10 @@ class BitmexRestApi(StockRestApi):
 
     def get_funding_rates(self, symbol: str, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
         if schema.lower() == OrderSchema.margin:
-            funding_rates, _ = self._bitmex_api(
+            funding_rates = self._bitmex_api(
+                method=self._handler.get_funding,
                 symbol=utils.symbol2stock(symbol),
-                method=self._handler.Funding.Funding_get,
-                startTime=datetime.now() - timedelta(hours=period_hour*period_multiplier, minutes=1),
+                startTime=datetime.now() - timedelta(hours=period_hour * period_multiplier, minutes=1),
                 count=500,
             )
             return utils.load_funding_rates(funding_rates)
@@ -378,9 +346,9 @@ class BitmexRestApi(StockRestApi):
 
     def list_funding_rates(self, schema: str, period_multiplier: int, period_hour: int = 8) -> list:
         if schema == OrderSchema.margin:
-            funding_rates, _ = self._bitmex_api(
-                method=self._handler.Funding.Funding_get,
-                startTime=datetime.now() - timedelta(hours=period_hour*period_multiplier, minutes=1),
+            funding_rates = self._bitmex_api(
+                method=self._handler.get_funding,
+                startTime=datetime.now() - timedelta(hours=period_hour * period_multiplier, minutes=1),
                 count=500,
             )
             return utils.load_funding_rates(funding_rates)
@@ -389,12 +357,12 @@ class BitmexRestApi(StockRestApi):
     def get_leverage(self, schema: str, symbol: str, **kwargs) -> tuple:
         if schema != OrderSchema.margin:
             raise ConnectorError(f"Invalid schema {schema}.")
-        response, _ = self._bitmex_api(
-            self._handler.Position.Position_get, filter=j_dumps({'symbol': utils.symbol2stock(symbol)})
+        response = self._bitmex_api(
+            self._handler.get_position, filter=j_dumps({'symbol': utils.symbol2stock(symbol)})
         )
         if response:
             return utils.load_leverage(response[0])
-        response, _ = self._bitmex_api(self._handler.Instrument.Instrument_get, symbol=utils.symbol2stock(symbol))
+        response = self._bitmex_api(self._handler.get_instrument, symbol=utils.symbol2stock(symbol))
         _data = response[0] if response else {'initMargin': 0}
         _tmp = {
             'crossMargin': False,
@@ -406,8 +374,8 @@ class BitmexRestApi(StockRestApi):
                         leverage: Union[float, int], **kwargs) -> tuple:
         if schema != OrderSchema.margin:
             raise ConnectorError(f"Invalid schema {schema}.")
-        response, _ = self._bitmex_api(
-            self._handler.Position.Position_updateLeverage, symbol=utils.symbol2stock(symbol),
+        response = self._bitmex_api(
+            self._handler.update_position_leverage, symbol=utils.symbol2stock(symbol),
             leverage=utils.store_leverage(leverage_type, leverage)
         )
         return utils.load_leverage(response)
@@ -415,8 +383,8 @@ class BitmexRestApi(StockRestApi):
     def get_position(self, schema: str, symbol: str, **kwargs) -> dict:
         if schema != OrderSchema.margin:
             raise ConnectorError(f"Invalid schema {schema}.")
-        response, _ = self._bitmex_api(
-            self._handler.Position.Position_get, **{'filter': j_dumps({'symbol': symbol.upper()})}
+        response = self._bitmex_api(
+            self._handler.get_position, **{'filter': j_dumps({'symbol': symbol.upper()})}
         )
         try:
             response = response[0]
@@ -429,9 +397,7 @@ class BitmexRestApi(StockRestApi):
     def list_positions(self, schema: str, **kwargs) -> list:
         if schema != OrderSchema.margin:
             raise ConnectorError(f"Invalid schema {schema}.")
-        response, _ = self._bitmex_api(
-            self._handler.Position.Position_get
-        )
+        response = self._bitmex_api(self._handler.get_position, **kwargs)
         return utils.load_positions_list(response, schema)
 
     def get_positions_state(self, schema: str) -> dict:
@@ -440,15 +406,15 @@ class BitmexRestApi(StockRestApi):
         return {}
 
     def get_liquidation(
-        self,
-        symbol: str,
-        schema: str,
-        leverage_type: str,
-        wallet_balance: float,
-        side: int,
-        volume: float,
-        price: float,
-        **kwargs,
+            self,
+            symbol: str,
+            schema: str,
+            leverage_type: str,
+            wallet_balance: float,
+            side: int,
+            volume: float,
+            price: float,
+            **kwargs,
     ) -> dict:
         schema = schema.lower()
         if schema != OrderSchema.margin:
@@ -458,7 +424,7 @@ class BitmexRestApi(StockRestApi):
                 side=side,
                 leverage_type=leverage_type,
                 entry_price=price,
-                maint_margin=kwargs.get('wallet_detail',  {}).get('maint_margin'),
+                maint_margin=kwargs.get('wallet_detail', {}).get('maint_margin'),
                 volume=volume,
                 wallet_balance=wallet_balance,
                 taker_fee=kwargs.get('taker_fee'),
@@ -467,56 +433,59 @@ class BitmexRestApi(StockRestApi):
             )}
 
     def _bitmex_api(self, method: callable, **kwargs):
+        rest_method, path = self.handler.get_method_path(method.__name__)
+        if not rest_method:
+            raise ConnectorError("Bitmex request method error.")
         if not self.ratelimit:
             self.validate_throttling(self.throttle_hash_name())
-
+        else:
+            url = self.handler.create_url(path, **kwargs)
+            proxies = self.ratelimit.get_proxies(
+                method=rest_method, url=str(url), hashed_uid=self._generate_hashed_uid()
+            )
+            if not proxies:
+                raise ConnectorError('Ratelimit service error.')
+            kwargs['proxies'] = proxies
         headers = {}
         if self._keepalive:
             headers['Connection'] = "keep-alive"
         if self._compress:
             headers['Accept-Encoding'] = "deflate, gzip;q=1.0, *;q=0.5"
+        kwargs['headers'] = headers
         try:
-            resp = method(
-                authenticator=self._authenticator,
-                ratelimit=self.ratelimit,
-                _request_options={'headers': headers},
-                **kwargs
-            ).response()
+            resp = method(**kwargs)
+            data = self.handler.handle_response(resp)
             if not self.ratelimit:
                 self.throttle.set(
                     key=self.throttle_hash_name(),
-                    limit=(int(resp.incoming_response.headers.get('X-RateLimit-Limit', 0)) -
-                           int(resp.incoming_response.headers.get('X-RateLimit-Remaining', 0))),
-                    reset=int(resp.incoming_response.headers.get('X-RateLimit-Reset', 0)),
+                    limit=(int(resp.headers.get('X-RateLimit-Limit', 0)) -
+                           int(resp.headers.get('X-RateLimit-Remaining', 0))),
+                    reset=int(resp.headers.get('X-RateLimit-Reset', 0)),
                     scope='rest'
                 )
-            return resp.result, resp.metadata
-        except HTTPError as exc:
+            return data
+        except BitmexAPIException as exc:
             if not self.ratelimit:
                 self.throttle.set(
                     key=self.throttle_hash_name(),
-                    **self.__get_limit_header(exc.response.headers)
+                    **self.__get_limit_headers(exc.response.headers)
                 )
-
-            message = exc.message
-            if not message and isinstance(exc.swagger_result, dict):
-                message = exc.swagger_result.get('error', {}).get('message')
-            status_code = int(exc.status_code)
-            full_message = f"Bitmex api error. Details: {status_code}, {message}"
-            if status_code == 429 or status_code >= 500:
-                raise RecoverableError(full_message)
-            elif status_code == 403:
+            message = f"Bitmex api error. Details: {exc.status_code}, {exc.message}"
+            if exc.status_code == 429 or exc.status_code >= 500:
+                raise RecoverableError(message)
+            elif exc.status_code == 403:
                 self.logger.critical(f"{self.__class__.__name__}: {exc}")
-            elif status_code == 404:
-                raise NotFoundError(full_message)
-            raise ConnectorError(full_message)
-        except RateLimitServiceError as exc:
-            raise ConnectorError(exc)
+            elif exc.status_code == 404:
+                raise NotFoundError(message)
+            raise ConnectorError(message)
         except Exception as exc:
             self.logger.error(f"Bitmex api error. Details: {exc}")
             raise ConnectorError("Bitmex api error.")
 
-    def __get_limit_header(self, headers: CaseInsensitiveDict):
+    def _generate_hashed_uid(self):
+        return sha256(self.auth.get('api_key', '').encode('utf-8')).hexdigest()
+
+    def __get_limit_headers(self, headers: httpx.Headers):
         limit_header = {
             'limit': 0,
             'reset': None,
