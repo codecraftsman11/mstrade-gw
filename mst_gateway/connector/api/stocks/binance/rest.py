@@ -489,7 +489,10 @@ class BinanceRestApi(StockRestApi):
                                  OrderSchema.margin, OrderSchema.margin_coin))
         if schema == OrderSchema.margin_cross:
             _margin = self._binance_api(self._handler.get_margin_account, **kwargs)
-            _borrow = self._binance_api(self._handler.get_max_margin_loan, asset=asset.upper())
+            try:
+                _borrow = self._binance_api(self._handler.get_max_margin_loan, asset=asset.upper())
+            except ConnectorError:
+                _borrow = 0
             _vip = self.get_vip_level(schema)
             _interest_rate = utils.get_interest_rate(
                 self._binance_api(self._handler.get_public_interest_rate, **kwargs),
