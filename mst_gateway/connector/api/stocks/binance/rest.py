@@ -492,12 +492,15 @@ class BinanceRestApi(StockRestApi):
             try:
                 _borrow = self._binance_api(self._handler.get_max_margin_loan, asset=asset.upper())
             except ConnectorError:
-                _borrow = 0
+                _borrow = None
             _vip = self.get_vip_level(schema)
-            _interest_rate = utils.get_interest_rate(
-                self._binance_api(self._handler.get_public_interest_rate, **kwargs),
-                _vip, asset
-            )
+            try:
+                _interest_rate = utils.get_interest_rate(
+                    self._binance_api(self._handler.get_public_interest_rate, **kwargs),
+                    _vip, asset
+                )
+            except ConnectorError:
+                _interest_rate = None
             return utils.load_margin_cross_wallet_extra_data(_margin, asset, _borrow, _interest_rate)
         if schema == OrderSchema.margin:
             try:
