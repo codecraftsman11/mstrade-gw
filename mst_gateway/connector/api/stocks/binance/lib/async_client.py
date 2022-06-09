@@ -7,7 +7,7 @@ class AsyncBinanceApiClient(BaseBinanceApiClient):
 
     async def _get_request_kwargs(self, method: str, signed: bool = False, force_params: bool = False,
                                   **kwargs) -> dict:
-        for k, v in kwargs['data'].items():
+        for k, v in dict(kwargs['data']).items():
             if v is None:
                 del(kwargs['data'][k])
 
