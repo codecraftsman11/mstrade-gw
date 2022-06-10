@@ -5,25 +5,6 @@ from .base import BaseBinanceApiClient
 
 class BinanceApiClient(BaseBinanceApiClient):
 
-    def _get_request_kwargs(self, method: str, signed: bool = False, force_params: bool = False, **kwargs) -> dict:
-        for k, v in dict(kwargs['data']).items():
-            if v is None:
-                del(kwargs['data'][k])
-
-        if signed:
-            res = self.get_server_time()
-            kwargs.setdefault('data', {})['timestamp'] = res['serverTime']
-            kwargs['data']['signature'] = self.generate_signature(kwargs['data'])
-
-        if kwargs['data']:
-            if method.upper() == self.GET.upper() or force_params:
-                kwargs['params'] = httpx.QueryParams(**kwargs['data'])
-                del(kwargs['data'])
-        else:
-            del(kwargs['data'])
-
-        return kwargs
-
     def _request(self, method: str, url: str, signed: bool = False, force_params: bool = False,
                  **kwargs) -> Union[dict, List[dict], List[list]]:
         self.response = None

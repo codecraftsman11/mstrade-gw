@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import httpx
+import time
 from typing import List, Optional, Tuple
 from .exceptions import BinanceApiException, BinanceRequestException
 
@@ -30,6 +31,7 @@ class BaseBinanceApiClient:
         self._api_key = api_key
         self._api_secret = api_secret
         self._testnet = testnet
+        self._timestamp_offset = 0
         self.response = None
 
     def get_method_info(self, method_name: str) -> Tuple[str, str]:
@@ -198,11 +200,6 @@ class BaseBinanceApiClient:
         ))
         return httpx.URL(f"{url}?{params}" if params else url)
 
-    def generate_signature(self, data: dict) -> str:
-        query_string = '&'.join(f"{k}={v}" for k, v in data.items())
-        m = hmac.new(self._api_secret.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256)
-        return m.hexdigest()
-
     def _get_headers(self) -> httpx.Headers:
         headers = {
             'Accept': 'application/json'
@@ -210,6 +207,29 @@ class BaseBinanceApiClient:
         if self._api_key:
             headers['X-MBX-APIKEY'] = self._api_key
         return httpx.Headers(headers)
+
+    def generate_signature(self, data: dict) -> str:
+        query_string = '&'.join(f"{k}={v}" for k, v in data.items())
+        m = hmac.new(self._api_secret.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256)
+        return m.hexdigest()
+
+    def _get_request_kwargs(self, method: str, signed: bool = False, force_params: bool = False, **kwargs) -> dict:
+        for k, v in dict(kwargs['data']).items():
+            if v is None:
+                del(kwargs['data'][k])
+
+        if signed:
+            kwargs.setdefault('data', {})['timestamp'] = int(time.time() * 1000 + self._timestamp_offset)
+            kwargs['data']['signature'] = self.generate_signature(kwargs['data'])
+
+        if kwargs['data']:
+            if method.upper() == self.GET.upper() or force_params:
+                kwargs['params'] = httpx.QueryParams(**kwargs['data'])
+                del(kwargs['data'])
+        else:
+            del(kwargs['data'])
+
+        return kwargs
 
     def _handle_response(self) -> dict:
         if self.response:

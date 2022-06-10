@@ -1,29 +1,22 @@
 import httpx
-from typing import List, Union
+import time
+from typing import List, Optional, Union
 from .base import BaseBinanceApiClient
 
 
 class AsyncBinanceApiClient(BaseBinanceApiClient):
 
-    async def _get_request_kwargs(self, method: str, signed: bool = False, force_params: bool = False,
-                                  **kwargs) -> dict:
-        for k, v in dict(kwargs['data']).items():
-            if v is None:
-                del(kwargs['data'][k])
+    @classmethod
+    async def create(cls, api_key: Optional[str] = None, api_secret: Optional[str] = None, testnet: bool = False):
+        self = cls(api_key, api_secret, testnet)
+        resp = await self.get_server_time()
+        self._timestamp_offset = resp['serverTime'] - int(time.time() * 1000)
+        return self
 
-        if signed:
-            res = await self.get_server_time()
-            kwargs.setdefault('data', {})['timestamp'] = res['serverTime']
-            kwargs['data']['signature'] = self.generate_signature(kwargs['data'])
-
-        if kwargs['data']:
-            if method.upper() == self.GET.upper() or force_params:
-                kwargs['params'] = httpx.QueryParams(**kwargs['data'])
-                del(kwargs['data'])
-        else:
-            del(kwargs['data'])
-
-        return kwargs
+    async def __aenter__(self):
+        resp = await self.get_server_time()
+        self._timestamp_offset = resp['serverTime'] - int(time.time() * 1000)
+        return self
 
     async def _request(self, method: str, url: str, signed: bool = False, force_params: bool = False,
                        **kwargs) -> Union[dict, List[dict], List[list]]:
@@ -31,7 +24,7 @@ class AsyncBinanceApiClient(BaseBinanceApiClient):
         async with httpx.AsyncClient(headers=self._get_headers(),
                                      proxies=kwargs['data'].pop('proxies', None),
                                      timeout=kwargs['data'].pop('timeout', None)) as client:
-            kwargs = await self._get_request_kwargs(method, signed, force_params, **kwargs)
+            kwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
             request = client.build_request(method, url, **kwargs)
             self.response = await client.send(request)
         return self._handle_response()
