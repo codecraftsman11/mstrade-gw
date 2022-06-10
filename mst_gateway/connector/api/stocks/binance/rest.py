@@ -836,7 +836,7 @@ class BinanceRestApi(StockRestApi):
         return {'liquidation_price': liquidation_price}
 
     def _binance_api(self, method: callable, **kwargs):
-        rest_method, url, signed = self.handler.get_method_info(method.__name__)
+        rest_method, url = self.handler.get_method_info(method.__name__)
         if not self.ratelimit:
             self.validate_throttling(self.throttle_hash_name(url))
         else:
