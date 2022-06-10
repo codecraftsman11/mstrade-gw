@@ -48,7 +48,7 @@ SYMBOL_FIELDS = {
     'high_price': Use(float_valid),
     'low_price': Use(float_valid),
     'expiration': Or(None, str),
-    'expiration_date': Or(None, Use(datetime_valid), str),
+    'expiration_date': Or(None, Use(datetime_valid)),
     'pair': Or(None, Use(pair_valid)),
     'tick': Or(None, float),
     'volume_tick': Or(None, float),
