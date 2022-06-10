@@ -60,8 +60,8 @@ STORAGE_DATA = {
             'volume_tick': 0.001,
             'max_leverage': 125.0,
             'schema': OrderSchema.margin,
-            'expiration': 'None',
-            'expiration_date': 'None',
+            'expiration': None,
+            'expiration_date': None,
             'created': '2021-09-06T09:51:21.272746',
             'extra': {
                 'leverage_brackets': [
@@ -100,8 +100,8 @@ STORAGE_DATA = {
             'volume_tick': 1.0,
             'max_leverage': 125.0,
             'schema': OrderSchema.margin_coin,
-            'expiration': 'None',
-            'expiration_date': 'None',
+            'expiration': None,
+            'expiration_date': None,
             'created': '2021-09-06T09:51:21.288366',
             'extra': {
                 'face_price_data': {'contract_size': 100},
