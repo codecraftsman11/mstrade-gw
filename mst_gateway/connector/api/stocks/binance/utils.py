@@ -578,15 +578,18 @@ def load_margin_cross_collaterals_data(cross_collaterals: dict) -> list:
     return data
 
 
-def load_exchange_asset_balance(raw_data: list) -> dict:
+def load_exchange_asset_balance(raw_data: dict) -> dict:
     balances = {}
-    for balance in raw_data:
+    for balance in raw_data['balances']:
         balances[balance.get('asset', '').lower()] = to_float(balance.get('free', 0))
     return balances
 
 
-def load_margin_cross_asset_balance(raw_data: list) -> dict:
-    return load_exchange_asset_balance(raw_data)
+def load_margin_cross_asset_balance(raw_data: dict) -> dict:
+    balances = {}
+    for balance in raw_data['userAssets']:
+        balances[balance.get('asset', '').lower()] = to_float(balance.get('free', 0))
+    return balances
 
 
 def load_futures_asset_balance(raw_data: list) -> dict:
@@ -1092,7 +1095,7 @@ def load_commissions(raw_data: dict) -> list:
             'maker': to_float(commission['makerCommission']),
             'taker': to_float(commission['takerCommission']),
             'type': f'VIP{commission["level"]}',
-        } for commission in raw_data
+        } for commission in raw_data['data']
     ]
 
 

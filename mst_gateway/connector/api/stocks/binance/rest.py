@@ -3,19 +3,18 @@ from hashlib import sha256
 from uuid import uuid4
 from datetime import datetime, timedelta
 from typing import Union, Tuple, Optional
-from bravado.exception import HTTPError
 from mst_gateway.connector.api.utils import time2timestamp
 from mst_gateway.storage import StateStorageKey
 from mst_gateway.calculator import BinanceFinFactory
 from mst_gateway.connector.api.types import OrderSchema, OrderType, ExchangeDrivers
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id, validate_schema
-from mst_gateway.connector.api.stocks.binance.lib.exceptions import BinanceApiException, BinanceRequestException
+from mst_gateway.connector.api.stocks.binance.lib.exceptions import BinanceAPIException
 from mst_gateway.connector.api.stocks.binance.lib.sync_client import BinanceApiClient
 from mst_gateway.connector.api.stocks.binance.wss.serializers.position import BinanceMarginPositionSerializer
 from . import utils, var
 from .utils import to_date
 from ...rest import StockRestApi
-from .....exceptions import GatewayError, ConnectorError, RecoverableError, NotFoundError, RateLimitServiceError
+from .....exceptions import GatewayError, ConnectorError, RecoverableError, NotFoundError
 from ...rest.throttle import ThrottleRest
 
 
@@ -26,9 +25,8 @@ class BinanceRestApi(StockRestApi):
     throttle = ThrottleRest(rest_limit=var.BINANCE_THROTTLE_LIMITS.get('rest'),
                             order_limit=var.BINANCE_THROTTLE_LIMITS.get('order'))
 
-    def throttle_hash_name(self, url=None):
-        url_split = url.split('/')
-        return sha256(f"{self.name}.{url_split[0]}/{url_split[1]}".lower().encode('utf-8')).hexdigest()
+    def throttle_hash_name(self, url=httpx.URL, **kwargs):
+        return sha256(f"{url.host}".lower().encode('utf-8')).hexdigest()
 
     def _generate_hashed_uid(self):
         return sha256(self.auth.get('api_key').encode('utf-8')).hexdigest()
@@ -151,8 +149,8 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.exchange: (self._handler.get_ticker, self._spot_list_symbols_handler),
             OrderSchema.margin_cross: (self._handler.get_margin_ticker, self._spot_list_symbols_handler),
             OrderSchema.margin_isolated: (self._handler.get_isolated_margin_ticker, self._spot_list_symbols_handler),
-            OrderSchema.margin: (self._handler.get_futures_ticker, self._margin_list_symbols_handler),
-            OrderSchema.margin_coin: (self._handler.get_futures_coin_ticker, self._margin_list_symbols_handler),
+            OrderSchema.margin: (self._handler.get_futures_ticker, self._futures_list_symbols_handler),
+            OrderSchema.margin_coin: (self._handler.get_futures_coin_ticker, self._futures_list_symbols_handler),
         }
         validate_schema(schema, schema_handlers)
         schema = schema.lower()
@@ -166,7 +164,7 @@ class BinanceRestApi(StockRestApi):
         return [utils.load_symbol_data(schema, data.get(symbol.lower()), st_data)
                 for symbol, st_data in state_data.items()]
 
-    def _margin_list_symbols_handler(self, schema, data, state_data):
+    def _futures_list_symbols_handler(self, schema, data, state_data):
         schema_handlers = {
             OrderSchema.margin: (
                 self._handler.get_futures_order_book_ticker,
@@ -836,52 +834,39 @@ class BinanceRestApi(StockRestApi):
         return {'liquidation_price': liquidation_price}
 
     def _binance_api(self, method: callable, **kwargs):
-        rest_method, url = self.handler.get_method_info(method.__name__)
+        rest_method, url = self.handler.get_method_info(method.__name__, **kwargs)
+        if not rest_method:
+            raise ConnectorError('Binance request method error.')
         if not self.ratelimit:
             self.validate_throttling(self.throttle_hash_name(url))
         else:
-            kwargs['proxies'] = self.ratelimit.get_proxies(
-                method=rest_method,
-                url=self.handler.get_ratelimit_url(rest_method, url, **kwargs),
-                hashed_uid=self._generate_hashed_uid()
+            proxies = self.ratelimit.get_proxies(
+                method=rest_method, url=str(url), hashed_uid=self._generate_hashed_uid()
             )
+            if not proxies:
+                raise ConnectorError('Ratelimit service error.')
+            kwargs['proxies'] = proxies
         try:
             resp = method(**kwargs)
-        except HTTPError as exc:
-            message = f"Binance api error. Details: {exc.status_code}, {exc.message}"
-            if exc.status_code in (418, 429) or int(exc.status_code) >= 500:
+            data = self.handler.handle_response(resp)
+        except BinanceAPIException as exc:
+            if not self.ratelimit:
+                self.throttle.set(
+                    key=self.throttle_hash_name(url),
+                    **self.__get_limit_header(exc.response.headers)
+                )
+            message = f"Binance api error. Details: {exc.code}, {exc.message}"
+            if exc.code == -1003:
+                self.logger.critical(f"{self.__class__.__name__}: {exc}")
+            if exc.code == -2011:
+                raise NotFoundError(message)
+            if exc.status_code in (418, 429) or exc.status_code >= 500:
                 raise RecoverableError(message)
             raise ConnectorError(message)
-        except BinanceApiException as exc:
-            message = f"Binance api error. Details: {exc.code}, {exc.message}"
-            if int(exc.code) == 0:
-                raise ConnectorError(f"Binance api error. Details: {exc.code}, 504 Gateway Timeout")
-            if int(exc.code) == -1003:
-                self.logger.critical(f"{self.__class__.__name__}: {exc}")
-            if int(exc.code) == -2011:
-                raise NotFoundError(message)
-            raise ConnectorError(message)
-        except BinanceRequestException as exc:
-            raise ConnectorError(f"Binance api error. Details: {exc.message}")
-        except RateLimitServiceError as exc:
-            raise ConnectorError(exc)
         except Exception as exc:
             self.logger.error(f"Binance api error. Detail: {exc}")
             raise ConnectorError("Binance api error.")
-        finally:
-            if self.handler.response and not self.ratelimit:
-                self.throttle.set(
-                    key=self.throttle_hash_name(url),
-                    **self.__get_limit_header(self.handler.response.headers)
-                )
-
-        if isinstance(resp, dict) and resp.get('code') != 200 and resp.get('msg'):
-            try:
-                _, msg = resp['msg'].split('=', 1)
-            except ValueError:
-                msg = resp['msg']
-            raise ConnectorError(f"Binance api error. Details: {msg}")
-        return resp
+        return data
 
     def _api_kwargs(self, kwargs):
         api_kwargs = dict()

@@ -36,10 +36,10 @@ class StockRestApi(Connector):
         self.ratelimit = ratelimit
         super().__init__(auth, logger)
 
-    def throttle_hash_name(self, name=None):
+    def throttle_hash_name(self, **kwargs):
         if self.auth:
             return sha256(str(self.auth.get('api_key', '')).encode('utf-8')).hexdigest()
-        return super().throttle_hash_name(name)
+        return super().throttle_hash_name(**kwargs)
 
     def validate_throttling(self, hash_name: str):
         reset_time = self.throttle.validate(hash_name, self.throttle.rest_limit)

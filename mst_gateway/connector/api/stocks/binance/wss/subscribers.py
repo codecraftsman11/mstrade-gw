@@ -5,7 +5,7 @@ from asyncio import CancelledError
 from typing import TYPE_CHECKING, Optional
 from websockets.exceptions import ConnectionClosedError
 from mst_gateway.connector.api.types import OrderSchema
-from mst_gateway.connector.api.stocks.binance.lib.exceptions import BinanceApiException
+from mst_gateway.connector.api.stocks.binance.lib.exceptions import BinanceAPIException
 from mst_gateway.exceptions import QueryError, GatewayError
 from .. import utils
 from ....wss.subscriber import Subscriber
@@ -170,12 +170,12 @@ class BinanceWalletSubscriber(BinanceSubscriber):
         kwargs = {}
         try:
             kwargs['raw_data'] = schema_handlers[schema][0]()
-        except (GatewayError, BinanceApiException):
+        except (GatewayError, BinanceAPIException):
             return None, None
         if schema in (OrderSchema.margin,):
             try:
                 cross_collaterals = await client._handler.get_futures_loan_wallet()
-            except (GatewayError, BinanceApiException):
+            except (GatewayError, BinanceAPIException):
                 cross_collaterals = {}
             kwargs['cross_collaterals'] = utils.load_margin_cross_collaterals_data(cross_collaterals)
         wallet_data = schema_handlers[schema][1](**kwargs)

@@ -24,7 +24,7 @@ class AsyncBinanceApiClient(BaseBinanceApiClient):
         async with httpx.AsyncClient(headers=self._get_headers(),
                                      proxies=kwargs['data'].pop('proxies', None),
                                      timeout=kwargs['data'].pop('timeout', None)) as client:
-            kwargs = self._get_request_kwargs(method, signed, force_params, **kwargs)
+            kwargs = self._prepare_request_params(method, signed, force_params, **kwargs)
             request = client.build_request(method, url, **kwargs)
             self.response = await client.send(request)
         return self._handle_response()
