@@ -426,13 +426,14 @@ def load_margin_cross_wallet_detail_data(raw_data: dict, asset: str) -> dict:
     raise ConnectorError(f"Invalid asset {asset}.")
 
 
-def load_margin_cross_wallet_extra_data(raw_data: dict, asset: str, max_borrow: dict, interest_rate: float) -> dict:
+def load_margin_cross_wallet_extra_data(raw_data: dict, asset: str, max_borrow: Optional[dict],
+                                        interest_rate: float) -> dict:
     data = {}
     for a in raw_data.get('userAssets'):
         if a.get('asset', '').upper() == asset.upper():
             data['currency'] = asset.upper()
-            data['interest'] = to_float(raw_data.get('interest'))
-            data['borrowed'] = to_float(raw_data.get('borrowed'))
+            data['interest'] = to_float(a.get('interest'))
+            data['borrowed'] = to_float(a.get('borrowed'))
             data['interest_rate'] = interest_rate
             data['available_borrow'] = _margin_max_borrow(max_borrow)
     return data
@@ -442,7 +443,6 @@ def get_vip(data: dict) -> str:
     return str(data.get('feeTier', 0))
 
 
-# TODO: remove
 def get_interest_rate(asset_rates: list, vip_level: str, asset: str):
     _h1_rate = None
     for rate in asset_rates:
