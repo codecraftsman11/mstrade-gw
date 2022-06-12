@@ -442,27 +442,15 @@ def get_vip(data: dict) -> str:
     return str(data.get('feeTier', 0))
 
 
-# TODO: remove
-def get_interest_rate(asset_rates: list, vip_level: str, asset: str):
+def get_interest_rate(raw_data: dict, vip_level: str, asset: str):
     _h1_rate = None
-    for rate in asset_rates:
+    for rate in raw_data['data']:
         if rate.get('assetName', '').upper() == asset.upper():
             for spec in rate['specs']:
                 if str(spec.get('vipLevel')) == vip_level:
                     _r = to_float(spec.get('dailyInterestRate')) or 0
                     _h1_rate = round(_r * 100 / 24, 8)
                     break
-    return _h1_rate
-
-
-def get_interest_rates(asset_rates: list):
-    _h1_rate = {}
-    for rate in asset_rates:
-        asset = rate.get('assetName', '').lower()
-        _h1_rate.setdefault(asset, {})
-        for spec in rate['specs']:
-            _r = to_float(spec.get('dailyInterestRate')) or 0
-            _h1_rate[asset].setdefault(str(spec.get('vipLevel')), round(_r * 100 / 24, 8))
     return _h1_rate
 
 

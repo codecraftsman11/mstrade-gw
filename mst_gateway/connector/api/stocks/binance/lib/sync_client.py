@@ -1,5 +1,4 @@
 import httpx
-from typing import Optional
 from .base import BaseBinanceApiClient
 
 
@@ -11,19 +10,9 @@ class BinanceApiClient(BaseBinanceApiClient):
         proxies = kwargs.pop('proxies', None)
         timeout = kwargs.pop('timeout', None)
         headers = self._get_headers(optional_headers)
-        params = self._prepare_request_params(method, signed, force_params, **kwargs)
         with httpx.Client(headers=headers, proxies=proxies, timeout=timeout) as client:
+            params = self._prepare_request_params(method, signed, force_params, **kwargs)
             return client.request(method, url, **params)
-
-    def _get_headers(self, optional_headers: Optional[dict]) -> httpx.Headers:
-        headers = {
-            'Accept': 'application/json'
-        }
-        if self.api_key:
-            headers['X-MBX-APIKEY'] = self.api_key
-        if isinstance(optional_headers, dict):
-            headers.update(optional_headers)
-        return httpx.Headers(headers)
 
     def get_server_time(self, **kwargs) -> httpx.Response:
         method, url = self.get_method_info('get_server_time')
