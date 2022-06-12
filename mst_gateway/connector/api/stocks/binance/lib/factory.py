@@ -28,8 +28,6 @@ class BinanceMethodFactory:
 
     @classmethod
     def info(cls, method_name, testnet=False, **params) -> Tuple[str, httpx.URL]:
-        # print('info name', method_name)
-        # print('info kwargs', params)
         return getattr(cls, method_name)(testnet, **params)
 
     @classmethod
