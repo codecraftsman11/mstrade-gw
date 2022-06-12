@@ -20,7 +20,7 @@ class AsyncBinanceApiClient(BaseBinanceApiClient):
         self._timestamp_offset = data['serverTime'] - int(time.time() * 1000)
         return self
 
-    async def _request(self, method: str, url: str, signed: bool = False,
+    async def _request(self, method: str, url: httpx.URL, signed: bool = False,
                        force_params: bool = False, **kwargs) -> httpx.Response:
         optional_headers = kwargs.pop('headers', None)
         proxies = kwargs.pop('proxies', None)

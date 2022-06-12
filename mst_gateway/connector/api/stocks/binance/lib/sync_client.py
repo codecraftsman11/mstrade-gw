@@ -4,15 +4,15 @@ from .base import BaseBinanceApiClient
 
 class BinanceApiClient(BaseBinanceApiClient):
 
-    def _request(self, method: str, url: str, signed: bool = False,
+    def _request(self, method: str, url: httpx.URL, signed: bool = False,
                  force_params: bool = False, **kwargs) -> httpx.Response:
         optional_headers = kwargs.pop('headers', None)
         proxies = kwargs.pop('proxies', None)
         timeout = kwargs.pop('timeout', None)
         headers = self._get_headers(optional_headers)
         with httpx.Client(headers=headers, proxies=proxies, timeout=timeout) as client:
-            params = self._prepare_request_params(method, signed, force_params, **kwargs)
-            return client.request(method, url, **params)
+            request_params = self._prepare_request_params(method, signed, force_params, **kwargs)
+            return client.request(method, url, **request_params)
 
     def get_server_time(self, **kwargs) -> httpx.Response:
         method, url = self.get_method_info('get_server_time')

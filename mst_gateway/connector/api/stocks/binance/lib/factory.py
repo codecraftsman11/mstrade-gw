@@ -3,7 +3,6 @@ from typing import Tuple
 
 
 class BinanceMethodFactory:
-
     API_URL = 'https://api.binance.com/api'
     API_TESTNET_URL = 'https://testnet.binance.vision/api'
     MARGIN_API_URL = 'https://api.binance.com/sapi'

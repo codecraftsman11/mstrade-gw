@@ -433,13 +433,12 @@ class BitmexRestApi(StockRestApi):
             )}
 
     def _bitmex_api(self, method: callable, **kwargs):
-        rest_method, path = self.handler.get_method_path(method.__name__)
+        rest_method, url = self.handler.get_method_info(method.__name__, **kwargs)
         if not rest_method:
             raise ConnectorError("Bitmex request method error.")
         if not self.ratelimit:
             self.validate_throttling(self.throttle_hash_name())
         else:
-            url = self.handler.create_url(path, **kwargs)
             proxies = self.ratelimit.get_proxies(
                 method=rest_method, url=str(url), hashed_uid=self._generate_hashed_uid()
             )
