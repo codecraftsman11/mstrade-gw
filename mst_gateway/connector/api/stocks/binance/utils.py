@@ -1083,7 +1083,7 @@ def load_commissions(raw_data: dict) -> list:
         {
             'maker': to_float(commission['makerCommission']),
             'taker': to_float(commission['takerCommission']),
-            'type': f'VIP{commission["level"]}',
+            'type': f"VIP{commission['level']}",
         } for commission in raw_data['data']
     ]
 
