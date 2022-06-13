@@ -5,7 +5,6 @@ from typing import Dict, Optional, Union
 import websockets
 from copy import deepcopy
 from mst_gateway.storage import AsyncStateStorage, StateStorageKey
-from binance.client import AsyncClient
 from .router import Router
 from .subscriber import Subscriber
 from .throttle import ThrottleWss
@@ -102,9 +101,8 @@ class StockWssApi(Connector):
             self.partial_state_data.setdefault(subscription, {}).clear()
 
     async def __cleanup_subscribers(self):
-        for sub in [*self.subscribers.values(), *self.auth_subscribers.values()]:
-            if sub.rest_client and isinstance(sub.rest_client, AsyncClient):
-                await sub.rest_client.close_connection()
+        # TODO: if used HTTP session connect, close it
+        pass
 
     async def get_data(self, message: dict) -> Dict[str, Dict]:
         data = await self._router.get_data(message)
