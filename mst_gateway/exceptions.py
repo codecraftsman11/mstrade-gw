@@ -18,10 +18,6 @@ class ConnectorError(GatewayError):
     pass
 
 
-class RateLimitServiceError(GatewayError):
-    pass
-
-
 class RecoverableError(GatewayError):
     """ Used for 429 and 5xx status codes. """
     pass

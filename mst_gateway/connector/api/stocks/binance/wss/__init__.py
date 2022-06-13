@@ -75,15 +75,16 @@ class BinanceWssApi(StockWssApi):
         ) as bin_client:
             try:
                 if self.schema == OrderSchema.exchange:
-                    key = bin_client.handler.stream_get_listen_key()
+                    resp = bin_client.handler.stream_get_listen_key()
                 elif self.schema == OrderSchema.margin_cross:
-                    key = bin_client.handler.margin_stream_get_listen_key()
+                    resp = bin_client.handler.margin_stream_get_listen_key()
                 elif self.schema == OrderSchema.margin:
-                    key = bin_client.handler.futures_stream_get_listen_key()
+                    resp = bin_client.handler.futures_stream_get_listen_key()
                 elif self.schema == OrderSchema.margin_coin:
-                    key = bin_client.handler.futures_coin_stream_get_listen_key()
+                    resp = bin_client.handler.futures_coin_stream_get_listen_key()
                 else:
                     raise ConnectorError(f"Invalid schema {self.schema}.")
+                key = bin_client.handler.handle_response(resp).get('listenKey')
             except Exception as e:
                 raise ConnectorError(e)
             if not key:

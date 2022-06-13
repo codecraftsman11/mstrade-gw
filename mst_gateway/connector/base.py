@@ -26,7 +26,7 @@ class Connector(ABC):
     def _connect(self, **kwargs):
         pass
 
-    def throttle_hash_name(self, name=None):
+    def throttle_hash_name(self, **kwargs):
         return sha256(f"{self.__name__}.*".encode('utf-8')).hexdigest()
 
     def open(self, **kwargs):

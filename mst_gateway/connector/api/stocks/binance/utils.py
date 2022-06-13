@@ -443,26 +443,15 @@ def get_vip(data: dict) -> str:
     return str(data.get('feeTier', 0))
 
 
-def get_interest_rate(asset_rates: list, vip_level: str, asset: str):
+def get_interest_rate(raw_data: dict, vip_level: str, asset: str):
     _h1_rate = None
-    for rate in asset_rates:
+    for rate in raw_data['data']:
         if rate.get('assetName', '').upper() == asset.upper():
             for spec in rate['specs']:
                 if str(spec.get('vipLevel')) == vip_level:
                     _r = to_float(spec.get('dailyInterestRate')) or 0
                     _h1_rate = round(_r * 100 / 24, 8)
                     break
-    return _h1_rate
-
-
-def get_interest_rates(asset_rates: list):
-    _h1_rate = {}
-    for rate in asset_rates:
-        asset = rate.get('assetName', '').lower()
-        _h1_rate.setdefault(asset, {})
-        for spec in rate['specs']:
-            _r = to_float(spec.get('dailyInterestRate')) or 0
-            _h1_rate[asset].setdefault(str(spec.get('vipLevel')), round(_r * 100 / 24, 8))
     return _h1_rate
 
 
@@ -578,15 +567,18 @@ def load_margin_cross_collaterals_data(cross_collaterals: dict) -> list:
     return data
 
 
-def load_exchange_asset_balance(raw_data: list) -> dict:
+def load_exchange_asset_balance(raw_data: dict) -> dict:
     balances = {}
-    for balance in raw_data:
+    for balance in raw_data['balances']:
         balances[balance.get('asset', '').lower()] = to_float(balance.get('free', 0))
     return balances
 
 
-def load_margin_cross_asset_balance(raw_data: list) -> dict:
-    return load_exchange_asset_balance(raw_data)
+def load_margin_cross_asset_balance(raw_data: dict) -> dict:
+    balances = {}
+    for balance in raw_data['userAssets']:
+        balances[balance.get('asset', '').lower()] = to_float(balance.get('free', 0))
+    return balances
 
 
 def load_futures_asset_balance(raw_data: list) -> dict:
@@ -1091,8 +1083,8 @@ def load_commissions(raw_data: dict) -> list:
         {
             'maker': to_float(commission['makerCommission']),
             'taker': to_float(commission['takerCommission']),
-            'type': f'VIP{commission["level"]}',
-        } for commission in raw_data
+            'type': f"VIP{commission['level']}",
+        } for commission in raw_data['data']
     ]
 
 

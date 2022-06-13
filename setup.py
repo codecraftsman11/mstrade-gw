@@ -10,7 +10,7 @@ with open('LICENSE') as f:
 
 setup(
     name='mst-gateway',
-    python_requires='>=3.8.0',
+    python_requires='>=3.9.0',
     version=version.VERSION,
     packages=find_packages(exclude=('tests', 'tests.*')),
     author='Vladimir Belinskiy',
@@ -20,12 +20,8 @@ setup(
     long_description=README,
     url='ssh://belka158@bitbucket.org/mstrade_dev/mst-gateway.git',
     install_requires=[
-        'httpx==0.22.0',
-        'httpx[socks]==0.22.0',
         'websockets==8.1',
-        'python-binance==1.0.10',
-        'pysocks==1.7.1',
-        'aiohttp==3.7.4.post0'
+        'httpx[socks]==0.23.0'
     ],
     extras_require={
         'mysql': ['mysql-connector-python'],
