@@ -6,7 +6,7 @@ class BinanceMethodFactory:
     API_URL = 'https://api.binance.com/api'
     API_TESTNET_URL = 'https://testnet.binance.vision/api'
     MARGIN_API_URL = 'https://api.binance.com/sapi'
-    MARGIN_API_TESTNET_URL = ''  # NotImplemented
+    MARGIN_API_TESTNET_URL = 'https://testnet.binance.vision/sapi'  # NotImplemented
     FUTURES_API_URL = 'https://fapi.binance.com/fapi'
     FUTURES_API_TESTNET_URL = 'https://testnet.binancefuture.com/fapi'
     FUTURES_COIN_API_URL = 'https://dapi.binance.com/dapi'
