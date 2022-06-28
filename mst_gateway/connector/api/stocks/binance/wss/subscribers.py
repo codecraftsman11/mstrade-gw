@@ -1,5 +1,6 @@
 from __future__ import annotations
 import asyncio
+import json
 from copy import deepcopy
 from asyncio import CancelledError
 from typing import TYPE_CHECKING, Optional
@@ -100,11 +101,15 @@ class BinanceSubscriber(Subscriber):
         """
         watcher for new symbol when `general_subscribe_available` is False
         """
-        redis = await api.storage.get_client()
-        symbol_channel = (await redis.subscribe(f"{StateStorageKey.symbol}.{api.name}.{api.schema}"))[0]
-        while api.handler and not api.handler.closed:
-            while await symbol_channel.wait_message():
-                symbols = await symbol_channel.get_json()
+        redis = api.storage.get_client()
+        pubsub = redis.pubsub()
+        pubsub.subscribe(f"{StateStorageKey.symbol}.{api.name}.{api.schema}")
+        while True:
+            if api.handler and api.handler.closed:
+                break
+            message = pubsub.get_message()
+            if message and message['type'] == 'message':
+                symbols = json.loads(message['data'])
                 unsubscribe_symbols = self._subscribed_symbols.difference(symbols)
                 subscribe_symbols = symbols.difference(self._subscribed_symbols)
                 for symbol in unsubscribe_symbols:
@@ -114,6 +119,7 @@ class BinanceSubscriber(Subscriber):
                     await asyncio.sleep(1)
                     await self._subscribe(api, symbol)
                 self._subscribed_symbols = symbols
+            await asyncio.sleep(0.5)
 
 
 class BinanceOrderBookSubscriber(BinanceSubscriber):
@@ -175,7 +181,7 @@ class BinanceWalletSubscriber(BinanceSubscriber):
             return None, None
         if schema in (OrderSchema.margin,):
             try:
-                resp = await client._handler.get_futures_loan_wallet()
+                resp = client.handler.get_futures_loan_wallet()
                 cross_collaterals = client.handler.handle_response(resp)
             except (GatewayError, BinanceAPIException):
                 cross_collaterals = {}
@@ -219,25 +225,27 @@ class BinancePositionSubscriber(BinanceSubscriber):
     detail_subscribe_available = False
 
     async def subscribe_positions_state(self, api: BinanceWssApi):
-        redis = await api.storage.get_client()
-        state_channel = (await redis.psubscribe(
-            f"{StateStorageKey.state}:{self.subscription}.{api.account_id}.{api.name}.{api.schema}.*".lower()))[0]
+        redis = api.storage.get_client()
+        pubsub = redis.pubsub()
+        pubsub.psubscribe(
+            f"{StateStorageKey.state}:{self.subscription}.{api.account_id}.{api.name}.{api.schema}.*".lower())
         api.partial_state_data[self.subscription].setdefault('position_state', {})
-        while await state_channel.wait_message():
-            try:
-                state_key, state_data = await state_channel.get_json()
-            except ValueError:
-                continue
-            if (action := state_data.get('action')) and (symbol := state_data.get('symbol')):
-                _state = api.partial_state_data[self.subscription]['position_state']
-                if action == 'delete':
-                    _state.pop(symbol.lower(), None)
-                else:
-                    _state[symbol.lower()] = state_data
+        while True:
+            message = pubsub.get_message()
+            if message and message['type'] == 'pmessage':
+                state_data = json.loads(message['data'])
+                if (action := state_data.get('action')) and (symbol := state_data.get('symbol')):
+                    _state = api.partial_state_data[self.subscription]['position_state']
+                    if action == 'delete':
+                        _state.pop(symbol.lower(), None)
+                    else:
+                        _state[symbol.lower()] = state_data
+            else:
+                await asyncio.sleep(1.5)
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
         api.tasks.append(asyncio.create_task(self.subscribe_positions_state(api)))
-        positions_state_data = await api.storage.get_pattern(
+        positions_state_data = api.storage.get_pattern(
             f"{StateStorageKey.state}:{self.subscription}.{api.account_id}.{api.name}.{api.schema}.*".lower()
         )
         return {
@@ -282,7 +290,7 @@ class BinanceMarginCoinPositionSubscriber(BinanceMarginPositionSubscriber):
                 account_info = client.handler.handle_response(resp)
                 resp = client.handler.get_futures_coin_leverage_bracket()
                 leverage_brackets = client.handler.handle_response(resp)
-                state_data = await api.storage.get(f"{StateStorageKey.symbol}.{api.name}.{api.schema}")
+                state_data = api.storage.get(f"{StateStorageKey.symbol}.{api.name}.{api.schema}")
                 return {
                     'position_state': utils.load_futures_coin_positions_state(account_info, state_data),
                     'leverage_brackets': utils.load_futures_coin_leverage_brackets_as_dict(leverage_brackets),
