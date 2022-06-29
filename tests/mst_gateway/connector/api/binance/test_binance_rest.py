@@ -4,6 +4,8 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import Optional
 from schema import Schema
+
+from mst_gateway.connector.api import OrderTTL
 from mst_gateway.logging import init_logger
 from mst_gateway.calculator import BinanceFinFactory
 from mst_gateway.connector.api.stocks.binance.rest import BinanceRestApi
@@ -507,6 +509,11 @@ class TestOrderBinanceRestApi:
                  'system_symbol': 'btcusd',
                  'type': OrderType.market,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
+                 'ttl': OrderTTL.GTC,
+                 'is_iceberg': False,
+                 'iceberg_volume': 0.0,
+                 'is_passive': False,
+                 'comments': None
              }),
             ('tbinance_spot', OrderSchema.exchange, SELL, OrderType.market, {
                  'active': True,
@@ -519,6 +526,11 @@ class TestOrderBinanceRestApi:
                  'system_symbol': 'btcusd',
                  'type': OrderType.market,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
+                 'ttl': OrderTTL.GTC,
+                 'is_iceberg': False,
+                 'iceberg_volume': 0.0,
+                 'is_passive': False,
+                 'comments': None
              }),
             ('tbinance_spot', OrderSchema.exchange, BUY, OrderType.limit, {
                  'active': False,
@@ -531,6 +543,11 @@ class TestOrderBinanceRestApi:
                  'system_symbol': 'btcusd',
                  'type': OrderType.limit,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
+                 'ttl': OrderTTL.GTC,
+                 'is_iceberg': False,
+                 'iceberg_volume': 0.0,
+                 'is_passive': False,
+                 'comments': None
              }),
             ('tbinance_spot', OrderSchema.exchange, SELL, OrderType.limit, {
                  'active': False,
@@ -543,6 +560,11 @@ class TestOrderBinanceRestApi:
                  'system_symbol': 'btcusd',
                  'type': OrderType.limit,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
+                 'ttl': OrderTTL.GTC,
+                 'is_iceberg': False,
+                 'iceberg_volume': 0.0,
+                 'is_passive': False,
+                 'comments': None
              }),
             ('tbinance_margin', OrderSchema.margin, BUY, OrderType.market, {
                  'active': False,
@@ -555,6 +577,11 @@ class TestOrderBinanceRestApi:
                  'system_symbol': 'btcusd',
                  'type': OrderType.market,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                 'ttl': OrderTTL.GTC,
+                 'is_iceberg': False,
+                 'iceberg_volume': 0.0,
+                 'is_passive': False,
+                 'comments': None
              }),
             ('tbinance_margin', OrderSchema.margin, SELL, OrderType.market,  {
                  'active': False,
@@ -567,6 +594,11 @@ class TestOrderBinanceRestApi:
                  'system_symbol': 'btcusd',
                  'type': OrderType.market,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                 'ttl': OrderTTL.GTC,
+                 'is_iceberg': False,
+                 'iceberg_volume': 0.0,
+                 'is_passive': False,
+                 'comments': None
              }),
             ('tbinance_margin', OrderSchema.margin, BUY, OrderType.limit, {
                  'active': False,
@@ -579,6 +611,11 @@ class TestOrderBinanceRestApi:
                  'system_symbol': 'btcusd',
                  'type': OrderType.limit,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                 'ttl': OrderTTL.GTC,
+                 'is_iceberg': False,
+                 'iceberg_volume': 0.0,
+                 'is_passive': False,
+                 'comments': None
              }),
             ('tbinance_margin', OrderSchema.margin, SELL, OrderType.limit, {
                  'active': False,
@@ -591,6 +628,11 @@ class TestOrderBinanceRestApi:
                  'system_symbol': 'btcusd',
                  'type': OrderType.limit,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                 'ttl': OrderTTL.GTC,
+                 'is_iceberg': False,
+                 'iceberg_volume': 0.0,
+                 'is_passive': False,
+                 'comments': None
              }),
             ('tbinance_margin', OrderSchema.margin_coin, BUY, OrderType.market, {
                  'active': False,
@@ -603,6 +645,11 @@ class TestOrderBinanceRestApi:
                  'system_symbol': 'btcusd',
                  'type': OrderType.market,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
+                 'ttl': OrderTTL.GTC,
+                 'is_iceberg': False,
+                 'iceberg_volume': 0.0,
+                 'is_passive': False,
+                 'comments': None
              }),
             ('tbinance_margin', OrderSchema.margin_coin, SELL, OrderType.market, {
                  'active': False,
@@ -615,6 +662,11 @@ class TestOrderBinanceRestApi:
                  'system_symbol': 'btcusd',
                  'type': OrderType.market,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
+                 'ttl': OrderTTL.GTC,
+                 'is_iceberg': False,
+                 'iceberg_volume': 0.0,
+                 'is_passive': False,
+                 'comments': None
              }),
             ('tbinance_margin', OrderSchema.margin_coin, BUY, OrderType.limit, {
                  'active': False,
@@ -627,6 +679,11 @@ class TestOrderBinanceRestApi:
                  'system_symbol': 'btcusd',
                  'type': OrderType.limit,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
+                 'ttl': OrderTTL.GTC,
+                 'is_iceberg': False,
+                 'iceberg_volume': 0.0,
+                 'is_passive': False,
+                 'comments': None
              }),
             ('tbinance_margin', OrderSchema.margin_coin, SELL, OrderType.limit, {
                  'active': False,
@@ -639,6 +696,11 @@ class TestOrderBinanceRestApi:
                  'system_symbol': 'btcusd',
                  'type': OrderType.limit,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
+                 'ttl': OrderTTL.GTC,
+                 'is_iceberg': False,
+                 'iceberg_volume': 0.0,
+                 'is_passive': False,
+                 'comments': None
              }),
         ],
         indirect=['rest'],
@@ -699,6 +761,11 @@ class TestOrderBinanceRestApi:
                 'system_symbol': 'btcusd',
                 'type': OrderType.limit,
                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange] * 2,
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
             }),
             ('tbinance_margin', OrderSchema.margin, {
                 'active': False,
@@ -711,6 +778,11 @@ class TestOrderBinanceRestApi:
                 'system_symbol': 'btcusd',
                 'type': OrderType.limit,
                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin] * 2,
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
             }),
             ('tbinance_margin', OrderSchema.margin_coin, {
                 'active': False,
@@ -723,6 +795,12 @@ class TestOrderBinanceRestApi:
                 'system_symbol': 'btcusd',
                 'type': OrderType.limit,
                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin] * 2,
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+
             }),
         ],
         indirect=['rest'],
@@ -755,6 +833,11 @@ class TestOrderBinanceRestApi:
                 'system_symbol': 'btcusd',
                 'type': OrderType.limit,
                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
             }),
             ('tbinance_margin', OrderSchema.margin, {
                 'active': True,
@@ -767,6 +850,11 @@ class TestOrderBinanceRestApi:
                 'system_symbol': 'btcusd',
                 'type': OrderType.limit,
                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
             }),
             ('tbinance_margin', OrderSchema.margin_coin, {
                 'active': True,
@@ -779,6 +867,11 @@ class TestOrderBinanceRestApi:
                 'system_symbol': 'btcusd',
                 'type': OrderType.limit,
                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
             }),
         ],
         indirect=['rest'],

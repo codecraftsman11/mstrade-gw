@@ -27,6 +27,11 @@ DEFAULT_ORDER = {
         'system_symbol': 'btcusd',
         'type': OrderType.limit,
         'volume': DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
+        'ttl': OrderTTL.GTC,
+        'is_iceberg': False,
+        'iceberg_volume': 0.0,
+        'is_passive': False,
+        'comments': None
     },
     OrderSchema.margin: {
         'active': False,
@@ -39,6 +44,11 @@ DEFAULT_ORDER = {
         'system_symbol': 'btcusd',
         'type': OrderType.limit,
         'volume': DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+        'ttl': OrderTTL.GTC,
+        'is_iceberg': False,
+        'iceberg_volume': 0.0,
+        'is_passive': False,
+        'comments': None
     },
     OrderSchema.margin_coin: {
         'active': False,
@@ -51,6 +61,11 @@ DEFAULT_ORDER = {
         'system_symbol': 'btcusd',
         'type': OrderType.limit,
         'volume': DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
+        'ttl': OrderTTL.GTC,
+        'is_iceberg': False,
+        'iceberg_volume': 0.0,
+        'is_passive': False,
+        'comments': None
     },
 }
 
