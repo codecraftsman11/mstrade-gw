@@ -440,7 +440,7 @@ class TestBinanceWssApi:
     )
     def test__split_message(self, wss: BinanceWssApi, subscr_name, message, expect):
         if subscr_name == 'wallet' and wss.schema == OrderSchema.exchange:
-            assert wss._split_message(deepcopy(message)) == [None]
+            assert wss._split_message(deepcopy(message)) == []
             wss._subscriptions = {subscr_name: {'*': {'1'}}}
         assert wss._split_message(deepcopy(message)) == expect
         if subscr_name == 'wallet' and wss.schema == OrderSchema.exchange:

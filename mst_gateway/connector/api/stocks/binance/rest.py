@@ -279,7 +279,7 @@ class BinanceRestApi(StockRestApi):
             'order_type': order_type,
             'side': utils.store_order_side(side),
             'volume': volume,
-            'price': str(price),
+            'price': str(price) if price else None,
         }
         params = utils.generate_parameters_by_order_type(main_params, options, schema)
         data = self._binance_api(schema_handlers[schema.lower()], **params)

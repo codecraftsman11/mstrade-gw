@@ -20,7 +20,7 @@ setup(
     long_description=README,
     url='ssh://belka158@bitbucket.org/mstrade_dev/mst-gateway.git',
     install_requires=[
-        'websockets==8.1',
+        'websockets==10.3',
         'httpx[socks]==0.23.0'
     ],
     extras_require={
