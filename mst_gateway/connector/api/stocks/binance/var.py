@@ -36,6 +36,13 @@ BINANCE_ORDER_STATUS_MAP = {
     'NEW_ADL': api.OrderState.liquidated
 }
 
+BINANCE_ORDER_TTL_MAP = {
+    'IOC': api.OrderTTL.IOC,
+    'FOK': api.OrderTTL.FOK,
+    'GTC': api.OrderTTL.GTC,
+    'GTX': api.OrderTTL.GTC
+}
+
 PARAMETER_NAMES_MAP = {
     'order_id': 'newClientOrderId',
     'exchange_order_id': 'orderId',
