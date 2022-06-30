@@ -108,11 +108,11 @@ class BinanceRestApi(StockRestApi):
         schema_handlers = {
             OrderSchema.margin: (
                 self._handler.get_futures_order_book_ticker,
-                self._handler.get_futures_mark_price,
+                self._handler.get_futures_premium_index,
             ),
             OrderSchema.margin_coin: (
                 self._handler.get_futures_coin_order_book_ticker,
-                self._handler.get_futures_coin_mark_price,
+                self._handler.get_futures_coin_premium_index,
             ),
         }
         if isinstance(data, list):
@@ -120,26 +120,29 @@ class BinanceRestApi(StockRestApi):
         data_bid_ask_price = self._binance_api(schema_handlers[schema][0], symbol=symbol)
         if isinstance(data_bid_ask_price, list):
             data_bid_ask_price = data_bid_ask_price[0]
-        mark_price = self._binance_api(schema_handlers[schema][1], symbol=symbol)
-        if isinstance(mark_price, list):
-            mark_price = mark_price[0]
+        data_premium_index = self._binance_api(schema_handlers[schema][1], symbol=symbol)
+        if isinstance(data_premium_index, list):
+            data_premium_index = data_premium_index[0]
         data.update({
             'bidPrice': data_bid_ask_price.get('bidPrice'),
             'askPrice': data_bid_ask_price.get('askPrice'),
-            'markPrice': mark_price.get('markPrice'),
+            'markPrice': data_premium_index.get('markPrice'),
+            'lastFundingRate': data_premium_index.get('lastFundingRate')
         })
         return utils.load_futures_symbol_data(schema, data, state_data)
 
     @staticmethod
-    def _update_ticker_data(ticker_data: list, bid_ask_prices: dict, mark_prices: dict) -> dict:
+    def _update_ticker_data(ticker_data: list, bid_ask_prices: dict, premium_index: dict) -> dict:
         data = {}
         for ticker in ticker_data:
             symbol = ticker['symbol'].lower()
             bid_ask_price = bid_ask_prices.get(symbol, {})
+            premium_index = premium_index.get(symbol, {})
             ticker.update({
                 'bidPrice': bid_ask_price.get('bidPrice'),
                 'askPrice': bid_ask_price.get('askPrice'),
-                'markPrice': mark_prices.get(symbol)
+                'markPrice': premium_index.get('markPrice'),
+                'lastFundingRate': premium_index.get('lastFundingRate')
             })
             data[symbol] = ticker
         return data
@@ -168,17 +171,17 @@ class BinanceRestApi(StockRestApi):
         schema_handlers = {
             OrderSchema.margin: (
                 self._handler.get_futures_order_book_ticker,
-                self._handler.get_futures_mark_price,
+                self._handler.get_futures_premium_index,
             ),
             OrderSchema.margin_coin: (
                 self._handler.get_futures_coin_order_book_ticker,
-                self._handler.get_futures_coin_mark_price,
+                self._handler.get_futures_coin_premium_index,
             ),
         }
         bid_ask_prices = {bap['symbol'].lower(): bap for bap in self._binance_api(schema_handlers[schema][0])}
-        mark_prices = {p['symbol'].lower(): p.get('markPrice') for p in self._binance_api(schema_handlers[schema][1])}
-        data = self._update_ticker_data(data, bid_ask_prices, mark_prices)
-        return [utils.load_futures_symbol_data(schema, data.get(symbol.lower()), st_data)
+        premium_index = {pi['symbol'].lower(): pi for pi in self._binance_api(schema_handlers[schema][1])}
+        data = self._update_ticker_data(data, bid_ask_prices, premium_index)
+        return [utils.load_futures_symbol_data(schema, data.get(symbol.lower(), {}), st_data)
                 for symbol, st_data in state_data.items()]
 
     def get_exchange_symbol_info(self, schema: str) -> list:

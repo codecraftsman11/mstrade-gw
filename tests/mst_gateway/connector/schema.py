@@ -56,6 +56,7 @@ SYMBOL_FIELDS = {
     'created': Or(None, Use(datetime_valid)),
     'max_leverage': Or(None, float),
     'wallet_asset': Or(None, str),
+    'funding_rate': Or(None, float)
 }
 
 ORDER_FIELDS = {
@@ -408,6 +409,7 @@ WS_MESSAGE_DATA_FIELDS = {
         'crt': Or(None, Use(datetime_valid)),
         'mlvr': Use(float_valid),
         'wa': Or(None, str),
+        'fr': Or(None, float)
     },
     'trade': {
         'tm': Use(iso_datetime_valid),

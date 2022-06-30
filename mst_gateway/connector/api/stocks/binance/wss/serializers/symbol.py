@@ -37,7 +37,7 @@ class BinanceMarginSymbolSerializer(BinanceSymbolSerializer):
         elif table == 'markPriceUpdate':
             for item in message.get('data', []):
                 if symbol := item.get('s', '').lower():
-                    self._mark_prices[symbol] = utils.to_float(item.get('p'))
+                    self._mark_prices[symbol] = {'mp': item.get('p'), 'fr': item.get('r')}
 
     async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         if not self.is_item_valid(message, item):
@@ -47,5 +47,5 @@ class BinanceMarginSymbolSerializer(BinanceSymbolSerializer):
         if self._wss_api.register_state:
             if (state_data := self._wss_api.get_state_data(_symbol)) is None:
                 return None
-        item.update(dict(**self._book_ticker.get(_symbol, {}), mp=self._mark_prices.get(_symbol)))
+        item.update(dict(**self._book_ticker.get(_symbol, {}), **self._mark_prices.get(_symbol, {})))
         return utils.load_futures_symbol_ws_data(self._wss_api.schema, item, state_data)
