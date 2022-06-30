@@ -1,10 +1,11 @@
 import asyncio
+import json
 from abc import ABCMeta, abstractmethod
 from logging import Logger
 from typing import Dict, Optional, Union
 import websockets
 from copy import deepcopy
-from mst_gateway.storage import AsyncStateStorage, StateStorageKey
+from mst_gateway.storage import StateStorage, StateStorageKey
 from .router import Router
 from .subscriber import Subscriber
 from .throttle import ThrottleWss
@@ -23,7 +24,7 @@ class StockWssApi(Connector):
     BASE_URL = None
     TEST_URL = None
     throttle = ThrottleWss()
-    storage = AsyncStateStorage()
+    storage = StateStorage()
 
     def __init__(self,
                  name: str = None,
@@ -51,7 +52,7 @@ class StockWssApi(Connector):
         self.auth_connect = False
         self.schema = schema
         if state_storage is not None:
-            self.storage = AsyncStateStorage(state_storage)
+            self.storage = StateStorage(state_storage)
         self.ratelimit = ratelimit
         self.register_state = register_state
         super().__init__(auth, logger)
@@ -105,8 +106,7 @@ class StockWssApi(Connector):
         pass
 
     async def get_data(self, message: dict) -> Dict[str, Dict]:
-        data = await self._router.get_data(message)
-        return data
+        return await self._router.get_data(message)
 
     @property
     def router(self):
@@ -209,7 +209,7 @@ class StockWssApi(Connector):
         return False, symbol
 
     async def open(self, **kwargs):
-        throttle_valid = await self.throttle.validate(
+        throttle_valid = self.throttle.validate(
             key=dict(name=self.name, url=self._url),
             rate=self.throttle.ws_limit
         )
@@ -340,6 +340,8 @@ class StockWssApi(Connector):
         return None
 
     def _split_message(self, message) -> list:
+        if not message:
+            return []
         if isinstance(message, list):
             return message
         return [message]
@@ -354,11 +356,16 @@ class StockWssApi(Connector):
         return self.__state_data.get(symbol.lower())
 
     async def __load_state_data(self):
-        self.__state_data = await self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{self.schema}")
-        redis = await self.storage.get_client()
-        symbol_channel = (await redis.subscribe(f"{StateStorageKey.symbol}.{self.name}.{self.schema}"))[0]
-        while await symbol_channel.wait_message():
-            self.__state_data = await symbol_channel.get_json()
+        self.__state_data = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{self.schema}")
+        redis = self.storage.get_client()
+        pubsub = redis.pubsub()
+        pubsub.subscribe(f"{StateStorageKey.symbol}.{self.name}.{self.schema}")
+        while True:
+            message = pubsub.get_message()
+            if message and message['type'] == 'message':
+                self.__state_data = json.loads(message['data'])
+            else:
+                await asyncio.sleep(0.5)
 
     @property
     def state_symbol_list(self) -> list:
