@@ -59,7 +59,7 @@ def load_futures_symbol_data(schema: str, raw_data: Optional[dict], state_data: 
     if data := load_symbol_data(schema, raw_data, state_data):
         data.update({
             'mark_price': to_float(raw_data.get('markPrice')),
-            'funding_rate': funding2proc(to_float(raw_data.get('lastFundingRate')))
+            'funding_rate': load_funding_rate(raw_data.get('lastFundingRate'))
         })
     return data
 
@@ -1288,12 +1288,13 @@ def load_futures_symbol_ws_data(schema: str, raw_data: dict, state_data: Optiona
     if data := load_symbol_ws_data(schema, raw_data, state_data):
         data.update({
             'mp': to_float(raw_data.get('mp')),
-            'fr': funding2proc(to_float(raw_data.get('fr')))
+            'fr': load_funding_rate(raw_data.get('fr'))
         })
     return data
 
 
-def funding2proc(value: float) -> float:
+def load_funding_rate(value: str) -> float:
+    value = to_float(value)
     return value * 100 if value else value
 
 

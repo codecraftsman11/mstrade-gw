@@ -30,7 +30,7 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'mark_price': raw_data.get('markPrice'),
         'high_price': to_float(raw_data.get('highPrice')),
         'low_price': to_float(raw_data.get('lowPrice')),
-        'funding_rate': funding2proc(to_float(raw_data.get('fundingRate')))
+        'funding_rate': load_funding_rate(raw_data.get('fundingRate'))
     }
     if isinstance(state_data, dict):
         face_price = None
@@ -59,7 +59,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict], use_state: b
     price24 = to_float(raw_data.get('prevPrice24h'))
     funding_rate = to_float(raw_data.get('fundingRate'))
     if not use_state:
-        funding_rate = funding2proc(funding_rate)
+        funding_rate = load_funding_rate(funding_rate)
     data = {
         'tm': symbol_time,
         's': symbol,
@@ -92,7 +92,7 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict], use_state: b
     return data
 
 
-def funding2proc(value: float) -> float:
+def load_funding_rate(value: float) -> float:
     return value * 100 if value else value
 
 
