@@ -315,10 +315,8 @@ def load_quote_bin_data(raw_data: list, state_data: Optional[dict]) -> dict:
     return data
 
 
-def _is_passive_order(ttl: str) -> bool:
-    if ttl == var.PARAMETER_NAMES_MAP.get('GTX'):
-        return True
-    return False
+def load_order_passive(ttl: str) -> bool:
+    return ttl.upper() == 'GTX'
 
 
 def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
@@ -340,7 +338,7 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
         'ttl': var.BINANCE_ORDER_TTL_MAP.get(raw_data.get('timeInForce')),
         'is_iceberg': bool(iceberg_volume),
         'iceberg_volume': iceberg_volume,
-        'is_passive': _is_passive_order(raw_data.get('timeInForce')),
+        'is_passive': load_order_passive(raw_data.get('timeInForce')),
         'comments': None,
         **order_type_and_exec
     }
