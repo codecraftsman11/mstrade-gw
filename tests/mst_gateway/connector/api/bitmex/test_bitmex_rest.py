@@ -9,7 +9,7 @@ from mst_gateway.logging import init_logger
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector.api.stocks.bitmex import BitmexRestApi
 from mst_gateway.exceptions import ConnectorError
-from mst_gateway.connector.api import BUY, SELL, OrderType, OrderSchema, LeverageType, OrderExec
+from mst_gateway.connector.api import BUY, SELL, OrderType, OrderSchema, LeverageType, OrderExec, OrderTTL
 from tests.mst_gateway.connector import schema as fields
 from tests import config as cfg
 from .data import order as order_data
@@ -502,7 +502,12 @@ class TestOrderBitmexRestApi:
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.market,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.IOC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, SELL, OrderType.market, {
                 'execution': OrderExec.market,
@@ -513,7 +518,12 @@ class TestOrderBitmexRestApi:
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.market,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.IOC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, BUY, OrderType.limit, {
                 'execution': OrderExec.limit,
@@ -524,7 +534,12 @@ class TestOrderBitmexRestApi:
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.limit,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, SELL, OrderType.limit, {
                 'execution': OrderExec.limit,
@@ -535,7 +550,12 @@ class TestOrderBitmexRestApi:
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.limit,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
             }),
         ],
         indirect=['rest'],
@@ -591,6 +611,11 @@ class TestOrderBitmexRestApi:
                 'system_symbol': order_data.DEFAULT_SYSTEM_SYMBOL,
                 'type': OrderType.market,
                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin] * 2,
+                'ttl': OrderTTL.IOC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
             }),
         ],
         indirect=['rest'],
@@ -608,16 +633,33 @@ class TestOrderBitmexRestApi:
         rest.close_all_orders(order['symbol'], schema)
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbitmex', OrderSchema.margin)],
+        'rest, schema, expect', [
+            ('tbitmex', OrderSchema.margin, {
+                'execution': OrderExec.limit,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.margin,
+                'side': order_data.DEFAULT_ORDER_SIDE,
+                'stop': 0.0,
+                'symbol': order_data.DEFAULT_SYMBOL,
+                'system_symbol': order_data.DEFAULT_SYSTEM_SYMBOL,
+                'type': OrderType.limit,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Canceled: Canceled via API.\nSubmitted via API."
+            }),
+        ],
         indirect=['rest'],
     )
-    def test_cancel_order(self, rest: BitmexRestApi, schema: str):
+    def test_cancel_order(self, rest: BitmexRestApi, schema: str, expect: dict):
         default_order = create_default_order(rest, schema)
         order_schema = Schema(fields.ORDER_FIELDS)
         order = rest.cancel_order(default_order['exchange_order_id'], default_order['symbol'], schema)
         assert order_schema.validate(order) == order
         clear_stock_order_data(order)
-        assert order == order_data.DEFAULT_ORDER[schema]
+        assert order == expect
 
     @pytest.mark.parametrize(
         'rest, schema', [('tbitmex', OrderSchema.margin)],

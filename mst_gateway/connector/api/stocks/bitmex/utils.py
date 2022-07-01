@@ -215,6 +215,7 @@ def load_order_side(order_side: str) -> int:
 def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
     order_time = to_date(raw_data.get('timestamp'))
     order_type_and_exec = load_order_type_and_exec(schema, raw_data.get('ordType'))
+    iceberg_volume = to_float(raw_data.get('displayQty'))
     data = {
         'exchange_order_id': raw_data.get('orderID'),
         'symbol': raw_data.get('symbol'),
@@ -226,6 +227,11 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
         'price': to_float(raw_data.get('price')),
         'time': order_time,
         'active': bool(raw_data.get('ordStatus') != "New"),
+        'ttl': var.BITMEX_ORDER_TTL_MAP.get(raw_data.get('timeInForce')),
+        'is_iceberg': bool(iceberg_volume),
+        'iceberg_volume': iceberg_volume,
+        'is_passive': bool(raw_data.get('execInst')),
+        'comments': raw_data.get('text'),
         **order_type_and_exec,
     }
     if isinstance(state_data, dict):

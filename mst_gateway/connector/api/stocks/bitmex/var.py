@@ -38,6 +38,12 @@ BITMEX_ORDER_STATUS_MAP = {
     'Expired': api.OrderState.expired,
 }
 
+BITMEX_ORDER_TTL_MAP = {
+    'ImmediateOrCancel': api.OrderTTL.IOC,
+    'FillOrKill': api.OrderTTL.FOK,
+    'GoodTillCancel': api.OrderTTL.GTC
+}
+
 PARAMETER_NAMES_MAP = {
     'order_id': 'clOrdID',
     'exchange_order_id': 'orderID',
@@ -57,7 +63,6 @@ PARAMETER_NAMES_MAP = {
     'FOK': 'FillOrKill',
     'IOC': 'ImmediateOrCancel',
 }
-
 
 DEFAULT_PARAMETERS = [
     'clOrdID',
