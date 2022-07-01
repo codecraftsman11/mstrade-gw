@@ -318,10 +318,15 @@ def load_quote_bin_data(raw_data: list, state_data: Optional[dict]) -> dict:
     return data
 
 
+def load_order_passive(ttl: str) -> bool:
+    return ttl.upper() == 'GTX'
+
+
 def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
     _time_field = raw_data.get('time') or raw_data.get('transactTime') or raw_data.get('updateTime')
     _time = to_date(_time_field) or datetime.now()
     order_type_and_exec = load_order_type_and_exec(schema, raw_data.get('type').upper())
+    iceberg_volume = to_float(raw_data.get('icebergQty', 0.0))
     data = {
         'time': _time,
         'exchange_order_id': str(raw_data.get('orderId')),
@@ -333,6 +338,11 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
         'side': load_order_side(raw_data.get('side')),
         'price': to_float(raw_data.get('price')),
         'active': raw_data.get('status') != "NEW",
+        'ttl': var.BINANCE_ORDER_TTL_MAP.get(raw_data.get('timeInForce')),
+        'is_iceberg': bool(iceberg_volume),
+        'iceberg_volume': iceberg_volume,
+        'is_passive': load_order_passive(raw_data.get('timeInForce')),
+        'comments': None,
         **order_type_and_exec
     }
     if isinstance(state_data, dict):
