@@ -29,7 +29,8 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'volume24': raw_data.get('volume24h'),
         'mark_price': raw_data.get('markPrice'),
         'high_price': to_float(raw_data.get('highPrice')),
-        'low_price': to_float(raw_data.get('lowPrice'))
+        'low_price': to_float(raw_data.get('lowPrice')),
+        'funding_rate': load_funding_rate(raw_data.get('fundingRate'))
     }
     if isinstance(state_data, dict):
         face_price = None
@@ -51,11 +52,14 @@ def load_symbol_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     return data
 
 
-def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict], use_state: bool = False) -> dict:
     symbol = raw_data.get('symbol')
     symbol_time = to_iso_datetime(raw_data.get('timestamp'))
     price = to_float(raw_data.get('lastPrice'))
     price24 = to_float(raw_data.get('prevPrice24h'))
+    funding_rate = to_float(raw_data.get('fundingRate'))
+    if not use_state:
+        funding_rate = load_funding_rate(funding_rate)
     data = {
         'tm': symbol_time,
         's': symbol,
@@ -67,7 +71,8 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'v24': raw_data.get('volume24h'),
         'mp': to_float(raw_data.get('markPrice')),
         'hip': to_float(raw_data.get("highPrice")),
-        'lop': to_float(raw_data.get('lowPrice'))
+        'lop': to_float(raw_data.get('lowPrice')),
+        'fr': funding_rate
     }
     if isinstance(state_data, dict):
         face_price_data = state_data.get('extra', {}).get('face_price_data', {})
@@ -85,6 +90,10 @@ def load_symbol_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
             'wa': state_data.get('wallet_asset'),
         })
     return data
+
+
+def load_funding_rate(value: float) -> float:
+    return value * 100 if value else value
 
 
 def load_currency_exchange_symbol(currency: list) -> list:

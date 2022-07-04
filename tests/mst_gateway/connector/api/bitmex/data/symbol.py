@@ -33,6 +33,7 @@ DEFAULT_SYMBOL_DATA = {
                             "crt": "2020-07-01T15:10:16.748936",
                             "mlvr": 100.0,
                             "wa": "XBT",
+                            "fr": 0.01
                         }
                     ],
                 }
@@ -40,7 +41,7 @@ DEFAULT_SYMBOL_DATA = {
 
         },
         {
-            'message': '{"table":"instrument","action":"update","data":[{"symbol":"XBTUSD","lastPrice":46691.5,"timestamp":"2021-12-18T20:03:16.369Z","lastChangePcnt":-0.0022}]}',
+            'message': '{"table":"instrument","action":"update","data":[{"symbol":"XBTUSD","lastPrice":46691.5,"timestamp":"2021-12-18T20:03:16.369Z","lastChangePcnt":-0.0022,"fundingRate":-0.0022}]}',
             'expect': {
                 "symbol": {
                     "acc": "tbitmex",
@@ -70,6 +71,7 @@ DEFAULT_SYMBOL_DATA = {
                             "crt": "2020-07-01T15:10:16.748936",
                             "mlvr": 100.0,
                             "wa": "XBT",
+                            "fr": -0.22
                         }
                     ],
                 }
@@ -106,6 +108,7 @@ DEFAULT_SYMBOL_DATA = {
                             "crt": "2020-07-01T15:10:16.748936",
                             "mlvr": 100.0,
                             "wa": "XBT",
+                            "fr": -0.22
                         }
                     ],
                 }

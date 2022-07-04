@@ -380,12 +380,12 @@ class AsyncBinanceApiClient(BaseBinanceApiClient):
         method, url = self.get_method_info('get_futures_coin_leverage_bracket')
         return await self._request(method, url, signed=True, force_params=True, data=kwargs)
 
-    async def get_futures_mark_price(self, **kwargs) -> httpx.Response:
-        method, url = self.get_method_info('get_futures_mark_price')
+    async def get_futures_premium_index(self, **kwargs) -> httpx.Response:
+        method, url = self.get_method_info('get_futures_premium_index')
         return await self._request(method, url, force_params=True, data=kwargs)
 
-    async def get_futures_coin_mark_price(self, **kwargs) -> httpx.Response:
-        method, url = self.get_method_info('get_futures_coin_mark_price')
+    async def get_futures_coin_premium_index(self, **kwargs) -> httpx.Response:
+        method, url = self.get_method_info('get_futures_coin_premium_index')
         return await self._request(method, url, force_params=True, data=kwargs)
 
     async def get_public_interest_rate(self, **kwargs) -> httpx.Response:

@@ -374,11 +374,11 @@ class BinanceMethodFactory:
         return cls.GET, httpx.URL(f"{cls._futures_coin_api_url(testnet)}/{cls.V2}/leverageBracket", params=params)
 
     @classmethod
-    def get_futures_mark_price(cls, testnet=False, **params):
+    def get_futures_premium_index(cls, testnet=False, **params):
         return cls.GET, httpx.URL(f"{cls._futures_api_url(testnet)}/{cls.V1}/premiumIndex", params=params)
 
     @classmethod
-    def get_futures_coin_mark_price(cls, testnet=False, **params):
+    def get_futures_coin_premium_index(cls, testnet=False, **params):
         return cls.GET, httpx.URL(f"{cls._futures_coin_api_url(testnet)}/{cls.V1}/premiumIndex", params=params)
 
     @classmethod
