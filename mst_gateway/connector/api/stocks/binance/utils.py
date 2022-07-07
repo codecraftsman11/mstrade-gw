@@ -322,7 +322,7 @@ def load_order_passive(ttl: str) -> bool:
     return ttl.upper() == 'GTX'
 
 
-def load_price_and_filled_volume(fills: list) -> dict:
+def _load_price_and_filled_volume(fills: list) -> dict:
     executed_qty = 0.0
     sum_price = 0.0
     for fill in fills:
@@ -330,7 +330,7 @@ def load_price_and_filled_volume(fills: list) -> dict:
         price = to_float(fill.get('price'))
         sum_price += price * qty
         executed_qty += qty
-    price = sum_price / executed_qty
+    price = (sum_price / executed_qty) if executed_qty else 0.0
     data = {
         "price": price,
         "filled_volume": executed_qty
@@ -363,7 +363,7 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
     }
     if fills := raw_data.get('fills'):
         data.update(
-            load_price_and_filled_volume(fills)
+            _load_price_and_filled_volume(fills)
         )
     if isinstance(state_data, dict):
         data.update({
