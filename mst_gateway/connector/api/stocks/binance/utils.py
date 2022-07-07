@@ -319,18 +319,28 @@ def load_order_passive(ttl: str) -> bool:
     return ttl.upper() == 'GTX'
 
 
+def load_filled_volume(executed_qty: str, fills: Optional[list]) -> float:
+    if fills:
+        executed_qty = 0.0
+        for fill in fills:
+            executed_qty += to_float(fill.get('qty'))
+        return executed_qty
+    return to_float(executed_qty)
+
+
 def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
     _time_field = raw_data.get('time') or raw_data.get('transactTime') or raw_data.get('updateTime')
     _time = to_date(_time_field) or datetime.now()
     order_type_and_exec = load_order_type_and_exec(schema, raw_data.get('type').upper())
     iceberg_volume = to_float(raw_data.get('icebergQty', 0.0))
+    filled_volume = load_filled_volume(raw_data.get('executedQty'), raw_data.get('fills', None))
     data = {
         'time': _time,
         'exchange_order_id': str(raw_data.get('orderId')),
         'symbol': raw_data.get('symbol'),
         'schema': schema,
         'volume': to_float(raw_data.get('origQty')),
-        'filled_volume': to_float(raw_data.get('cumQty')),
+        'filled_volume': filled_volume,
         'stop': to_float(raw_data.get('stopPrice')),
         'side': load_order_side(raw_data.get('side')),
         'price': to_float(raw_data.get('price')),
