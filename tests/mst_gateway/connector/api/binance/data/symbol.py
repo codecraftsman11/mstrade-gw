@@ -323,6 +323,7 @@ DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT = {
                         'crt': '2021-09-06T09:51:21.271836',
                         'mlvr': None,
                         'wa': None,
+                        'fr': None
                     }
                 ],
             }
@@ -358,6 +359,7 @@ DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT = {
                         'crt': '2021-09-06T09:51:21.272746',
                         'mlvr': 125.0,
                         'wa': 'USDT',
+                        'fr': 0.0
                     }
                 ],
             }
@@ -393,6 +395,7 @@ DEFAULT_SYMBOL_DETAIL_GET_DATA_RESULT = {
                         'crt': '2021-09-06T09:51:21.288366',
                         'mlvr': 125.0,
                         'wa': 'BTC',
+                        'fr': 0.0
                     }
                 ],
             }
@@ -683,6 +686,7 @@ DEFAULT_SYMBOL_GET_DATA_RESULT = {
                         'crt': '2021-09-06T09:51:21.271836',
                         'mlvr': None,
                         'wa': None,
+                        'fr': None
                     }
                 ],
             }
@@ -718,6 +722,7 @@ DEFAULT_SYMBOL_GET_DATA_RESULT = {
                         'crt': '2021-09-06T09:51:21.272746',
                         'mlvr': 125.0,
                         'wa': 'USDT',
+                        'fr': 0.0
                     }
                 ],
             }
@@ -753,6 +758,7 @@ DEFAULT_SYMBOL_GET_DATA_RESULT = {
                         'crt': '2021-09-06T09:51:21.288366',
                         'mlvr': 125.0,
                         'wa': 'BTC',
+                        'fr': 0.0
                     }
                 ],
             }

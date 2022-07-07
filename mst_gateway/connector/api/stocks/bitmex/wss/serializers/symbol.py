@@ -18,22 +18,23 @@ class BitmexSymbolSerializer(BitmexSerializer):
     def prefetch(self, message: dict) -> None:
         if message.get("table") == "instrument":
             for item in message.get('data', []):
-                if item.get('symbol'):
-                    state = self._get_state(stock2symbol(item['symbol']))
-                    if state:
-                        if item.get('lastPrice'):
-                            state[0]['p'] = item['lastPrice']
-                        if item.get('volume24h'):
-                            state[0]['v24'] = item['volume24h']
-                        if item.get('prevPrice24h'):
-                            state[0]['p24'] = to_float(item['prevPrice24h'])
-                        if item.get('askPrice'):
-                            state[0]['asp'] = to_float(item['askPrice'])
-                        if item.get('bidPrice'):
-                            state[0]['bip'] = to_float(item['bidPrice'])
-                        if item.get('markPrice'):
-                            state[0]['mp'] = to_float(item['markPrice'])
-                        self._update_state(stock2symbol(item['symbol']), state[0])
+                symbol = stock2symbol(item['symbol'])
+                if state := self._get_state(symbol):
+                    if item.get('lastPrice'):
+                        state[0]['p'] = item['lastPrice']
+                    if item.get('volume24h'):
+                        state[0]['v24'] = item['volume24h']
+                    if item.get('prevPrice24h'):
+                        state[0]['p24'] = to_float(item['prevPrice24h'])
+                    if item.get('askPrice'):
+                        state[0]['asp'] = to_float(item['askPrice'])
+                    if item.get('bidPrice'):
+                        state[0]['bip'] = to_float(item['bidPrice'])
+                    if item.get('markPrice'):
+                        state[0]['mp'] = to_float(item['markPrice'])
+                    if item.get('fundingRate'):
+                        state[0]['fr'] = to_float(item['fundingRate'])
+                    self._update_state(symbol, state[0])
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
         if message.get('table') == 'quote':
@@ -61,7 +62,8 @@ class BitmexSymbolSerializer(BitmexSerializer):
             'v24': 'volume24h',
             'mp': 'markPrice',
             'hip': 'highPrice',
-            'lop': 'lowPrice'
+            'lop': 'lowPrice',
+            'fr': 'fundingRate'
         }
         return _map.get(key)
 
@@ -73,10 +75,12 @@ class BitmexSymbolSerializer(BitmexSerializer):
         if self._wss_api.register_state:
             if (state_data := self._wss_api.get_state_data(symbol)) is None:
                 return None
-        state = self._get_state(symbol)
-        if state:
-            for k, v in state[0].items():
+        use_state = False
+        if state := self._get_state(symbol):
+            for k in state[0]:
                 _mapped_key = self._key_map(k)
                 if _mapped_key and item.get(_mapped_key) is None:
+                    if _mapped_key in ('fundingRate',):
+                        use_state = True
                     item[_mapped_key] = state[0][k]
-        return load_symbol_ws_data(item, state_data)
+        return load_symbol_ws_data(item, state_data, use_state)

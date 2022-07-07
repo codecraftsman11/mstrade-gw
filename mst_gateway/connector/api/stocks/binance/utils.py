@@ -34,7 +34,8 @@ def load_symbol_data(schema: str, raw_data: Optional[dict], state_data: Optional
         'volume24': to_float(raw_data.get('volume')),
         'mark_price': price,
         'high_price': to_float(raw_data.get('highPrice')),
-        'low_price': to_float(raw_data.get('lowPrice'))
+        'low_price': to_float(raw_data.get('lowPrice')),
+        'funding_rate': None
     }
     if isinstance(state_data, dict):
         face_price_data = state_data.get('extra', {}).get('face_price_data', {})
@@ -55,9 +56,11 @@ def load_symbol_data(schema: str, raw_data: Optional[dict], state_data: Optional
 
 
 def load_futures_symbol_data(schema: str, raw_data: Optional[dict], state_data: Optional[dict]) -> dict:
-    raw_data = raw_data if raw_data else {}
     if data := load_symbol_data(schema, raw_data, state_data):
-        data['mark_price'] = to_float(raw_data.get('markPrice'))
+        data.update({
+            'mark_price': to_float(raw_data.get('markPrice')),
+            'funding_rate': load_funding_rate(raw_data.get('lastFundingRate'))
+        })
     return data
 
 
@@ -1290,7 +1293,8 @@ def load_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict])
         'v24': to_float(raw_data.get('v')),
         'mp': to_float(raw_data.get('c')),
         'hip': to_float(raw_data.get("h")),
-        'lop': to_float(raw_data.get('l'))
+        'lop': to_float(raw_data.get('l')),
+        'fr': None
     }
     if isinstance(state_data, dict):
         face_price_data = state_data.get('extra', {}).get('face_price_data', {})
@@ -1312,8 +1316,16 @@ def load_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict])
 
 def load_futures_symbol_ws_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
     if data := load_symbol_ws_data(schema, raw_data, state_data):
-        data['mp'] = to_float(raw_data.get('mp'))
+        data.update({
+            'mp': to_float(raw_data.get('mp')),
+            'fr': load_funding_rate(raw_data.get('fr'))
+        })
     return data
+
+
+def load_funding_rate(value: str) -> float:
+    value = to_float(value)
+    return value * 100 if value else value
 
 
 def to_date(token: Union[datetime, int, str]) -> Optional[datetime]:
