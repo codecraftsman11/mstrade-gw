@@ -8,21 +8,6 @@ class BitmexApiClient(BaseBitmexApiClient):
     For details of request params see: https://testnet.bitmex.com/api/explorer/
     """
 
-    def close(self):
-        for proxy, session in self._session_map.copy().items():
-            session.close()
-            if session.is_closed:
-                del self._session_map[proxy]
-
-    def __enter__(self):
-        return self
-
-    def __aexit__(self, exc_type, exc_val, exc_tb):
-        self.close()
-
-    def __del__(self):
-        self.close()
-
     def _request(self, method: str, url: httpx.URL, **kwargs) -> httpx.Response:
         optional_headers = kwargs.pop('headers', None)
         proxies = kwargs.pop('proxies', None)
@@ -341,3 +326,17 @@ class BitmexApiClient(BaseBitmexApiClient):
     def get_wallet_networks(self, **params) -> httpx.Response:
         method, url = self.get_method_info('get_wallet_networks')
         return self._request(method, url, **params)
+
+    def close(self):
+        for session in self._session_map.values():
+            session.close()
+        self._session_map.clear()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def __del__(self):
+        self.close()

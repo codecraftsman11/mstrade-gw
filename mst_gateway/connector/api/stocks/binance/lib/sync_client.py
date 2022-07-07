@@ -4,21 +4,6 @@ from .base import BaseBinanceApiClient
 
 class BinanceApiClient(BaseBinanceApiClient):
 
-    def close(self):
-        for proxy, session in self._session_map.copy().items():
-            session.close()
-            if session.is_closed:
-                del self._session_map[proxy]
-
-    def __enter__(self):
-        return self
-
-    def __aexit__(self, exc_type, exc_val, exc_tb):
-        self.close()
-
-    def __del__(self):
-        self.close()
-
     def _request(self, method: str, url: httpx.URL, signed: bool = False,
                  force_params: bool = False, **kwargs) -> httpx.Response:
         optional_headers = kwargs['data'].pop('headers', None)
@@ -611,3 +596,17 @@ class BinanceApiClient(BaseBinanceApiClient):
             'amount': amount
         })
         return self._request(method, url, signed=True, data=kwargs)
+
+    def close(self):
+        for session in self._session_map.values():
+            session.close()
+        self._session_map.clear()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def __del__(self):
+        self.close()

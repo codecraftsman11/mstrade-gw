@@ -14,21 +14,6 @@ class AsyncBinanceApiClient(BaseBinanceApiClient):
         self._timestamp_offset = data['serverTime'] - int(time.time() * 1000)
         return self
 
-    async def aclose(self):
-        for proxy, session in self._session_map.copy().items():
-            await session.aclose()
-            if session.is_closed:
-                del self._session_map[proxy]
-
-    async def __aenter__(self):
-        resp = await self.get_server_time()
-        data = resp.json()
-        self._timestamp_offset = data['serverTime'] - int(time.time() * 1000)
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.aclose()
-
     async def _request(self, method: str, url: httpx.URL, signed: bool = False,
                        force_params: bool = False, **kwargs) -> httpx.Response:
         optional_headers = kwargs['data'].pop('headers', None)
@@ -624,3 +609,17 @@ class AsyncBinanceApiClient(BaseBinanceApiClient):
             'amount': amount
         })
         return await self._request(method, url, signed=True, data=kwargs)
+
+    async def aclose(self):
+        for session in self._session_map.values():
+            await session.aclose()
+        self._session_map.clear()
+
+    async def __aenter__(self):
+        resp = await self.get_server_time()
+        data = resp.json()
+        self._timestamp_offset = data['serverTime'] - int(time.time() * 1000)
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.aclose()
