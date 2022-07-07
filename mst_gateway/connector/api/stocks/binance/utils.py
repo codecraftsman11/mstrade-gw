@@ -323,17 +323,20 @@ def load_order_passive(ttl: str) -> bool:
 
 
 def _load_price_and_filled_volume(fills: list) -> dict:
-    executed_qty = 0.0
-    sum_price = 0.0
+    filled_volume = 0.0
+    amount = 0.0
     for fill in fills:
         qty = to_float(fill.get('qty'))
         price = to_float(fill.get('price'))
-        sum_price += price * qty
-        executed_qty += qty
-    price = (sum_price / executed_qty) if executed_qty else 0.0
+        amount += price * qty
+        filled_volume += qty
+    try:
+        entry_price = amount / filled_volume
+    except ZeroDivisionError:
+        entry_price = 0.0
     data = {
-        "price": price,
-        "filled_volume": executed_qty
+        "price": round(entry_price, 8),
+        "filled_volume": round(filled_volume, 8)
     }
     return data
 
