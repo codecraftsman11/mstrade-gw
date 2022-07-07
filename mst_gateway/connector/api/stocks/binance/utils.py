@@ -322,6 +322,25 @@ def load_order_passive(ttl: str) -> bool:
     return ttl.upper() == 'GTX'
 
 
+def _load_price_and_filled_volume(fills: list) -> dict:
+    filled_volume = 0.0
+    amount = 0.0
+    for fill in fills:
+        qty = to_float(fill.get('qty'))
+        price = to_float(fill.get('price'))
+        amount += price * qty
+        filled_volume += qty
+    try:
+        entry_price = amount / filled_volume
+    except ZeroDivisionError:
+        entry_price = 0.0
+    data = {
+        "price": round(entry_price, 8),
+        "filled_volume": round(filled_volume, 8)
+    }
+    return data
+
+
 def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
     _time_field = raw_data.get('time') or raw_data.get('transactTime') or raw_data.get('updateTime')
     _time = to_date(_time_field) or datetime.now()
@@ -333,7 +352,7 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
         'symbol': raw_data.get('symbol'),
         'schema': schema,
         'volume': to_float(raw_data.get('origQty')),
-        'filled_volume': to_float(raw_data.get('cumQty')),
+        'filled_volume': to_float(raw_data.get('executedQty')),
         'stop': to_float(raw_data.get('stopPrice')),
         'side': load_order_side(raw_data.get('side')),
         'price': to_float(raw_data.get('price')),
@@ -345,6 +364,10 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
         'comments': None,
         **order_type_and_exec
     }
+    if fills := raw_data.get('fills'):
+        data.update(
+            _load_price_and_filled_volume(fills)
+        )
     if isinstance(state_data, dict):
         data.update({
             'system_symbol': state_data.get('system_symbol'),

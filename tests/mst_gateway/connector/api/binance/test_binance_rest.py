@@ -501,7 +501,7 @@ class TestOrderBinanceRestApi:
             ('tbinance_spot', OrderSchema.exchange, BUY, OrderType.market, {
                  'active': True,
                  'execution': OrderExec.market,
-                 'filled_volume': 0.0,
+                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
                  'schema': OrderSchema.exchange,
                  'side': BUY,
                  'stop': 0.0,
@@ -518,7 +518,7 @@ class TestOrderBinanceRestApi:
             ('tbinance_spot', OrderSchema.exchange, SELL, OrderType.market, {
                  'active': True,
                  'execution': OrderExec.market,
-                 'filled_volume': 0.0,
+                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
                  'schema': OrderSchema.exchange,
                  'side': SELL,
                  'stop': 0.0,
