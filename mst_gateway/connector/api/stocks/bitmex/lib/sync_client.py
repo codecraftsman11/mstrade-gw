@@ -8,14 +8,31 @@ class BitmexApiClient(BaseBitmexApiClient):
     For details of request params see: https://testnet.bitmex.com/api/explorer/
     """
 
+    def close(self):
+        for proxy, session in self._session_map.copy().items():
+            session.close()
+            if session.is_closed:
+                del self._session_map[proxy]
+
+    def __enter__(self):
+        return self
+
+    def __aexit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def __del__(self):
+        self.close()
+
     def _request(self, method: str, url: httpx.URL, **kwargs) -> httpx.Response:
         optional_headers = kwargs.pop('headers', None)
         proxies = kwargs.pop('proxies', None)
         timeout = kwargs.pop('timeout', None)
         headers = self._get_headers(method, url, optional_headers, kwargs)
-        with httpx.Client(headers=headers, proxies=proxies, timeout=timeout) as client:
-            request_params = self._prepare_request_params(**kwargs)
-            return client.request(method, url, **request_params)
+        request_params = self._prepare_request_params(**kwargs)
+        if not (session := self._session_map.get(proxies)):
+            session = httpx.Client(proxies=proxies)
+            self._session_map[proxies] = session
+        return session.request(method, url, headers=headers, timeout=timeout, **request_params)
 
     # ANNOUNCEMENT
     def get_announcement(self, **params) -> httpx.Response:

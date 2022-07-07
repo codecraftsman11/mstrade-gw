@@ -16,6 +16,7 @@ class BaseBitmexApiClient:
         self.api_key = api_key
         self.api_secret = api_secret
         self.testnet = testnet
+        self._session_map = {}
 
     def get_method_info(self, method_name: str, **params):
         return self.method_factory.info(method_name, self.testnet, **params)

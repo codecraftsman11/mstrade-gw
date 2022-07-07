@@ -14,21 +14,32 @@ class AsyncBinanceApiClient(BaseBinanceApiClient):
         self._timestamp_offset = data['serverTime'] - int(time.time() * 1000)
         return self
 
+    async def aclose(self):
+        for proxy, session in self._session_map.copy().items():
+            await session.aclose()
+            if session.is_closed:
+                del self._session_map[proxy]
+
     async def __aenter__(self):
         resp = await self.get_server_time()
         data = resp.json()
         self._timestamp_offset = data['serverTime'] - int(time.time() * 1000)
         return self
 
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.aclose()
+
     async def _request(self, method: str, url: httpx.URL, signed: bool = False,
                        force_params: bool = False, **kwargs) -> httpx.Response:
-        optional_headers = kwargs.pop('headers', None)
-        proxies = kwargs.pop('proxies', None)
-        timeout = kwargs.pop('timeout', None)
+        optional_headers = kwargs['data'].pop('headers', None)
+        proxies = kwargs['data'].pop('proxies', None)
+        timeout = kwargs['data'].pop('timeout', None)
         headers = self._get_headers(optional_headers)
-        async with httpx.AsyncClient(headers=headers, proxies=proxies, timeout=timeout) as client:
-            params = self._prepare_request_params(method, signed, force_params, **kwargs)
-            return await client.request(method, url, **params)
+        request_params = self._prepare_request_params(method, signed, force_params, **kwargs)
+        if not (session := self._session_map.get(proxies)):
+            session = httpx.AsyncClient(proxies=proxies)
+            self._session_map[proxies] = session
+        return await session.request(method, url, headers=headers, timeout=timeout, **request_params)
 
     async def get_server_time(self, **kwargs) -> httpx.Response:
         method, url = self.get_method_info('get_server_time')

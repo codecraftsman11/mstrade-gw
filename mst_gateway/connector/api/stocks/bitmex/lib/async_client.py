@@ -8,14 +8,28 @@ class AsyncBitmexApiClient(BaseBitmexApiClient):
     For details of request params see: https://testnet.bitmex.com/api/explorer/
     """
 
+    async def aclose(self):
+        for proxy, session in self._session_map.copy().items():
+            await session.aclose()
+            if session.is_closed:
+                del self._session_map[proxy]
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.aclose()
+
     async def _request(self, method: str, url: httpx.URL, **kwargs) -> httpx.Response:
         optional_headers = kwargs.pop('headers', None)
         proxies = kwargs.pop('proxies', None)
         timeout = kwargs.pop('timeout', None)
         headers = self._get_headers(method, url, optional_headers, kwargs)
-        async with httpx.AsyncClient(headers=headers, proxies=proxies, timeout=timeout) as client:
-            request_params = self._prepare_request_params(**kwargs)
-            return await client.request(method, url, **request_params)
+        request_params = self._prepare_request_params(**kwargs)
+        if not (session := self._session_map.get(proxies)):
+            session = httpx.AsyncClient(proxies=proxies)
+            self._session_map[proxies] = session
+        return await session.request(method, url, headers=headers, timeout=timeout, **request_params)
     
     # ANNOUNCEMENT
     async def get_announcement(self, **params) -> httpx.Response:
