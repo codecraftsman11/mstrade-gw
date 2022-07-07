@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Union, Optional, Tuple
+from typing import Union, Optional
 from mst_gateway.connector import api
 from mst_gateway.calculator import BinanceFinFactory
 from mst_gateway.connector.api.stocks.binance.var import BinancePositionSideMode
