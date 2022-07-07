@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Union, Optional
+from typing import Union, Optional, Tuple
 from mst_gateway.connector import api
 from mst_gateway.calculator import BinanceFinFactory
 from mst_gateway.connector.api.stocks.binance.var import BinancePositionSideMode
@@ -319,13 +319,20 @@ def load_order_passive(ttl: str) -> bool:
     return ttl.upper() == 'GTX'
 
 
-def load_filled_volume(executed_qty: str, fills: Optional[list]) -> float:
-    if fills:
-        executed_qty = 0.0
-        for fill in fills:
-            executed_qty += to_float(fill.get('qty'))
-        return executed_qty
-    return to_float(executed_qty)
+def load_price_and_filled_volume(fills: list) -> dict:
+    executed_qty = 0.0
+    sum_price = 0.0
+    for fill in fills:
+        qty = to_float(fill.get('qty'))
+        price = to_float(fill.get('price'))
+        sum_price += price * qty
+        executed_qty += qty
+    price = sum_price / executed_qty
+    data = {
+        "price": price,
+        "filled_volume": executed_qty
+    }
+    return data
 
 
 def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
@@ -333,14 +340,13 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
     _time = to_date(_time_field) or datetime.now()
     order_type_and_exec = load_order_type_and_exec(schema, raw_data.get('type').upper())
     iceberg_volume = to_float(raw_data.get('icebergQty', 0.0))
-    filled_volume = load_filled_volume(raw_data.get('executedQty'), raw_data.get('fills', None))
     data = {
         'time': _time,
         'exchange_order_id': str(raw_data.get('orderId')),
         'symbol': raw_data.get('symbol'),
         'schema': schema,
         'volume': to_float(raw_data.get('origQty')),
-        'filled_volume': filled_volume,
+        'filled_volume': to_float(raw_data.get('executedQty')),
         'stop': to_float(raw_data.get('stopPrice')),
         'side': load_order_side(raw_data.get('side')),
         'price': to_float(raw_data.get('price')),
@@ -352,6 +358,10 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
         'comments': None,
         **order_type_and_exec
     }
+    if fills := raw_data.get('fills'):
+        data.update(
+            load_price_and_filled_volume(fills)
+        )
     if isinstance(state_data, dict):
         data.update({
             'system_symbol': state_data.get('system_symbol'),
