@@ -6,13 +6,19 @@ class BinanceApiClient(BaseBinanceApiClient):
 
     def _request(self, method: str, url: httpx.URL, signed: bool = False,
                  force_params: bool = False, **kwargs) -> httpx.Response:
-        optional_headers = kwargs.pop('headers', None)
-        proxies = kwargs.pop('proxies', None)
-        timeout = kwargs.pop('timeout', None)
+        optional_headers = kwargs['data'].pop('headers', None)
+        proxies = kwargs['data'].pop('proxies', None)
+        timeout = kwargs['data'].pop('timeout', None)
         headers = self._get_headers(optional_headers)
-        with httpx.Client(headers=headers, proxies=proxies, timeout=timeout) as client:
-            request_params = self._prepare_request_params(method, signed, force_params, **kwargs)
-            return client.request(method, url, **request_params)
+        request_params = self._prepare_request_params(method, signed, force_params, **kwargs)
+        return self.get_client(proxies).request(method, url, headers=headers, timeout=timeout, **request_params)
+
+    def get_client(self, proxies) -> httpx.Client:
+        if session := self._session_map.get(proxies):
+            return session
+        session = httpx.Client(proxies=proxies)
+        self._session_map[proxies] = session
+        return session
 
     def get_server_time(self, **kwargs) -> httpx.Response:
         method, url = self.get_method_info('get_server_time')
@@ -594,3 +600,17 @@ class BinanceApiClient(BaseBinanceApiClient):
             'amount': amount
         })
         return self._request(method, url, signed=True, data=kwargs)
+
+    def close(self):
+        for session in self._session_map.values():
+            session.close()
+        self._session_map.clear()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def __del__(self):
+        self.close()

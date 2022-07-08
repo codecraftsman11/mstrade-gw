@@ -13,10 +13,16 @@ class AsyncBitmexApiClient(BaseBitmexApiClient):
         proxies = kwargs.pop('proxies', None)
         timeout = kwargs.pop('timeout', None)
         headers = self._get_headers(method, url, optional_headers, kwargs)
-        async with httpx.AsyncClient(headers=headers, proxies=proxies, timeout=timeout) as client:
-            request_params = self._prepare_request_params(**kwargs)
-            return await client.request(method, url, **request_params)
-    
+        request_params = self._prepare_request_params(**kwargs)
+        return await self.get_client(proxies).request(method, url, headers=headers, timeout=timeout, **request_params)
+
+    def get_client(self, proxies) -> httpx.AsyncClient:
+        if session := self._session_map.get(proxies):
+            return session
+        session = httpx.AsyncClient(proxies=proxies)
+        self._session_map[proxies] = session
+        return session
+
     # ANNOUNCEMENT
     async def get_announcement(self, **params) -> httpx.Response:
         method, url = self.get_method_info('get_announcement')
@@ -324,3 +330,14 @@ class AsyncBitmexApiClient(BaseBitmexApiClient):
     async def get_wallet_networks(self, **params) -> httpx.Response:
         method, url = self.get_method_info('get_wallet_networks')
         return await self._request(method, url, **params)
+
+    async def aclose(self):
+        for session in self._session_map.values():
+            await session.aclose()
+        self._session_map.clear()
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.aclose()

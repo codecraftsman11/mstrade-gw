@@ -13,9 +13,15 @@ class BitmexApiClient(BaseBitmexApiClient):
         proxies = kwargs.pop('proxies', None)
         timeout = kwargs.pop('timeout', None)
         headers = self._get_headers(method, url, optional_headers, kwargs)
-        with httpx.Client(headers=headers, proxies=proxies, timeout=timeout) as client:
-            request_params = self._prepare_request_params(**kwargs)
-            return client.request(method, url, **request_params)
+        request_params = self._prepare_request_params(**kwargs)
+        return self.get_client(proxies).request(method, url, headers=headers, timeout=timeout, **request_params)
+
+    def get_client(self, proxies) -> httpx.Client:
+        if session := self._session_map.get(proxies):
+            return session
+        session = httpx.Client(proxies=proxies)
+        self._session_map[proxies] = session
+        return session
 
     # ANNOUNCEMENT
     def get_announcement(self, **params) -> httpx.Response:
@@ -324,3 +330,17 @@ class BitmexApiClient(BaseBitmexApiClient):
     def get_wallet_networks(self, **params) -> httpx.Response:
         method, url = self.get_method_info('get_wallet_networks')
         return self._request(method, url, **params)
+
+    def close(self):
+        for session in self._session_map.values():
+            session.close()
+        self._session_map.clear()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def __del__(self):
+        self.close()

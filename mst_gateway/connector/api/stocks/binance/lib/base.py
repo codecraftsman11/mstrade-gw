@@ -1,20 +1,25 @@
+import abc
 import hashlib
 import hmac
 import httpx
 import time
+from abc import abstractmethod
 from typing import Optional
 from .factory import BinanceMethodFactory
 from .exceptions import BinanceAPIException
+from ...lib import AbstractApiClient
 
 
-class BaseBinanceApiClient:
+class BaseBinanceApiClient(AbstractApiClient, abc.ABC):
     method_factory = BinanceMethodFactory()
 
     def __init__(self, api_key: Optional[str] = None, api_secret: Optional[str] = None, testnet: bool = False):
-        self.api_key = api_key
-        self.api_secret = api_secret
-        self.testnet = testnet
+        super().__init__(api_key, api_secret, testnet)
         self._timestamp_offset = 0
+
+    @abstractmethod
+    def get_client(self, proxies) -> httpx.Client:
+        raise NotImplementedError
 
     def get_method_info(self, method_name: str, **params):
         return self.method_factory.info(method_name, self.testnet, **params)
