@@ -14,11 +14,15 @@ class AsyncBitmexApiClient(BaseBitmexApiClient):
         timeout = kwargs.pop('timeout', None)
         headers = self._get_headers(method, url, optional_headers, kwargs)
         request_params = self._prepare_request_params(**kwargs)
-        if not (session := self._session_map.get(proxies)):
-            session = httpx.AsyncClient(proxies=proxies)
-            self._session_map[proxies] = session
-        return await session.request(method, url, headers=headers, timeout=timeout, **request_params)
-    
+        return await self.get_client(proxies).request(method, url, headers=headers, timeout=timeout, **request_params)
+
+    def get_client(self, proxies) -> httpx.AsyncClient:
+        if session := self._session_map.get(proxies):
+            return session
+        session = httpx.AsyncClient(proxies=proxies)
+        self._session_map[proxies] = session
+        return session
+
     # ANNOUNCEMENT
     async def get_announcement(self, **params) -> httpx.Response:
         method, url = self.get_method_info('get_announcement')

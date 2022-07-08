@@ -19,6 +19,13 @@ class BitmexApiClient(BaseBitmexApiClient):
             self._session_map[proxies] = session
         return session.request(method, url, headers=headers, timeout=timeout, **request_params)
 
+    def get_client(self, proxies) -> httpx.Client:
+        if session := self._session_map.get(proxies):
+            return session
+        session = httpx.Client(proxies=proxies)
+        self._session_map[proxies] = session
+        return session
+
     # ANNOUNCEMENT
     def get_announcement(self, **params) -> httpx.Response:
         method, url = self.get_method_info('get_announcement')

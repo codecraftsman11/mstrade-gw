@@ -1,3 +1,4 @@
+import abc
 import json
 import hashlib
 import hmac
@@ -7,16 +8,11 @@ from urllib import parse
 from typing import Optional, Union
 from .exceptions import BitmexAPIException
 from .factory import BitmexMethodFactory
+from ...lib import AbstractApiClient
 
 
-class BaseBitmexApiClient:
+class BaseBitmexApiClient(AbstractApiClient, abc.ABC):
     method_factory = BitmexMethodFactory()
-
-    def __init__(self, api_key: Optional[str], api_secret: Optional[str], testnet: bool = True):
-        self.api_key = api_key
-        self.api_secret = api_secret
-        self.testnet = testnet
-        self._session_map = {}
 
     def get_method_info(self, method_name: str, **params):
         return self.method_factory.info(method_name, self.testnet, **params)

@@ -11,10 +11,14 @@ class BinanceApiClient(BaseBinanceApiClient):
         timeout = kwargs['data'].pop('timeout', None)
         headers = self._get_headers(optional_headers)
         request_params = self._prepare_request_params(method, signed, force_params, **kwargs)
-        if not (session := self._session_map.get(proxies)):
-            session = httpx.Client(proxies=proxies)
-            self._session_map[proxies] = session
-        return session.request(method, url, headers=headers, timeout=timeout, **request_params)
+        return self.get_client(proxies).request(method, url, headers=headers, timeout=timeout, **request_params)
+
+    def get_client(self, proxies) -> httpx.Client:
+        if session := self._session_map.get(proxies):
+            return session
+        session = httpx.Client(proxies=proxies)
+        self._session_map[proxies] = session
+        return session
 
     def get_server_time(self, **kwargs) -> httpx.Response:
         method, url = self.get_method_info('get_server_time')
