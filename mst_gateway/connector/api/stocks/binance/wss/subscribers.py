@@ -177,7 +177,7 @@ class BinanceWalletSubscriber(BinanceSubscriber):
         schema = api.schema
         kwargs = {}
         try:
-            resp = schema_handlers[schema][0]({})
+            resp = schema_handlers[schema][0]()
             kwargs['raw_data'] = client.handler.handle_response(resp)
         except (GatewayError, BinanceAPIException):
             return None, None
