@@ -259,9 +259,6 @@ class TestBinanceWssApi:
             ('tbinance_spot', 'order_book',
              order_book_message.DEFAULT_ORDER_BOOK_MESSAGE[OrderSchema.exchange],
              order_book_message.DEFAULT_ORDER_BOOK_LOOKUP_TABLE_RESULT[OrderSchema.exchange]),
-            ('tbinance_spot', 'position',
-             position_message.DEFAULT_POSITION_MESSAGE[OrderSchema.exchange],
-             position_message.DEFAULT_POSITION_LOOKUP_TABLE_RESULT[OrderSchema.exchange]),
             ('tbinance_spot', 'quote_bin',
              quote_message.DEFAULT_QUOTE_BIN_MESSAGE[OrderSchema.exchange],
              quote_message.DEFAULT_QUOTE_BIN_LOOKUP_TABLE_RESULT[OrderSchema.exchange]),
@@ -369,9 +366,6 @@ class TestBinanceWssApi:
             ('tbinance_spot', 'order_book',
              order_book_message.DEFAULT_ORDER_BOOK_LOOKUP_TABLE_RESULT[OrderSchema.exchange],
              order_book_message.DEFAULT_ORDER_BOOK_SPLIT_MESSAGE_RESULT[OrderSchema.exchange]),
-            ('tbinance_spot', 'position',
-             position_message.DEFAULT_POSITION_LOOKUP_TABLE_RESULT[OrderSchema.exchange],
-             position_message.DEFAULT_POSITION_SPLIT_MESSAGE_RESULT[OrderSchema.exchange]),
             ('tbinance_spot', 'order',
              quote_message.DEFAULT_QUOTE_BIN_LOOKUP_TABLE_RESULT[OrderSchema.exchange],
              quote_message.DEFAULT_QUOTE_BIN_SPLIT_MESSAGE_RESULT[OrderSchema.exchange]),
@@ -492,11 +486,6 @@ class TestBinanceWssApi:
         )
         if subscr_name == 'position':
             leverage_brackets, position_state = get_position_partial_state_data(schema)
-            if schema == OrderSchema.exchange:
-                position_state = {symbol.lower(): deepcopy(state_data.STORAGE_DATA[
-                    f"{StateStorageKey.state}:{subscr_name}.{wss.account_id}.{exchange}.{OrderSchema.exchange}.{symbol}"
-                    f"".lower()
-                ])}
             wss.partial_state_data[subscr_name].update({
                 'position_state': position_state,
                 'leverage_brackets': {symbol.lower(): leverage_brackets},
@@ -508,10 +497,7 @@ class TestBinanceWssApi:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        'wss, messages, expect', [('tbinance_spot',
-                                   position_message.DEFAULT_POSITION_SPLIT_MESSAGE_RESULT[OrderSchema.exchange],
-                                   position_message.DEFAULT_POSITION_GET_DATA_RESULT[OrderSchema.exchange]),
-                                  ('tbinance_margin',
+        'wss, messages, expect', [('tbinance_margin',
                                    position_message.DEFAULT_POSITION_SPLIT_MESSAGE_RESULT[OrderSchema.margin],
                                    position_message.DEFAULT_POSITION_GET_DATA_RESULT[OrderSchema.margin]),
                                   ('tbinance_margin_coin',
@@ -680,7 +666,6 @@ class TestSubscriptionBinanceWssApi:
             ('tbinance_spot', 'trade', 'BTCUSDT'), ('tbinance_spot', 'trade', None),
             ('tbinance_spot', 'wallet', None),
             ('tbinance_spot', 'order', 'BTCUSDT'), ('tbinance_spot', 'order', None),
-            ('tbinance_spot', 'position', 'BTCUSDT'), ('tbinance_spot', 'position', None),
             ('tbinance_margin', 'order_book', 'BTCUSDT'), ('tbinance_margin', 'order_book', None),
             ('tbinance_margin', 'quote_bin', 'BTCUSDT'), ('tbinance_margin', 'quote_bin', None),
             ('tbinance_margin', 'symbol', 'BTCUSDT'), ('tbinance_margin', 'symbol', None),

@@ -33,33 +33,6 @@ DEFAULT_POSITIONS_STATE = {
 
 
 DEFAULT_POSITION_MESSAGE = {
-    OrderSchema.exchange: [
-        {
-            'e': '24hrTicker',
-            'E': 1638964424515,
-            's': 'BTCUSDT',
-            'p': '-2214.54000000',
-            'P': '-4.311',
-            'w': '46897.67609538',
-            'x': '51373.17000000',
-            'c': '49155.42000000',
-            'Q': '0.01000000',
-            'b': '49152.96000000',
-            'B': '0.01017300',
-            'a': '49152.97000000',
-            'A': '0.01017300',
-            'o': '51369.96000000',
-            'h': '120000.00000000',
-            'l': '9782.00000000',
-            'v': '1038.52459100',
-            'q': '48704389.88580066',
-            'O': 1638878022537,
-            'C': 1638964422537,
-            'F': 381050,
-            'L': 466268,
-            'n': 85219,
-        }
-    ],
     OrderSchema.margin: {
         'e': 'ACCOUNT_UPDATE',
         'T': 1639499597056,
@@ -112,37 +85,6 @@ DEFAULT_POSITION_MESSAGE = {
     },
 }
 DEFAULT_POSITION_LOOKUP_TABLE_RESULT = {
-    OrderSchema.exchange: {
-        'table': '24hrTicker',
-        'action': 'update',
-        'data': [
-            {
-                'e': '24hrTicker',
-                'E': 1638964424515,
-                's': 'BTCUSDT',
-                'p': '-2214.54000000',
-                'P': '-4.311',
-                'w': '46897.67609538',
-                'x': '51373.17000000',
-                'c': '49155.42000000',
-                'Q': '0.01000000',
-                'b': '49152.96000000',
-                'B': '0.01017300',
-                'a': '49152.97000000',
-                'A': '0.01017300',
-                'o': '51369.96000000',
-                'h': '120000.00000000',
-                'l': '9782.00000000',
-                'v': '1038.52459100',
-                'q': '48704389.88580066',
-                'O': 1638878022537,
-                'C': 1638964422537,
-                'F': 381050,
-                'L': 466268,
-                'n': 85219,
-            }
-        ],
-    },
     OrderSchema.margin: {
         'table': 'ACCOUNT_UPDATE',
         'action': 'update',
@@ -212,39 +154,6 @@ DEFAULT_POSITION_LOOKUP_TABLE_RESULT = {
     },
 }
 DEFAULT_POSITION_SPLIT_MESSAGE_RESULT = {
-    OrderSchema.exchange: [
-        {
-            'table': '24hrTicker',
-            'action': 'update',
-            'data': [
-                {
-                    'e': '24hrTicker',
-                    'E': 1638964424515,
-                    's': 'BTCUSDT',
-                    'p': '-2214.54000000',
-                    'P': '-4.311',
-                    'w': '46897.67609538',
-                    'x': '51373.17000000',
-                    'c': '49155.42000000',
-                    'Q': '0.01000000',
-                    'b': '49152.96000000',
-                    'B': '0.01017300',
-                    'a': '49152.97000000',
-                    'A': '0.01017300',
-                    'o': '51369.96000000',
-                    'h': '120000.00000000',
-                    'l': '9782.00000000',
-                    'v': '1038.52459100',
-                    'q': '48704389.88580066',
-                    'O': 1638878022537,
-                    'C': 1638964422537,
-                    'F': 381050,
-                    'L': 466268,
-                    'n': 85219,
-                }
-            ],
-        }
-    ],
     OrderSchema.margin: [
         {
             'table': 'ACCOUNT_UPDATE',
@@ -323,32 +232,6 @@ DEFAULT_POSITION_SPLIT_MESSAGE_RESULT = {
     ],
 }
 DEFAULT_POSITION_GET_DATA_RESULT = {
-    OrderSchema.exchange: [
-        {
-            'position': {
-                'acc': 'tbinance.tbinance_spot',
-                'tb': 'position',
-                'sch': 'exchange',
-                'act': 'update',
-                'd': [
-                    {
-                        'tm': '2021-12-08T11:53:44.515000',
-                        's': 'btcusdt',
-                        'sd': 0,
-                        'vl': 1.0,
-                        'ep': 55555.0,
-                        'mp': 49155.42,
-                        'upnl': -6399.580000000002,
-                        'lvrp': 'isolated',
-                        'lvr': 1.0,
-                        'lp': None,
-                        'act': 'update',
-                        'ss': 'btcusd',
-                    }
-                ],
-            }
-        }
-    ],
     OrderSchema.margin: [
         {
             'position': {
