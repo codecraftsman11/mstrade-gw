@@ -1658,35 +1658,6 @@ def load_futures_coin_positions_state(account_info: dict, state_data: dict) -> d
     return positions_state
 
 
-def load_exchange_position(raw_data: dict, schema: str, mark_price: float) -> dict:
-    symbol = raw_data.get('symbol')
-    volume = to_float(raw_data.get('volume'))
-    entry_price = to_float(raw_data.get('entry_price'))
-    side = raw_data.get('side')
-    mark_price = to_float(mark_price)
-    now = datetime.now()
-    data = {
-        'time': now,
-        'schema': schema.lower(),
-        'symbol': symbol,
-        'side': side,
-        'volume': volume,
-        'entry_price': entry_price,
-        'mark_price': mark_price,
-        'unrealised_pnl': BinanceFinFactory.calc_unrealised_pnl_by_side(
-            volume=volume, entry_price=entry_price, mark_price=mark_price, side=side
-        ),
-        'leverage_type': raw_data.get('leverage_type'),
-        'leverage': to_float(raw_data.get('leverage')),
-        'liquidation_price': to_float(raw_data.get('liquidation_price')),
-        }
-    return data
-
-
-def load_margin_cross_position(raw_data: dict, schema: str, mark_price: float) -> dict:
-    return load_exchange_position(raw_data, schema, mark_price)
-
-
 def load_futures_position(raw_data: dict, schema: str) -> dict:
     now = datetime.now()
     data = {
@@ -1707,17 +1678,6 @@ def load_futures_position(raw_data: dict, schema: str) -> dict:
 
 def load_futures_coin_position(raw_data: dict, schema: str) -> dict:
     return load_futures_position(raw_data, schema)
-
-
-def load_exchange_position_list(raw_data: dict, schema: str, symbol_list: list) -> list:
-    symbols_mark_price = {
-        symbol.get('symbol', '').lower(): to_float(symbol.get('lastPrice')) for symbol in symbol_list
-    }
-    return [load_exchange_position(v, schema, symbols_mark_price.get(v.get('symbol'))) for k, v in raw_data.items()]
-
-
-def load_margin_cross_position_list(raw_data: dict, schema: str, symbol_list: list) -> list:
-    return load_exchange_position_list(raw_data, schema, symbol_list)
 
 
 def load_futures_position_list(raw_data: list, schema: str) -> list:

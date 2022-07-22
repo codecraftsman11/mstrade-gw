@@ -17,7 +17,6 @@ class BinancePositionSerializer(BinanceSerializer):
 
     def __init__(self, wss_api: BinanceWssApi):
         super().__init__(wss_api)
-        self._item_symbol = None
 
     async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         return None
@@ -29,6 +28,7 @@ class BinanceMarginPositionSerializer(BinancePositionSerializer):
         super().__init__(wss_api)
         self.position_state = wss_api.partial_state_data.get(self.subscription, {}).get('position_state', {})
         self.leverage_brackets = wss_api.partial_state_data.get(self.subscription, {}).get('leverage_brackets', {})
+        self._item_symbol = None
 
     @property
     def _initialized(self) -> bool:
