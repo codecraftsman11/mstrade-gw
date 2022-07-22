@@ -2,7 +2,7 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Optional, Tuple, TYPE_CHECKING
 from mst_gateway.calculator.binance import BinanceFinFactory
-from mst_gateway.connector.api.types import LeverageType, OrderSchema
+from mst_gateway.connector.api.types import LeverageType
 from mst_gateway.connector.api.stocks.binance import utils
 from mst_gateway.connector.api.stocks.binance.var import BinancePositionSideMode
 from mst_gateway.connector.api.stocks.binance.wss.serializers.base import BinanceSerializer
@@ -36,17 +36,6 @@ class BinancePositionSerializer(BinanceSerializer):
         return False
 
     async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
-        if not self.is_item_valid(message, item):
-            return None
-        state_data = None
-        if self._wss_api.register_state:
-            if (state_data := self._wss_api.get_state_data(self._item_symbol)) is None:
-                return None
-        symbol_position_state = self.get_position_state(self.position_state, self._item_symbol)
-        if self._wss_api.schema == OrderSchema.exchange:
-            return utils.load_exchange_position_ws_data(item, symbol_position_state, state_data)
-        if self._wss_api.schema == OrderSchema.margin_cross:
-            return utils.load_margin_cross_position_ws_data(item, symbol_position_state, state_data)
         return None
 
 

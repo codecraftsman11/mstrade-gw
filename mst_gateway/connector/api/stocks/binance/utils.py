@@ -1728,38 +1728,6 @@ def load_futures_coin_position_list(raw_data: list, schema: str) -> list:
     return load_futures_position_list(raw_data, schema)
 
 
-def load_exchange_position_ws_data(raw_data: dict, position_state: dict, state_data: Optional[dict]) -> dict:
-    side = position_state['side']
-    volume = to_float(position_state['volume'])
-    mark_price = to_float(raw_data.get('c'))
-    entry_price = to_float(position_state['entry_price'])
-    unrealised_pnl = BinanceFinFactory.calc_unrealised_pnl_by_side(
-        side=side, volume=volume, mark_price=mark_price, entry_price=entry_price
-    )
-    data = {
-        'tm': to_iso_datetime(raw_data.get('E')),
-        's': raw_data['s'].lower(),
-        'sd': side,
-        'vl': volume,
-        'ep': entry_price,
-        'mp': mark_price,
-        'upnl': unrealised_pnl,
-        'lvrp': position_state['leverage_type'],
-        'lvr': position_state['leverage'],
-        'lp': None,
-        'act': 'update'
-    }
-    if isinstance(state_data, dict):
-        data.update({
-            'ss': state_data.get('system_symbol')
-        })
-    return data
-
-
-def load_margin_cross_position_ws_data(raw_data: dict, position_state: dict, state_data: Optional[dict]) -> dict:
-    return load_exchange_position_ws_data(raw_data, position_state, state_data)
-
-
 def load_futures_coin_position_request_leverage(margin_type: str) -> str:
     if margin_type.lower() == LeverageType.isolated:
         return LeverageType.isolated

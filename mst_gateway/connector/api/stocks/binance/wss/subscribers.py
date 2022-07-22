@@ -221,36 +221,8 @@ class BinanceOrderSubscriber(BinanceSubscriber):
 
 class BinancePositionSubscriber(BinanceSubscriber):
     subscription = "position"
-    subscriptions = ("!ticker@arr",)
+    subscriptions = ()
     detail_subscribe_available = False
-
-    async def subscribe_positions_state(self, api: BinanceWssApi):
-        redis = api.storage.get_client()
-        pubsub = redis.pubsub()
-        pubsub.psubscribe(
-            f"{StateStorageKey.state}:{self.subscription}.{api.account_id}.{api.name}.{api.schema}.*".lower())
-        api.partial_state_data[self.subscription].setdefault('position_state', {})
-        while True:
-            message = pubsub.get_message()
-            if message and message['type'] == 'pmessage':
-                state_data = json.loads(message['data'])
-                if (action := state_data.get('action')) and (symbol := state_data.get('symbol')):
-                    _state = api.partial_state_data[self.subscription]['position_state']
-                    if action == 'delete':
-                        _state.pop(symbol.lower(), None)
-                    else:
-                        _state[symbol.lower()] = state_data
-            else:
-                await asyncio.sleep(1.5)
-
-    async def init_partial_state(self, api: BinanceWssApi) -> dict:
-        api.tasks.append(asyncio.create_task(self.subscribe_positions_state(api)))
-        positions_state_data = api.storage.get_pattern(
-            f"{StateStorageKey.state}:{self.subscription}.{api.account_id}.{api.name}.{api.schema}.*".lower()
-        )
-        return {
-            'position_state': utils.load_positions_state(positions_state_data),
-        }
 
 
 class BinanceMarginPositionSubscriber(BinancePositionSubscriber):
