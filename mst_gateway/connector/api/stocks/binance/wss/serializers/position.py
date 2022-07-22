@@ -17,23 +17,7 @@ class BinancePositionSerializer(BinanceSerializer):
 
     def __init__(self, wss_api: BinanceWssApi):
         super().__init__(wss_api)
-        self.position_state = wss_api.partial_state_data.get(self.subscription, {}).get('position_state', {})
         self._item_symbol = None
-
-    @property
-    def _initialized(self) -> bool:
-        return bool(self.subscription in self._wss_api.subscriptions)
-
-    @staticmethod
-    def get_position_state(positions_state: dict, symbol: str) -> dict:
-        return positions_state.get(symbol.lower(), {})
-
-    def is_item_valid(self, message: dict, item: dict) -> bool:
-        if self._initialized:
-            self._item_symbol = item.get('s', '').lower()
-            if self._item_symbol:
-                return bool(self.position_state.get(self._item_symbol))
-        return False
 
     async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
         return None
@@ -43,7 +27,16 @@ class BinanceMarginPositionSerializer(BinancePositionSerializer):
 
     def __init__(self, wss_api: BinanceWssApi):
         super().__init__(wss_api)
+        self.position_state = wss_api.partial_state_data.get(self.subscription, {}).get('position_state', {})
         self.leverage_brackets = wss_api.partial_state_data.get(self.subscription, {}).get('leverage_brackets', {})
+
+    @property
+    def _initialized(self) -> bool:
+        return bool(self.subscription in self._wss_api.subscriptions)
+
+    @staticmethod
+    def get_position_state(positions_state: dict, symbol: str) -> dict:
+        return positions_state.get(symbol.lower(), {})
 
     def _get_wallet_asset(self, position: dict, default: str) -> str:
         return position.get('ma', default).lower()

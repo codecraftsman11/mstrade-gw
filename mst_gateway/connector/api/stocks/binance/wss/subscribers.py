@@ -224,11 +224,11 @@ class BinanceOrderSubscriber(BinanceSubscriber):
 class BinancePositionSubscriber(BinanceSubscriber):
     subscription = "position"
     subscriptions = ()
-    detail_subscribe_available = False
 
 
 class BinanceMarginPositionSubscriber(BinancePositionSubscriber):
     subscriptions = ("!markPrice@arr",)
+    detail_subscribe_available = False
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
         with rest.BinanceRestApi(
