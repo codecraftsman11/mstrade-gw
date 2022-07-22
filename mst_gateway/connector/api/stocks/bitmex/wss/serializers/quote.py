@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 from mst_gateway.connector import api
 from mst_gateway.connector.api.stocks.bitmex import utils
 from .base import BitmexSerializer
@@ -22,14 +22,14 @@ class BitmexQuoteBinSerializer(BitmexSerializer):
             data = []
             for item in message.pop('data', []):
                 if time := utils.to_date(item['timestamp']):
-                    item['timestamp'] = time.replace(minute=time.minute - 1, second=59, microsecond=999999)
+                    item['timestamp'] = (time - timedelta(minutes=1)).replace(second=59, microsecond=999999)
                 data += [item, self.create_open_data(item)]
             message['data'] = data
 
     @staticmethod
     def create_open_data(item: dict) -> dict:
         if bin_time := utils.to_date(item.get('timestamp')):
-            bin_time = bin_time.replace(minute=bin_time.minute + 1, second=0, microsecond=000000)
+            bin_time = (bin_time + timedelta(minutes=1)).replace(second=0, microsecond=000000)
         close = item.get('close')
         return {
             'timestamp': utils.to_iso_datetime(bin_time),

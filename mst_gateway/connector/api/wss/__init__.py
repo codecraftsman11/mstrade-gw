@@ -1,9 +1,9 @@
 import asyncio
 import json
+import websockets
 from abc import ABCMeta, abstractmethod
 from logging import Logger
 from typing import Dict, Optional, Union
-import websockets
 from copy import deepcopy
 from mst_gateway.storage import StateStorage, StateStorageKey
 from .router import Router
@@ -266,7 +266,7 @@ class StockWssApi(Connector):
                     continue
             try:
                 message = await self.handler.recv()
-            except websockets.exceptions.ConnectionClosed:
+            except websockets.ConnectionClosed:
                 continue
             await self.process_message(message, recv_callback)
 

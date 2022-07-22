@@ -28,7 +28,8 @@ class BinanceSubscriber(Subscriber):
     async def _subscribe(self, api: BinanceWssApi, symbol=None):
         for subscription in self.subscriptions:
             if symbol in ('*', None) and not self.general_subscribe_available:
-                symbols = api.state_symbol_list
+                # TODO: support limit symbol count by exchange
+                symbols = api.state_symbol_list[:900]
                 # run task watcher for new symbols
                 self._subscribed_symbols = set(symbols)
                 self._task_watcher = asyncio.create_task(self.subscribe_watcher(api))
@@ -81,11 +82,11 @@ class BinanceSubscriber(Subscriber):
     async def send_command(self, command: callable, api: BinanceWssApi, subscription: str, symbols: list):
         symbols_count = len(symbols)
         try:
-            for i in range(0, symbols_count, 400):
+            for i in range(0, symbols_count, 200):
                 await asyncio.sleep(1)
                 if not api.handler or api.handler.closed:
                     return
-                await api.handler.send(command(subscription, symbols[i:i+400]))
+                await api.handler.send(command(subscription, symbols[i:i+200]))
         except (CancelledError, ConnectionClosedError) as e:
             api.logger.warning(f"{self.__class__.__name__} - {e}")
 
@@ -109,7 +110,8 @@ class BinanceSubscriber(Subscriber):
                 break
             message = pubsub.get_message()
             if message and message['type'] == 'message':
-                symbols = json.loads(message['data'])
+                # TODO: support limit symbol count by exchange
+                symbols = set(list(json.loads(message['data']).keys())[:900])
                 unsubscribe_symbols = self._subscribed_symbols.difference(symbols)
                 subscribe_symbols = symbols.difference(self._subscribed_symbols)
                 for symbol in unsubscribe_symbols:
