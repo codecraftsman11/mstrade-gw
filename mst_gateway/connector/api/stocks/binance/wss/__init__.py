@@ -288,10 +288,9 @@ class BinanceMarginCoinWssApi(BinanceMarginWssApi):
     def _split_position(self, message: dict) -> list:
         _messages = []
         for position in message.pop('data', []):
-            if position.get('positionSide', '') == var.BinancePositionSideMode.BOTH:
-                _messages.append(dict(**message, data=[
-                    remap_futures_coin_position_request_data(position)
-                ]))
+            _messages.append(dict(**message, data=[
+                remap_futures_coin_position_request_data(position)
+            ]))
         return _messages
 
     def __split_message_map(self, key: str) -> Optional[callable]:

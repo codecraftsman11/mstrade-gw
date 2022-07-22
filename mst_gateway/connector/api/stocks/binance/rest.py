@@ -6,7 +6,7 @@ from typing import Union, Tuple, Optional
 from mst_gateway.connector.api.utils import time2timestamp
 from mst_gateway.storage import StateStorageKey
 from mst_gateway.calculator import BinanceFinFactory
-from mst_gateway.connector.api.types import OrderSchema, OrderType, ExchangeDrivers
+from mst_gateway.connector.api.types import OrderSchema, OrderType, ExchangeDrivers, PositionMode
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id, validate_schema
 from mst_gateway.connector.api.stocks.binance.lib.exceptions import BinanceAPIException
 from mst_gateway.connector.api.stocks.binance.lib.sync_client import BinanceApiClient
@@ -731,6 +731,34 @@ class BinanceRestApi(StockRestApi):
             )
             leverage = utils.to_float(data["leverage"])
         return leverage_type, leverage
+
+    def get_position_mode(self, schema: str) -> dict:
+        schema_handlers = {
+            OrderSchema.margin: self._handler.get_futures_position_mode,
+            OrderSchema.margin_coin: self._handler.get_futures_coin_position_mode,
+        }
+        validate_schema(schema, schema_handlers)
+        data = self._binance_api(schema_handlers[schema.lower()])
+        return utils.load_position_mode(data)
+
+    def _handle_change_position_mode_response(self, mode: str, data: dict) -> dict:
+        mode = mode.lower()
+        if data.get('code') != 200:
+            mode = PositionMode.hedge if mode == PositionMode.one_way else PositionMode.one_way
+        return {
+            'mode': mode
+        }
+
+    def change_position_mode(self, schema: str, mode: str) -> dict:
+        schema_handlers = {
+            OrderSchema.margin: self._handler.change_futures_position_mode,
+            OrderSchema.margin_coin: self._handler.change_futures_coin_position_mode,
+        }
+        validate_schema(schema, schema_handlers)
+        if not PositionMode.is_valid(mode.lower()):
+            raise ConnectorError(f"Invalid position mode {mode}.")
+        data = self._binance_api(schema_handlers[schema.lower()], dualSidePosition=utils.store_position_mode(mode))
+        return self._handle_change_position_mode_response(mode, data)
 
     def get_position(self, schema: str, symbol: str, **kwargs) -> dict:
         validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin,

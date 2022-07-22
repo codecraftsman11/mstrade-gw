@@ -19,7 +19,9 @@ from .order import (
     OrderPositionOpenedBy,
     OrderPositionClosedBy,
     OrderStandardTypes,
-    LeverageType
+    LeverageType,
+    PositionMode,
+    PositionSide
 )
 from .converters import (
     BaseOrderTypeConverter

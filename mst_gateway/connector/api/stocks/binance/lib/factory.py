@@ -343,11 +343,27 @@ class BinanceMethodFactory:
 
     @classmethod
     def get_futures_position_info(cls, testnet=False, **params):
-        return cls.GET, httpx.URL(f"{cls._futures_api_url(testnet)}/{cls.V1}/positionRisk", params=params)
+        return cls.GET, httpx.URL(f"{cls._futures_api_url(testnet)}/{cls.V2}/positionRisk", params=params)
 
     @classmethod
     def get_futures_coin_position_info(cls, testnet=False, **params):
         return cls.GET, httpx.URL(f"{cls._futures_coin_api_url(testnet)}/{cls.V1}/positionRisk", params=params)
+
+    @classmethod
+    def get_futures_position_mode(cls, testnet=False, **params):
+        return cls.GET, httpx.URL(f"{cls._futures_api_url(testnet)}/{cls.V1}/positionSide/dual", params=params)
+
+    @classmethod
+    def get_futures_coin_position_mode(cls, testnet=False, **params):
+        return cls.GET, httpx.URL(f"{cls._futures_coin_api_url(testnet)}/{cls.V1}/positionSide/dual", params=params)
+
+    @classmethod
+    def change_futures_position_mode(cls, testnet=False, **params):
+        return cls.POST, httpx.URL(f"{cls._futures_api_url(testnet)}/{cls.V1}/positionSide/dual", params=params)
+
+    @classmethod
+    def change_futures_coin_position_mode(cls, testnet=False, **params):
+        return cls.POST, httpx.URL(f"{cls._futures_coin_api_url(testnet)}/{cls.V1}/positionSide/dual", params=params)
 
     @classmethod
     def change_futures_leverage(cls, testnet=False, **params):

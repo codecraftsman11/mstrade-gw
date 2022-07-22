@@ -345,6 +345,22 @@ class BinanceApiClient(BaseBinanceApiClient):
         #             if position.get('symbol', '').lower() == symbol.lower()]
         return self._request(method, url, signed=True, force_params=True, data=kwargs)
 
+    def get_futures_position_mode(self, **kwargs) -> httpx.Response:
+        method, url = self.get_method_info('get_futures_position_mode')
+        return self._request(method, url, signed=True, force_params=True, data=kwargs)
+
+    def get_futures_coin_position_mode(self, **kwargs) -> httpx.Response:
+        method, url = self.get_method_info('get_futures_coin_position_mode')
+        return self._request(method, url, signed=True, force_params=True, data=kwargs)
+
+    def change_futures_position_mode(self, **kwargs) -> httpx.Response:
+        method, url = self.get_method_info('change_futures_position_mode')
+        return self._request(method, url, signed=True, force_params=True, data=kwargs)
+
+    def change_futures_coin_position_mode(self, **kwargs) -> httpx.Response:
+        method, url = self.get_method_info('change_futures_coin_position_mode')
+        return self._request(method, url, signed=True, force_params=True, data=kwargs)
+
     def change_futures_leverage(self, **kwargs) -> httpx.Response:
         method, url = self.get_method_info('change_futures_leverage')
         return self._request(method, url, signed=True, force_params=True, data=kwargs)

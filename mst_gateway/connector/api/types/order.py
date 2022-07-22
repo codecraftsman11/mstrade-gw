@@ -132,6 +132,17 @@ class LeverageType(ClassWithAttributes):
     isolated = 'isolated'
 
 
+class PositionMode(ClassWithAttributes):
+    one_way = 'one_way'
+    hedge = 'hedge'
+
+
+class PositionSide(ClassWithAttributes):
+    both = 'both'
+    long = 'long'
+    short = 'short'
+
+
 ORDER_STANDARD_TYPES = (
     OrderType.limit,
     OrderType.market,
