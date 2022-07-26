@@ -287,7 +287,7 @@ class BinanceRestApi(StockRestApi):
         params = utils.generate_parameters_by_order_type(main_params, options, schema)
         data = self._binance_api(schema_handlers[schema.lower()], **params)
         state_data = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}").get(symbol.lower(), {})
-        return utils.load_order_data(schema, data, state_data)
+        return utils.load_order_data(schema, data, state_data, params)
 
     def update_order(self, exchange_order_id: str, symbol: str,
                      schema: str, side: int, volume: float,
@@ -873,6 +873,8 @@ class BinanceRestApi(StockRestApi):
                 raise RecoverableError(message)
             raise ConnectorError(message)
         except Exception as exc:
+            import traceback
+            traceback.print_exc()
             self.logger.error(f"Binance api error. Detail: {exc}")
             raise ConnectorError("Binance api error.")
         return data

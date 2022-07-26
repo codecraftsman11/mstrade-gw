@@ -2,7 +2,10 @@ from mst_gateway.connector.api import (
     BaseOrderTypeConverter,
     OrderType,
     OrderSchema,
-    OrderExec
+    OrderExec,
+)
+from mst_gateway.connector.api.stocks.bitmex.var import (
+    BITMEX_BUY, BITMEX_SELL
 )
 
 
@@ -13,15 +16,21 @@ class BitmexOrderTypeConverter(BaseOrderTypeConverter):
         OrderSchema.margin: {
             'Market': {'type': OrderType.market, 'execution': OrderExec.market},
             'Limit': {'type': OrderType.limit, 'execution': OrderExec.limit},
-            'StopLimit': {'type': OrderType.stop_loss, 'execution': OrderExec.limit},
+            'Stop': {'type': OrderType.stop_market, 'execution': OrderExec.limit},
+            'StopLimit': {'type': OrderType.stop_limit, 'execution': OrderExec.limit},
+            'MarketIfTouched': {'type': OrderType.take_profit, 'execution': OrderExec.market},
             'LimitIfTouched': {'type': OrderType.take_profit, 'execution': OrderExec.limit},
-            # 'Stop': {'type': OrderType.stop_loss, 'execution': OrderExec.market},
-            # 'MarketIfTouched': {'type': OrderType.take_profit, 'execution': OrderExec.market},
         }
     }
-
-    STORE_TYPE_MAP = {
+    BASE_STORE_TYPE_MAP = {
         OrderType.limit: 'Limit',
         OrderType.market: 'Market',
         OrderType.position: 'Market',
+    }
+
+    STORE_TYPE_BY_SCHEMA_MAP = {
+        OrderSchema.margin: {
+            OrderType.stop_market: 'Stop',
+            OrderType.stop_limit: 'StopLimit'
+        }
     }

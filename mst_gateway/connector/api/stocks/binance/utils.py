@@ -235,9 +235,9 @@ def store_order_side(side: int) -> str:
     return var.BINANCE_ORDER_SIDE_BUY
 
 
-def store_order_type(order_type: str) -> str:
+def store_order_type(order_type: str, schema: str) -> str:
     converter = BinanceOrderTypeConverter
-    return converter.store_type(order_type)
+    return converter.store_type(order_type, schema)
 
 
 def load_order_book_side(order_side: str) -> int:
@@ -341,26 +341,27 @@ def _load_price_and_filled_volume(fills: list) -> dict:
     return data
 
 
-def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
+def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict], payload: dict = None) -> dict:
     _time_field = raw_data.get('time') or raw_data.get('transactTime') or raw_data.get('updateTime')
     _time = to_date(_time_field) or datetime.now()
-    order_type_and_exec = load_order_type_and_exec(schema, raw_data.get('type').upper())
+    order_type = raw_data.get('type') or payload.get('type')
+    order_type_and_exec = load_order_type_and_exec(schema, order_type.upper())
     iceberg_volume = to_float(raw_data.get('icebergQty', 0.0))
     data = {
         'time': _time,
         'exchange_order_id': str(raw_data.get('orderId')),
         'symbol': raw_data.get('symbol'),
         'schema': schema,
-        'volume': to_float(raw_data.get('origQty')),
+        'volume': to_float(raw_data.get('origQty') or payload.get('quantity')),
         'filled_volume': to_float(raw_data.get('executedQty')),
-        'stop': to_float(raw_data.get('stopPrice')),
-        'side': load_order_side(raw_data.get('side')),
-        'price': to_float(raw_data.get('price')),
+        'stop': to_float(raw_data.get('stopPrice') or payload.get('stopPrice')),
+        'side': load_order_side(raw_data.get('side') or payload.get('side')),
+        'price': to_float(raw_data.get('price') or payload.get('price')),
         'active': raw_data.get('status') != "NEW",
-        'ttl': var.BINANCE_ORDER_TTL_MAP.get(raw_data.get('timeInForce')),
+        'ttl': var.BINANCE_ORDER_TTL_MAP.get(raw_data.get('timeInForce') or payload.get('timeInForce')),
         'is_iceberg': bool(iceberg_volume),
         'iceberg_volume': iceberg_volume,
-        'is_passive': load_order_passive(raw_data.get('timeInForce')),
+        'is_passive': load_order_passive(raw_data.get('timeInForce') or payload.get('timeInForce')),
         'comments': None,
         **order_type_and_exec
     }
@@ -1481,7 +1482,7 @@ def generate_parameters_by_order_type(main_params: dict, options: dict, schema: 
 
     """
     order_type = main_params.pop('order_type', None)
-    exchange_order_type = store_order_type(order_type)
+    exchange_order_type = store_order_type(order_type, schema)
     mapping_parameters = store_order_mapping_parameters(exchange_order_type, schema)
     options = assign_custom_parameter_values(options, schema)
     all_params = map_api_parameter_names(
@@ -1511,6 +1512,8 @@ def assign_custom_parameter_values(options: Optional[dict], schema: Optional[str
 
     if options.get('is_passive') and schema in [api.OrderSchema.margin_coin, api.OrderSchema.margin]:
         new_options['ttl'] = var.PARAMETER_NAMES_MAP.get('GTX')
+    if 'stop_price' in options:
+        new_options['stop_price'] = options['stop_price']
     return new_options
 
 
