@@ -873,8 +873,6 @@ class BinanceRestApi(StockRestApi):
                 raise RecoverableError(message)
             raise ConnectorError(message)
         except Exception as exc:
-            import traceback
-            traceback.print_exc()
             self.logger.error(f"Binance api error. Detail: {exc}")
             raise ConnectorError("Binance api error.")
         return data
