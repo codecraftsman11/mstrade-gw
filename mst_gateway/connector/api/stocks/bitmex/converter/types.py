@@ -30,6 +30,7 @@ class BitmexOrderTypeConverter(BaseOrderTypeConverter):
 
     STORE_TYPE_BY_SCHEMA_MAP = {
         OrderSchema.margin: {
+            **BASE_STORE_TYPE_MAP,
             OrderType.stop_market: 'Stop',
             OrderType.stop_limit: 'StopLimit'
         }
