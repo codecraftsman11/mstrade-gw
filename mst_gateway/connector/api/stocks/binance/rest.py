@@ -777,17 +777,7 @@ class BinanceRestApi(StockRestApi):
             except IndexError:
                 return {}
             return schema_handlers[schema][1](data, schema)
-        if schema in (OrderSchema.exchange, OrderSchema.margin_cross):
-            if data := self.storage.get(
-                f"{StateStorageKey.state}:position.{kwargs.get('account_id')}.{self.name}.{schema}.{symbol}".lower()
-            ):
-                schema_handlers = {
-                    OrderSchema.exchange: utils.load_exchange_position,
-                    OrderSchema.margin_cross: utils.load_margin_cross_position,
-                }
-                symbol_data = self._binance_api(self._handler.get_ticker, symbol=symbol.upper())
-                return schema_handlers[schema](data, schema, symbol_data.get('lastPrice'))
-            return {}
+        return {}
 
     def list_positions(self, schema: str, **kwargs) -> list:
         validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin,
@@ -802,17 +792,7 @@ class BinanceRestApi(StockRestApi):
             }
             data = self._binance_api(schema_handlers[schema][0])
             return schema_handlers[schema][1](data, schema)
-        if schema in (OrderSchema.exchange, OrderSchema.margin_cross):
-            if data := self.storage.get_pattern(
-                f"{StateStorageKey.state}:position.{kwargs.get('account_id')}.{self.name}.{schema}.*".lower()
-            ):
-                schema_handlers = {
-                    OrderSchema.exchange: utils.load_exchange_position_list,
-                    OrderSchema.margin_cross: utils.load_margin_cross_position_list,
-                }
-                symbols_data = self._binance_api(self._handler.get_ticker)
-                return schema_handlers[schema](data, schema, symbols_data)
-            return []
+        return []
 
     def get_positions_state(self, schema: str) -> dict:
         schema = schema.lower()

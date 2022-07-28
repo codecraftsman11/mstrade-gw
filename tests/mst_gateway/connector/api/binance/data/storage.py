@@ -133,26 +133,6 @@ STORAGE_DATA = {
             'wallet_asset': 'BTC',
         }
     },
-    f"{StateStorageKey.state}:position.1.tbinance.{OrderSchema.exchange}.btcusdt": {
-        'id': '1',
-        'symbol': 'btcusdt',
-        'side': BUY,
-        'volume': 1.0,
-        'entry_price': 55555.0,
-        'leverage': 1,
-        'leverage_type': LeverageType.isolated,
-        'action': 'update',
-    },
-    f"{StateStorageKey.state}:position.1.tbinance.{OrderSchema.margin_cross}.btcusdt": {
-        'id': '1',
-        'symbol': 'btcusdt',
-        'side': BUY,
-        'volume': 1.0,
-        'entry_price': 55555.0,
-        'leverage': 1,
-        'leverage_type': LeverageType.isolated,
-        'action': 'update',
-    },
     f"{StateStorageKey.exchange_rates}.tbinance.{OrderSchema.exchange}": {
         'bnb': 547.9, 'btc': 48736.89, 'eth': 2757.89, 'ltc': 1095.94, 'trx': 0.09164,
          'xrp': 0.8234, 'usdt': 1, 'busd': 0.9843693856

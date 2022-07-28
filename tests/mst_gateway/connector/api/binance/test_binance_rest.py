@@ -9,7 +9,7 @@ from mst_gateway.connector.api import OrderTTL
 from mst_gateway.logging import init_logger
 from mst_gateway.calculator import BinanceFinFactory
 from mst_gateway.connector.api.stocks.binance.rest import BinanceRestApi
-from mst_gateway.connector.api.types import LeverageType, OrderExec, OrderSchema, OrderType, BUY, SELL, PositionMode
+from mst_gateway.connector.api.types import LeverageType, OrderExec, OrderSchema, OrderType, BUY, SELL
 from mst_gateway.exceptions import ConnectorError
 from tests.mst_gateway.connector import schema as fields
 from tests import config as cfg
@@ -435,41 +435,12 @@ class TestBinanceRestApi:
         'rest, schema', [('tbinance_margin', OrderSchema.margin), ('tbinance_margin', OrderSchema.margin_coin)],
         indirect=['rest'],
     )
-    def test_get_position_mode(self, rest: BinanceRestApi, schema):
-        position_mode = rest.get_position_mode(schema)
-        assert Schema(fields.POSITION_MODE_FIELDS).validate(position_mode) == position_mode
-
-    @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross)],
-        indirect=['rest'],
-    )
-    def test_get_position_mode_invalid_schema(self, rest: BinanceRestApi, schema):
-        with pytest.raises(ConnectorError):
-            rest.get_position_mode(schema)
-
-    @pytest.mark.parametrize(
-        'rest, schema, mode', [('tbinance_spot', OrderSchema.exchange, PositionMode.one_way),
-                               ('tbinance_spot', OrderSchema.margin_cross, PositionMode.one_way),
-                               ('tbinance_spot', OrderSchema.exchange, PositionMode.hedge),
-                               ('tbinance_spot', OrderSchema.margin_cross, PositionMode.hedge)],
-        indirect=['rest'],
-    )
-    def test_change_position_mode_invalid_schema(self, rest: BinanceRestApi, schema, mode):
-        with pytest.raises(ConnectorError):
-            rest.change_position_mode(schema, mode)
-
-    @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross),
-                         ('tbinance_margin', OrderSchema.margin), ('tbinance_margin', OrderSchema.margin_coin)],
-        indirect=['rest'],
-    )
     def test_get_position(self, rest: BinanceRestApi, schema):
         position = rest.get_position(schema, get_symbol(schema), account_id=1)
         assert Schema(fields.POSITION_FIELDS).validate(position) == position
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross),
-                         ('tbinance_margin', OrderSchema.margin), ('tbinance_margin', OrderSchema.margin_coin)],
+        'rest, schema', [('tbinance_margin', OrderSchema.margin), ('tbinance_margin', OrderSchema.margin_coin)],
         indirect=['rest'],
     )
     def test_list_positions(self, rest: BinanceRestApi, schema):
@@ -478,8 +449,7 @@ class TestBinanceRestApi:
             assert position_schema.validate(position) == position
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross),
-                         ('tbinance_margin', OrderSchema.margin), ('tbinance_margin', OrderSchema.margin_coin)],
+        'rest, schema', [('tbinance_margin', OrderSchema.margin), ('tbinance_margin', OrderSchema.margin_coin)],
         indirect=['rest'],
     )
     def test_get_positions_state(self, rest: BinanceRestApi, schema):
