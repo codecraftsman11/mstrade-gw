@@ -2,9 +2,8 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Optional, Tuple, TYPE_CHECKING
 from mst_gateway.calculator.binance import BinanceFinFactory
-from mst_gateway.connector.api.types import LeverageType
+from mst_gateway.connector.api.types import LeverageType, PositionSide
 from mst_gateway.connector.api.stocks.binance import utils
-from mst_gateway.connector.api.stocks.binance.var import BinancePositionSideMode
 from mst_gateway.connector.api.stocks.binance.wss.serializers.base import BinanceSerializer
 
 
@@ -64,7 +63,7 @@ class BinanceMarginPositionSerializer(BinancePositionSerializer):
                         }
                     )
                 for position in item['a'].get('P', []):
-                    if (symbol := position.get('s')) and position.get('ps') == BinancePositionSideMode.BOTH:
+                    if (symbol := position.get('s')) and position.get('ps').lower() == PositionSide.both:
                         _wallet_asset = self._get_wallet_asset(position, '')
                         volume = utils.to_float(position.get('pa'))
                         side = utils.load_position_side_by_volume(volume)
