@@ -432,8 +432,7 @@ class TestBinanceRestApi:
                                  leverage_type_update=True, leverage_update=True)
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross),
-                         ('tbinance_margin', OrderSchema.margin), ('tbinance_margin', OrderSchema.margin_coin)],
+        'rest, schema', [('tbinance_margin', OrderSchema.margin), ('tbinance_margin', OrderSchema.margin_coin)],
         indirect=['rest'],
     )
     def test_get_position(self, rest: BinanceRestApi, schema):
@@ -441,8 +440,7 @@ class TestBinanceRestApi:
         assert Schema(fields.POSITION_FIELDS).validate(position) == position
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross),
-                         ('tbinance_margin', OrderSchema.margin), ('tbinance_margin', OrderSchema.margin_coin)],
+        'rest, schema', [('tbinance_margin', OrderSchema.margin), ('tbinance_margin', OrderSchema.margin_coin)],
         indirect=['rest'],
     )
     def test_list_positions(self, rest: BinanceRestApi, schema):
@@ -451,8 +449,7 @@ class TestBinanceRestApi:
             assert position_schema.validate(position) == position
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross),
-                         ('tbinance_margin', OrderSchema.margin), ('tbinance_margin', OrderSchema.margin_coin)],
+        'rest, schema', [('tbinance_margin', OrderSchema.margin), ('tbinance_margin', OrderSchema.margin_coin)],
         indirect=['rest'],
     )
     def test_get_positions_state(self, rest: BinanceRestApi, schema):
