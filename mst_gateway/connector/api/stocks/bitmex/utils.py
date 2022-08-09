@@ -198,13 +198,11 @@ def load_assets_precision(base_asset: str, quote_asset: str, assets_config: list
 
 
 def store_order_type(order_type: str, schema: str) -> str:
-    converter = BitmexOrderTypeConverter
-    return converter.store_type(order_type, schema)
+    return BitmexOrderTypeConverter.store_type(order_type, schema)
 
 
 def load_order_type_and_exec(schema: str, exchange_order_type: str) -> dict:
-    converter = BitmexOrderTypeConverter
-    return converter.load_type_and_exec(schema, exchange_order_type)
+    return BitmexOrderTypeConverter.load_type_and_exec(schema, exchange_order_type)
 
 
 def store_order_side(order_side: int) -> Optional[str]:

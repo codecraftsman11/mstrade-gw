@@ -15,8 +15,7 @@ class BaseOrderTypeConverter:
 
         """
         mapping_data = cls.LOAD_TYPE_AND_EXECUTION_MAP.get(schema, dict())
-        order_type_and_exec = mapping_data.get(exchange_order_type)
-        if order_type_and_exec:
+        if order_type_and_exec := mapping_data.get(exchange_order_type):
             return order_type_and_exec
         return {'type': None, 'execution': None}
 
@@ -28,7 +27,6 @@ class BaseOrderTypeConverter:
 
         """
         mapping_data = cls.STORE_TYPE_BY_SCHEMA_MAP.get(schema, dict())
-        exchange_order_type = mapping_data.get(order_type)
-        if exchange_order_type:
+        if exchange_order_type := mapping_data.get(order_type):
             return exchange_order_type
         return OrderType.limit

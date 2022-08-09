@@ -41,9 +41,7 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
             'MARKET': {'type': OrderType.market, 'execution': OrderExec.market},
             'STOP': {'type': OrderType.stop_limit, 'execution': OrderExec.limit},
             'STOP_MARKET': {'type': OrderType.stop_market, 'execution': OrderExec.limit},
-            # 'STOP': {'type': OrderType.stop_loss, 'execution': OrderExec.limit},
             # 'TAKE_PROFIT': {'type': OrderType.take_profit, 'execution': OrderExec.limit},
-            # 'STOP_MARKET': {'type': OrderType.stop_loss, 'execution': OrderExec.market},
             # 'TAKE_PROFIT_MARKET': {'type': OrderType.take_profit, 'execution': OrderExec.market},
             # 'TRAILING_STOP_MARKET': {'type': OrderType.trailing_stop, 'execution': OrderExec.market},
         },
@@ -52,43 +50,40 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
             'MARKET': {'type': OrderType.market, 'execution': OrderExec.market},
             'STOP': {'type': OrderType.stop_limit, 'execution': OrderExec.limit},
             'STOP_MARKET': {'type': OrderType.stop_market, 'execution': OrderExec.limit},
-            # 'STOP': {'type': OrderType.stop_loss, 'execution': OrderExec.limit},
             # 'TAKE_PROFIT': {'type': OrderType.take_profit, 'execution': OrderExec.limit},
-            # 'STOP_MARKET': {'type': OrderType.stop_loss, 'execution': OrderExec.market},
             # 'TAKE_PROFIT_MARKET': {'type': OrderType.take_profit, 'execution': OrderExec.market},
             # 'TRAILING_STOP_MARKET': {'type': OrderType.trailing_stop, 'execution': OrderExec.market},
         }
     }
 
-    BASE_STORE_TYPE_MAP = {
-        OrderType.limit: 'LIMIT',
-        OrderType.market: 'MARKET',
-        OrderType.position: 'MARKET',
-    }
-
     STORE_TYPE_BY_SCHEMA_MAP = {
         OrderSchema.margin_cross: {
-            **BASE_STORE_TYPE_MAP,
+            OrderType.limit: 'LIMIT',
+            OrderType.market: 'MARKET',
             OrderType.stop_limit: 'STOP_LOSS_LIMIT',
             OrderType.stop_market: 'MARKET'
         },
         OrderSchema.margin_isolated: {
-            **BASE_STORE_TYPE_MAP,
+            OrderType.limit: 'LIMIT',
+            OrderType.market: 'MARKET',
             OrderType.stop_limit: 'STOP_LOSS_LIMIT',
             OrderType.stop_market: 'MARKET',
         },
         OrderSchema.exchange: {
-            **BASE_STORE_TYPE_MAP,
+            OrderType.limit: 'LIMIT',
+            OrderType.market: 'MARKET',
             OrderType.stop_limit: 'STOP_LOSS_LIMIT',
             OrderType.stop_market: 'MARKET'
         },
         OrderSchema.margin: {
-            **BASE_STORE_TYPE_MAP,
+            OrderType.limit: 'LIMIT',
+            OrderType.market: 'MARKET',
             OrderType.stop_limit: 'STOP',
             OrderType.stop_market: 'STOP_MARKET'
         },
         OrderSchema.margin_coin: {
-            **BASE_STORE_TYPE_MAP,
+            OrderType.limit: 'LIMIT',
+            OrderType.market: 'MARKET',
             OrderType.stop_limit: 'STOP',
             OrderType.stop_market: 'STOP_MARKET'
         }

@@ -236,8 +236,7 @@ def store_order_side(side: int) -> str:
 
 
 def store_order_type(order_type: str, schema: str) -> str:
-    converter = BinanceOrderTypeConverter
-    return converter.store_type(order_type, schema)
+    return BinanceOrderTypeConverter.store_type(order_type, schema)
 
 
 def load_order_book_side(order_side: str) -> int:
@@ -1444,8 +1443,7 @@ def load_funding_rates(funding_rates: list) -> list:
 
 
 def load_order_type_and_exec(schema: str, exchange_order_type: str) -> dict:
-    converter = BinanceOrderTypeConverter
-    return converter.load_type_and_exec(schema, exchange_order_type)
+    return BinanceOrderTypeConverter.load_type_and_exec(schema, exchange_order_type)
 
 
 def get_mapping_for_schema(schema: str) -> Optional[dict]:
