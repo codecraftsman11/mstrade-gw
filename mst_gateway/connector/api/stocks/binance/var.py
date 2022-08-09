@@ -71,6 +71,41 @@ DEFAULT_PARAMETERS = [
 ]
 
 PARAMETERS_BY_ORDER_TYPE_MAP = {
+    api.OrderSchema.exchange: {
+        'MARKET': {
+            'params': [
+                *DEFAULT_PARAMETERS
+            ],
+            'additional_params': {}
+        },
+        'LIMIT': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'icebergQty',
+                'timeInForce',
+                'price'
+            ],
+            'additional_params': {}
+        },
+        'STOP_LOSS_LIMIT': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'stopPrice',
+                'timeInForce',
+                'price'
+            ],
+            'additional_params': {}
+        },
+        'STOP_LOSS': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'stopPrice',
+                'quantity'
+            ],
+            'additional_params': {}
+        }
+    },
+
     api.OrderSchema.margin_cross: {
         'MARKET': {
             'params': [
@@ -124,41 +159,6 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
                 *DEFAULT_PARAMETERS,
                 'isIsolated',
                 'sideEffectType'
-                'icebergQty',
-                'timeInForce',
-                'price'
-            ],
-            'additional_params': {}
-        },
-        'STOP_LOSS_LIMIT': {
-            'params': [
-                *DEFAULT_PARAMETERS,
-                'stopPrice',
-                'timeInForce',
-                'price'
-            ],
-            'additional_params': {}
-        },
-        'STOP_LOSS': {
-            'params': [
-                *DEFAULT_PARAMETERS,
-                'stopPrice',
-                'quantity'
-            ],
-            'additional_params': {}
-        }
-    },
-
-    api.OrderSchema.exchange: {
-        'MARKET': {
-            'params': [
-                *DEFAULT_PARAMETERS
-            ],
-            'additional_params': {}
-        },
-        'LIMIT': {
-            'params': [
-                *DEFAULT_PARAMETERS,
                 'icebergQty',
                 'timeInForce',
                 'price'
