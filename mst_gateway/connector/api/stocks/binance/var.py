@@ -251,7 +251,7 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         'STOP': {
             'params': [
                 *DEFAULT_PARAMETERS,
-                'stopPrice'
+                'stopPrice',
                 'quantity',
                 'price'
             ],
