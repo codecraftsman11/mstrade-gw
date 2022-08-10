@@ -747,24 +747,19 @@ class BinanceRestApi(StockRestApi):
         data = self._binance_api(schema_handlers[schema.lower()])
         return utils.load_position_mode(data)
 
-    def _handle_change_position_mode_response(self, mode: str, data: dict) -> dict:
-        mode = mode.lower()
-        if data.get('code') != 200:
-            mode = PositionMode.hedge if mode == PositionMode.one_way else PositionMode.one_way
-        return {
-            'mode': mode
-        }
-
     def change_position_mode(self, schema: str, mode: str) -> dict:
         schema_handlers = {
             OrderSchema.margin: self._handler.change_futures_position_mode,
             OrderSchema.margin_coin: self._handler.change_futures_coin_position_mode,
         }
         validate_schema(schema, schema_handlers)
-        if not PositionMode.is_valid(mode.lower()):
+        mode = mode.lower()
+        if not PositionMode.is_valid(mode):
             raise ConnectorError(f"Invalid position mode {mode}.")
         data = self._binance_api(schema_handlers[schema.lower()], dualSidePosition=utils.store_position_mode(mode))
-        return self._handle_change_position_mode_response(mode, data)
+        if data.get('code') != 200:
+            raise ConnectorError(data['msg'])
+        return {'mode': mode}
 
     def get_position(self, schema: str, symbol: str, **kwargs) -> dict:
         validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin,

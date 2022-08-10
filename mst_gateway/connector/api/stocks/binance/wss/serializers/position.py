@@ -63,7 +63,7 @@ class BinanceMarginPositionSerializer(BinancePositionSerializer):
                         }
                     )
                 for position in item['a'].get('P', []):
-                    if (symbol := position.get('s')) and position.get('ps').lower() == PositionSide.both:
+                    if (symbol := position.get('s')) and position.get('ps', '').lower() == PositionSide.both:
                         _wallet_asset = self._get_wallet_asset(position, '')
                         volume = utils.to_float(position.get('pa'))
                         side = utils.load_position_side_by_volume(volume)
