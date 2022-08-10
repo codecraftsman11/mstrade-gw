@@ -184,7 +184,7 @@ class BitmexRestApi(StockRestApi):
             volume=volume,
             price=price
         )
-        params = utils.generate_parameters_by_order_type(params, options)
+        params = utils.generate_parameters_by_order_type(params, options, schema)
         data = self._bitmex_api(self._handler.create_order, **params)
         state_data = self.storage.get(
             f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin}"

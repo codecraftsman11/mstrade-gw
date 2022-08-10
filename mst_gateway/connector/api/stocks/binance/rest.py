@@ -117,10 +117,16 @@ class BinanceRestApi(StockRestApi):
         }
         if isinstance(data, list):
             data = data[0]
-        data_bid_ask_price = self._binance_api(schema_handlers[schema][0], symbol=symbol)
+        try:
+            data_bid_ask_price = self._binance_api(schema_handlers[schema][0], symbol=symbol)
+        except GatewayError:
+            data_bid_ask_price = {}
         if isinstance(data_bid_ask_price, list):
             data_bid_ask_price = data_bid_ask_price[0]
-        data_premium_index = self._binance_api(schema_handlers[schema][1], symbol=symbol)
+        try:
+            data_premium_index = self._binance_api(schema_handlers[schema][1], symbol=symbol)
+        except GatewayError:
+            data_premium_index = {}
         if isinstance(data_premium_index, list):
             data_premium_index = data_premium_index[0]
         data.update({
@@ -287,7 +293,7 @@ class BinanceRestApi(StockRestApi):
         params = utils.generate_parameters_by_order_type(main_params, options, schema)
         data = self._binance_api(schema_handlers[schema.lower()], **params)
         state_data = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}").get(symbol.lower(), {})
-        return utils.load_order_data(schema, data, state_data)
+        return utils.load_order_data(schema, data, state_data, params)
 
     def update_order(self, exchange_order_id: str, symbol: str,
                      schema: str, side: int, volume: float,

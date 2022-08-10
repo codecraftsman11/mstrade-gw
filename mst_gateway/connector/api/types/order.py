@@ -15,6 +15,8 @@ class OrderType(ClassWithAttributes):
     squeeze = 'squeeze'
     limit_smart = 'limit_smart'
     position = 'position'
+    stop_limit = 'stop_limit'
+    stop_market = 'stop_market'
 
 
 class OrderSchema(ClassWithAttributes):
