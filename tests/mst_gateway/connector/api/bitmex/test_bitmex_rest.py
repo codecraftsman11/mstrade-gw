@@ -805,9 +805,9 @@ class TestOrderBitmexRestApi:
         'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
-    def test_get_position_mode(self, rest: BitmexRestApi, schema):
-        position_mode = rest.get_position_mode(schema)
-        assert Schema(fields.POSITION_MODE_FIELDS).validate(position_mode) == position_mode
+    def test_get_position_mode_exception(self, rest: BitmexRestApi, schema):
+        with pytest.raises(ConnectorError):
+            rest.get_position_mode(schema)
 
     @pytest.mark.parametrize(
         'rest, schema, mode', [('tbitmex', OrderSchema.margin, PositionMode.one_way),
@@ -816,4 +816,4 @@ class TestOrderBitmexRestApi:
     )
     def test_change_position_mode_exception(self, rest: BitmexRestApi, schema, mode):
         with pytest.raises(ConnectorError):
-            rest.get_position_mode(schema)
+            rest.change_position_mode(schema, mode)
