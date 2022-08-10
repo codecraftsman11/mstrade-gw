@@ -916,14 +916,14 @@ class TestOrderBinanceRestApi:
         symbol = get_symbol(schema)
         price = None
         default_order_data = deepcopy(order_data.DEFAULT_ORDER_OPTIONS)
-        if order_type in (OrderType.limit, OrderType.stop_limit, OrderType.stop_market):
+        if order_type != OrderType.market:
             price = get_order_price(rest, schema, symbol, side)
-            if order_type != OrderType.limit:
+            if order_type != OrderType.stop_market:
+                expect['price'] = price
+            if order_type in (OrderType.stop_market, OrderType.stop_limit):
                 stop_price = get_order_stop_price(price, side)
                 default_order_data.update({'stop_price': stop_price})
                 expect['stop'] = stop_price
-            if order_type != OrderType.stop_market:
-                expect['price'] = price
 
         order = rest.create_order(symbol, schema, side, order_data.DEFAULT_ORDER_VOLUME[schema], order_type, price,
                                   default_order_data)
