@@ -340,7 +340,7 @@ def _load_price_and_filled_volume(fills: list) -> dict:
     return data
 
 
-def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict], payload: dict = None) -> dict:
+def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict], payload: dict = {}) -> dict:
     _time_field = raw_data.get('time') or raw_data.get('transactTime') or raw_data.get('updateTime')
     _time = to_date(_time_field) or datetime.now()
     order_type = raw_data.get('type') or payload.get('type')

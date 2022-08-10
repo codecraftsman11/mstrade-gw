@@ -741,7 +741,7 @@ class TestOrderBinanceRestApi:
             }),
             ('tbinance_margin', OrderSchema.margin, BUY, OrderType.stop_market, {
                 'active': False,
-                'execution': OrderExec.limit,
+                'execution': OrderExec.market,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': BUY,
@@ -758,7 +758,7 @@ class TestOrderBinanceRestApi:
             }),
             ('tbinance_margin', OrderSchema.margin, SELL, OrderType.stop_market, {
                 'active': False,
-                'execution': OrderExec.limit,
+                'execution': OrderExec.market,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': SELL,
@@ -877,7 +877,7 @@ class TestOrderBinanceRestApi:
             }),
             ('tbinance_margin', OrderSchema.margin_coin, BUY, OrderType.stop_market, {
                 'active': False,
-                'execution': OrderExec.limit,
+                'execution': OrderExec.market,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin_coin,
                 'side': BUY,
@@ -894,7 +894,7 @@ class TestOrderBinanceRestApi:
             }),
             ('tbinance_margin', OrderSchema.margin_coin, SELL, OrderType.stop_market, {
                 'active': False,
-                'execution': OrderExec.limit,
+                'execution': OrderExec.market,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin_coin,
                 'side': SELL,
@@ -915,7 +915,7 @@ class TestOrderBinanceRestApi:
     def test_create_order(self, rest: BinanceRestApi, schema, side, order_type, expect):
         symbol = get_symbol(schema)
         price = None
-        default_order_data = order_data.DEFAULT_ORDER_OPTIONS
+        default_order_data = deepcopy(order_data.DEFAULT_ORDER_OPTIONS)
         if order_type in (OrderType.limit, OrderType.stop_limit, OrderType.stop_market):
             price = get_order_price(rest, schema, symbol, side)
             if order_type != OrderType.limit:

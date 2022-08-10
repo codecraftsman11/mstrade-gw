@@ -150,8 +150,6 @@ def clear_stock_order_data(order: dict):
     order.pop('time')
     order.pop('exchange_order_id')
     order.pop('active')
-    if order['type'] in (OrderType.market, OrderType.stop_market):
-        order.pop('price')
 
 
 class TestBitmexRestApi:
@@ -633,9 +631,10 @@ class TestOrderBitmexRestApi:
     )
     def test_create_order(self, rest: BitmexRestApi, schema: str, side: int, order_type: str, expect: dict):
         symbol = get_symbol(schema)
-        price = get_order_price(rest, schema, symbol, side, order_type)
-        default_order_data = order_data.DEFAULT_ORDER_OPTIONS
+        price = None
+        default_order_data = deepcopy(order_data.DEFAULT_ORDER_OPTIONS)
         if order_type in (OrderType.limit, OrderType.stop_limit, OrderType.stop_market):
+            price = get_order_price(rest, schema, symbol, side, order_type)
             if order_type != OrderType.limit:
                 stop_price = get_order_stop_price(price, side)
                 default_order_data.update({'stop_price': stop_price})
@@ -648,6 +647,8 @@ class TestOrderBitmexRestApi:
                                   default_order_data)
         assert order_schema.validate(order) == order
         clear_stock_order_data(order)
+        if order_type in (OrderType.market, OrderType.stop_market):
+            order.pop('price')
         assert order == expect
         rest.cancel_all_orders(schema)
 
@@ -657,11 +658,13 @@ class TestOrderBitmexRestApi:
     )
     def test_get_order(self, rest: BitmexRestApi, schema):
         default_order = create_default_order(rest, schema)
+        expect = deepcopy(order_data.DEFAULT_ORDER[schema])
+        expect['price'] = default_order['price']
         order_schema = Schema(fields.ORDER_FIELDS)
         order = rest.get_order(default_order['exchange_order_id'], default_order['symbol'], schema)
         assert order_schema.validate(order) == order
         clear_stock_order_data(order)
-        assert order == order_data.DEFAULT_ORDER[schema]
+        assert order == expect
         rest.cancel_all_orders(schema)
 
     @pytest.mark.parametrize(
@@ -670,12 +673,14 @@ class TestOrderBitmexRestApi:
     )
     def test_list_orders(self, rest: BitmexRestApi, schema: str):
         default_order = create_default_order(rest, schema)
+        expect = deepcopy(order_data.DEFAULT_ORDER[schema])
+        expect['price'] = default_order['price']
         order_schema = Schema(fields.ORDER_FIELDS)
         orders = rest.list_orders(schema, default_order['symbol'])
         for order in orders:
             assert order_schema.validate(order) == order
         clear_stock_order_data(orders[0])
-        assert orders[0] == order_data.DEFAULT_ORDER[schema]
+        assert orders[0] == expect
         rest.cancel_all_orders(schema)
 
 
@@ -703,11 +708,14 @@ class TestOrderBitmexRestApi:
     def test_bitmex_rest_update_order(self, rest: BitmexRestApi, schema: str, expect: dict):
         default_order = create_default_order(rest, schema)
         order_schema = Schema(fields.ORDER_FIELDS)
+        symbol = get_symbol(schema)
         order = rest.update_order(default_order['exchange_order_id'], default_order['symbol'], schema,
+                                  price=get_order_price(rest, schema, symbol, order_data.DEFAULT_ORDER_OPPOSITE_SIDE),
                                   side=order_data.DEFAULT_ORDER_OPPOSITE_SIDE, volume=default_order['volume'] * 2,
                                   options=order_data.DEFAULT_ORDER_OPTIONS)
         assert order_schema.validate(order) == order
         clear_stock_order_data(order)
+        order.pop('price')
         assert order == expect
         rest.cancel_all_orders(schema)
         rest.close_all_orders(order['symbol'], schema)
@@ -735,6 +743,7 @@ class TestOrderBitmexRestApi:
     )
     def test_cancel_order(self, rest: BitmexRestApi, schema: str, expect: dict):
         default_order = create_default_order(rest, schema)
+        expect['price'] = default_order['price']
         order_schema = Schema(fields.ORDER_FIELDS)
         order = rest.cancel_order(default_order['exchange_order_id'], default_order['symbol'], schema)
         assert order_schema.validate(order) == order
