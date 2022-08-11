@@ -381,7 +381,7 @@ class BitmexRestApi(StockRestApi):
         return utils.load_leverage(response)
 
     def get_position_mode(self, schema: str) -> dict:
-        raise ConnectorError('Bitmex api error. Details: Invalid method.')
+        return {'mode': PositionMode.one_way}
 
     def change_position_mode(self, schema: str, mode: str) -> None:
         raise ConnectorError('Bitmex api error. Details: Invalid method.')
