@@ -760,7 +760,8 @@ class BinanceRestApi(StockRestApi):
         mode = mode.lower()
         if not PositionMode.is_valid(mode):
             raise ConnectorError(f"Invalid position mode {mode}.")
-        data = self._binance_api(schema_handlers[schema.lower()], dualSidePosition=utils.store_position_mode(mode))
+        data = self._binance_api(schema_handlers[schema.lower()],
+                                 dualSidePosition=str(utils.is_hedge_mode(mode)).lower())
         if data.get('code') != 200:
             raise ConnectorError(data['msg'])
         return {'mode': mode}

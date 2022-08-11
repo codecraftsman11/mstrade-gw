@@ -1555,11 +1555,8 @@ def load_position_mode(raw_data: dict) -> dict:
     }
 
 
-def store_position_mode(mode: str):
-    dual_side_position = False
-    if mode.lower() == PositionMode.hedge:
-        dual_side_position = True
-    return str(dual_side_position).lower()
+def is_hedge_mode(mode: str):
+    return mode.lower() == PositionMode.hedge
 
 
 def load_position_side_by_volume(position_amount: float) -> Optional[int]:
