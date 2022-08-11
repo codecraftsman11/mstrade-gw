@@ -805,7 +805,7 @@ class TestOrderBitmexRestApi:
         'rest, schema', [('tbitmex', OrderSchema.margin)],
         indirect=['rest'],
     )
-    def test_get_position_mode_exception(self, rest: BitmexRestApi, schema):
+    def test_get_position_mode(self, rest: BitmexRestApi, schema):
         position_mode = rest.get_position_mode(schema)
         assert Schema(fields.POSITION_MODE_FIELDS).validate(position_mode) == position_mode
 
