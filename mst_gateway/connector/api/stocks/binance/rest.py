@@ -739,13 +739,17 @@ class BinanceRestApi(StockRestApi):
         return leverage_type, leverage
 
     def get_position_mode(self, schema: str) -> dict:
-        schema_handlers = {
-            OrderSchema.margin: self._handler.get_futures_position_mode,
-            OrderSchema.margin_coin: self._handler.get_futures_coin_position_mode,
-        }
-        validate_schema(schema, schema_handlers)
-        data = self._binance_api(schema_handlers[schema.lower()])
-        return utils.load_position_mode(data)
+        validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin,
+                                 OrderSchema.margin_coin))
+        schema = schema.lower()
+        if schema in (OrderSchema.margin, OrderSchema.margin_coin):
+            schema_handlers = {
+                OrderSchema.margin: self._handler.get_futures_position_mode,
+                OrderSchema.margin_coin: self._handler.get_futures_coin_position_mode,
+            }
+            data = self._binance_api(schema_handlers[schema.lower()])
+            return utils.load_position_mode(data)
+        return {'mode': PositionMode.one_way}
 
     def change_position_mode(self, schema: str, mode: str) -> dict:
         schema_handlers = {

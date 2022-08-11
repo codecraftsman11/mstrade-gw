@@ -438,7 +438,8 @@ class TestBinanceRestApi:
                                  leverage_type_update=True, leverage_update=True)
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_margin', OrderSchema.margin), ('tbinance_margin', OrderSchema.margin_coin)],
+        'rest, schema', [('tbinance_margin', OrderSchema.margin), ('tbinance_margin', OrderSchema.margin_coin),
+                         ('tbinance_spot', OrderSchema.margin_cross), ('tbinance_spot', OrderSchema.exchange)],
         indirect=['rest'],
     )
     def test_get_position_mode(self, rest: BinanceRestApi, schema):

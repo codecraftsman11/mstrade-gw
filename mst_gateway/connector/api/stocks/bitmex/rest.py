@@ -381,6 +381,8 @@ class BitmexRestApi(StockRestApi):
         return utils.load_leverage(response)
 
     def get_position_mode(self, schema: str) -> dict:
+        if schema != OrderSchema.margin:
+            raise ConnectorError(f"Invalid schema {schema}.")
         return {'mode': PositionMode.one_way}
 
     def change_position_mode(self, schema: str, mode: str) -> None:
