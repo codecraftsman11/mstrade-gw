@@ -447,21 +447,13 @@ class TestBinanceRestApi:
         assert Schema(fields.POSITION_MODE_FIELDS).validate(position_mode) == position_mode
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_spot', OrderSchema.exchange), ('tbinance_spot', OrderSchema.margin_cross)],
-        indirect=['rest'],
-    )
-    def test_get_position_mode_invalid_schema(self, rest: BinanceRestApi, schema):
-        with pytest.raises(ConnectorError):
-            rest.get_position_mode(schema)
-
-    @pytest.mark.parametrize(
         'rest, schema, mode', [('tbinance_spot', OrderSchema.exchange, PositionMode.one_way),
                                ('tbinance_spot', OrderSchema.margin_cross, PositionMode.one_way),
                                ('tbinance_spot', OrderSchema.exchange, PositionMode.hedge),
                                ('tbinance_spot', OrderSchema.margin_cross, PositionMode.hedge)],
         indirect=['rest'],
     )
-    def test_change_position_mode_invalid_schema(self, rest: BinanceRestApi, schema, mode):
+    def test_change_position_mode_exception(self, rest: BinanceRestApi, schema, mode):
         with pytest.raises(ConnectorError):
             rest.change_position_mode(schema, mode)
 

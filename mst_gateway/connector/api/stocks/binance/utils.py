@@ -1555,10 +1555,6 @@ def load_position_mode(raw_data: dict) -> dict:
     }
 
 
-def is_hedge_mode(mode: str):
-    return mode.lower() == PositionMode.hedge
-
-
 def load_position_side_by_volume(position_amount: float) -> Optional[int]:
     if position_amount and position_amount < 0:
         return api.SELL
