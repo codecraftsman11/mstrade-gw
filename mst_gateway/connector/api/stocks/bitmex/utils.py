@@ -197,14 +197,12 @@ def load_assets_precision(base_asset: str, quote_asset: str, assets_config: list
     return base_asset_precision, quote_asset_precision
 
 
-def store_order_type(order_type: str) -> str:
-    converter = BitmexOrderTypeConverter
-    return converter.store_type(order_type)
+def store_order_type(order_type: str, schema: str) -> str:
+    return BitmexOrderTypeConverter.store_type(order_type, schema)
 
 
 def load_order_type_and_exec(schema: str, exchange_order_type: str) -> dict:
-    converter = BitmexOrderTypeConverter
-    return converter.load_type_and_exec(schema, exchange_order_type)
+    return BitmexOrderTypeConverter.load_type_and_exec(schema, exchange_order_type)
 
 
 def store_order_side(order_side: int) -> Optional[str]:
@@ -707,14 +705,14 @@ def store_order_additional_parameters(exchange_order_type: str) -> dict:
     return var.PARAMETERS_BY_ORDER_TYPE_MAP['Limit']['additional_params']
 
 
-def generate_parameters_by_order_type(main_params: dict, options: dict) -> dict:
+def generate_parameters_by_order_type(main_params: dict, options: dict, schema: str) -> dict:
     """
     Fetches specific order parameters based on the order_type value and adds them
     to the main parameters.
 
     """
     order_type = main_params.pop('order_type', None)
-    exchange_order_type = store_order_type(order_type)
+    exchange_order_type = store_order_type(order_type, schema)
     mapping_parameters = store_order_mapping_parameters(exchange_order_type)
     options = assign_custom_parameter_values(options)
     all_params = map_api_parameter_names(
@@ -748,6 +746,8 @@ def assign_custom_parameter_values(options: Optional[dict]) -> dict:
 
     if options.get('is_passive'):
         new_options['is_passive'] = 'ParticipateDoNotInitiate'
+    if 'stop_price' in options:
+        new_options['stop_price'] = options['stop_price']
     return new_options
 
 

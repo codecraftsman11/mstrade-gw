@@ -71,49 +71,6 @@ DEFAULT_PARAMETERS = [
 ]
 
 PARAMETERS_BY_ORDER_TYPE_MAP = {
-
-    api.OrderSchema.margin_coin: {
-        'MARKET': {
-            'params': [
-                *DEFAULT_PARAMETERS,
-                'positionSide',
-                'reduceOnly'
-            ],
-            'additional_params': {}
-        },
-        'LIMIT': {
-            'params': [
-                *DEFAULT_PARAMETERS,
-                'positionSide',
-                'reduceOnly',
-                'timeInForce',
-                'price'
-            ],
-            'additional_params': {}
-        },
-    },
-
-    api.OrderSchema.margin: {
-        'MARKET': {
-            'params': [
-                *DEFAULT_PARAMETERS,
-                'positionSide',
-                'reduceOnly'
-            ],
-            'additional_params': {}
-        },
-        'LIMIT': {
-            'params': [
-                *DEFAULT_PARAMETERS,
-                'positionSide',
-                'reduceOnly',
-                'timeInForce',
-                'price'
-            ],
-            'additional_params': {}
-        },
-    },
-
     api.OrderSchema.exchange: {
         'MARKET': {
             'params': [
@@ -130,6 +87,23 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
             ],
             'additional_params': {}
         },
+        'STOP_LOSS_LIMIT': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'stopPrice',
+                'timeInForce',
+                'price'
+            ],
+            'additional_params': {}
+        },
+        'STOP_LOSS': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'stopPrice',
+                'quantity'
+            ],
+            'additional_params': {}
+        }
     },
 
     api.OrderSchema.margin_cross: {
@@ -149,6 +123,23 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
                 'icebergQty',
                 'timeInForce',
                 'price'
+            ],
+            'additional_params': {}
+        },
+        'STOP_LOSS_LIMIT': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'stopPrice',
+                'timeInForce',
+                'price'
+            ],
+            'additional_params': {}
+        },
+        'STOP_LOSS': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'stopPrice',
+                'quantity'
             ],
             'additional_params': {}
         }
@@ -173,8 +164,101 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
                 'price'
             ],
             'additional_params': {}
+        },
+        'STOP_LOSS_LIMIT': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'stopPrice',
+                'timeInForce',
+                'price'
+            ],
+            'additional_params': {}
+        },
+        'STOP_LOSS': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'stopPrice',
+                'quantity'
+            ],
+            'additional_params': {}
+        }
+    },
+
+    api.OrderSchema.margin: {
+        'MARKET': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'positionSide',
+                'reduceOnly'
+            ],
+            'additional_params': {}
+        },
+        'LIMIT': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'positionSide',
+                'reduceOnly',
+                'timeInForce',
+                'price'
+            ],
+            'additional_params': {}
+        },
+        'STOP': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'stopPrice',
+                'quantity',
+                'price'
+            ],
+            'additional_params': {}
+        },
+        'STOP_MARKET': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'stopPrice'
+
+            ],
+            'additional_params': {}
+        }
+    },
+
+    api.OrderSchema.margin_coin: {
+        'MARKET': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'positionSide',
+                'reduceOnly'
+            ],
+            'additional_params': {}
+        },
+        'LIMIT': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'positionSide',
+                'reduceOnly',
+                'timeInForce',
+                'price'
+            ],
+            'additional_params': {}
+        },
+        'STOP_MARKET': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'stopPrice'
+            ],
+            'additional_params': {}
+        },
+        'STOP': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'stopPrice',
+                'quantity',
+                'price'
+            ],
+            'additional_params': {}
         }
     }
+
 }
 
 BINANCE_LEVERAGE_TYPE_CROSS = "CROSSED"

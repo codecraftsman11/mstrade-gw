@@ -292,7 +292,7 @@ class BinanceRestApi(StockRestApi):
         params = utils.generate_parameters_by_order_type(main_params, options, schema)
         data = self._binance_api(schema_handlers[schema.lower()], **params)
         state_data = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}").get(symbol.lower(), {})
-        return utils.load_order_data(schema, data, state_data)
+        return utils.load_order_data(schema, data, state_data, params)
 
     def update_order(self, exchange_order_id: str, symbol: str, schema: str, side: int, volume: float,
                      order_type: str = OrderType.market, price: float = None, options: dict = None,

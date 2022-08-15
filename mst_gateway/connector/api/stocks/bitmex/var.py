@@ -1,6 +1,5 @@
 from mst_gateway.connector import api
 
-
 BITMEX_THROTTLE_LIMITS = {
     'ws': 50,
     'rest': 100,
@@ -90,6 +89,37 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         ],
         'additional_params': {}
     },
+    'Stop': {
+        'params': [
+            *DEFAULT_PARAMETERS,
+            'stopPx'
+        ],
+        'additional_params': {}
+    },
+    'StopLimit': {
+        'params': [
+            *DEFAULT_PARAMETERS,
+            'stopPx',
+            'price'
+        ],
+        'additional_params': {}
+    },
+    'MarketIfTouched': {
+        'params': [
+            *DEFAULT_PARAMETERS,
+            'stopPx'
+        ],
+        'additional_params': {}
+    },
+    'LimitIfTouched': {
+        'params': [
+            *DEFAULT_PARAMETERS,
+            'stopPx',
+            'price'
+        ],
+        'additional_params': {}
+    },
+
 }
 
 BITMEX_CROSS_LEVERAGE_TYPE_PARAM = 0
