@@ -281,7 +281,7 @@ DEFAULT_QUOTE_BIN_GET_DATA_RESULT = {
                         'lop': 49056.95,
                         'vl': 0.065147,
                         's': 'btcusdt',
-                        'ss': 'btcusd',
+                        'ss': 'btcusdt',
                     }
                 ],
             }
@@ -303,7 +303,7 @@ DEFAULT_QUOTE_BIN_GET_DATA_RESULT = {
                         'lop': 48929.8,
                         'vl': 3113.884,
                         's': 'btcusdt',
-                        'ss': 'btcusd',
+                        'ss': 'btcusdt',
                     }
                 ],
             }

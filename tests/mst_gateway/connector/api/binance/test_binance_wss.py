@@ -6,6 +6,8 @@ from copy import deepcopy
 from schema import Schema
 from typing import Optional
 from websockets.exceptions import ConnectionClosed
+
+from mst_gateway.connector.api import PositionSide
 from mst_gateway.logging import init_logger
 from mst_gateway.storage.var import StateStorageKey
 from mst_gateway.connector.api.stocks.binance import BinanceWssApi, BinanceMarginWssApi, BinanceMarginCoinWssApi
@@ -83,7 +85,7 @@ def get_position_partial_state_data(schema):
     leverage_brackets, position_state = get_liquidation_kwargs(schema)
     if schema in (OrderSchema.margin, OrderSchema.margin_coin):
         symbol = get_symbol(schema)
-        position_state[symbol.lower()].update({'volume': 0, 'side': None})
+        position_state[symbol.lower()][PositionSide.both].update({'volume': 0, 'side': None})
     return leverage_brackets, position_state
 
 
@@ -478,17 +480,12 @@ class TestBinanceWssApi:
 
     @classmethod
     def init_partial_state(cls, wss: BinanceWssApi, subscr_name):
-        exchange = wss.name
         schema = wss.schema
-        symbol = get_symbol(schema)
-        wss.partial_state_data[subscr_name]['exchange_rates'] = deepcopy(
-            state_data.STORAGE_DATA[f"{StateStorageKey.exchange_rates}.{exchange}.{schema}"]
-        )
         if subscr_name == 'position':
             leverage_brackets, position_state = get_position_partial_state_data(schema)
             wss.partial_state_data[subscr_name].update({
                 'position_state': position_state,
-                'leverage_brackets': {symbol.lower(): leverage_brackets},
+                'leverage_brackets': leverage_brackets,
             })
         if subscr_name == 'wallet':
             wss.partial_state_data[subscr_name].update({
@@ -511,6 +508,7 @@ class TestBinanceWssApi:
         for message in messages:
             assert await wss.get_data(deepcopy(message)) == {}
 
+        self.init_partial_state(wss, subscr_name)
         wss._subscriptions = {subscr_name: {'*': {'1'}}}
         for i, message in enumerate(messages):
             data = await wss.get_data(deepcopy(message))

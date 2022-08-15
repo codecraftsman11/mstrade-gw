@@ -9,7 +9,7 @@ from .utils import is_auth_ok, make_cmd
 from .. import rest
 from ....wss import StockWssApi, ThrottleWss
 from ..utils import to_float, remap_futures_coin_position_request_data
-from .... import OrderSchema, ExchangeDrivers
+from .... import OrderSchema, ExchangeDrivers, PositionSide
 from .. import var
 
 
@@ -231,6 +231,9 @@ class BinanceMarginWssApi(BinanceWssApi):
         _map = {
             'depthUpdate': self.split_order_book,
             'ORDER_TRADE_UPDATE': self.split_order,
+            'ACCOUNT_UPDATE': self.split_account_update,
+            'ACCOUNT_CONFIG_UPDATE': self.split_account_config_update,
+            'markPriceUpdate': self.split_mark_price_update
         }
         return _map.get(key)
 
@@ -247,6 +250,28 @@ class BinanceMarginWssApi(BinanceWssApi):
             item.update(**item.pop('o', {}))
             action = self.define_action_by_order_status(item.get('X'))
             _messages.append(dict(**message, action=action, data=[item]))
+        return _messages
+
+    def split_account_update(self, message):
+        _messages = []
+        for item in message.pop('data', []):
+            a = item.pop('a', {})
+            for position in a.pop('P', []):
+                _messages.append(dict(**message, data=[dict(**item, a=dict(**a, P=[position]))]))
+        return _messages
+
+    def split_account_config_update(self, message):
+        _messages = []
+        for item in message.pop('data', []):
+            for position_side in PositionSide.values():
+                _messages.append(dict(**message, data=[dict(**item, ps=position_side)]))
+        return _messages
+
+    def split_mark_price_update(self, message):
+        _messages = []
+        for item in message.pop('data', []):
+            for position_side in PositionSide.values():
+                _messages.append(dict(**message, data=[dict(**item, ps=position_side)]))
         return _messages
 
 
@@ -288,10 +313,9 @@ class BinanceMarginCoinWssApi(BinanceMarginWssApi):
     def _split_position(self, message: dict) -> list:
         _messages = []
         for position in message.pop('data', []):
-            if position.get('positionSide', '') == var.BinancePositionSideMode.BOTH:
-                _messages.append(dict(**message, data=[
-                    remap_futures_coin_position_request_data(position)
-                ]))
+            _messages.append(dict(**message, data=[
+                remap_futures_coin_position_request_data(position)
+            ]))
         return _messages
 
     def __split_message_map(self, key: str) -> Optional[callable]:

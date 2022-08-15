@@ -1,9 +1,9 @@
 from datetime import datetime, timezone
-from typing import Union, Optional
+from typing import Union, Optional, Tuple
+from copy import deepcopy
 from mst_gateway.connector import api
 from mst_gateway.calculator import BinanceFinFactory
-from mst_gateway.connector.api.stocks.binance.var import BinancePositionSideMode
-from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
+from mst_gateway.connector.api.types.order import LeverageType, OrderSchema, PositionSide
 from mst_gateway.utils import delta
 from ...utils import time2timestamp
 from .....exceptions import ConnectorError
@@ -346,6 +346,7 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
     _time = to_date(_time_field) or datetime.now()
     order_type_and_exec = load_order_type_and_exec(schema, raw_data.get('type').upper())
     iceberg_volume = to_float(raw_data.get('icebergQty', 0.0))
+    position_side = raw_data.get('positionSide') or PositionSide.both
     data = {
         'time': _time,
         'exchange_order_id': str(raw_data.get('orderId')),
@@ -355,6 +356,7 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
         'filled_volume': to_float(raw_data.get('executedQty')),
         'stop': to_float(raw_data.get('stopPrice')),
         'side': load_order_side(raw_data.get('side')),
+        'position_side': position_side.lower(),
         'price': to_float(raw_data.get('price')),
         'active': raw_data.get('status') != "NEW",
         'ttl': var.BINANCE_ORDER_TTL_MAP.get(raw_data.get('timeInForce')),
@@ -1031,9 +1033,8 @@ def _ws_futures_coin_balance_data(balances: list):
 def load_futures_leverage_brackets_as_dict(data: list) -> dict:
     result = {}
     for d in data:
-        result.setdefault(d['symbol'].lower(), [])
         for bracket in d.get('brackets', []):
-            result[d['symbol'].lower()].append({
+            result.setdefault(d['symbol'].lower(), []).append({
                 'bracket': bracket['bracket'],
                 'initial_leverage': to_float(bracket['initialLeverage']),
                 'notional_cap': to_float(bracket['notionalCap']),
@@ -1047,9 +1048,8 @@ def load_futures_leverage_brackets_as_dict(data: list) -> dict:
 def load_futures_coin_leverage_brackets_as_dict(data: list) -> dict:
     result = {}
     for d in data:
-        result.setdefault(d['symbol'].lower(), [])
         for bracket in d.get('brackets', []):
-            result[d['symbol'].lower()].append({
+            result.setdefault(d['symbol'].lower(), []).append({
                 'bracket': bracket['bracket'],
                 'initial_leverage': to_float(bracket['initialLeverage']),
                 'qty_cap': to_float(bracket['qtyCap']),
@@ -1384,9 +1384,11 @@ def load_ws_order_side(order_side: Optional[str]) -> Optional[int]:
 
 
 def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+    position_side = raw_data.get('ps') or PositionSide.both
     data = {
         'eoid': str(raw_data.get('i')),
         'sd': load_ws_order_side(raw_data.get('S')),
+        'ps': position_side.lower(),
         'tv': to_float(raw_data.get('l')),
         'tp': to_float(raw_data.get('L')),
         'vl': to_float(raw_data.get('q')),
@@ -1530,15 +1532,10 @@ def map_api_parameter_names(params: dict) -> Optional[dict]:
 
 
 def load_leverage(raw_data: list) -> tuple:
-    for pos in raw_data:
-        if pos.get('positionSide', '') == var.BinancePositionSideMode.BOTH:
-            if pos.get('marginType', '') == LeverageType.cross:
-                leverage_type = LeverageType.cross
-            else:
-                leverage_type = LeverageType.isolated
-            leverage = to_float(pos.get('leverage')) or 20
-            return leverage_type, leverage
-    return LeverageType.cross, 20
+    try:
+        return raw_data[0]['marginType'], to_float(raw_data[0]['leverage'])
+    except (IndexError, KeyError):
+        return LeverageType.cross, 20
 
 
 def store_leverage(leverage_type: str) -> str:
@@ -1568,6 +1565,7 @@ def load_futures_position_ws_data(raw_data: dict, position_state_data: dict, sta
         'tm': to_iso_datetime(raw_data.get('E')),
         's': position_state_data['symbol'].lower(),
         'sd': position_state_data['side'],
+        'ps': position_state_data['position_side'].lower(),
         'vl': position_state_data['volume'],
         'ep': position_state_data['entry_price'],
         'mp': position_state_data['mark_price'],
@@ -1594,77 +1592,105 @@ def load_positions_state(state_data: dict) -> dict:
     return {data['symbol'].lower(): data for data in state_data.values() if 'symbol' in data}
 
 
-def load_futures_positions_state(account_info: dict) -> dict:
+def load_futures_positions_state(account_info: dict, null_volume: bool = True) -> dict:
     positions_state = {}
     cross_wallet_balance = to_float(account_info.get('totalCrossWalletBalance'))
     for position in account_info.get('positions', []):
-        if position['positionSide'].upper() == BinancePositionSideMode.BOTH:
-            symbol = position['symbol'].lower()
-            volume = to_float(position['positionAmt'])
-            side = load_position_side_by_volume(volume)
-            entry_price = to_float(position['entryPrice'])
-            _unrealised_pnl = to_float(position['unrealizedProfit'])
-            mark_price = BinanceFinFactory.calc_mark_price(volume, entry_price, _unrealised_pnl)
-            positions_state[symbol] = {
-                'symbol': symbol,
-                'volume': volume,
-                'side': side,
-                'entry_price': entry_price,
-                'mark_price': mark_price,
-                'leverage_type': load_position_leverage_type(position),
-                'leverage': to_float(position['leverage']),
-                'isolated_wallet_balance': to_float(position.get('isolatedWallet')),
-                'cross_wallet_balance': cross_wallet_balance,
-                'action': 'update'
-            }
+        symbol = position['symbol'].lower()
+        volume = to_float(position.get('positionAmt'))
+        if not null_volume and not volume:
+            continue
+        side = load_position_side_by_volume(volume)
+        if position_side := position.get('positionSide'):
+            position_side = position_side.lower()
+        entry_price = to_float(position.get('entryPrice'))
+        unrealised_pnl = to_float(position.get('unrealizedProfit'))
+        mark_price = BinanceFinFactory.calc_mark_price(volume, entry_price, unrealised_pnl, schema=OrderSchema.margin)
+        positions_state.setdefault(symbol, {})[position_side] = {
+            'symbol': symbol,
+            'volume': volume,
+            'side': side,
+            'position_side': position_side,
+            'entry_price': entry_price,
+            'mark_price': mark_price,
+            'leverage_type': load_position_leverage_type(position),
+            'leverage': to_float(position.get('leverage')),
+            'isolated_wallet_balance': to_float(position.get('isolatedWallet')),
+            'cross_wallet_balance': cross_wallet_balance,
+            'action': 'update',
+            'contract_size': None
+        }
     return positions_state
 
 
-def load_futures_coin_positions_state(account_info: dict, state_data: dict) -> dict:
+def load_futures_coin_positions_state(account_info: dict, state_data: dict, null_volume: bool = True) -> dict:
     balances = {}
     for asset in account_info.get('assets', []):
         balances[asset['asset'].lower()] = to_float(asset['crossWalletBalance'])
     positions_state = {}
     for position in account_info.get('positions', []):
-        if position['positionSide'].upper() == BinancePositionSideMode.BOTH:
-            symbol = position['symbol'].lower()
-            volume = to_float(position['positionAmt'])
-            side = load_position_side_by_volume(volume)
-            entry_price = to_float(position['entryPrice'])
-            _unrealised_pnl = to_float(position['unrealizedProfit'])
-            contract_size = state_data.get(
-                symbol, {}).get('extra', {}).get('face_price_data', {}).get('contract_size')
-            mark_price = BinanceFinFactory.calc_mark_price(
-                volume, entry_price, _unrealised_pnl,
-                schema=OrderSchema.margin_coin, symbol=symbol, side=side, contract_size=contract_size
-            )
-            try:
-                wallet_asset = state_data.get(symbol, {}).get('pair', [])[0].lower()
-                cross_wallet_balance = balances.get(wallet_asset)
-            except IndexError:
-                cross_wallet_balance = None
-            positions_state[symbol] = {
-                'symbol': symbol,
-                'volume': volume,
-                'side': side,
-                'entry_price': entry_price,
-                'mark_price': mark_price,
-                'leverage_type': load_position_leverage_type(position),
-                'leverage': to_float(position['leverage']),
-                'isolated_wallet_balance': to_float(position.get('isolatedWallet')),
-                'cross_wallet_balance': cross_wallet_balance,
-                'action': 'update'
-            }
+        symbol = position.get('symbol', '').lower()
+        volume = to_float(position.get('positionAmt'))
+        if not null_volume and not volume:
+            continue
+        side = load_position_side_by_volume(volume)
+        if position_side := position.get('positionSide'):
+            position_side = position_side.lower()
+        entry_price = to_float(position.get('entryPrice'))
+        unrealised_pnl = to_float(position.get('unrealizedProfit'))
+        if isinstance(state_data, dict):
+            contract_size = state_data.get(symbol, {}).get('extra', {}).get('face_price_data', {}).get('contract_size')
+        else:
+            contract_size = None
+        mark_price = BinanceFinFactory.calc_mark_price(
+            volume, entry_price, unrealised_pnl, schema=OrderSchema.margin_coin, side=side, contract_size=contract_size
+        )
+        try:
+            wallet_asset = state_data.get(symbol, {}).get('pair', [])[0].lower()
+            cross_wallet_balance = balances.get(wallet_asset)
+        except IndexError:
+            cross_wallet_balance = None
+        positions_state.setdefault(symbol, {})[position_side] = {
+            'symbol': symbol,
+            'volume': volume,
+            'side': side,
+            'position_side': position_side,
+            'entry_price': entry_price,
+            'mark_price': mark_price,
+            'leverage_type': load_position_leverage_type(position),
+            'leverage': to_float(position.get('leverage')),
+            'isolated_wallet_balance': to_float(position.get('isolatedWallet')),
+            'cross_wallet_balance': cross_wallet_balance,
+            'action': 'update',
+            'contract_size': contract_size
+        }
     return positions_state
+
+
+def is_hedge_mode(positions_state: dict) -> bool:
+    for symbol, positions_data in positions_state.items():
+        if PositionSide.long in positions_data or PositionSide.short in positions_data:
+            return True
+    return False
+
+
+def split_positions_state(positions_state: dict, symbol: str, position_side: str) -> Tuple[dict, dict, dict]:
+    positions_state = deepcopy(positions_state)
+    symbol_positions_state = positions_state.pop(symbol.lower(), {})
+    current_position_state = symbol_positions_state.pop(position_side.lower(), {})
+    return current_position_state, symbol_positions_state, positions_state
 
 
 def load_futures_position(raw_data: dict, schema: str) -> dict:
     now = datetime.now()
+    if position_side := raw_data.get('positionSide'):
+        position_side = position_side.lower()
     data = {
         'time': now,
         'schema': schema.lower(),
         'symbol': raw_data.get('symbol'),
         'side': load_position_side_by_volume(to_float(raw_data.get('positionAmt'))),
+        'position_side': position_side,
         'volume': to_float(raw_data.get('positionAmt')),
         'entry_price': to_float(raw_data.get('entryPrice')),
         'mark_price': to_float(raw_data.get('markPrice')),
@@ -1696,11 +1722,14 @@ def load_futures_coin_position_request_leverage(margin_type: str) -> str:
 
 def remap_futures_coin_position_request_data(data: dict) -> dict:
     volume = to_float(data.get('positionAmt'))
+    if position_side := data.get('positionSide'):
+        position_side = position_side.lower()
     return {
         'E': time2timestamp(datetime.now()),
         'symbol': data.get('symbol'),
         'volume': volume,
         'side': load_position_side_by_volume(volume),
+        'position_side': position_side,
         'entry_price': to_float(data.get('entryPrice')),
         'mark_price': to_float(data.get('markPrice')),
         'leverage': to_float(data.get('leverage')),

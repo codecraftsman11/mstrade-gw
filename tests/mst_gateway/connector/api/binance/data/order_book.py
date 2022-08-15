@@ -453,7 +453,7 @@ DEFAULT_ORDER_BOOK_GET_DATA_RESULT = {
                         'p': 50238.41,
                         'vl': 0.0,
                         'sd': 0,
-                        'ss': 'btcusd',
+                        'ss': 'btcusdt',
                     },
                     {
                         'id': 5024910,
@@ -461,7 +461,7 @@ DEFAULT_ORDER_BOOK_GET_DATA_RESULT = {
                         'p': 50249.1,
                         'vl': 0.0,
                         'sd': 1,
-                        'ss': 'btcusd',
+                        'ss': 'btcusdt',
                     },
                     {
                         'id': 5026642,
@@ -469,7 +469,7 @@ DEFAULT_ORDER_BOOK_GET_DATA_RESULT = {
                         'p': 50266.42,
                         'vl': 0.0,
                         'sd': 1,
-                        'ss': 'btcusd',
+                        'ss': 'btcusdt',
                     },
                 ],
             }
@@ -487,7 +487,7 @@ DEFAULT_ORDER_BOOK_GET_DATA_RESULT = {
                         'p': 50235.76,
                         'vl': 0.009954,
                         'sd': 0,
-                        'ss': 'btcusd',
+                        'ss': 'btcusdt',
                     },
                     {
                         'id': 5023059,
@@ -495,7 +495,7 @@ DEFAULT_ORDER_BOOK_GET_DATA_RESULT = {
                         'p': 50230.59,
                         'vl': 0.009955,
                         'sd': 0,
-                        'ss': 'btcusd',
+                        'ss': 'btcusdt',
                     },
                     {
                         'id': 5024503,
@@ -503,7 +503,7 @@ DEFAULT_ORDER_BOOK_GET_DATA_RESULT = {
                         'p': 50245.03,
                         'vl': 0.009952,
                         'sd': 1,
-                        'ss': 'btcusd',
+                        'ss': 'btcusdt',
                     },
                     {
                         'id': 5025250,
@@ -511,7 +511,7 @@ DEFAULT_ORDER_BOOK_GET_DATA_RESULT = {
                         'p': 50252.5,
                         'vl': 0.00995,
                         'sd': 1,
-                        'ss': 'btcusd',
+                        'ss': 'btcusdt',
                     },
                 ],
             }
@@ -526,20 +526,20 @@ DEFAULT_ORDER_BOOK_GET_DATA_RESULT = {
                 'act': 'delete',
                 'd': [
                     {
-                        'id': 4898280,
+                        'id': 489828,
                         's': 'btcusdt',
                         'p': 48982.8,
                         'vl': 0.0,
                         'sd': 0,
-                        'ss': 'btcusd',
+                        'ss': 'btcusdt',
                     },
                     {
-                        'id': 4903390,
+                        'id': 490339,
                         's': 'btcusdt',
                         'p': 49033.9,
                         'vl': 0.0,
                         'sd': 0,
-                        'ss': 'btcusd',
+                        'ss': 'btcusdt',
                     },
                 ],
             }
@@ -552,36 +552,36 @@ DEFAULT_ORDER_BOOK_GET_DATA_RESULT = {
                 'act': 'update',
                 'd': [
                     {
-                        'id': 4905878,
+                        'id': 490587,
                         's': 'btcusdt',
                         'p': 49058.78,
                         'vl': 0.02,
                         'sd': 0,
-                        'ss': 'btcusd',
+                        'ss': 'btcusdt',
                     },
                     {
-                        'id': 4908777,
+                        'id': 490877,
                         's': 'btcusdt',
                         'p': 49087.77,
                         'vl': 0.01,
                         'sd': 0,
-                        'ss': 'btcusd',
+                        'ss': 'btcusdt',
                     },
                     {
-                        'id': 4932952,
+                        'id': 493295,
                         's': 'btcusdt',
                         'p': 49329.52,
                         'vl': 0.01,
                         'sd': 1,
-                        'ss': 'btcusd',
+                        'ss': 'btcusdt',
                     },
                     {
-                        'id': 4935342,
+                        'id': 493534,
                         's': 'btcusdt',
                         'p': 49353.42,
                         'vl': 0.04,
                         'sd': 1,
-                        'ss': 'btcusd',
+                        'ss': 'btcusdt',
                     },
                 ],
             }

@@ -12,31 +12,33 @@ class BitmexFinFactory(FinFactory):
         return 1
 
     @classmethod
-    def calc_liquidation_price(cls, side: int, leverage_type: str, entry_price: float, **kwargs) -> Optional[float]:
+    def calc_liquidation_price(cls, side: int, volume: float, entry_price: float, leverage_type: str,
+                               wallet_balance: float, **kwargs) -> Optional[float]:
         liquidation_price = None
         direction = cls.direction_by_side(side)
         taker_fee = kwargs.get('taker_fee')
         funding_rate = kwargs.get('funding_rate')
         maint_margin = kwargs.get('maint_margin')
+        leverage = kwargs.get('leverage')
         try:
             leverage_type = leverage_type.lower()
             if leverage_type == api.LeverageType.isolated:
                 liquidation_price = round(
                     entry_price / (
-                        1 + (-direction * ((100 / kwargs.get('leverage') / 100) + 2 * taker_fee / 100)) +
+                        1 + (-direction * ((100 / leverage / 100) + 2 * taker_fee / 100)) +
                         (direction * (maint_margin + taker_fee + funding_rate) / 100)
                     ), 8)
             if leverage_type == api.LeverageType.cross:
-                quantity = abs(kwargs.get('volume'))
+                quantity = abs(volume)
                 liquidation_price = round(
                     (direction * quantity * entry_price) / (
-                        (-kwargs.get('wallet_balance') * entry_price) +
+                        (-wallet_balance * entry_price) +
                         ((maint_margin + taker_fee + funding_rate) / 100 * quantity) +
                         (direction * quantity)
                     ), 8)
+            if liquidation_price <= 0:
+                liquidation_price = None
         except (TypeError, ZeroDivisionError):
-            pass
-        if liquidation_price is not None and liquidation_price < 0:
             liquidation_price = None
         return liquidation_price
 

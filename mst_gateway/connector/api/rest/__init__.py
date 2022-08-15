@@ -10,7 +10,7 @@ from ..errors import ERROR_OK
 from .. import (
     OrderType,
     BUY,
-    SELL
+    SELL, PositionSide
 )
 from .throttle import ThrottleRest
 from mst_gateway.exceptions import RecoverableError
@@ -97,16 +97,14 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def create_order(self, symbol: str, schema: str, side: int, volume: float,
-                     order_type: str = OrderType.market,
-                     price: float = None, options: dict = None) -> dict:
+    def create_order(self, symbol: str, schema: str, side: int, volume: float, order_type: str = OrderType.market,
+                     price: float = None, options: dict = None, position_side: str = PositionSide.both) -> dict:
         raise NotImplementedError
 
     @abstractmethod
-    def update_order(self, exchange_order_id: str, symbol: str,
-                     schema: str, side: int, volume: float,
-                     order_type: str = OrderType.market,
-                     price: float = None, options: dict = None) -> dict:
+    def update_order(self, exchange_order_id: str, symbol: str, schema: str, side: int, volume: float,
+                     order_type: str = OrderType.market, price: float = None, options: dict = None,
+                     position_side: str = PositionSide.both) -> dict:
         raise NotImplementedError
 
     @abstractmethod
@@ -237,7 +235,7 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def get_position(self, schema: str, symbol: str, **kwargs) -> dict:
+    def get_position(self, schema: str, symbol: str,  position_side: str = PositionSide.both, **kwargs) -> dict:
         raise NotImplementedError
 
     @abstractmethod

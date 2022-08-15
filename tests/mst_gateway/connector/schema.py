@@ -11,6 +11,7 @@ from .validators import (
     leverage_type_valid,
     state_valid,
     float_valid,
+    position_side_valid
 )
 from mst_gateway.connector.api.types import OrderSchema
 
@@ -77,7 +78,8 @@ ORDER_FIELDS = {
     'is_iceberg': bool,
     'iceberg_volume': float,
     'is_passive': bool,
-    'comments': Or(None, str)
+    'comments': Or(None, str),
+    'position_side': Use(position_side_valid)
 }
 
 ORDER_BOOK_FIELDS = {
@@ -286,6 +288,7 @@ POSITION_FIELDS = {
     'schema': Use(schema_valid),
     'symbol': str,
     'side': Or(None, Use(side_valid)),
+    'position_side': Use(position_side_valid),
     'volume': Or(int, float),
     'entry_price': float,
     'mark_price': float,
@@ -299,6 +302,7 @@ POSITION_STATE_FIELDS = {
     'symbol': str,
     'volume': Or(int, float),
     'side': Or(None, Use(side_valid)),
+    'position_side': Use(position_side_valid),
     'entry_price': float,
     'mark_price': Or(None, float),
     'leverage_type': Use(leverage_type_valid),
@@ -306,6 +310,7 @@ POSITION_STATE_FIELDS = {
     'isolated_wallet_balance': Use(float_valid),
     'cross_wallet_balance': Use(float_valid),
     'action': str,
+    'contract_size': Or(None, int)
 }
 
 LIQUIDATION_FIELDS = {
@@ -359,6 +364,7 @@ WS_MESSAGE_DATA_FIELDS = {
         't': Use(type_valid),
         'exc': Use(execution_valid),
         'ss': Or(None, str),
+        'ps': Use(position_side_valid)
     },
     'order_book': {
         'id': Or(None, int),
@@ -372,6 +378,7 @@ WS_MESSAGE_DATA_FIELDS = {
         'tm': Use(iso_datetime_valid),
         's': str,
         'sd': Or(None, Use(side_valid)),
+        'ps': Use(position_side_valid),
         'vl': float,
         'ep': Or(None, float),
         'mp': Or(None, float),

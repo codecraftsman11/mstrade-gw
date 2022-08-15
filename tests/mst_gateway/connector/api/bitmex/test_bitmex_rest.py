@@ -9,7 +9,7 @@ from mst_gateway.logging import init_logger
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector.api.stocks.bitmex import BitmexRestApi
 from mst_gateway.exceptions import ConnectorError
-from mst_gateway.connector.api import BUY, SELL, OrderType, OrderSchema, LeverageType, OrderExec, OrderTTL
+from mst_gateway.connector.api import BUY, SELL, OrderType, OrderSchema, LeverageType, OrderExec, OrderTTL, PositionSide
 from tests.mst_gateway.connector import schema as fields
 from tests import config as cfg
 from .data import order as order_data
@@ -498,6 +498,7 @@ class TestOrderBitmexRestApi:
                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
                 'schema': OrderSchema.margin,
                 'side': BUY,
+                'position_side': PositionSide.both,
                 'stop': 0.0,
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
@@ -514,6 +515,7 @@ class TestOrderBitmexRestApi:
                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
                 'schema': OrderSchema.margin,
                 'side': SELL,
+                'position_side': PositionSide.both,
                 'stop': 0.0,
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
@@ -530,6 +532,7 @@ class TestOrderBitmexRestApi:
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': BUY,
+                'position_side': PositionSide.both,
                 'stop': 0.0,
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
@@ -546,6 +549,7 @@ class TestOrderBitmexRestApi:
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': SELL,
+                'position_side': PositionSide.both,
                 'stop': 0.0,
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
@@ -606,6 +610,7 @@ class TestOrderBitmexRestApi:
                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin] * 2,
                 'schema': OrderSchema.margin,
                 'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
+                'position_side': PositionSide.both,
                 'stop': 0.0,
                 'symbol': order_data.DEFAULT_SYMBOL,
                 'system_symbol': order_data.DEFAULT_SYSTEM_SYMBOL,
@@ -639,6 +644,7 @@ class TestOrderBitmexRestApi:
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': order_data.DEFAULT_ORDER_SIDE,
+                'position_side': PositionSide.both,
                 'stop': 0.0,
                 'symbol': order_data.DEFAULT_SYMBOL,
                 'system_symbol': order_data.DEFAULT_SYSTEM_SYMBOL,

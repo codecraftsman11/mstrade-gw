@@ -343,7 +343,7 @@ class BinanceMethodFactory:
 
     @classmethod
     def get_futures_position_info(cls, testnet=False, **params):
-        return cls.GET, httpx.URL(f"{cls._futures_api_url(testnet)}/{cls.V1}/positionRisk", params=params)
+        return cls.GET, httpx.URL(f"{cls._futures_api_url(testnet)}/{cls.V2}/positionRisk", params=params)
 
     @classmethod
     def get_futures_coin_position_info(cls, testnet=False, **params):

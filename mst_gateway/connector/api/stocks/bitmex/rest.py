@@ -174,9 +174,8 @@ class BitmexRestApi(StockRestApi):
             return utils.load_exchange_symbol_info(data, assets_config)
         raise ConnectorError(f"Invalid schema {schema}.")
 
-    def create_order(self, symbol: str, schema: str, side: int, volume: float,
-                     order_type: str = api.OrderType.market,
-                     price: float = None, options: dict = None) -> dict:
+    def create_order(self, symbol: str, schema: str, side: int, volume: float, order_type: str = api.OrderType.market,
+                     price: float = None, options: dict = None, position_side: str = api.PositionSide.both) -> dict:
         params = dict(
             symbol=utils.symbol2stock(symbol),
             order_type=order_type,
@@ -191,17 +190,16 @@ class BitmexRestApi(StockRestApi):
         ).get(symbol.lower(), dict())
         return utils.load_order_data(schema, data, state_data)
 
-    def update_order(self, exchange_order_id: str, symbol: str,
-                     schema: str, side: int, volume: float,
-                     order_type: str = api.OrderType.market,
-                     price: float = None, options: dict = None) -> dict:
+    def update_order(self, exchange_order_id: str, symbol: str, schema: str, side: int, volume: float,
+                     order_type: str = api.OrderType.market, price: float = None, options: dict = None,
+                     position_side: str = api.PositionSide.both) -> dict:
         """
         Updates an order by deleting an existing order and creating a new one.
 
         """
         self.cancel_order(exchange_order_id, symbol, schema)
-        return self.create_order(symbol, schema, side, volume,
-                                 order_type, price, options=options)
+        return self.create_order(symbol, schema, side, volume, order_type, price, options=options,
+                                 position_side=position_side)
 
     def cancel_all_orders(self, schema: str):
         data = self._bitmex_api(self._handler.cancel_all_orders)
@@ -380,7 +378,7 @@ class BitmexRestApi(StockRestApi):
         )
         return utils.load_leverage(response)
 
-    def get_position(self, schema: str, symbol: str, **kwargs) -> dict:
+    def get_position(self, schema: str, symbol: str, position_side: str = api.PositionSide.both, **kwargs) -> dict:
         if schema != OrderSchema.margin:
             raise ConnectorError(f"Invalid schema {schema}.")
         response = self._bitmex_api(
@@ -421,12 +419,12 @@ class BitmexRestApi(StockRestApi):
             raise ConnectorError(f'Invalid schema {schema}.')
         return {
             'liquidation_price': self.fin_factory.calc_liquidation_price(
-                side=side,
-                leverage_type=leverage_type,
-                entry_price=price,
+                side,
+                volume,
+                price,
+                leverage_type,
+                wallet_balance,
                 maint_margin=kwargs.get('wallet_detail', {}).get('maint_margin'),
-                volume=volume,
-                wallet_balance=wallet_balance,
                 taker_fee=kwargs.get('taker_fee'),
                 funding_rate=kwargs.get('funding_rate'),
                 leverage=kwargs.get('leverage'),

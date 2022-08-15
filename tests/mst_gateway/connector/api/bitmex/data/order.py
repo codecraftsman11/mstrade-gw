@@ -1,4 +1,4 @@
-from mst_gateway.connector.api import BUY, SELL, OrderSchema, OrderExec, OrderType, OrderTTL
+from mst_gateway.connector.api import BUY, SELL, OrderSchema, OrderExec, OrderType, OrderTTL, PositionSide
 
 DEFAULT_SYMBOL = "XBTUSD"
 DEFAULT_SYSTEM_SYMBOL = "btcusd"
@@ -25,6 +25,7 @@ DEFAULT_ORDER_DATA = {
                         {
                             "eoid": "cf8a2c91-464a-4618-a05f-fb7a57f9a67d",
                             "sd": 0,
+                            "ps": PositionSide.both,
                             "tv": 0.0,
                             "tp": 0.0,
                             "vl": 100.0,
@@ -43,6 +44,7 @@ DEFAULT_ORDER_DATA = {
                         {
                             "eoid": "cf8a2c91-464a-4618-a05f-fb7a57f9a67d",
                             "sd": 0,
+                            "ps": PositionSide.both,
                             "tv": 100.0,
                             "tp": 48844.5,
                             "vl": 100.0,
@@ -74,6 +76,7 @@ DEFAULT_ORDER_DATA = {
                         {
                             "eoid": "b46c1aa9-992a-48c5-a953-fd6ef1bff1d0",
                             "sd": 1,
+                            "ps": PositionSide.both,
                             "tv": 0.0,
                             "tp": 0.0,
                             "vl": 100.0,
@@ -92,6 +95,7 @@ DEFAULT_ORDER_DATA = {
                         {
                             "eoid": "b46c1aa9-992a-48c5-a953-fd6ef1bff1d0",
                             "sd": 1,
+                            "ps": PositionSide.both,
                             "tv": 100.0,
                             "tp": 48844.0,
                             "vl": 100.0,
@@ -350,6 +354,7 @@ DEFAULT_ORDER = {
         'filled_volume': 0.0,
         'schema': OrderSchema.margin,
         'side': DEFAULT_ORDER_SIDE,
+        'position_side': PositionSide.both,
         'stop': 0.0,
         'symbol': DEFAULT_SYMBOL,
         'system_symbol': DEFAULT_SYSTEM_SYMBOL,

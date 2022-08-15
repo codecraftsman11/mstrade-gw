@@ -338,11 +338,6 @@ class BinanceApiClient(BaseBinanceApiClient):
 
     def get_futures_coin_position_info(self, **kwargs) -> httpx.Response:
         method, url = self.get_method_info('get_futures_coin_position_info')
-        # TODO: fix implementation
-        # if symbol := kwargs.pop('symbol', None):
-        #     kwargs['pair'] = symbol.split('_')[0]
-        #     return [position for position in self._request(method, url, signed=True, force_params=True, data=kwargs)
-        #             if position.get('symbol', '').lower() == symbol.lower()]
         return self._request(method, url, signed=True, force_params=True, data=kwargs)
 
     def change_futures_leverage(self, **kwargs) -> httpx.Response:
