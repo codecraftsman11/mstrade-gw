@@ -777,11 +777,11 @@ class BinanceRestApi(StockRestApi):
         schema = schema.lower()
         if schema == OrderSchema.margin:
             account_info = self._binance_api(self._handler.get_futures_account)
-            return utils.load_futures_positions_state(account_info, null_volume=False)
+            return utils.load_futures_positions_state(account_info, empty_volume=False)
         if schema == OrderSchema.margin_coin:
             account_info = self._binance_api(self._handler.get_futures_coin_account)
             state_data = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}")
-            return utils.load_futures_coin_positions_state(account_info, state_data, null_volume=False)
+            return utils.load_futures_coin_positions_state(account_info, state_data, empty_volume=False)
         return {}
 
     def get_liquidation(
