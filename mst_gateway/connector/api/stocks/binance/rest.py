@@ -835,12 +835,9 @@ class BinanceRestApi(StockRestApi):
         if not self.ratelimit:
             self.validate_throttling(self.throttle_hash_name(url))
         else:
-            proxies = self.ratelimit.get_proxies(
+            kwargs['proxies'] = self.ratelimit.get_proxies(
                 method=rest_method, url=str(url), hashed_uid=self._generate_hashed_uid()
             )
-            if not proxies:
-                raise ConnectorError('Proxy list error.')
-            kwargs['proxies'] = proxies
         try:
             resp = method(**kwargs)
             data = self.handler.handle_response(resp)
