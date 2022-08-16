@@ -443,7 +443,7 @@ class BitmexRestApi(StockRestApi):
                 method=rest_method, url=str(url), hashed_uid=self._generate_hashed_uid()
             )
             if not proxies:
-                raise ConnectorError('Ratelimit service error.')
+                raise ConnectorError('Proxy list error.')
             kwargs['proxies'] = proxies
         headers = {}
         if self._keepalive:
