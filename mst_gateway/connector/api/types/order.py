@@ -134,6 +134,11 @@ class LeverageType(ClassWithAttributes):
     isolated = 'isolated'
 
 
+class PositionMode(ClassWithAttributes):
+    one_way = 'one_way'
+    hedge = 'hedge'
+
+
 class PositionSide(ClassWithAttributes):
     both = 'both'
     long = 'long'

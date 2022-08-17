@@ -20,6 +20,7 @@ from .order import (
     OrderPositionClosedBy,
     OrderStandardTypes,
     LeverageType,
+    PositionMode,
     PositionSide
 )
 from .converters import (

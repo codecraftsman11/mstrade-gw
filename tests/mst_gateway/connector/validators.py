@@ -112,7 +112,7 @@ def value_valid(value, rule):
     return True
 
 
-def position_side_valid(value):
-    if api.PositionSide.is_valid(value):
+def position_mode_valid(value):
+    if api.PositionMode.is_valid(value):
         return value
-    raise SchemaError('Invalid position side')
+    raise SchemaError('Invalid position mode')

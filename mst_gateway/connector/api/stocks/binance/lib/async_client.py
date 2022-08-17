@@ -350,6 +350,22 @@ class AsyncBinanceApiClient(BaseBinanceApiClient):
         method, url = self.get_method_info('get_futures_coin_position_info')
         return await self._request(method, url, signed=True, force_params=True, data=kwargs)
 
+    async def get_futures_position_mode(self, **kwargs) -> httpx.Response:
+        method, url = self.get_method_info('get_futures_position_mode')
+        return await self._request(method, url, signed=True, force_params=True, data=kwargs)
+
+    async def get_futures_coin_position_mode(self, **kwargs) -> httpx.Response:
+        method, url = self.get_method_info('get_futures_coin_position_mode')
+        return await self._request(method, url, signed=True, force_params=True, data=kwargs)
+
+    async def change_futures_position_mode(self, **kwargs) -> httpx.Response:
+        method, url = self.get_method_info('change_futures_position_mode')
+        return await self._request(method, url, signed=True, force_params=True, data=kwargs)
+
+    async def change_futures_coin_position_mode(self, **kwargs) -> httpx.Response:
+        method, url = self.get_method_info('change_futures_coin_position_mode')
+        return await self._request(method, url, signed=True, force_params=True, data=kwargs)
+
     async def change_futures_leverage(self, **kwargs) -> httpx.Response:
         method, url = self.get_method_info('change_futures_leverage')
         return await self._request(method, url, signed=True, force_params=True, data=kwargs)
