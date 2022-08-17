@@ -237,6 +237,14 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
+    def get_position_mode(self, schema: str) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
+    def change_position_mode(self, schema: str, mode: str) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_position(self, schema: str, symbol: str, **kwargs) -> dict:
         raise NotImplementedError
 

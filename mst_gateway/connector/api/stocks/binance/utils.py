@@ -2,8 +2,7 @@ from datetime import datetime, timezone
 from typing import Union, Optional
 from mst_gateway.connector import api
 from mst_gateway.calculator import BinanceFinFactory
-from mst_gateway.connector.api.stocks.binance.var import BinancePositionSideMode
-from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
+from mst_gateway.connector.api.types.order import LeverageType, OrderSchema, PositionMode, PositionSide
 from mst_gateway.utils import delta
 from ...utils import time2timestamp
 from .....exceptions import ConnectorError
@@ -1534,7 +1533,7 @@ def map_api_parameter_names(params: dict) -> Optional[dict]:
 
 def load_leverage(raw_data: list) -> tuple:
     for pos in raw_data:
-        if pos.get('positionSide', '') == var.BinancePositionSideMode.BOTH:
+        if pos.get('positionSide', '').lower() == PositionSide.both:
             if pos.get('marginType', '') == LeverageType.cross:
                 leverage_type = LeverageType.cross
             else:
@@ -1548,6 +1547,16 @@ def store_leverage(leverage_type: str) -> str:
     if leverage_type == LeverageType.cross:
         return var.BINANCE_LEVERAGE_TYPE_CROSS
     return var.BINANCE_LEVERAGE_TYPE_ISOLATED
+
+
+def load_position_mode(raw_data: dict) -> dict:
+    return {
+        'mode': PositionMode.hedge if raw_data.get('dualSidePosition') else PositionMode.one_way
+    }
+
+
+def store_position_mode(mode: str) -> str:
+    return str(bool(mode.lower() == PositionMode.hedge)).lower()
 
 
 def load_position_side_by_volume(position_amount: float) -> Optional[int]:
@@ -1601,7 +1610,7 @@ def load_futures_positions_state(account_info: dict) -> dict:
     positions_state = {}
     cross_wallet_balance = to_float(account_info.get('totalCrossWalletBalance'))
     for position in account_info.get('positions', []):
-        if position['positionSide'].upper() == BinancePositionSideMode.BOTH:
+        if position['positionSide'].lower() == PositionSide.both:
             symbol = position['symbol'].lower()
             volume = to_float(position['positionAmt'])
             side = load_position_side_by_volume(volume)
@@ -1629,7 +1638,7 @@ def load_futures_coin_positions_state(account_info: dict, state_data: dict) -> d
         balances[asset['asset'].lower()] = to_float(asset['crossWalletBalance'])
     positions_state = {}
     for position in account_info.get('positions', []):
-        if position['positionSide'].upper() == BinancePositionSideMode.BOTH:
+        if position['positionSide'].lower() == PositionSide.both:
             symbol = position['symbol'].lower()
             volume = to_float(position['positionAmt'])
             side = load_position_side_by_volume(volume)

@@ -9,7 +9,7 @@ from mst_gateway.logging import init_logger
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector.api.stocks.bitmex import BitmexRestApi
 from mst_gateway.exceptions import ConnectorError
-from mst_gateway.connector.api import BUY, SELL, OrderType, OrderSchema, LeverageType, OrderExec, OrderTTL
+from mst_gateway.connector.api import BUY, SELL, OrderType, OrderSchema, LeverageType, OrderExec, OrderTTL, PositionMode
 from tests.mst_gateway.connector import schema as fields
 from tests import config as cfg
 from .data import order as order_data
@@ -800,3 +800,20 @@ class TestOrderBitmexRestApi:
             assert position_schema.validate(position) == position
         rest.cancel_all_orders(schema)
         rest.close_all_orders(schema=schema, symbol=order_data.DEFAULT_SYMBOL)
+
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbitmex', OrderSchema.margin)],
+        indirect=['rest'],
+    )
+    def test_get_position_mode(self, rest: BitmexRestApi, schema):
+        position_mode = rest.get_position_mode(schema)
+        assert Schema(fields.POSITION_MODE_FIELDS).validate(position_mode) == position_mode
+
+    @pytest.mark.parametrize(
+        'rest, schema, mode', [('tbitmex', OrderSchema.margin, PositionMode.one_way),
+                               ('tbitmex', OrderSchema.margin, PositionMode.hedge)],
+        indirect=['rest'],
+    )
+    def test_change_position_mode_exception(self, rest: BitmexRestApi, schema, mode):
+        with pytest.raises(ConnectorError):
+            rest.change_position_mode(schema, mode)

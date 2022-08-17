@@ -110,3 +110,9 @@ def value_valid(value, rule):
     if callable(rule):
         return rule(value)
     return True
+
+
+def position_mode_valid(value):
+    if api.PositionMode.is_valid(value):
+        return value
+    raise SchemaError('Invalid position mode')

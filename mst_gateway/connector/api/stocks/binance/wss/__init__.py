@@ -9,7 +9,7 @@ from .utils import is_auth_ok, make_cmd
 from .. import rest
 from ....wss import StockWssApi, ThrottleWss
 from ..utils import to_float, remap_futures_coin_position_request_data
-from .... import OrderSchema, ExchangeDrivers
+from .... import OrderSchema, ExchangeDrivers, PositionSide
 from .. import var
 
 
@@ -288,7 +288,7 @@ class BinanceMarginCoinWssApi(BinanceMarginWssApi):
     def _split_position(self, message: dict) -> list:
         _messages = []
         for position in message.pop('data', []):
-            if position.get('positionSide', '') == var.BinancePositionSideMode.BOTH:
+            if position.get('positionSide', '').lower() == PositionSide.both:
                 _messages.append(dict(**message, data=[
                     remap_futures_coin_position_request_data(position)
                 ]))
