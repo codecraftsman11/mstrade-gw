@@ -11,7 +11,7 @@ from mst_gateway.connector.api.utils.rest import validate_exchange_order_id, val
 from mst_gateway.connector.api.stocks.binance.lib.exceptions import BinanceAPIException
 from mst_gateway.connector.api.stocks.binance.lib.sync_client import BinanceApiClient
 from . import utils, var
-from ... import PositionSide
+from ... import PositionSide, PositionMode
 from ...rest import StockRestApi
 from .....exceptions import GatewayError, ConnectorError, RecoverableError, NotFoundError
 from ...rest.throttle import ThrottleRest
@@ -738,6 +738,32 @@ class BinanceRestApi(StockRestApi):
             )
             leverage = utils.to_float(data["leverage"])
         return leverage_type, leverage
+
+    def get_position_mode(self, schema: str) -> dict:
+        validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin,
+                                 OrderSchema.margin_coin))
+        schema = schema.lower()
+        if schema in (OrderSchema.margin, OrderSchema.margin_coin):
+            schema_handlers = {
+                OrderSchema.margin: self._handler.get_futures_position_mode,
+                OrderSchema.margin_coin: self._handler.get_futures_coin_position_mode,
+            }
+            data = self._binance_api(schema_handlers[schema.lower()])
+            return utils.load_position_mode(data)
+        return {'mode': PositionMode.one_way}
+
+    def change_position_mode(self, schema: str, mode: str) -> dict:
+        validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin,
+                                 OrderSchema.margin_coin))
+        schema = schema.lower()
+        if schema in (OrderSchema.exchange, OrderSchema.margin_cross):
+            raise ConnectorError('Binance api error. Details: Invalid method.')
+        schema_handlers = {
+            OrderSchema.margin: self._handler.change_futures_position_mode,
+            OrderSchema.margin_coin: self._handler.change_futures_coin_position_mode,
+        }
+        self._binance_api(schema_handlers[schema], dualSidePosition=utils.store_position_mode(mode))
+        return {'mode': mode}
 
     def get_position(self, schema: str, symbol: str,  position_side: str = PositionSide.both, **kwargs) -> dict:
         validate_schema(schema, (OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin,

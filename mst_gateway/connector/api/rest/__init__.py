@@ -7,11 +7,7 @@ from ...base import Connector
 from mst_gateway.storage import StateStorage
 from mst_gateway.calculator import FinFactory
 from ..errors import ERROR_OK
-from .. import (
-    OrderType,
-    BUY,
-    SELL, PositionSide
-)
+from .. import OrderType, BUY, SELL, PositionSide
 from .throttle import ThrottleRest
 from mst_gateway.exceptions import RecoverableError
 
@@ -232,6 +228,14 @@ class StockRestApi(Connector):
     @abstractmethod
     def change_leverage(self, schema: str, symbol: str, leverage_type: str,
                         leverage: Union[float, int], **kwargs) -> tuple:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_position_mode(self, schema: str) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
+    def change_position_mode(self, schema: str, mode: str) -> dict:
         raise NotImplementedError
 
     @abstractmethod

@@ -3,7 +3,7 @@ from typing import Union, Optional, Tuple
 from copy import deepcopy
 from mst_gateway.connector import api
 from mst_gateway.calculator import BinanceFinFactory
-from mst_gateway.connector.api.types.order import LeverageType, OrderSchema, PositionSide
+from mst_gateway.connector.api.types.order import LeverageType, OrderSchema, PositionSide, PositionMode
 from mst_gateway.utils import delta
 from ...utils import time2timestamp
 from .....exceptions import ConnectorError
@@ -1545,6 +1545,15 @@ def store_leverage(leverage_type: str) -> str:
     if leverage_type == LeverageType.cross:
         return var.BINANCE_LEVERAGE_TYPE_CROSS
     return var.BINANCE_LEVERAGE_TYPE_ISOLATED
+
+
+def load_position_mode(raw_data: dict) -> dict:
+    return {
+        'mode': PositionMode.hedge if raw_data.get('dualSidePosition') else PositionMode.one_way
+    }
+
+def store_position_mode(mode: str) -> str:
+    return str(bool(mode.lower() == PositionMode.hedge)).lower()
 
 
 def load_position_side_by_volume(position_amount: float) -> Optional[int]:

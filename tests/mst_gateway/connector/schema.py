@@ -11,7 +11,8 @@ from .validators import (
     leverage_type_valid,
     state_valid,
     float_valid,
-    position_side_valid
+    position_side_valid,
+    position_mode_valid
 )
 from mst_gateway.connector.api.types import OrderSchema
 
@@ -281,6 +282,10 @@ FUNDING_RATE_FIELDS = {
     'symbol': str,
     'funding_rate': Use(float_valid),
     'time': Use(datetime_valid),
+}
+
+POSITION_MODE_FIELDS = {
+    'mode': Use(position_mode_valid)
 }
 
 POSITION_FIELDS = {

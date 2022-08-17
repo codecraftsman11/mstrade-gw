@@ -5,7 +5,7 @@ from hashlib import sha256
 from typing import Optional, Union, Tuple
 from mst_gateway.storage import StateStorageKey
 from mst_gateway.calculator import BitmexFinFactory
-from mst_gateway.connector.api.types import OrderSchema, ExchangeDrivers
+from mst_gateway.connector.api.types import OrderSchema, ExchangeDrivers, PositionMode
 from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
 from mst_gateway.connector.api.stocks.bitmex.lib import BitmexApiClient
 from mst_gateway.connector.api.stocks.bitmex.lib.exceptions import BitmexAPIException
@@ -377,6 +377,14 @@ class BitmexRestApi(StockRestApi):
             leverage=utils.store_leverage(leverage_type, leverage)
         )
         return utils.load_leverage(response)
+
+    def get_position_mode(self, schema: str) -> dict:
+        if schema != OrderSchema.margin:
+            raise ConnectorError(f"Invalid schema {schema}.")
+        return {'mode': PositionMode.one_way}
+
+    def change_position_mode(self, schema: str, mode: str) -> None:
+        raise ConnectorError('Bitmex api error. Details: Invalid method.')
 
     def get_position(self, schema: str, symbol: str, position_side: str = api.PositionSide.both, **kwargs) -> dict:
         if schema != OrderSchema.margin:

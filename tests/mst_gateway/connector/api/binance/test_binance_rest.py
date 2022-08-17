@@ -8,7 +8,7 @@ from mst_gateway.logging import init_logger
 from mst_gateway.calculator import BinanceFinFactory
 from mst_gateway.connector.api.stocks.binance.rest import BinanceRestApi
 from mst_gateway.connector.api.types import (LeverageType, OrderExec, OrderSchema, OrderType, BUY, SELL,
-                                             PositionSide, OrderTTL)
+                                             PositionSide, OrderTTL, PositionMode)
 from mst_gateway.exceptions import ConnectorError
 from tests.mst_gateway.connector import schema as fields
 from tests import config as cfg
@@ -438,6 +438,26 @@ class TestBinanceRestApi:
             rest.change_leverage(schema=schema, symbol=get_symbol(schema),
                                  leverage_type=LeverageType.isolated, leverage=1,
                                  leverage_type_update=True, leverage_update=True)
+
+    @pytest.mark.parametrize(
+        'rest, schema', [('tbinance_margin', OrderSchema.margin), ('tbinance_margin', OrderSchema.margin_coin),
+                         ('tbinance_spot', OrderSchema.margin_cross), ('tbinance_spot', OrderSchema.exchange)],
+        indirect=['rest'],
+    )
+    def test_get_position_mode(self, rest: BinanceRestApi, schema):
+        position_mode = rest.get_position_mode(schema)
+        assert Schema(fields.POSITION_MODE_FIELDS).validate(position_mode) == position_mode
+
+    @pytest.mark.parametrize(
+        'rest, schema, mode', [('tbinance_spot', OrderSchema.exchange, PositionMode.one_way),
+                               ('tbinance_spot', OrderSchema.margin_cross, PositionMode.one_way),
+                               ('tbinance_spot', OrderSchema.exchange, PositionMode.hedge),
+                               ('tbinance_spot', OrderSchema.margin_cross, PositionMode.hedge)],
+        indirect=['rest'],
+    )
+    def test_change_position_mode_exception(self, rest: BinanceRestApi, schema, mode):
+        with pytest.raises(ConnectorError):
+            rest.change_position_mode(schema, mode)
 
     @pytest.mark.parametrize(
         'rest, schema, position_side', [('tbinance_margin', OrderSchema.margin, PositionSide.both),
