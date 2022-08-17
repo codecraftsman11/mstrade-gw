@@ -762,8 +762,6 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin_coin: self._handler.change_futures_coin_position_mode,
         }
         mode = mode.lower()
-        if not PositionMode.is_valid(mode):
-            raise ConnectorError(f"Invalid position mode {mode}.")
         data = self._binance_api(schema_handlers[schema], dualSidePosition=str(mode == PositionMode.hedge).lower())
         if data.get('code') != 200:
             raise ConnectorError(data['msg'])
