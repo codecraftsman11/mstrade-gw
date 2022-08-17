@@ -761,10 +761,7 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin: self._handler.change_futures_position_mode,
             OrderSchema.margin_coin: self._handler.change_futures_coin_position_mode,
         }
-        mode = mode.lower()
-        data = self._binance_api(schema_handlers[schema], dualSidePosition=str(mode == PositionMode.hedge).lower())
-        if data.get('code') != 200:
-            raise ConnectorError(data['msg'])
+        self._binance_api(schema_handlers[schema], dualSidePosition=utils.store_position_mode(mode))
         return {'mode': mode}
 
     def get_position(self, schema: str, symbol: str, **kwargs) -> dict:
