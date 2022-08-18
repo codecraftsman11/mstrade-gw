@@ -384,9 +384,7 @@ def load_ws_quote_data(raw_data: dict, state_data: Optional[dict]) -> dict:
 
 
 def load_quote_bin_data(raw_data: dict, state_data: Optional[dict], binsize=None) -> dict:
-    if binsize and isinstance(raw_data.get('timestamp'), datetime):
-        raw_data['timestamp'] = raw_data['timestamp'] - binsize2timedelta(binsize)
-    quote_bin_time = to_date(raw_data.get('timestamp'))
+    quote_bin_time = to_date(raw_data.get('timestamp')) - binsize2timedelta(binsize)
     data = {
         'time': quote_bin_time,
         'symbol': raw_data.get('symbol'),
