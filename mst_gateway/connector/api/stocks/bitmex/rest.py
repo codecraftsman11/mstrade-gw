@@ -445,12 +445,12 @@ class BitmexRestApi(StockRestApi):
         if not self.ratelimit:
             self.validate_throttling(self.throttle_hash_name())
         else:
-            proxies = self.ratelimit.get_proxies(
-                method=rest_method, url=str(url), hashed_uid=self._generate_hashed_uid()
-            )
-            if not proxies:
-                raise ConnectorError('Ratelimit service error.')
-            kwargs['proxies'] = proxies
+            try:
+                kwargs['proxies'] = self.ratelimit.get_proxies(
+                    method=rest_method, url=str(url), hashed_uid=self._generate_hashed_uid()
+                )
+            except ConnectionError:
+                raise ConnectorError('Proxy list error.')
         headers = {}
         if self._keepalive:
             headers['Connection'] = "keep-alive"
