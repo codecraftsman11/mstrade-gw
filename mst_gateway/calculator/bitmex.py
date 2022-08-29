@@ -37,7 +37,7 @@ class BitmexFinFactory(FinFactory):
                         (direction * quantity)
                     ), 8)
         except (TypeError, ZeroDivisionError):
-            liquidation_price = None
+            pass
         if liquidation_price is not None and liquidation_price < 0:
             liquidation_price = None
         return liquidation_price
