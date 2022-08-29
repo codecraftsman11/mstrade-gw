@@ -36,9 +36,9 @@ class BitmexFinFactory(FinFactory):
                         ((maint_margin + taker_fee + funding_rate) / 100 * quantity) +
                         (direction * quantity)
                     ), 8)
-            if liquidation_price <= 0:
-                liquidation_price = None
         except (TypeError, ZeroDivisionError):
+            liquidation_price = None
+        if liquidation_price is not None and liquidation_price < 0:
             liquidation_price = None
         return liquidation_price
 
