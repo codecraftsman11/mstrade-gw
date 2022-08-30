@@ -867,7 +867,7 @@ class BinanceRestApi(StockRestApi):
                 self.logger.critical(f"{self.__class__.__name__}: {exc}")
             if exc.code == -2011:
                 raise NotFoundError(message)
-            if exc.code == -4059:
+            if exc.code in (-4059, -4046):
                 raise SuccessFullError(message, exc.code)
             if exc.status_code in (418, 429) or exc.status_code >= 500:
                 raise RecoverableError(message)
