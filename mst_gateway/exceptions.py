@@ -28,6 +28,11 @@ class NotFoundError(GatewayError):
     pass
 
 
+class SuccessFullError(GatewayError):
+    """ No need to change. """
+    pass
+
+
 class QueryError(ConnectorError):
     def __init__(self, msg: str, code: int = None):
         self._code = code

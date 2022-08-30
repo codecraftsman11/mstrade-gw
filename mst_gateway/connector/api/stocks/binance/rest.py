@@ -13,7 +13,7 @@ from mst_gateway.connector.api.stocks.binance.lib.sync_client import BinanceApiC
 from . import utils, var
 from ... import PositionSide, PositionMode
 from ...rest import StockRestApi
-from .....exceptions import GatewayError, ConnectorError, RecoverableError, NotFoundError
+from .....exceptions import GatewayError, ConnectorError, RecoverableError, NotFoundError, SuccessFullError
 from ...rest.throttle import ThrottleRest
 
 
@@ -867,6 +867,8 @@ class BinanceRestApi(StockRestApi):
                 self.logger.critical(f"{self.__class__.__name__}: {exc}")
             if exc.code == -2011:
                 raise NotFoundError(message)
+            if exc.code == -4059:
+                raise SuccessFullError(message, exc.code)
             if exc.status_code in (418, 429) or exc.status_code >= 500:
                 raise RecoverableError(message)
             raise ConnectorError(message)
