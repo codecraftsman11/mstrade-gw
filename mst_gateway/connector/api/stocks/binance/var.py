@@ -50,6 +50,7 @@ PARAMETER_NAMES_MAP = {
     'volume': 'quantity',
     'iceberg_volume': 'icebergQty',
     'stop_price': 'stopPrice',
+    'position_side': 'positionSide',
     'ttl': 'timeInForce',
     'H1': 'GTC',
     'H4': 'GTC',
@@ -67,7 +68,8 @@ DEFAULT_PARAMETERS = [
     'type',
     'side',
     'quantity',
-    'quoteOrderQty'
+    'quoteOrderQty',
+    'positionSide'
 ]
 
 PARAMETERS_BY_ORDER_TYPE_MAP = {
