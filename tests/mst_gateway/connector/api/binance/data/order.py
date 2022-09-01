@@ -1,4 +1,3 @@
-import datetime
 from mst_gateway.connector.api.types import OrderExec, OrderSchema, OrderType, OrderTTL, BUY, SELL, PositionSide
 
 DEFAULT_ORDER_SIDE = BUY
@@ -495,7 +494,7 @@ DEFAULT_ORDER_GET_DATA_RESULT = {
                         'tm': '2021-12-09T13:56:36.460000',
                         's': 'BTCUSDT',
                         'stp': 0.0,
-                        'crt': datetime.datetime(2021, 12, 9, 13, 56, 36, 458000, tzinfo=datetime.timezone.utc),
+                        'crt': '2021-12-09T13:56:36.458000',
                         't': 'limit',
                         'exc': 'limit',
                         'ss': 'btcusdt',
@@ -527,7 +526,7 @@ DEFAULT_ORDER_GET_DATA_RESULT = {
                         'tm': '2021-12-09T13:59:54.219000',
                         's': 'BTCUSD_PERP',
                         'stp': 0.0,
-                        'crt': datetime.datetime(2021, 12, 9, 13, 59, 54, 216000, tzinfo=datetime.timezone.utc),
+                        'crt': '2021-12-09T13:59:54.216000',
                         't': 'limit',
                         'exc': 'limit',
                         'ss': 'btcusd',
