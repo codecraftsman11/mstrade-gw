@@ -1201,7 +1201,6 @@ class TestOrderBinanceRestApi:
         assert Schema(fields.ORDER_FIELDS).validate(order) == order
         clear_stock_order_data(order)
         order.pop('price')
-        order.pop('filled_volume')
         assert order == expect
         rest.cancel_all_orders(schema)
 
