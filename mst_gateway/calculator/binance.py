@@ -71,42 +71,40 @@ class BinanceFinFactory(FinFactory):
             return 0
 
     @classmethod
-    def _get_volume_and_price(cls, symbol: str, position_side: str, volume: float, entry_price: float,
+    def _get_volume_and_price(cls, schema: str, symbol: str, position_side: str, volume: float, entry_price: float,
                               leverage_type: str, positions_state: dict) -> tuple:
         from mst_gateway.connector.api.stocks.binance import utils
 
         both_volume = volume
-        long_volume = 0
-        short_volume = 0
         both_entry_price = entry_price
+        long_volume = 0
         long_entry_price = 0
+        short_volume = 0
         short_entry_price = 0
         if utils.is_hedge_mode(positions_state):
             symbol = symbol.lower()
             position_side = position_side.lower()
             leverage_type = leverage_type.lower()
-            both_position = positions_state.get(symbol, {}).get(api.PositionSide.both, {})
+            both_volume = 0
+            both_entry_price = 0
             long_position = positions_state.get(symbol, {}).get(api.PositionSide.long, {})
             short_position = positions_state.get(symbol, {}).get(api.PositionSide.short, {})
-            both_volume = both_position.get('volume', 0)
             long_volume = long_position.get('volume', 0)
-            short_volume = short_position.get('volume', 0)
-            both_entry_price = both_position.get('entry_price', 0)
             long_entry_price = long_position.get('entry_price', 0)
+            short_volume = short_position.get('volume', 0)
             short_entry_price = short_position.get('entry_price', 0)
-            if position_side == api.PositionSide.both:
-                both_volume = volume
-                both_entry_price = entry_price
-            elif position_side == api.PositionSide.long:
+            margin_schema = schema == api.OrderSchema.margin
+            isolated_leverage_type = leverage_type == api.LeverageType.isolated
+            if position_side == api.PositionSide.long:
                 long_volume = volume
                 long_entry_price = entry_price
-            else:
+                if margin_schema and isolated_leverage_type:
+                    short_volume = 0
+            if position_side == api.PositionSide.short:
                 short_volume = volume
                 short_entry_price = entry_price
-            if leverage_type == api.LeverageType.isolated and position_side == api.PositionSide.long:
-                short_volume = 0
-            if leverage_type == api.LeverageType.isolated and position_side == api.PositionSide.short:
-                long_volume = 0
+                if margin_schema and isolated_leverage_type:
+                    long_volume = 0
         return both_volume, both_entry_price, long_volume, long_entry_price, short_volume, short_entry_price
 
     @classmethod
@@ -126,8 +124,8 @@ class BinanceFinFactory(FinFactory):
         both_direction = cls.direction_by_side(side)
         (both_volume, both_entry_price,
          long_volume, long_entry_price,
-         short_volume, short_entry_price) = cls._get_volume_and_price(symbol, position_side, volume, entry_price,
-                                                                      leverage_type, positions_state)
+         short_volume, short_entry_price) = cls._get_volume_and_price(schema, symbol, position_side, volume,
+                                                                      entry_price, leverage_type, positions_state)
         mark_price = kwargs.get('mark_price')
 
         current_position, symbol_positions, other_positions = utils.split_positions_state(

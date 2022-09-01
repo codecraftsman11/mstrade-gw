@@ -687,8 +687,8 @@ DEFAULT_POSITION_DETAIL_GET_DATA_RESULT = {
                         'mp': 46978.27930309058,
                         'upnl': -1.0000000000021927e-08,
                         'lvrp': LeverageType.cross,
-                         'lp': None,
-                         'lvr': 3.0,
+                        'lp': None,
+                        'lvr': 3.0,
                         'act': 'create',
                         'ss': 'btcusd',
                     }
