@@ -68,8 +68,7 @@ DEFAULT_PARAMETERS = [
     'type',
     'side',
     'quantity',
-    'quoteOrderQty',
-    'positionSide'
+    'quoteOrderQty'
 ]
 
 PARAMETERS_BY_ORDER_TYPE_MAP = {
@@ -208,6 +207,7 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         'STOP': {
             'params': [
                 *DEFAULT_PARAMETERS,
+                'positionSide',
                 'stopPrice',
                 'quantity',
                 'price'
@@ -217,8 +217,8 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         'STOP_MARKET': {
             'params': [
                 *DEFAULT_PARAMETERS,
+                'positionSide',
                 'stopPrice'
-
             ],
             'additional_params': {}
         }
@@ -246,6 +246,7 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         'STOP_MARKET': {
             'params': [
                 *DEFAULT_PARAMETERS,
+                'positionSide',
                 'stopPrice'
             ],
             'additional_params': {}
@@ -253,6 +254,7 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         'STOP': {
             'params': [
                 *DEFAULT_PARAMETERS,
+                'positionSide',
                 'stopPrice',
                 'quantity',
                 'price'
