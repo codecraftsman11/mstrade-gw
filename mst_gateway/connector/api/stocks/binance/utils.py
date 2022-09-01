@@ -1402,7 +1402,7 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'tm': to_iso_datetime(raw_data.get('E')),
         's': raw_data.get('s'),
         'stp': to_float(raw_data['P']) if raw_data.get('P') else to_float(raw_data.get('sp')),
-        'crt': to_iso_datetime(raw_data['O']) if raw_data.get('O') else to_date(raw_data.get('T')),
+        'crt': to_iso_datetime(raw_data['O']) if raw_data.get('O') else to_iso_datetime(raw_data.get('T')),
         't': raw_data.get('o', '').lower(),
         'exc': raw_data.get('o', '').lower(),
     }
