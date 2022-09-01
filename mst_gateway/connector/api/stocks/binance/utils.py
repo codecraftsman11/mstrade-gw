@@ -356,7 +356,7 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict], pay
         'schema': schema,
         'volume': to_float(raw_data.get('origQty') or payload.get('quantity')),
         'filled_volume': to_float(raw_data.get('executedQty')),
-        'stop': to_float(raw_data.get('stopPrice') or payload.get('stopPrice')),
+        'stop_price': to_float(raw_data.get('stopPrice') or payload.get('stopPrice')),
         'side': load_order_side(raw_data.get('side') or payload.get('side')),
         'position_side': position_side.lower(),
         'price': to_float(raw_data.get('price') or payload.get('price')),

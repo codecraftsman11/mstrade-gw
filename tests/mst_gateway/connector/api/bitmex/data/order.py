@@ -355,7 +355,7 @@ DEFAULT_ORDER = {
         'schema': OrderSchema.margin,
         'side': DEFAULT_ORDER_SIDE,
         'position_side': PositionSide.both,
-        'stop': 0.0,
+        'stop_price': 0.0,
         'symbol': DEFAULT_SYMBOL,
         'system_symbol': DEFAULT_SYSTEM_SYMBOL,
         'type': OrderType.limit,

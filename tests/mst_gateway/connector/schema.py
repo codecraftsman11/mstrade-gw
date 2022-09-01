@@ -66,7 +66,7 @@ ORDER_FIELDS = {
     'symbol': str,
     'volume': Or(int, float),
     'filled_volume': Use(float_valid),
-    'stop': Or(None, float),  # trigger level for Stop and Take Profit orders
+    'stop_price': Or(None, float),  # trigger level for Stop and Take Profit orders
     'type': Use(type_valid),
     'side': int,
     'price': float,

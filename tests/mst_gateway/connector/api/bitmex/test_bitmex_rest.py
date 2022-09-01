@@ -9,13 +9,15 @@ from mst_gateway.logging import init_logger
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector.api.stocks.bitmex import BitmexRestApi
 from mst_gateway.exceptions import ConnectorError
-from mst_gateway.connector.api import (BUY, SELL, OrderType, OrderSchema, LeverageType, OrderExec, OrderTTL,
-                                       PositionSide, PositionMode)
+from mst_gateway.connector.api import (
+    BUY, SELL, OrderType, OrderSchema, LeverageType, OrderExec, OrderTTL,
+    PositionSide, PositionMode
+)
 from tests.mst_gateway.connector import schema as fields
 from tests import config as cfg
 from .data import order as order_data
 from .data import storage as data
-
+from ..utils import get_order_price, get_order_stop_price
 
 BITMEX_SYMBOL = 'XBTUSD'
 
@@ -101,23 +103,6 @@ def rest_keepalive_compress(request) -> BitmexRestApi:
         api.close()
 
 
-def get_order_price(rest: BitmexRestApi, schema: str,
-                    symbol: str, side: int, order_type: str = order_data.DEFAULT_ORDER_TYPE) -> Optional[float]:
-    price = None
-    if order_type == OrderType.market:
-        return price
-    symbol = rest.get_symbol(schema=schema, symbol=symbol)
-    if side == BUY:
-        return round(symbol.get('bid_price') / 1.05, 0)
-    return round(symbol.get('ask_price') * 1.05, 0)
-
-
-def get_order_stop_price(price: float, side):
-    if side == BUY:
-        return round(price + 2000, 0)
-    return round(price - 2000, 0)
-
-
 def get_symbol(schema: str) -> Optional[str]:
     if schema == OrderSchema.margin:
         return data.SYMBOL
@@ -133,7 +118,7 @@ def get_asset(schema: str) -> Optional[str]:
 def create_default_order(rest: BitmexRestApi,
                          schema: str, order_type: str = order_data.DEFAULT_ORDER_TYPE, options: dict = None) -> dict:
     price = get_order_price(rest=rest, schema=schema, symbol=order_data.DEFAULT_SYMBOL,
-                            side=order_data.DEFAULT_ORDER_SIDE, order_type=order_type)
+                            side=order_data.DEFAULT_ORDER_SIDE)
     options = options if options else order_data.DEFAULT_ORDER_OPTIONS
     order = rest.create_order(
         schema=schema,
@@ -505,7 +490,7 @@ class TestOrderBitmexRestApi:
                 'schema': OrderSchema.margin,
                 'side': BUY,
                 'position_side': PositionSide.both,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.market,
@@ -522,7 +507,7 @@ class TestOrderBitmexRestApi:
                 'schema': OrderSchema.margin,
                 'side': SELL,
                 'position_side': PositionSide.both,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.market,
@@ -539,7 +524,7 @@ class TestOrderBitmexRestApi:
                 'schema': OrderSchema.margin,
                 'side': BUY,
                 'position_side': PositionSide.both,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.stop_market,
@@ -556,7 +541,7 @@ class TestOrderBitmexRestApi:
                 'schema': OrderSchema.margin,
                 'side': SELL,
                 'position_side': PositionSide.both,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.stop_market,
@@ -573,7 +558,7 @@ class TestOrderBitmexRestApi:
                 'schema': OrderSchema.margin,
                 'side': BUY,
                 'position_side': PositionSide.both,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.limit,
@@ -590,7 +575,7 @@ class TestOrderBitmexRestApi:
                 'schema': OrderSchema.margin,
                 'side': SELL,
                 'position_side': PositionSide.both,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.limit,
@@ -607,7 +592,7 @@ class TestOrderBitmexRestApi:
                 'schema': OrderSchema.margin,
                 'side': BUY,
                 'position_side': PositionSide.both,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.stop_limit,
@@ -624,7 +609,7 @@ class TestOrderBitmexRestApi:
                 'schema': OrderSchema.margin,
                 'side': SELL,
                 'position_side': PositionSide.both,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.stop_limit,
@@ -640,24 +625,23 @@ class TestOrderBitmexRestApi:
     )
     def test_create_order(self, rest: BitmexRestApi, schema: str, side: int, order_type: str, expect: dict):
         symbol = get_symbol(schema)
-        price = None
         default_order_data = deepcopy(order_data.DEFAULT_ORDER_OPTIONS)
-        if order_type != OrderType.market:
-            price = get_order_price(rest, schema, symbol, side, order_type)
-            if order_type != OrderType.stop_market:
-                expect['price'] = price
-            if order_type in (OrderType.stop_market, OrderType.stop_limit):
-                stop_price = get_order_stop_price(price, side)
-                default_order_data.update({'stop_price': stop_price})
-                expect['stop'] = stop_price
+        price = get_order_price(rest, schema, symbol, side)
+        expect['price'] = price
+        if order_type in (OrderType.stop_market, OrderType.stop_limit):
+            stop_price = get_order_stop_price(price, side)
+            default_order_data.update({'stop_price': stop_price})
+            expect['stop_price'] = stop_price
 
         order_schema = Schema(fields.ORDER_FIELDS)
         order = rest.create_order(symbol, schema, side, order_data.DEFAULT_ORDER_VOLUME[schema], order_type, price,
                                   default_order_data)
         assert order_schema.validate(order) == order
         clear_stock_order_data(order)
+
         if order_type in (OrderType.market, OrderType.stop_market):
-            order.pop('price')
+            expect['price'] = order['price']
+
         assert order == expect
         rest.cancel_all_orders(schema)
 
@@ -701,7 +685,7 @@ class TestOrderBitmexRestApi:
                 'schema': OrderSchema.margin,
                 'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
                 'position_side': PositionSide.both,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': order_data.DEFAULT_SYMBOL,
                 'system_symbol': order_data.DEFAULT_SYSTEM_SYMBOL,
                 'type': OrderType.market,
@@ -720,7 +704,7 @@ class TestOrderBitmexRestApi:
         order_schema = Schema(fields.ORDER_FIELDS)
         symbol = get_symbol(schema)
         order = rest.update_order(default_order['exchange_order_id'], default_order['symbol'], schema,
-                                  price=get_order_price(rest, schema, symbol, order_data.DEFAULT_ORDER_OPPOSITE_SIDE),
+                                  price=get_order_price(rest, schema, symbol, default_order['side']),
                                   side=order_data.DEFAULT_ORDER_OPPOSITE_SIDE, volume=default_order['volume'] * 2,
                                   options=order_data.DEFAULT_ORDER_OPTIONS)
         assert order_schema.validate(order) == order
@@ -738,7 +722,7 @@ class TestOrderBitmexRestApi:
                 'schema': OrderSchema.margin,
                 'side': order_data.DEFAULT_ORDER_SIDE,
                 'position_side': PositionSide.both,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': order_data.DEFAULT_SYMBOL,
                 'system_symbol': order_data.DEFAULT_SYSTEM_SYMBOL,
                 'type': OrderType.limit,

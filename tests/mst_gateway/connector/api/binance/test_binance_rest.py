@@ -7,8 +7,10 @@ from schema import Schema
 from mst_gateway.logging import init_logger
 from mst_gateway.calculator import BinanceFinFactory
 from mst_gateway.connector.api.stocks.binance.rest import BinanceRestApi
-from mst_gateway.connector.api.types import (LeverageType, OrderExec, OrderSchema, OrderType, BUY, SELL,
-                                             PositionSide, OrderTTL, PositionMode)
+from mst_gateway.connector.api.types import (
+    LeverageType, OrderExec, OrderSchema, OrderType, BUY, SELL,
+    PositionSide, OrderTTL, PositionMode
+)
 from mst_gateway.exceptions import ConnectorError
 from tests.mst_gateway.connector import schema as fields
 from tests import config as cfg
@@ -17,6 +19,7 @@ from .data import symbol as symbol_data
 from .data import order_book as order_book_data
 from .data import order as order_data
 from .data import position as position_data
+from ..utils import get_order_price, get_order_stop_price
 
 
 def rest_params(param):
@@ -56,19 +59,6 @@ def get_asset(schema):
 
 def get_symbol(schema):
     return 'BTCUSD_PERP' if schema == OrderSchema.margin_coin else 'BTCUSDT'
-
-
-def get_order_price(rest: BinanceRestApi, schema, symbol, side) -> float:
-    symbol = rest.get_symbol(symbol, schema)
-    if side == BUY:
-        return round(symbol.get('bid_price') / 1.05, 0)
-    return round(symbol.get('ask_price') * 1.05, 0)
-
-
-def get_order_stop_price(price: float, side):
-    if side == BUY:
-        return round(price + 2000, 0)
-    return round(price - 2000, 0)
 
 
 def create_default_order(rest: BinanceRestApi, schema):
@@ -658,7 +648,7 @@ class TestOrderBinanceRestApi:
                  'schema': OrderSchema.exchange,
                  'side': BUY,
                  'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop': 0.0,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSDT',
                  'system_symbol': 'btcusdt',
                  'type': OrderType.market,
@@ -676,7 +666,7 @@ class TestOrderBinanceRestApi:
                  'schema': OrderSchema.exchange,
                  'side': SELL,
                  'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop': 0.0,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSDT',
                  'system_symbol': 'btcusdt',
                  'type': OrderType.market,
@@ -694,7 +684,7 @@ class TestOrderBinanceRestApi:
                  'schema': OrderSchema.exchange,
                  'side': BUY,
                  'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop': 0.0,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSDT',
                  'system_symbol': 'btcusdt',
                  'type': OrderType.limit,
@@ -712,7 +702,7 @@ class TestOrderBinanceRestApi:
                  'schema': OrderSchema.exchange,
                  'side': SELL,
                  'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop': 0.0,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSDT',
                  'system_symbol': 'btcusdt',
                  'type': OrderType.limit,
@@ -730,7 +720,7 @@ class TestOrderBinanceRestApi:
                  'schema': OrderSchema.exchange,
                  'side': BUY,
                  'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop': 0.0,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSDT',
                  'system_symbol': 'btcusdt',
                  'type': OrderType.stop_limit,
@@ -748,7 +738,7 @@ class TestOrderBinanceRestApi:
                  'schema': OrderSchema.exchange,
                  'side': SELL,
                  'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop': 0.0,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSDT',
                  'system_symbol': 'btcusdt',
                  'type': OrderType.stop_limit,
@@ -766,7 +756,7 @@ class TestOrderBinanceRestApi:
                 'schema': OrderSchema.exchange,
                 'side': BUY,
                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSDT',
                 'system_symbol': 'btcusdt',
                 'type': OrderType.market,
@@ -784,7 +774,7 @@ class TestOrderBinanceRestApi:
                 'schema': OrderSchema.exchange,
                 'side': SELL,
                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSDT',
                 'system_symbol': 'btcusdt',
                 'type': OrderType.market,
@@ -802,7 +792,7 @@ class TestOrderBinanceRestApi:
                  'schema': OrderSchema.margin,
                  'side': BUY,
                  'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop': 0.0,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSDT',
                  'system_symbol': 'btcusdt',
                  'type': OrderType.market,
@@ -820,7 +810,7 @@ class TestOrderBinanceRestApi:
                  'schema': OrderSchema.margin,
                  'side': SELL,
                  'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop': 0.0,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSDT',
                  'system_symbol': 'btcusdt',
                  'type': OrderType.market,
@@ -838,7 +828,7 @@ class TestOrderBinanceRestApi:
                  'schema': OrderSchema.margin,
                  'side': BUY,
                  'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop': 0.0,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSDT',
                  'system_symbol': 'btcusdt',
                  'type': OrderType.limit,
@@ -856,7 +846,7 @@ class TestOrderBinanceRestApi:
                  'schema': OrderSchema.margin,
                  'side': SELL,
                  'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop': 0.0,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSDT',
                  'system_symbol': 'btcusdt',
                  'type': OrderType.limit,
@@ -874,7 +864,7 @@ class TestOrderBinanceRestApi:
                 'schema': OrderSchema.margin,
                 'side': BUY,
                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSDT',
                 'system_symbol': 'btcusdt',
                 'type': OrderType.stop_limit,
@@ -892,7 +882,7 @@ class TestOrderBinanceRestApi:
                 'schema': OrderSchema.margin,
                 'side': SELL,
                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSDT',
                 'system_symbol': 'btcusdt',
                 'type': OrderType.stop_limit,
@@ -910,7 +900,7 @@ class TestOrderBinanceRestApi:
                 'schema': OrderSchema.margin,
                 'side': BUY,
                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSDT',
                 'system_symbol': 'btcusdt',
                 'type': OrderType.stop_market,
@@ -928,7 +918,7 @@ class TestOrderBinanceRestApi:
                 'schema': OrderSchema.margin,
                 'side': SELL,
                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSDT',
                 'system_symbol': 'btcusdt',
                 'type': OrderType.stop_market,
@@ -946,7 +936,7 @@ class TestOrderBinanceRestApi:
                  'schema': OrderSchema.margin_coin,
                  'side': BUY,
                  'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop': 0.0,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSD_PERP',
                  'system_symbol': 'btcusd',
                  'type': OrderType.market,
@@ -964,7 +954,7 @@ class TestOrderBinanceRestApi:
                  'schema': OrderSchema.margin_coin,
                  'side': SELL,
                  'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop': 0.0,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSD_PERP',
                  'system_symbol': 'btcusd',
                  'type': OrderType.market,
@@ -982,7 +972,7 @@ class TestOrderBinanceRestApi:
                  'schema': OrderSchema.margin_coin,
                  'side': BUY,
                  'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop': 0.0,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSD_PERP',
                  'system_symbol': 'btcusd',
                  'type': OrderType.limit,
@@ -1000,7 +990,7 @@ class TestOrderBinanceRestApi:
                  'schema': OrderSchema.margin_coin,
                  'side': SELL,
                  'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop': 0.0,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSD_PERP',
                  'system_symbol': 'btcusd',
                  'type': OrderType.limit,
@@ -1018,7 +1008,7 @@ class TestOrderBinanceRestApi:
                 'schema': OrderSchema.margin_coin,
                 'side': BUY,
                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSD_PERP',
                 'system_symbol': 'btcusd',
                 'type': OrderType.stop_limit,
@@ -1036,7 +1026,7 @@ class TestOrderBinanceRestApi:
                 'schema': OrderSchema.margin_coin,
                 'side': SELL,
                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSD_PERP',
                 'system_symbol': 'btcusd',
                 'type': OrderType.stop_limit,
@@ -1054,7 +1044,7 @@ class TestOrderBinanceRestApi:
                 'schema': OrderSchema.margin_coin,
                 'side': BUY,
                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSD_PERP',
                 'system_symbol': 'btcusd',
                 'type': OrderType.stop_market,
@@ -1072,7 +1062,7 @@ class TestOrderBinanceRestApi:
                 'schema': OrderSchema.margin_coin,
                 'side': SELL,
                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSD_PERP',
                 'system_symbol': 'btcusd',
                 'type': OrderType.stop_market,
@@ -1088,26 +1078,24 @@ class TestOrderBinanceRestApi:
     )
     def test_create_order(self, rest: BinanceRestApi, schema, side, order_type, expect):
         symbol = get_symbol(schema)
-        price = None
         default_order_data = deepcopy(order_data.DEFAULT_ORDER_OPTIONS)
-        if order_type != OrderType.market:
-            price = get_order_price(rest, schema, symbol, side)
-            if order_type != OrderType.stop_market:
-                expect['price'] = price
-            if order_type in (OrderType.stop_market, OrderType.stop_limit):
-                stop_price = get_order_stop_price(price, side)
-                default_order_data.update({'stop_price': stop_price})
-                expect['stop'] = stop_price
+        price = get_order_price(rest, schema, symbol, side)
+        expect['price'] = price
+        if order_type in (OrderType.stop_market, OrderType.stop_limit):
+            stop_price = get_order_stop_price(price, side)
+            default_order_data.update({'stop_price': stop_price})
+            expect['stop_price'] = stop_price
 
         order = rest.create_order(symbol, schema, side, order_data.DEFAULT_ORDER_VOLUME[schema], order_type, price,
                                   default_order_data, PositionSide.both)
         assert Schema(fields.ORDER_FIELDS).validate(order) == order
         clear_stock_order_data(order)
-        if order_type in (OrderType.market, OrderType.stop_market):
-            order.pop('price')
 
-        if order['type'] == OrderType.market:
-            expect['stop'] = 0.0
+        if order_type in (OrderType.market, OrderType.stop_market):
+            expect['price'] = order['price']
+        if order_type == OrderType.stop_market and schema in (
+                OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin_isolated):
+            expect['stop_price'] = order['stop_price']
 
         assert order == expect
         rest.cancel_all_orders(schema)
@@ -1149,7 +1137,7 @@ class TestOrderBinanceRestApi:
                 'schema': OrderSchema.exchange,
                 'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSDT',
                 'system_symbol': 'btcusdt',
                 'type': OrderType.limit,
@@ -1167,7 +1155,7 @@ class TestOrderBinanceRestApi:
                 'schema': OrderSchema.margin,
                 'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSDT',
                 'system_symbol': 'btcusdt',
                 'type': OrderType.limit,
@@ -1185,7 +1173,7 @@ class TestOrderBinanceRestApi:
                 'schema': OrderSchema.margin_coin,
                 'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSD_PERP',
                 'system_symbol': 'btcusd',
                 'type': OrderType.limit,
@@ -1207,7 +1195,7 @@ class TestOrderBinanceRestApi:
                                   side=order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
                                   volume=default_order['volume'] * 2,
                                   order_type=OrderType.limit,
-                                  price=get_order_price(rest, schema, symbol, order_data.DEFAULT_ORDER_OPPOSITE_SIDE),
+                                  price=get_order_price(rest, schema, symbol, default_order['side']),
                                   options=order_data.DEFAULT_ORDER_OPTIONS,
                                   position_side=PositionSide.both)
         assert Schema(fields.ORDER_FIELDS).validate(order) == order
@@ -1225,7 +1213,7 @@ class TestOrderBinanceRestApi:
                 'schema': OrderSchema.exchange,
                 'side': order_data.DEFAULT_ORDER_SIDE,
                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSDT',
                 'system_symbol': 'btcusdt',
                 'type': OrderType.limit,
@@ -1243,7 +1231,7 @@ class TestOrderBinanceRestApi:
                 'schema': OrderSchema.margin,
                 'side': order_data.DEFAULT_ORDER_SIDE,
                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSDT',
                 'system_symbol': 'btcusdt',
                 'type': OrderType.limit,
@@ -1261,7 +1249,7 @@ class TestOrderBinanceRestApi:
                 'schema': OrderSchema.margin_coin,
                 'side': order_data.DEFAULT_ORDER_SIDE,
                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                'stop': 0.0,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSD_PERP',
                 'system_symbol': 'btcusd',
                 'type': OrderType.limit,

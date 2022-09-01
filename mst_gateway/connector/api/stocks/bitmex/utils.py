@@ -229,7 +229,7 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
         'schema': schema,
         'volume': to_int(raw_data.get('orderQty')),
         'filled_volume': to_int(raw_data.get('cumQty')),
-        'stop': to_float(raw_data.get('stopPx')),
+        'stop_price': to_float(raw_data.get('stopPx')),
         'side': load_order_side(raw_data.get('side')),
         'position_side': PositionSide.both,
         'price': to_float(raw_data.get('price')),
