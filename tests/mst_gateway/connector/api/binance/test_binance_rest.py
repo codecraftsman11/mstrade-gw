@@ -1131,9 +1131,9 @@ class TestOrderBinanceRestApi:
     @pytest.mark.parametrize(
         'rest, schema, expect', [
             ('tbinance_spot', OrderSchema.exchange, {
-                'active': False,
+                'active': True,
                 'execution': OrderExec.limit,
-                'filled_volume': 0.0,
+                'filled_volume': 0.002,
                 'schema': OrderSchema.exchange,
                 'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
