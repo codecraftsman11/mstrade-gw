@@ -4,12 +4,13 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import Optional
 from schema import Schema
-
-from mst_gateway.connector.api import OrderTTL
 from mst_gateway.logging import init_logger
 from mst_gateway.calculator import BinanceFinFactory
 from mst_gateway.connector.api.stocks.binance.rest import BinanceRestApi
-from mst_gateway.connector.api.types import LeverageType, OrderExec, OrderSchema, OrderType, BUY, SELL, PositionMode
+from mst_gateway.connector.api.types import (
+    LeverageType, OrderExec, OrderSchema, OrderType, BUY, SELL,
+    PositionSide, OrderTTL, PositionMode
+)
 from mst_gateway.exceptions import ConnectorError
 from tests.mst_gateway.connector import schema as fields
 from tests import config as cfg
@@ -18,6 +19,7 @@ from .data import symbol as symbol_data
 from .data import order_book as order_book_data
 from .data import order as order_data
 from .data import position as position_data
+from ..utils import get_order_price, get_order_stop_price
 
 
 def rest_params(param):
@@ -25,7 +27,7 @@ def rest_params(param):
         'tbinance_spot': (cfg.BINANCE_SPOT_TESTNET_AUTH_KEYS,
                           [OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin_isolated]),
         'tbinance_margin': (cfg.BINANCE_FUTURES_TESTNET_AUTH_KEYS,
-                             [OrderSchema.margin, OrderSchema.margin_coin]),
+                            [OrderSchema.margin, OrderSchema.margin_coin]),
     }
     return param_map[param]
 
@@ -59,25 +61,13 @@ def get_symbol(schema):
     return 'BTCUSD_PERP' if schema == OrderSchema.margin_coin else 'BTCUSDT'
 
 
-def get_order_price(rest: BinanceRestApi, schema, symbol, side) -> float:
-    symbol = rest.get_symbol(symbol, schema)
-    if side == BUY:
-        return round(symbol.get('bid_price') / 1.05, 0)
-    return round(symbol.get('ask_price') * 1.05, 0)
-
-
-def get_order_stop_price(price: float, side):
-    if side == BUY:
-        return round(price + 2000, 0)
-    return round(price - 2000, 0)
-
-
 def create_default_order(rest: BinanceRestApi, schema):
     symbol = get_symbol(schema)
     return rest.create_order(
         schema=schema,
         symbol=symbol,
         side=order_data.DEFAULT_ORDER_SIDE,
+        position_side=order_data.DEFAULT_ORDER_POSITION_SIDE,
         volume=order_data.DEFAULT_ORDER_VOLUME[schema],
         order_type=OrderType.limit,
         price=get_order_price(rest, schema, symbol, order_data.DEFAULT_ORDER_SIDE),
@@ -90,9 +80,12 @@ def clear_stock_order_data(order):
     order.pop('exchange_order_id')
 
 
-def get_liquidation_kwargs(schema):
-    return symbol_data.DEFAULT_LEVERAGE_BRACKETS.get(schema, []), \
-           position_data.DEFAULT_POSITIONS_STATE.get(schema, {})
+def get_liquidation_kwargs(schema, hedge_mode=False):
+    if hedge_mode:
+        return symbol_data.DEFAULT_LEVERAGE_BRACKETS.get(schema, {}), \
+               position_data.HEDGE_MODE_POSITIONS_STATE.get(schema, {})
+    return symbol_data.DEFAULT_LEVERAGE_BRACKETS.get(schema, {}), \
+        position_data.DEFAULT_POSITIONS_STATE.get(schema, {})
 
 
 class TestBinanceRestApi:
@@ -122,7 +115,6 @@ class TestBinanceRestApi:
         quote_bin_schema = Schema(fields.QUOTE_BIN_FIELDS)
         for qb in quote_bins:
             assert quote_bin_schema.validate(qb) == qb
-        assert len(quote_bins) == 100
 
     @pytest.mark.parametrize(
         'rest', ['tbinance_spot', 'tbinance_margin'],
@@ -458,11 +450,12 @@ class TestBinanceRestApi:
             rest.change_position_mode(schema, mode)
 
     @pytest.mark.parametrize(
-        'rest, schema', [('tbinance_margin', OrderSchema.margin), ('tbinance_margin', OrderSchema.margin_coin)],
+        'rest, schema, position_side', [('tbinance_margin', OrderSchema.margin, PositionSide.both),
+                                        ('tbinance_margin', OrderSchema.margin_coin, PositionSide.both)],
         indirect=['rest'],
     )
-    def test_get_position(self, rest: BinanceRestApi, schema):
-        position = rest.get_position(schema, get_symbol(schema), account_id=1)
+    def test_get_position(self, rest: BinanceRestApi, schema, position_side):
+        position = rest.get_position(schema, get_symbol(schema), position_side)
         assert Schema(fields.POSITION_FIELDS).validate(position) == position
 
     @pytest.mark.parametrize(
@@ -480,38 +473,165 @@ class TestBinanceRestApi:
     )
     def test_get_positions_state(self, rest: BinanceRestApi, schema):
         position_state_schema = Schema(fields.POSITION_STATE_FIELDS)
-        for position_state in rest.get_positions_state(schema).values():
-            assert position_state_schema.validate(position_state) == position_state
+        for symbol, positions_data in rest.get_positions_state(schema).items():
+            for position_side, position_state in positions_data.items():
+                assert position_state_schema.validate(position_state) == position_state
 
     @pytest.mark.parametrize(
         'rest, schema, side, volume, mark_price, price, wallet_balance, leverage_type, expect',
         [
-            ('tbinance_spot', OrderSchema.exchange, BUY, 0.1, 55555.0, 55555.0, 10000.0, LeverageType.isolated,
-             None),
-            ('tbinance_spot', OrderSchema.margin_cross, BUY, 0.1, 55555.0, 55555.0, 10000.0, LeverageType.isolated,
-             None),
-            ('tbinance_margin', OrderSchema.margin, BUY, 1.0, 55555.0, 55555.0, 10000.0, LeverageType.isolated,
-             45733.668341708544),
-            ('tbinance_margin', OrderSchema.margin, BUY, 1.0, 55555.0, 55555.0, 10000.0, LeverageType.cross,
-             45733.668341708544),
-            ('tbinance_margin', OrderSchema.margin, SELL, 1.0, 55555.0, 55555.0, 10000.0, LeverageType.isolated,
-             65278.606965174135),
-            ('tbinance_margin', OrderSchema.margin, SELL, 1.0, 55555.0, 55555.0, 10000.0, LeverageType.cross,
-             65278.606965174135),
-            ('tbinance_margin', OrderSchema.margin_coin, BUY, 1.0, 55555.0, 55555.0, 10000.0, LeverageType.isolated,
-             0.010040001807218073),
-            ('tbinance_margin', OrderSchema.margin_coin, BUY, 1.0, 55555.0, 55555.0, 10000.0, LeverageType.cross,
-             0.010040001807218073),
-            ('tbinance_margin', OrderSchema.margin_coin, SELL, 1.0, 55555.0, 55555.0, 10000.0, LeverageType.isolated,
-             None),
+            ('tbinance_margin', OrderSchema.margin, BUY, 0.1, 25000.0, 25000.0, 10000.0,
+             LeverageType.cross, None),
+            ('tbinance_margin', OrderSchema.margin, SELL, 0.1, 25000.0, 25000.0, 10000.0,
+             LeverageType.cross, 123754.26732673268),
+            ('tbinance_margin', OrderSchema.margin, BUY, 0.1, 25000.0, 25000.0, 30000.0,
+             LeverageType.cross, None),
+            ('tbinance_margin', OrderSchema.margin, SELL, 0.1, 25000.0, 25000.0, 30000.0,
+             LeverageType.cross, 321774.0693069307),
+            ('tbinance_margin', OrderSchema.margin, BUY, 0.5, 25000.0, 25000.0, 10000.0,
+             LeverageType.cross, 5052.159595959595),
+            ('tbinance_margin', OrderSchema.margin, SELL, 0.5, 25000.0, 25000.0, 10000.0,
+             LeverageType.cross, 44552.833663366335),
+            ('tbinance_margin', OrderSchema.margin, BUY, 0.5, 23000.0, 23000.0, 10000.0,
+             LeverageType.cross, 3031.957575757575),
+            ('tbinance_margin', OrderSchema.margin, SELL, 0.5, 23000.0, 23000.0, 10000.0,
+             LeverageType.cross, 42572.635643564354),
+            ('tbinance_margin', OrderSchema.margin, BUY, 0.1, 25000.0, 25000.0, 10000.0,
+             LeverageType.isolated, None),
+            ('tbinance_margin', OrderSchema.margin, SELL, 0.1, 25000.0, 25000.0, 10000.0,
+             LeverageType.isolated, 123762.37623762376),
+            ('tbinance_margin', OrderSchema.margin, BUY, 0.5, 25000.0, 25000.0, 10000.0,
+             LeverageType.isolated, 5050.50505050505),
+            ('tbinance_margin', OrderSchema.margin, SELL, 0.5, 25000.0, 25000.0, 10000.0,
+             LeverageType.isolated, 44554.455445544554),
+            ('tbinance_margin', OrderSchema.margin, BUY, 0.5, 25000.0, 25000.0, 30000.0,
+             LeverageType.isolated, None),
+            ('tbinance_margin', OrderSchema.margin, SELL, 0.5, 25000.0, 25000.0, 30000.0,
+             LeverageType.isolated, 84158.41584158415),
+            ('tbinance_margin', OrderSchema.margin, BUY, 0.5, 23000.0, 23000.0, 10000.0,
+             LeverageType.isolated, 3030.3030303030305),
+            ('tbinance_margin', OrderSchema.margin, SELL, 0.5, 23000.0, 23000.0, 10000.0,
+             LeverageType.isolated, 42574.25742574257),
+            ('tbinance_margin', OrderSchema.margin_coin, BUY, 1, 25000.0, 25000.0, 10000.0,
+             LeverageType.cross, 0.010065022516464364),
+            ('tbinance_margin', OrderSchema.margin_coin, SELL, 1, 25000.0, 25000.0, 10000.0,
+             LeverageType.cross, None),
+            ('tbinance_margin', OrderSchema.margin_coin, BUY, 1, 25000.0, 25000.0, 30000.0,
+             LeverageType.cross, 0.00334944233444164),
+            ('tbinance_margin', OrderSchema.margin_coin, SELL, 1, 25000.0, 25000.0, 30000.0,
+             LeverageType.cross, None),
+            ('tbinance_margin', OrderSchema.margin_coin, BUY, 5, 25000.0, 25000.0, 10000.0,
+             LeverageType.cross, 0.050375131145019215),
+            ('tbinance_margin', OrderSchema.margin_coin, SELL, 5, 25000.0, 25000.0, 10000.0,
+             LeverageType.cross, None),
+            ('tbinance_margin', OrderSchema.margin_coin, BUY, 5, 23000.0, 23000.0, 10000.0,
+             LeverageType.cross, 0.050375122362312244),
+            ('tbinance_margin', OrderSchema.margin_coin, SELL, 5, 23000.0, 23000.0, 10000.0,
+             LeverageType.cross, None),
+            ('tbinance_margin', OrderSchema.margin_coin, BUY, 1, 25000.0, 25000.0, 10000.0,
+             LeverageType.isolated, 0.010039995984001607),
+            ('tbinance_margin', OrderSchema.margin_coin, SELL, 1, 25000.0, 25000.0, 10000.0,
+             LeverageType.isolated, None),
+            ('tbinance_margin', OrderSchema.margin_coin, BUY, 5, 25000.0, 25000.0, 10000.0,
+             LeverageType.isolated, 0.05024987437531407),
+            ('tbinance_margin', OrderSchema.margin_coin, SELL, 5, 25000.0, 25000.0, 10000.0,
+             LeverageType.isolated, None),
+            ('tbinance_margin', OrderSchema.margin_coin, BUY, 5, 25000.0, 25000.0, 30000.0,
+             LeverageType.isolated, 0.0167499860416783),
+            ('tbinance_margin', OrderSchema.margin_coin, SELL, 5, 25000.0, 25000.0, 30000.0,
+             LeverageType.isolated, None),
+            ('tbinance_margin', OrderSchema.margin_coin, BUY, 5, 23000.0, 23000.0, 10000.0,
+             LeverageType.isolated, 0.05024986563622885),
+            ('tbinance_margin', OrderSchema.margin_coin, SELL, 5, 23000.0, 23000.0, 10000.0,
+             LeverageType.isolated, None)
         ],
         indirect=['rest'],
     )
     def test_get_liquidation(self, rest: BinanceRestApi, schema: str, side: int, volume: float, mark_price: float,
                              price: float, wallet_balance: float, leverage_type: str, expect: Optional[float]):
         leverage_brackets, positions_state = get_liquidation_kwargs(schema)
-        liquidation = rest.get_liquidation(get_symbol(schema).lower(), schema,
-                                           leverage_type, wallet_balance, side, volume, price, mark_price=mark_price,
+        liquidation = rest.get_liquidation(get_symbol(schema).lower(), schema, leverage_type, wallet_balance, side,
+                                           volume, price, position_side=PositionSide.both, mark_price=mark_price,
+                                           leverage_brackets=leverage_brackets, positions_state=positions_state)
+        assert Schema(fields.LIQUIDATION_FIELDS).validate(liquidation) == liquidation
+        assert liquidation['liquidation_price'] == expect
+
+    @pytest.mark.parametrize(
+        'rest, schema, side, position_side, volume, mark_price, price, wallet_balance, leverage_type, expect',
+        [
+            ('tbinance_margin', OrderSchema.margin, BUY, PositionSide.long, 0.1, 25000.0, 25000.0, 10000.0,
+             LeverageType.cross, None),
+            ('tbinance_margin', OrderSchema.margin, SELL, PositionSide.short, 0.1, 25000.0, 25000.0, 10000.0,
+             LeverageType.cross, 75253.75308129104),
+            ('tbinance_margin', OrderSchema.margin, BUY, PositionSide.long, 0.1, 25000.0, 25000.0, 30000.0,
+             LeverageType.cross, None),
+            ('tbinance_margin', OrderSchema.margin, SELL, PositionSide.short, 0.1, 25000.0, 25000.0, 30000.0,
+             LeverageType.cross, 277233.1511826847),
+            ('tbinance_margin', OrderSchema.margin, BUY, PositionSide.long, 0.5, 25000.0, 25000.0, 10000.0,
+             LeverageType.cross, 5169.352245305205),
+            ('tbinance_margin', OrderSchema.margin, SELL, PositionSide.short, 0.5, 25000.0, 25000.0, 10000.0,
+             LeverageType.cross, None),
+            ('tbinance_margin', OrderSchema.margin, BUY, PositionSide.long, 0.5, 23000.0, 23000.0, 10000.0,
+             LeverageType.cross, 3140.8723881101873),
+            ('tbinance_margin', OrderSchema.margin, SELL, PositionSide.short, 0.5, 23000.0, 23000.0, 10000.0,
+             LeverageType.cross, None),
+            ('tbinance_margin', OrderSchema.margin, BUY, PositionSide.long, 0.1, 25000.0, 25000.0, 10000.0,
+             LeverageType.isolated, None),
+            ('tbinance_margin', OrderSchema.margin, SELL, PositionSide.short, 0.1, 25000.0, 25000.0, 10000.0,
+             LeverageType.isolated, 74257.42574257425),
+            ('tbinance_margin', OrderSchema.margin, BUY, PositionSide.long, 0.5, 25000.0, 25000.0, 10000.0,
+             LeverageType.isolated, 5050.50505050505),
+            ('tbinance_margin', OrderSchema.margin, SELL, PositionSide.short, 0.5, 25000.0, 25000.0, 10000.0,
+             LeverageType.isolated, None),
+            ('tbinance_margin', OrderSchema.margin, BUY, PositionSide.long, 0.5, 25000.0, 25000.0, 30000.0,
+             LeverageType.isolated, None),
+            ('tbinance_margin', OrderSchema.margin, SELL, PositionSide.short, 0.5, 25000.0, 25000.0, 30000.0,
+             LeverageType.isolated, 34653.46534653466),
+            ('tbinance_margin', OrderSchema.margin, BUY, PositionSide.long, 0.5, 23000.0, 23000.0, 10000.0,
+             LeverageType.isolated, 3030.3030303030305),
+            ('tbinance_margin', OrderSchema.margin, SELL, PositionSide.short, 0.5, 23000.0, 23000.0, 10000.0,
+             LeverageType.isolated, None),
+            ('tbinance_margin', OrderSchema.margin_coin, BUY, PositionSide.long, 1, 25000.0, 25000.0, 10000.0,
+             LeverageType.cross, None),
+            ('tbinance_margin', OrderSchema.margin_coin, SELL, PositionSide.short, 1, 25000.0, 25000.0, 10000.0,
+             LeverageType.cross, 7.999999873237033e-05),
+            ('tbinance_margin', OrderSchema.margin_coin, BUY, PositionSide.long, 1, 25000.0, 25000.0, 30000.0,
+             LeverageType.cross, None),
+            ('tbinance_margin', OrderSchema.margin_coin, SELL, PositionSide.short, 1, 25000.0, 25000.0, 30000.0,
+             LeverageType.cross, 2.666666652581894e-05),
+            ('tbinance_margin', OrderSchema.margin_coin, BUY, PositionSide.long, 5, 25000.0, 25000.0, 10000.0,
+             LeverageType.cross, 0.030329949392504673),
+            ('tbinance_margin', OrderSchema.margin_coin, SELL, PositionSide.short, 5, 25000.0, 25000.0, 10000.0,
+             LeverageType.cross, None),
+            ('tbinance_margin', OrderSchema.margin_coin, BUY, PositionSide.long, 5, 23000.0, 23000.0, 10000.0,
+             LeverageType.cross, 0.030329944117740586),
+            ('tbinance_margin', OrderSchema.margin_coin, SELL, PositionSide.short, 5, 23000.0, 23000.0, 10000.0,
+             LeverageType.cross, None),
+            ('tbinance_margin', OrderSchema.margin_coin, BUY, PositionSide.long, 1, 25000.0, 25000.0, 10000.0,
+             LeverageType.isolated, None),
+            ('tbinance_margin', OrderSchema.margin_coin, SELL, PositionSide.short, 1, 25000.0, 25000.0, 10000.0,
+             LeverageType.isolated, 7.999999873237033e-05),
+            ('tbinance_margin', OrderSchema.margin_coin, BUY, PositionSide.long, 5, 25000.0, 25000.0, 10000.0,
+             LeverageType.isolated, 0.030329949392504673),
+            ('tbinance_margin', OrderSchema.margin_coin, SELL, PositionSide.short, 5, 25000.0, 25000.0, 10000.0,
+             LeverageType.isolated, None),
+            ('tbinance_margin', OrderSchema.margin_coin, BUY, PositionSide.long, 5, 25000.0, 25000.0, 30000.0,
+             LeverageType.isolated, 0.010109994376938708),
+            ('tbinance_margin', OrderSchema.margin_coin, SELL, PositionSide.short, 5, 25000.0, 25000.0, 30000.0,
+             LeverageType.isolated, None),
+            ('tbinance_margin', OrderSchema.margin_coin, BUY, PositionSide.long, 5, 23000.0, 23000.0, 10000.0,
+             LeverageType.isolated, 0.030329944117740586),
+            ('tbinance_margin', OrderSchema.margin_coin, SELL, PositionSide.short, 5, 23000.0, 23000.0, 10000.0,
+             LeverageType.isolated, None)
+        ],
+        indirect=['rest'],
+    )
+    def test_get_liquidation_hedge_mode(self, rest: BinanceRestApi, schema: str, side: int, position_side: str,
+                                        volume: float, mark_price: float, price: float, wallet_balance: float,
+                                        leverage_type: str, expect: Optional[float]):
+        leverage_brackets, positions_state = get_liquidation_kwargs(schema, hedge_mode=True)
+        liquidation = rest.get_liquidation(get_symbol(schema).lower(), schema, leverage_type, wallet_balance, side,
+                                           volume, price, position_side=position_side, mark_price=mark_price,
                                            leverage_brackets=leverage_brackets, positions_state=positions_state)
         assert Schema(fields.LIQUIDATION_FIELDS).validate(liquidation) == liquidation
         assert liquidation['liquidation_price'] == expect
@@ -527,9 +647,10 @@ class TestOrderBinanceRestApi:
                  'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
                  'schema': OrderSchema.exchange,
                  'side': BUY,
-                 'stop': 0.0,
+                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSDT',
-                 'system_symbol': 'btcusd',
+                 'system_symbol': 'btcusdt',
                  'type': OrderType.market,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
                  'ttl': OrderTTL.GTC,
@@ -544,9 +665,10 @@ class TestOrderBinanceRestApi:
                  'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
                  'schema': OrderSchema.exchange,
                  'side': SELL,
-                 'stop': 0.0,
+                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSDT',
-                 'system_symbol': 'btcusd',
+                 'system_symbol': 'btcusdt',
                  'type': OrderType.market,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
                  'ttl': OrderTTL.GTC,
@@ -561,9 +683,10 @@ class TestOrderBinanceRestApi:
                  'filled_volume': 0.0,
                  'schema': OrderSchema.exchange,
                  'side': BUY,
-                 'stop': 0.0,
+                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSDT',
-                 'system_symbol': 'btcusd',
+                 'system_symbol': 'btcusdt',
                  'type': OrderType.limit,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
                  'ttl': OrderTTL.GTC,
@@ -578,9 +701,10 @@ class TestOrderBinanceRestApi:
                  'filled_volume': 0.0,
                  'schema': OrderSchema.exchange,
                  'side': SELL,
-                 'stop': 0.0,
+                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSDT',
-                 'system_symbol': 'btcusd',
+                 'system_symbol': 'btcusdt',
                  'type': OrderType.limit,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
                  'ttl': OrderTTL.GTC,
@@ -595,9 +719,10 @@ class TestOrderBinanceRestApi:
                  'filled_volume': 0.0,
                  'schema': OrderSchema.exchange,
                  'side': BUY,
-                 'stop': 0.0,
+                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSDT',
-                 'system_symbol': 'btcusd',
+                 'system_symbol': 'btcusdt',
                  'type': OrderType.stop_limit,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
                  'ttl': OrderTTL.GTC,
@@ -612,9 +737,10 @@ class TestOrderBinanceRestApi:
                  'filled_volume': 0.0,
                  'schema': OrderSchema.exchange,
                  'side': SELL,
-                 'stop': 0.0,
+                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSDT',
-                 'system_symbol': 'btcusd',
+                 'system_symbol': 'btcusdt',
                  'type': OrderType.stop_limit,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
                  'ttl': OrderTTL.GTC,
@@ -629,9 +755,10 @@ class TestOrderBinanceRestApi:
                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
                 'schema': OrderSchema.exchange,
                 'side': BUY,
-                'stop': 0.0,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSDT',
-                'system_symbol': 'btcusd',
+                'system_symbol': 'btcusdt',
                 'type': OrderType.market,
                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
                 'ttl': OrderTTL.GTC,
@@ -646,9 +773,10 @@ class TestOrderBinanceRestApi:
                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
                 'schema': OrderSchema.exchange,
                 'side': SELL,
-                'stop': 0.0,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSDT',
-                'system_symbol': 'btcusd',
+                'system_symbol': 'btcusdt',
                 'type': OrderType.market,
                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
                 'ttl': OrderTTL.GTC,
@@ -663,9 +791,10 @@ class TestOrderBinanceRestApi:
                  'filled_volume': 0.0,
                  'schema': OrderSchema.margin,
                  'side': BUY,
-                 'stop': 0.0,
+                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSDT',
-                 'system_symbol': 'btcusd',
+                 'system_symbol': 'btcusdt',
                  'type': OrderType.market,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
                  'ttl': OrderTTL.GTC,
@@ -680,9 +809,10 @@ class TestOrderBinanceRestApi:
                  'filled_volume': 0.0,
                  'schema': OrderSchema.margin,
                  'side': SELL,
-                 'stop': 0.0,
+                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSDT',
-                 'system_symbol': 'btcusd',
+                 'system_symbol': 'btcusdt',
                  'type': OrderType.market,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
                  'ttl': OrderTTL.GTC,
@@ -697,9 +827,10 @@ class TestOrderBinanceRestApi:
                  'filled_volume': 0.0,
                  'schema': OrderSchema.margin,
                  'side': BUY,
-                 'stop': 0.0,
+                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSDT',
-                 'system_symbol': 'btcusd',
+                 'system_symbol': 'btcusdt',
                  'type': OrderType.limit,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
                  'ttl': OrderTTL.GTC,
@@ -714,9 +845,10 @@ class TestOrderBinanceRestApi:
                  'filled_volume': 0.0,
                  'schema': OrderSchema.margin,
                  'side': SELL,
-                 'stop': 0.0,
+                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSDT',
-                 'system_symbol': 'btcusd',
+                 'system_symbol': 'btcusdt',
                  'type': OrderType.limit,
                  'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
                  'ttl': OrderTTL.GTC,
@@ -731,9 +863,10 @@ class TestOrderBinanceRestApi:
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': BUY,
-                'stop': 0.0,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSDT',
-                'system_symbol': 'btcusd',
+                'system_symbol': 'btcusdt',
                 'type': OrderType.stop_limit,
                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
                 'ttl': OrderTTL.GTC,
@@ -748,9 +881,10 @@ class TestOrderBinanceRestApi:
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': SELL,
-                'stop': 0.0,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSDT',
-                'system_symbol': 'btcusd',
+                'system_symbol': 'btcusdt',
                 'type': OrderType.stop_limit,
                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
                 'ttl': OrderTTL.GTC,
@@ -765,9 +899,10 @@ class TestOrderBinanceRestApi:
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': BUY,
-                'stop': 0.0,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSDT',
-                'system_symbol': 'btcusd',
+                'system_symbol': 'btcusdt',
                 'type': OrderType.stop_market,
                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
                 'ttl': OrderTTL.GTC,
@@ -782,9 +917,10 @@ class TestOrderBinanceRestApi:
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': SELL,
-                'stop': 0.0,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSDT',
-                'system_symbol': 'btcusd',
+                'system_symbol': 'btcusdt',
                 'type': OrderType.stop_market,
                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
                 'ttl': OrderTTL.GTC,
@@ -799,7 +935,8 @@ class TestOrderBinanceRestApi:
                  'filled_volume': 0.0,
                  'schema': OrderSchema.margin_coin,
                  'side': BUY,
-                 'stop': 0.0,
+                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSD_PERP',
                  'system_symbol': 'btcusd',
                  'type': OrderType.market,
@@ -816,7 +953,8 @@ class TestOrderBinanceRestApi:
                  'filled_volume': 0.0,
                  'schema': OrderSchema.margin_coin,
                  'side': SELL,
-                 'stop': 0.0,
+                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSD_PERP',
                  'system_symbol': 'btcusd',
                  'type': OrderType.market,
@@ -833,7 +971,8 @@ class TestOrderBinanceRestApi:
                  'filled_volume': 0.0,
                  'schema': OrderSchema.margin_coin,
                  'side': BUY,
-                 'stop': 0.0,
+                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSD_PERP',
                  'system_symbol': 'btcusd',
                  'type': OrderType.limit,
@@ -850,7 +989,8 @@ class TestOrderBinanceRestApi:
                  'filled_volume': 0.0,
                  'schema': OrderSchema.margin_coin,
                  'side': SELL,
-                 'stop': 0.0,
+                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                 'stop_price': 0.0,
                  'symbol': 'BTCUSD_PERP',
                  'system_symbol': 'btcusd',
                  'type': OrderType.limit,
@@ -867,7 +1007,8 @@ class TestOrderBinanceRestApi:
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin_coin,
                 'side': BUY,
-                'stop': 0.0,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSD_PERP',
                 'system_symbol': 'btcusd',
                 'type': OrderType.stop_limit,
@@ -884,7 +1025,8 @@ class TestOrderBinanceRestApi:
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin_coin,
                 'side': SELL,
-                'stop': 0.0,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSD_PERP',
                 'system_symbol': 'btcusd',
                 'type': OrderType.stop_limit,
@@ -901,7 +1043,8 @@ class TestOrderBinanceRestApi:
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin_coin,
                 'side': BUY,
-                'stop': 0.0,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSD_PERP',
                 'system_symbol': 'btcusd',
                 'type': OrderType.stop_market,
@@ -918,7 +1061,8 @@ class TestOrderBinanceRestApi:
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin_coin,
                 'side': SELL,
-                'stop': 0.0,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSD_PERP',
                 'system_symbol': 'btcusd',
                 'type': OrderType.stop_market,
@@ -934,26 +1078,24 @@ class TestOrderBinanceRestApi:
     )
     def test_create_order(self, rest: BinanceRestApi, schema, side, order_type, expect):
         symbol = get_symbol(schema)
-        price = None
         default_order_data = deepcopy(order_data.DEFAULT_ORDER_OPTIONS)
-        if order_type != OrderType.market:
-            price = get_order_price(rest, schema, symbol, side)
-            if order_type != OrderType.stop_market:
-                expect['price'] = price
-            if order_type in (OrderType.stop_market, OrderType.stop_limit):
-                stop_price = get_order_stop_price(price, side)
-                default_order_data.update({'stop_price': stop_price})
-                expect['stop'] = stop_price
+        price = get_order_price(rest, schema, symbol, side)
+        expect['price'] = price
+        if order_type in (OrderType.stop_market, OrderType.stop_limit):
+            stop_price = get_order_stop_price(price, side)
+            default_order_data.update({'stop_price': stop_price})
+            expect['stop_price'] = stop_price
 
         order = rest.create_order(symbol, schema, side, order_data.DEFAULT_ORDER_VOLUME[schema], order_type, price,
-                                  default_order_data)
+                                  default_order_data, PositionSide.both)
         assert Schema(fields.ORDER_FIELDS).validate(order) == order
         clear_stock_order_data(order)
-        if order_type in (OrderType.market, OrderType.stop_market):
-            order.pop('price')
 
-        if order['type'] == OrderType.market:
-            expect['stop'] = 0.0
+        if order_type in (OrderType.market, OrderType.stop_market):
+            expect['price'] = order['price']
+        if order_type == OrderType.stop_market and schema in (
+                OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin_isolated):
+            expect['stop_price'] = order['stop_price']
 
         assert order == expect
         rest.cancel_all_orders(schema)
@@ -989,14 +1131,15 @@ class TestOrderBinanceRestApi:
     @pytest.mark.parametrize(
         'rest, schema, expect', [
             ('tbinance_spot', OrderSchema.exchange, {
-                'active': False,
+                'active': True,
                 'execution': OrderExec.limit,
-                'filled_volume': 0.0,
+                'filled_volume': 0.002,
                 'schema': OrderSchema.exchange,
                 'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
-                'stop': 0.0,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSDT',
-                'system_symbol': 'btcusd',
+                'system_symbol': 'btcusdt',
                 'type': OrderType.limit,
                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange] * 2,
                 'ttl': OrderTTL.GTC,
@@ -1011,9 +1154,10 @@ class TestOrderBinanceRestApi:
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
-                'stop': 0.0,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSDT',
-                'system_symbol': 'btcusd',
+                'system_symbol': 'btcusdt',
                 'type': OrderType.limit,
                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin] * 2,
                 'ttl': OrderTTL.GTC,
@@ -1028,7 +1172,8 @@ class TestOrderBinanceRestApi:
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin_coin,
                 'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
-                'stop': 0.0,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSD_PERP',
                 'system_symbol': 'btcusd',
                 'type': OrderType.limit,
@@ -1050,8 +1195,9 @@ class TestOrderBinanceRestApi:
                                   side=order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
                                   volume=default_order['volume'] * 2,
                                   order_type=OrderType.limit,
-                                  price=get_order_price(rest, schema, symbol, order_data.DEFAULT_ORDER_OPPOSITE_SIDE),
-                                  options=order_data.DEFAULT_ORDER_OPTIONS)
+                                  price=get_order_price(rest, schema, symbol, default_order['side']),
+                                  options=order_data.DEFAULT_ORDER_OPTIONS,
+                                  position_side=PositionSide.both)
         assert Schema(fields.ORDER_FIELDS).validate(order) == order
         clear_stock_order_data(order)
         order.pop('price')
@@ -1066,9 +1212,10 @@ class TestOrderBinanceRestApi:
                 'filled_volume': 0.0,
                 'schema': OrderSchema.exchange,
                 'side': order_data.DEFAULT_ORDER_SIDE,
-                'stop': 0.0,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSDT',
-                'system_symbol': 'btcusd',
+                'system_symbol': 'btcusdt',
                 'type': OrderType.limit,
                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
                 'ttl': OrderTTL.GTC,
@@ -1083,9 +1230,10 @@ class TestOrderBinanceRestApi:
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': order_data.DEFAULT_ORDER_SIDE,
-                'stop': 0.0,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSDT',
-                'system_symbol': 'btcusd',
+                'system_symbol': 'btcusdt',
                 'type': OrderType.limit,
                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
                 'ttl': OrderTTL.GTC,
@@ -1100,7 +1248,8 @@ class TestOrderBinanceRestApi:
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin_coin,
                 'side': order_data.DEFAULT_ORDER_SIDE,
-                'stop': 0.0,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
                 'symbol': 'BTCUSD_PERP',
                 'system_symbol': 'btcusd',
                 'type': OrderType.limit,

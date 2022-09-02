@@ -50,6 +50,7 @@ PARAMETER_NAMES_MAP = {
     'volume': 'quantity',
     'iceberg_volume': 'icebergQty',
     'stop_price': 'stopPrice',
+    'position_side': 'positionSide',
     'ttl': 'timeInForce',
     'H1': 'GTC',
     'H4': 'GTC',
@@ -206,6 +207,7 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         'STOP': {
             'params': [
                 *DEFAULT_PARAMETERS,
+                'positionSide',
                 'stopPrice',
                 'quantity',
                 'price'
@@ -215,8 +217,8 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         'STOP_MARKET': {
             'params': [
                 *DEFAULT_PARAMETERS,
+                'positionSide',
                 'stopPrice'
-
             ],
             'additional_params': {}
         }
@@ -244,6 +246,7 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         'STOP_MARKET': {
             'params': [
                 *DEFAULT_PARAMETERS,
+                'positionSide',
                 'stopPrice'
             ],
             'additional_params': {}
@@ -251,6 +254,7 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         'STOP': {
             'params': [
                 *DEFAULT_PARAMETERS,
+                'positionSide',
                 'stopPrice',
                 'quantity',
                 'price'

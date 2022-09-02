@@ -168,7 +168,7 @@ DEFAULT_TRADE_GET_DATA_RESULT = {
                         'vl': 0.009955,
                         'sd': 1,
                         's': 'BTCUSDT',
-                        'ss': 'btcusd',
+                        'ss': 'btcusdt',
                     }
                 ],
             }
@@ -188,7 +188,7 @@ DEFAULT_TRADE_GET_DATA_RESULT = {
                         'vl': 0.01,
                         'sd': 0,
                         's': 'BTCUSDT',
-                        'ss': 'btcusd',
+                        'ss': 'btcusdt',
                     }
                 ],
             }

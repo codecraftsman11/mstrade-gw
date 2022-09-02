@@ -16,7 +16,8 @@ class FinFactory:
 
     @classmethod
     @abstractmethod
-    def calc_liquidation_price(cls, side: int, leverage_type: str, entry_price: float, **kwargs) -> Optional[float]:
+    def calc_liquidation_price(cls, side: int, volume: float, entry_price: float, leverage_type: str,
+                               wallet_balance: float, **kwargs) -> Optional[float]:
         raise NotImplementedError
 
     @classmethod
