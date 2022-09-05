@@ -852,7 +852,7 @@ class BinanceRestApi(StockRestApi):
                     method=rest_method, url=str(url), hashed_uid=self._generate_hashed_uid()
                 )
             except ConnectionError:
-                raise ConnectorError('Proxy list error.')
+                raise ConnectorError(f"Proxy list error. {rest_method} {url}")
         try:
             resp = method(**kwargs)
             data = self.handler.handle_response(resp)
