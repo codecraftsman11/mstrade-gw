@@ -450,7 +450,7 @@ class BitmexRestApi(StockRestApi):
                     method=rest_method, url=str(url), hashed_uid=self._generate_hashed_uid()
                 )
             except ConnectionError:
-                raise ConnectorError('Proxy list error.')
+                raise ConnectorError(f"Proxy list error. {rest_method} {url}")
         headers = {}
         if self._keepalive:
             headers['Connection'] = "keep-alive"
