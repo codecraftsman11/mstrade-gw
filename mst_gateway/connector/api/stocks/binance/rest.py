@@ -7,7 +7,7 @@ from mst_gateway.connector.api.utils import time2timestamp
 from mst_gateway.storage import StateStorageKey
 from mst_gateway.calculator import BinanceFinFactory
 from mst_gateway.connector.api.types import OrderSchema, OrderType, ExchangeDrivers
-from mst_gateway.connector.api.utils.rest import validate_exchange_order_id, validate_schema
+from mst_gateway.connector.api.utils.rest import validate_schema
 from mst_gateway.connector.api.stocks.binance.lib.exceptions import BinanceAPIException
 from mst_gateway.connector.api.stocks.binance.lib.sync_client import BinanceApiClient
 from . import utils, var
@@ -272,7 +272,8 @@ class BinanceRestApi(StockRestApi):
         return quote_bins
 
     def create_order(self, symbol: str, schema: str, side: int, volume: float, order_type: str = OrderType.market,
-                     price: float = None, options: dict = None, position_side: str = PositionSide.both) -> dict:
+                     price: float = None, options: dict = None, position_side: str = PositionSide.both,
+                     order_id: str = None) -> dict:
         schema_handlers = {
             OrderSchema.exchange: self._handler.create_order,
             OrderSchema.margin_cross: self._handler.create_margin_order,
@@ -288,22 +289,23 @@ class BinanceRestApi(StockRestApi):
             'position_side': position_side.upper(),
             'volume': volume,
             'price': str(price) if price else None,
+            'order_id': order_id
         }
         params = utils.generate_parameters_by_order_type(main_params, options, schema)
         data = self._binance_api(schema_handlers[schema.lower()], **params)
         state_data = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}").get(symbol.lower(), {})
         return utils.load_order_data(schema, data, state_data, params)
 
-    def update_order(self, exchange_order_id: str, symbol: str, schema: str, side: int, volume: float,
-                     order_type: str = OrderType.market, price: float = None, options: dict = None,
-                     position_side: str = PositionSide.both) -> dict:
+    def update_order(self, symbol: str, schema: str, side: int, volume: float, order_type: str = OrderType.market,
+                     price: float = None, options: dict = None, position_side: str = PositionSide.both,
+                     order_id: str = None, new_order_id: str = None, exchange_order_id: str = None) -> dict:
         """
         Updates an order by deleting an existing order and creating a new one.
 
         """
-        self.cancel_order(exchange_order_id, symbol, schema)
+        self.cancel_order(symbol, schema, order_id, exchange_order_id)
         return self.create_order(symbol, schema, side, volume, order_type, price, options=options,
-                                 position_side=position_side)
+                                 position_side=position_side, order_id=new_order_id)
 
     def cancel_all_orders(self, schema: str):
         data = [self.cancel_order(
@@ -313,8 +315,7 @@ class BinanceRestApi(StockRestApi):
         ) for order in self.list_orders(schema=schema)]
         return bool(data)
 
-    def cancel_order(self, exchange_order_id: str, symbol: str, schema: str) -> dict:
-        validate_exchange_order_id(exchange_order_id)
+    def cancel_order(self, symbol: str, schema: str, order_id: str = None, exchange_order_id: str = None) -> dict:
         schema_handlers = {
             OrderSchema.exchange: self._handler.cancel_order,
             OrderSchema.margin_cross: self._handler.cancel_margin_order,
@@ -323,15 +324,19 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin_coin: self._handler.cancel_futures_coin_order,
         }
         validate_schema(schema, schema_handlers)
+        if exchange_order_id:
+            exchange_order_id = int(exchange_order_id)
         params = utils.map_api_parameter_names({
-            'exchange_order_id': int(exchange_order_id),
+            'order_id': order_id,
+            'exchange_order_id': exchange_order_id,
             'symbol': utils.symbol2stock(symbol),
         })
         data = self._binance_api(schema_handlers[schema.lower()], **params)
         state_data = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}").get(symbol.lower(), {})
         return utils.load_order_data(schema, data, state_data)
 
-    def get_order(self, exchange_order_id: str, symbol: str, schema: str):
+    def get_order(self, symbol: str, schema: str, order_id: str = None,
+                  exchange_order_id: str = None) -> Optional[dict]:
         schema_handlers = {
             OrderSchema.exchange: self._handler.get_order,
             OrderSchema.margin_cross: self._handler.get_margin_order,
@@ -340,8 +345,11 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin_coin: self._handler.get_futures_coin_order,
         }
         validate_schema(schema, schema_handlers)
+        if exchange_order_id:
+            exchange_order_id = int(exchange_order_id)
         params = utils.map_api_parameter_names({
-            'exchange_order_id': int(exchange_order_id),
+            'order_id': order_id,
+            'exchange_order_id': exchange_order_id,
             'symbol': utils.symbol2stock(symbol),
         })
         if not (data := self._binance_api(schema_handlers[schema.lower()], **params)):
@@ -393,7 +401,7 @@ class BinanceRestApi(StockRestApi):
         state_data = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}").get(symbol.lower(), {})
         return [utils.load_trade_data(d, state_data) for d in data]
 
-    def close_order(self, exchange_order_id: str, symbol: str, schema: str):
+    def close_order(self, symbol: str, schema: str, order_id: str = None, exchange_order_id: str = None) -> bool:
         raise NotImplementedError
 
     def close_all_orders(self, symbol: str, schema: str):

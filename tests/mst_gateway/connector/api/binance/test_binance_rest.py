@@ -1,6 +1,7 @@
 import logging
 import pytest
 from copy import deepcopy
+from uuid import uuid4
 from datetime import datetime, timedelta
 from typing import Optional
 from schema import Schema
@@ -72,6 +73,7 @@ def create_default_order(rest: BinanceRestApi, schema):
         order_type=OrderType.limit,
         price=get_order_price(rest, schema, symbol, order_data.DEFAULT_ORDER_SIDE),
         options=order_data.DEFAULT_ORDER_OPTIONS,
+        order_id=uuid4().hex
     )
 
 
@@ -1078,16 +1080,19 @@ class TestOrderBinanceRestApi:
     )
     def test_create_order(self, rest: BinanceRestApi, schema, side, order_type, expect):
         symbol = get_symbol(schema)
-        default_order_data = deepcopy(order_data.DEFAULT_ORDER_OPTIONS)
+        options = deepcopy(order_data.DEFAULT_ORDER_OPTIONS)
         price = get_order_price(rest, schema, symbol, side)
-        expect['price'] = price
+        order_id = uuid4().hex
+        expect.update({
+            'price': price,
+            'order_id': order_id
+        })
         if order_type in (OrderType.stop_market, OrderType.stop_limit):
             stop_price = get_order_stop_price(price, side)
-            default_order_data.update({'stop_price': stop_price})
+            options.update({'stop_price': stop_price})
             expect['stop_price'] = stop_price
-
         order = rest.create_order(symbol, schema, side, order_data.DEFAULT_ORDER_VOLUME[schema], order_type, price,
-                                  default_order_data, PositionSide.both)
+                                  options, PositionSide.both, order_id)
         assert Schema(fields.ORDER_FIELDS).validate(order) == order
         clear_stock_order_data(order)
 
@@ -1108,8 +1113,12 @@ class TestOrderBinanceRestApi:
     def test_get_order(self, rest: BinanceRestApi, schema):
         default_order = create_default_order(rest, schema)
         expect = deepcopy(order_data.DEFAULT_ORDER[schema])
-        expect['price'] = default_order['price']
-        order = rest.get_order(default_order['exchange_order_id'], default_order['symbol'], schema)
+        order_id = default_order['order_id']
+        expect.update({
+            'price': default_order['price'],
+            'order_id': order_id
+        })
+        order = rest.get_order(default_order['symbol'], schema, order_id=order_id)
         assert Schema(fields.ORDER_FIELDS).validate(order) == order
         clear_stock_order_data(order)
         assert order == expect
@@ -1190,14 +1199,18 @@ class TestOrderBinanceRestApi:
     )
     def test_update_order(self, rest: BinanceRestApi, schema: str, expect):
         default_order = create_default_order(rest, schema)
-        symbol = get_symbol(schema)
-        order = rest.update_order(default_order['exchange_order_id'], symbol, schema,
+        symbol = default_order['symbol']
+        new_order_id = uuid4().hex
+        expect['order_id'] = new_order_id
+        order = rest.update_order(symbol, schema,
                                   side=order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
                                   volume=default_order['volume'] * 2,
                                   order_type=OrderType.limit,
                                   price=get_order_price(rest, schema, symbol, default_order['side']),
                                   options=order_data.DEFAULT_ORDER_OPTIONS,
-                                  position_side=PositionSide.both)
+                                  position_side=PositionSide.both,
+                                  order_id=default_order['order_id'],
+                                  new_order_id=new_order_id)
         assert Schema(fields.ORDER_FIELDS).validate(order) == order
         clear_stock_order_data(order)
         order.pop('price')
@@ -1265,8 +1278,12 @@ class TestOrderBinanceRestApi:
     )
     def test_cancel_order(self, rest: BinanceRestApi, schema: str, expect: dict):
         default_order = create_default_order(rest, schema)
-        expect['price'] = default_order['price']
-        order = rest.cancel_order(default_order['exchange_order_id'], default_order['symbol'], schema)
+        order_id = default_order['order_id']
+        expect.update({
+            'price': default_order['price'],
+            'order_id': order_id
+        })
+        order = rest.cancel_order(default_order['symbol'], schema, order_id=order_id)
         assert Schema(fields.ORDER_FIELDS).validate(order) == order
         clear_stock_order_data(order)
         assert order == expect

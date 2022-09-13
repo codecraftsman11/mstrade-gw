@@ -448,6 +448,7 @@ DEFAULT_ORDER_GET_DATA_RESULT = {
                 'act': 'insert',
                 'd': [
                     {
+                        'oid': 'VuuQ6CA63KWGl7Qyq9GFCR',
                         'eoid': '2352852',
                         'sd': 0,
                         'ps': PositionSide.both,
@@ -480,6 +481,7 @@ DEFAULT_ORDER_GET_DATA_RESULT = {
                 'act': 'insert',
                 'd': [
                     {
+                        'oid': 'web_PqSHEF5jz9kgqy9Ql82X',
                         'eoid': '2939862341',
                         'sd': 0,
                         'ps': PositionSide.both,
@@ -512,6 +514,7 @@ DEFAULT_ORDER_GET_DATA_RESULT = {
                 'act': 'insert',
                 'd': [
                     {
+                        'oid': 'web_UPJWJK4WYHUUQepbVPFl',
                         'eoid': '229157580',
                         'sd': 0,
                         'ps': PositionSide.both,

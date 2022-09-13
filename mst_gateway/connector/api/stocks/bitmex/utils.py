@@ -224,6 +224,7 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
     order_type_and_exec = load_order_type_and_exec(schema, raw_data.get('ordType'))
     iceberg_volume = to_float(raw_data.get('displayQty'))
     data = {
+        'order_id': raw_data.get('clOrdID'),
         'exchange_order_id': raw_data.get('orderID'),
         'symbol': raw_data.get('symbol'),
         'schema': schema,
@@ -251,6 +252,7 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
 
 def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     data = {
+        'oid': raw_data.get('clOrdID'),
         'eoid': raw_data.get('orderID'),
         'sd': load_order_side(raw_data.get('side')),
         'ps': PositionSide.both,

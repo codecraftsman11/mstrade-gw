@@ -350,6 +350,7 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict], pay
     iceberg_volume = to_float(raw_data.get('icebergQty', 0.0))
     position_side = raw_data.get('positionSide') or PositionSide.both
     data = {
+        'order_id': raw_data.get('origClientOrderId') or raw_data.get('clientOrderId'),
         'time': _time,
         'exchange_order_id': str(raw_data.get('orderId')),
         'symbol': raw_data.get('symbol'),
@@ -1388,6 +1389,7 @@ def load_ws_order_side(order_side: Optional[str]) -> Optional[int]:
 def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     position_side = raw_data.get('ps') or PositionSide.both
     data = {
+        'oid': raw_data.get('c'),
         'eoid': str(raw_data.get('i')),
         'sd': load_ws_order_side(raw_data.get('S')),
         'ps': position_side.lower(),
@@ -1488,7 +1490,8 @@ def generate_parameters_by_order_type(main_params: dict, options: dict, schema: 
     mapping_parameters = store_order_mapping_parameters(exchange_order_type, schema)
     options = assign_custom_parameter_values(options, schema)
     all_params = map_api_parameter_names(
-        {'order_type': exchange_order_type, **main_params, **options}
+        {'order_type': exchange_order_type, **main_params, **options},
+        create_params=True
     )
     new_params = dict()
     for param_name in mapping_parameters:
@@ -1519,17 +1522,20 @@ def assign_custom_parameter_values(options: Optional[dict], schema: Optional[str
     return new_options
 
 
-def map_api_parameter_names(params: dict) -> Optional[dict]:
+def map_api_parameter_names(params: dict, create_params: bool = False) -> Optional[dict]:
     """
     Changes the name (key) of any parameters that have a different name in the Binance API.
     Example: 'ttl' becomes 'timeInForce'
 
     """
     tmp_params = dict()
+    mapped_names = deepcopy(var.PARAMETER_NAMES_MAP)
+    if create_params:
+        mapped_names.update(var.CREATE_PARAMETER_NAMES_MAP)
     for param, value in params.items():
         if value is None:
             continue
-        _param = var.PARAMETER_NAMES_MAP.get(param) or param
+        _param = mapped_names.get(param) or param
         tmp_params[_param] = value
     return tmp_params
 

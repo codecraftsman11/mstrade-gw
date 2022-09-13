@@ -62,6 +62,7 @@ SYMBOL_FIELDS = {
 }
 
 ORDER_FIELDS = {
+    'order_id': str,
     'exchange_order_id': str,
     'symbol': str,
     'volume': Or(int, float),
@@ -352,6 +353,7 @@ WS_WALLET_BALANCE_FIELDS = {
 
 WS_MESSAGE_DATA_FIELDS = {
     'order': {
+        'oid': str,
         'eoid': str,
         'sd': Use(side_valid),
         'tv': Or(None, float),

@@ -44,7 +44,7 @@ BINANCE_ORDER_TTL_MAP = {
 }
 
 PARAMETER_NAMES_MAP = {
-    'order_id': 'newClientOrderId',
+    'order_id': 'origClientOrderId',
     'exchange_order_id': 'orderId',
     'order_type': 'type',
     'volume': 'quantity',
@@ -61,9 +61,14 @@ PARAMETER_NAMES_MAP = {
     'GTX': 'GTX'
 }
 
+CREATE_PARAMETER_NAMES_MAP = {
+    'order_id': 'newClientOrderId',
+}
 
 DEFAULT_PARAMETERS = [
+    'origClientOrderId',
     'newClientOrderId',
+    'orderId',
     'symbol',
     'type',
     'side',
@@ -223,7 +228,6 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
             'additional_params': {}
         }
     },
-
     api.OrderSchema.margin_coin: {
         'MARKET': {
             'params': [
