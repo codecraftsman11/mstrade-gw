@@ -50,6 +50,10 @@ PARAMETER_NAMES_MAP = {
     'volume': 'quantity',
     'iceberg_volume': 'icebergQty',
     'stop_price': 'stopPrice',
+    'trailing_delta': 'trailingDelta',
+    'callback_rate': 'callbackRate',
+    'reduce_only': 'reduceOnly',
+    'new_order_resp_type': 'newOrderRespType',
     'ttl': 'timeInForce',
     'H1': 'GTC',
     'H4': 'GTC',
@@ -63,6 +67,7 @@ PARAMETER_NAMES_MAP = {
 
 DEFAULT_PARAMETERS = [
     'newClientOrderId',
+    'newOrderRespType',
     'symbol',
     'type',
     'side',
@@ -103,6 +108,25 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
                 'quantity'
             ],
             'additional_params': {}
+        },
+        'TAKE_PROFIT_LIMIT': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'timeInForce',
+                'trailingDelta',
+                'stopPrice',
+                'price',
+                'quantity'
+            ],
+            'additional_params': {}
+        },
+        'TAKE_PROFIT': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'stopPrice',
+                'trailingDelta'
+            ],
+            'additional_params': {}
         }
     },
 
@@ -130,8 +154,10 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
             'params': [
                 *DEFAULT_PARAMETERS,
                 'stopPrice',
+                'trailingDelta',
                 'timeInForce',
-                'price'
+                'price',
+                'reduceOnly'
             ],
             'additional_params': {}
         },
@@ -139,7 +165,25 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
             'params': [
                 *DEFAULT_PARAMETERS,
                 'stopPrice',
-                'quantity'
+                'quantity',
+                'reduceOnly'
+            ],
+            'additional_params': {}
+        },
+        'TAKE_PROFIT_LIMIT': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'timeInForce',
+                'stopPrice',
+                'reduceOnly'
+            ],
+            'additional_params': {}
+        },
+        'TAKE_PROFIT': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'stopPrice',
+                'reduceOnly'
             ],
             'additional_params': {}
         }
@@ -169,8 +213,10 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
             'params': [
                 *DEFAULT_PARAMETERS,
                 'stopPrice',
+                'trailingDelta',
                 'timeInForce',
-                'price'
+                'price',
+                'reduceOnly'
             ],
             'additional_params': {}
         },
@@ -178,7 +224,25 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
             'params': [
                 *DEFAULT_PARAMETERS,
                 'stopPrice',
-                'quantity'
+                'quantity',
+                'reduceOnly'
+            ],
+            'additional_params': {}
+        },
+        'TAKE_PROFIT_LIMIT': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'timeInForce',
+                'stopPrice',
+                'reduceOnly'
+            ],
+            'additional_params': {}
+        },
+        'TAKE_PROFIT': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'stopPrice',
+                'reduceOnly'
             ],
             'additional_params': {}
         }
@@ -208,15 +272,43 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
                 *DEFAULT_PARAMETERS,
                 'stopPrice',
                 'quantity',
-                'price'
+                'price',
+                'reduceOnly'
             ],
             'additional_params': {}
         },
         'STOP_MARKET': {
             'params': [
                 *DEFAULT_PARAMETERS,
-                'stopPrice'
+                'stopPrice',
+                'reduceOnly'
 
+            ],
+            'additional_params': {}
+        },
+        'TAKE_PROFIT': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'stopPrice',
+                'quantity',
+                'price',
+                'reduceOnly'
+            ],
+            'additional_params': {}
+        },
+        'TAKE_PROFIT_MARKET': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'stopPrice',
+                'reduceOnly'
+            ],
+            'additional_params': {}
+        },
+        'TRAILING_STOP_MARKET': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'callbackRate',
+                'reduceOnly'
             ],
             'additional_params': {}
         }
@@ -244,7 +336,8 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         'STOP_MARKET': {
             'params': [
                 *DEFAULT_PARAMETERS,
-                'stopPrice'
+                'stopPrice',
+                'reduceOnly'
             ],
             'additional_params': {}
         },
@@ -252,8 +345,33 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
             'params': [
                 *DEFAULT_PARAMETERS,
                 'stopPrice',
-                'quantity',
-                'price'
+                'price',
+                'reduceOnly'
+            ],
+            'additional_params': {}
+        },
+        'TAKE_PROFIT': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'stopPrice',
+                'price',
+                'reduceOnly'
+            ],
+            'additional_params': {}
+        },
+        'TAKE_PROFIT_MARKET': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'stopPrice',
+                'reduceOnly'
+            ],
+            'additional_params': {}
+        },
+        'TRAILING_STOP_MARKET': {
+            'params': [
+                *DEFAULT_PARAMETERS,
+                'callbackRate',
+                'reduceOnly'
             ],
             'additional_params': {}
         }

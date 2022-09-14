@@ -291,7 +291,9 @@ class BinanceRestApi(StockRestApi):
             'price': str(price) if price else None,
         }
         params = utils.generate_parameters_by_order_type(main_params, options, schema)
+        print(f"\n {params=} \n")
         data = self._binance_api(schema_handlers[schema.lower()], **params)
+        print(f"\n exchange_{data=} \n")
         state_data = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}").get(symbol.lower(), {})
         return utils.load_order_data(schema, data, state_data, params)
 

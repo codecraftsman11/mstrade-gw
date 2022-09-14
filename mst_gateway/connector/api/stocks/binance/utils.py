@@ -345,7 +345,8 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict], pay
     _time_field = raw_data.get('time') or raw_data.get('transactTime') or raw_data.get('updateTime')
     _time = to_date(_time_field) or datetime.now()
     order_type = raw_data.get('type') or payload.get('type')
-    order_type_and_exec = load_order_type_and_exec(schema, order_type.upper())
+    if raw_data.get("trailingDelta"):
+        order_type = "TRAILING_STOP"
     iceberg_volume = to_float(raw_data.get('icebergQty', 0.0))
     data = {
         'time': _time,
@@ -354,16 +355,17 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict], pay
         'schema': schema,
         'volume': to_float(raw_data.get('origQty') or payload.get('quantity')),
         'filled_volume': to_float(raw_data.get('executedQty')),
-        'stop': to_float(raw_data.get('stopPrice') or payload.get('stopPrice')),
+        'stop': to_float(raw_data.get('stopPrice') or payload.get('stop_price')),
         'side': load_order_side(raw_data.get('side') or payload.get('side')),
         'price': to_float(raw_data.get('price') or payload.get('price')),
         'active': raw_data.get('status') != "NEW",
-        'ttl': var.BINANCE_ORDER_TTL_MAP.get(raw_data.get('timeInForce') or payload.get('timeInForce')),
+        'ttl': var.BINANCE_ORDER_TTL_MAP.get(raw_data.get('timeInForce') or payload.get('ttl')),
         'is_iceberg': bool(iceberg_volume),
         'iceberg_volume': iceberg_volume,
-        'is_passive': load_order_passive(raw_data.get('timeInForce') or payload.get('timeInForce')),
+        'is_passive': load_order_passive(raw_data.get('timeInForce') or payload.get('ttl')),
         'comments': None,
-        **order_type_and_exec
+        'type': convert_order_type(schema, order_type.upper())
+        # **order_type_and_exec
     }
     if fills := raw_data.get('fills'):
         data.update(
@@ -373,6 +375,7 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict], pay
         data.update({
             'system_symbol': state_data.get('system_symbol'),
         })
+    print(f"\n gw_{data=} \n")
     return data
 
 
@@ -1401,14 +1404,14 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'stp': to_float(raw_data['P']) if raw_data.get('P') else to_float(raw_data.get('sp')),
         'crt': to_iso_datetime(raw_data['O']) if raw_data.get('O') else to_date(raw_data.get('T')),
         't': raw_data.get('o', '').lower(),
-        'exc': raw_data.get('o', '').lower(),
     }
     if isinstance(state_data, dict):
-        order_type_and_exec = load_order_type_and_exec(state_data.get('schema'), raw_data.get('o', '').upper())
+        order_type = raw_data.get('o', '').upper()
+        if raw_data.get('d'):
+            order_type = "TRAILING_STOP"
         data.update({
             'ss': state_data.get('system_symbol'),
-            't': order_type_and_exec.get('type'),
-            'exc':  order_type_and_exec.get('execution')
+            't': convert_order_type(state_data.get('schema'), order_type),
         })
     return data
 
@@ -1443,8 +1446,8 @@ def load_funding_rates(funding_rates: list) -> list:
     ]
 
 
-def load_order_type_and_exec(schema: str, exchange_order_type: str) -> dict:
-    return BinanceOrderTypeConverter.load_type_and_exec(schema, exchange_order_type)
+def convert_order_type(schema: str, exchange_order_type: str) -> str:
+    return BinanceOrderTypeConverter.load_order_type(schema, exchange_order_type)
 
 
 def get_mapping_for_schema(schema: str) -> Optional[dict]:
@@ -1487,6 +1490,7 @@ def generate_parameters_by_order_type(main_params: dict, options: dict, schema: 
     all_params = map_api_parameter_names(
         {'order_type': exchange_order_type, **main_params, **options}
     )
+    print(f"{all_params=}")
     new_params = dict()
     for param_name in mapping_parameters:
         value = all_params.get(param_name)
@@ -1495,6 +1499,7 @@ def generate_parameters_by_order_type(main_params: dict, options: dict, schema: 
     new_params.update(
         store_order_additional_parameters(exchange_order_type, schema)
     )
+    print(f"{new_params=}")
     return new_params
 
 
@@ -1504,13 +1509,24 @@ def assign_custom_parameter_values(options: Optional[dict], schema: Optional[str
 
     """
     new_options = dict()
-    if 'ttl' in options:
-        new_options['ttl'] = var.PARAMETER_NAMES_MAP.get(options.get('ttl'))
+    new_options['new_order_resp_type'] = "RESULT"
+
+    if schema in [api.OrderSchema.margin, api.OrderSchema.margin_coin]:
+        if options.get('is_passive'):
+            new_options['ttl'] = var.PARAMETER_NAMES_MAP.get('GTX')
+        if 'callback_rate' in options:
+            new_options['callback_rate'] = options['callback_rate']
+    if schema in [api.OrderSchema.exchange, api.OrderSchema.margin_cross, api.OrderSchema.margin_isolated]:
+        if 'trailing_delta' in options:
+            new_options['trailing_delta'] = options['trailing_delta']
+
+    if options.get('ttl'):
+        new_options['ttl'] = var.PARAMETER_NAMES_MAP.get(options['ttl'])
     if options.get('is_iceberg'):
         new_options['iceberg_volume'] = options['iceberg_volume'] or 0
+    if options.get('reduce_only'):
+        new_options['reduce_only'] = options['reduce_only']
 
-    if options.get('is_passive') and schema in [api.OrderSchema.margin_coin, api.OrderSchema.margin]:
-        new_options['ttl'] = var.PARAMETER_NAMES_MAP.get('GTX')
     if 'stop_price' in options:
         new_options['stop_price'] = options['stop_price']
     return new_options

@@ -1,58 +1,64 @@
 from mst_gateway.connector.api import (
     BaseOrderTypeConverter,
     OrderType,
-    OrderSchema,
-    OrderExec
+    OrderSchema
 )
 
 
 class BinanceOrderTypeConverter(BaseOrderTypeConverter):
     """ Order type converter for Binance """
 
-    LOAD_TYPE_AND_EXECUTION_MAP = {
+    LOAD_TYPE_MAP = {
         OrderSchema.margin_cross: {
-            'LIMIT': {'type': OrderType.limit, 'execution': OrderExec.limit},
-            'MARKET': {'type': OrderType.market, 'execution': OrderExec.market},
-            'STOP_LOSS_LIMIT': {'type': OrderType.stop_limit, 'execution': OrderExec.limit},
-            # 'TAKE_PROFIT_LIMIT': {'type': OrderType.take_profit, 'execution': OrderExec.limit},
-            # 'STOP_LOSS': {'type': OrderType.stop_loss, 'execution': OrderExec.market},
-            # 'TAKE_PROFIT': {'type': OrderType.take_profit, 'execution': OrderExec.market},
-            # 'LIMIT_MAKER': {'type': OrderType.limit, 'execution': OrderExec.limit}
+            'LIMIT': OrderType.limit,
+            'MARKET': OrderType.market,
+            'STOP_LOSS_LIMIT': OrderType.stop_limit,
+            'STOP_LOSS': OrderType.stop_market,
+            'TAKE_PROFIT_LIMIT': OrderType.take_profit_limit,
+            'TAKE_PROFIT': OrderType.take_profit_market,
+            'LIMIT_MAKER': OrderType.limit,
+            # used if exchange order data contain a trailingDelta field with LONG type value
+            'TRAILING_STOP': OrderType.trailing_stop,
         },
         OrderSchema.margin_isolated: {
-            'LIMIT': {'type': OrderType.limit, 'execution': OrderExec.limit},
-            'MARKET': {'type': OrderType.market, 'execution': OrderExec.market},
-            'STOP_LOSS_LIMIT': {'type': OrderType.stop_limit, 'execution': OrderExec.limit},
-            # 'TAKE_PROFIT_LIMIT': {'type': OrderType.take_profit, 'execution': OrderExec.limit},
-            # 'STOP_LOSS': {'type': OrderType.stop_loss, 'execution': OrderExec.market},
-            # 'TAKE_PROFIT': {'type': OrderType.take_profit, 'execution': OrderExec.market},
-            # 'LIMIT_MAKER': {'type': OrderType.limit, 'execution': OrderExec.limit}
+            'LIMIT': OrderType.limit,
+            'MARKET': OrderType.market,
+            'STOP_LOSS_LIMIT': OrderType.stop_limit,
+            'STOP_LOSS': OrderType.stop_market,
+            'TAKE_PROFIT_LIMIT': OrderType.take_profit_limit,
+            'TAKE_PROFIT': OrderType.take_profit_market,
+            'LIMIT_MAKER': OrderType.limit,
+            # used if exchange order data contain a trailingDelta field with LONG type value
+            'TRAILING_STOP': OrderType.trailing_stop,
         },
         OrderSchema.exchange: {
-            'LIMIT': {'type': OrderType.limit, 'execution': OrderExec.limit},
-            'MARKET': {'type': OrderType.market, 'execution': OrderExec.market},
-            'STOP_LOSS_LIMIT': {'type': OrderType.stop_limit, 'execution': OrderExec.limit},
-            # 'TAKE_PROFIT_LIMIT': {'type': OrderType.take_profit, 'execution': OrderExec.limit},
-            # 'TAKE_PROFIT': {'type': OrderType.take_profit, 'execution': OrderExec.market},
-            # 'LIMIT_MAKER': {'type': OrderType.limit, 'execution': OrderExec.limit}
+            'LIMIT': OrderType.limit,
+            'MARKET': OrderType.market,
+            'STOP_LOSS_LIMIT': OrderType.stop_limit,
+            'STOP_LOSS': OrderType.stop_market,
+            'TAKE_PROFIT_LIMIT': OrderType.take_profit_limit,
+            'TAKE_PROFIT': OrderType.take_profit_market,
+            'LIMIT_MAKER': OrderType.limit,
+            # used if exchange order data contain a trailingDelta field with LONG type value
+            'TRAILING_STOP': OrderType.trailing_stop,
         },
         OrderSchema.margin: {
-            'LIMIT': {'type': OrderType.limit, 'execution': OrderExec.limit},
-            'MARKET': {'type': OrderType.market, 'execution': OrderExec.market},
-            'STOP': {'type': OrderType.stop_limit, 'execution': OrderExec.limit},
-            'STOP_MARKET': {'type': OrderType.stop_market, 'execution': OrderExec.market},
-            # 'TAKE_PROFIT': {'type': OrderType.take_profit, 'execution': OrderExec.limit},
-            # 'TAKE_PROFIT_MARKET': {'type': OrderType.take_profit, 'execution': OrderExec.market},
-            # 'TRAILING_STOP_MARKET': {'type': OrderType.trailing_stop, 'execution': OrderExec.market},
+            'LIMIT': OrderType.limit,
+            'MARKET': OrderType.market,
+            'STOP': OrderType.stop_limit,
+            'STOP_MARKET': OrderType.stop_market,
+            'TAKE_PROFIT': OrderType.take_profit_limit,
+            'TAKE_PROFIT_MARKET': OrderType.take_profit_market,
+            'TRAILING_STOP_MARKET': OrderType.trailing_stop,
         },
         OrderSchema.margin_coin: {
-            'LIMIT': {'type': OrderType.limit, 'execution': OrderExec.limit},
-            'MARKET': {'type': OrderType.market, 'execution': OrderExec.market},
-            'STOP': {'type': OrderType.stop_limit, 'execution': OrderExec.limit},
-            'STOP_MARKET': {'type': OrderType.stop_market, 'execution': OrderExec.market},
-            # 'TAKE_PROFIT': {'type': OrderType.take_profit, 'execution': OrderExec.limit},
-            # 'TAKE_PROFIT_MARKET': {'type': OrderType.take_profit, 'execution': OrderExec.market},
-            # 'TRAILING_STOP_MARKET': {'type': OrderType.trailing_stop, 'execution': OrderExec.market},
+            'LIMIT': OrderType.limit,
+            'MARKET': OrderType.market,
+            'STOP': OrderType.stop_limit,
+            'STOP_MARKET': OrderType.stop_market,
+            'TAKE_PROFIT': OrderType.take_profit_limit,
+            'TAKE_PROFIT_MARKET': OrderType.take_profit_market,
+            'TRAILING_STOP_MARKET': OrderType.trailing_stop,
         }
     }
 
@@ -61,30 +67,45 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
             OrderType.limit: 'LIMIT',
             OrderType.market: 'MARKET',
             OrderType.stop_limit: 'STOP_LOSS_LIMIT',
-            OrderType.stop_market: 'MARKET'
+            OrderType.stop_market: 'MARKET',
+            OrderType.take_profit_limit: 'TAKE_PROFIT',
+            OrderType.take_profit_market: 'TAKE_PROFIT_MARKET',
+            OrderType.trailing_stop: 'TAKE_PROFIT_LIMIT',
         },
         OrderSchema.margin_isolated: {
             OrderType.limit: 'LIMIT',
             OrderType.market: 'MARKET',
             OrderType.stop_limit: 'STOP_LOSS_LIMIT',
             OrderType.stop_market: 'MARKET',
+            OrderType.take_profit_limit: 'TAKE_PROFIT',
+            OrderType.take_profit_market: 'TAKE_PROFIT_MARKET',
+            OrderType.trailing_stop: 'TAKE_PROFIT_LIMIT',
         },
         OrderSchema.exchange: {
             OrderType.limit: 'LIMIT',
             OrderType.market: 'MARKET',
             OrderType.stop_limit: 'STOP_LOSS_LIMIT',
-            OrderType.stop_market: 'MARKET'
+            OrderType.stop_market: 'MARKET',
+            OrderType.take_profit_limit: 'TAKE_PROFIT_LIMIT',
+            OrderType.take_profit_market: 'TAKE_PROFIT',
+            OrderType.trailing_stop: 'TAKE_PROFIT_LIMIT',
         },
         OrderSchema.margin: {
             OrderType.limit: 'LIMIT',
             OrderType.market: 'MARKET',
             OrderType.stop_limit: 'STOP',
-            OrderType.stop_market: 'STOP_MARKET'
+            OrderType.stop_market: 'STOP_MARKET',
+            OrderType.trailing_stop: 'TRAILING_STOP_MARKET',
+            OrderType.take_profit_limit: 'TAKE_PROFIT',
+            OrderType.take_profit_market: 'TAKE_PROFIT_MARKET',
         },
         OrderSchema.margin_coin: {
             OrderType.limit: 'LIMIT',
             OrderType.market: 'MARKET',
             OrderType.stop_limit: 'STOP',
-            OrderType.stop_market: 'STOP_MARKET'
+            OrderType.stop_market: 'STOP_MARKET',
+            OrderType.trailing_stop: 'TRAILING_STOP_MARKET',
+            OrderType.take_profit_limit: 'TAKE_PROFIT',
+            OrderType.take_profit_market: 'TAKE_PROFIT_MARKET',
         }
     }
