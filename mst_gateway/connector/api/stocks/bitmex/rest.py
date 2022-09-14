@@ -449,7 +449,6 @@ class BitmexRestApi(StockRestApi):
                 kwargs['proxies'] = self.ratelimit.get_proxies(
                     method=rest_method, url=str(url), hashed_uid=self._generate_hashed_uid()
                 )
-                self.logger.error(f"TEST: {kwargs['proxies']}")
             except ConnectionError:
                 self.logger.warning(f"Proxy list error. {rest_method} {url}")
                 raise ConnectorError(f"Proxy list error.")
