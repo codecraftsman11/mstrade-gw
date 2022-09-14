@@ -201,8 +201,8 @@ def store_order_type(order_type: str, schema: str) -> str:
     return BitmexOrderTypeConverter.store_type(order_type, schema)
 
 
-def load_order_type_and_exec(schema: str, exchange_order_type: str) -> dict:
-    return BitmexOrderTypeConverter.load_type_and_exec(schema, exchange_order_type)
+def convert_order_type(schema: str, exchange_order_type: str) -> Optional[str]:
+    return BitmexOrderTypeConverter.load_order_type(schema, exchange_order_type)
 
 
 def store_order_side(order_side: int) -> Optional[str]:
@@ -219,10 +219,16 @@ def load_order_side(order_side: str) -> int:
     return api.BUY
 
 
+def load_order_passive(order_options: str) -> bool:
+    return "ParticipateDoNotInitiate" in order_options
+
+
 def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
     order_time = to_date(raw_data.get('timestamp'))
-    order_type_and_exec = load_order_type_and_exec(schema, raw_data.get('ordType'))
     iceberg_volume = to_float(raw_data.get('displayQty'))
+    order_type = raw_data.get('ordType')
+    if raw_data.get('pegPriceType') == "TrailingStopPeg":
+        order_type = "TrailingStop"
     data = {
         'exchange_order_id': raw_data.get('orderID'),
         'symbol': raw_data.get('symbol'),
@@ -237,9 +243,9 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
         'ttl': var.BITMEX_ORDER_TTL_MAP.get(raw_data.get('timeInForce')),
         'is_iceberg': bool(iceberg_volume),
         'iceberg_volume': iceberg_volume,
-        'is_passive': bool(raw_data.get('execInst')),
+        'is_passive': load_order_passive(raw_data.get('execInst')),
         'comments': raw_data.get('text'),
-        **order_type_and_exec,
+        'type': convert_order_type(schema, order_type),
     }
     if isinstance(state_data, dict):
         data.update({
@@ -264,14 +270,14 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         'stp': to_float(raw_data.get('stopPx')),
         'tm': to_iso_datetime(raw_data.get('timestamp')),
         't': raw_data.get('ordType', '').lower(),
-        'exc': raw_data.get('ordType', '').lower(),
     }
     if isinstance(state_data, dict):
-        order_type_and_exec = load_order_type_and_exec(state_data.get('schema'), raw_data.get('ordType'))
+        order_type = raw_data.get('ordType')
+        if raw_data.get('pegPriceType'):
+            order_type = "TrailingStop"
         data.update({
             'ss': state_data.get('system_symbol'),
-            't': order_type_and_exec.get('type'),
-            'exc': order_type_and_exec.get('execution')
+            't': convert_order_type(state_data.get('schema'), order_type)
         })
     return data
 
@@ -707,9 +713,10 @@ def generate_parameters_by_order_type(main_params: dict, options: dict, schema: 
 
     """
     order_type = main_params.pop('order_type', None)
+    options['price'] = main_params.get('price', 0.0)
     exchange_order_type = store_order_type(order_type, schema)
     mapping_parameters = store_order_mapping_parameters(exchange_order_type)
-    options = assign_custom_parameter_values(options)
+    options = assign_custom_parameter_values(options, order_type)
     all_params = map_api_parameter_names(
         {'order_type': exchange_order_type, **main_params, **options}
     )
@@ -724,25 +731,47 @@ def generate_parameters_by_order_type(main_params: dict, options: dict, schema: 
     return new_params
 
 
-def assign_custom_parameter_values(options: Optional[dict]) -> dict:
+def _calculate_peg_offset_value(price: float, stop_price: float) -> float:
+    peg_offset_value = stop_price - price
+    if peg_offset_value != 0:
+        return peg_offset_value
+    raise ConnectorError(f"Stop_price can`t be equal price.")
+
+
+def assign_custom_parameter_values(options: Optional[dict], order_type: str) -> dict:
     """
-    Changes the value of certain parameters according to Binance's specification.
+    Changes the value of certain parameters according to Bitmex's specification.
 
     """
     new_options = dict()
     if options is None:
         return new_options
+
+    exec_inst_values = []
     if options.get('comments'):
         new_options['text'] = options['comments']
     if options.get('ttl'):
         new_options['ttl'] = var.PARAMETER_NAMES_MAP.get(options.get('ttl'))
     if options.get('is_iceberg'):
         new_options['iceberg_volume'] = options['iceberg_volume'] or 0
-
     if options.get('is_passive'):
-        new_options['is_passive'] = 'ParticipateDoNotInitiate'
+        exec_inst_values.append('ParticipateDoNotInitiate')
+    if options.get('reduce_only'):
+        exec_inst_values.append('ReduceOnly')
+
     if 'stop_price' in options:
         new_options['stop_price'] = options['stop_price']
+
+    if order_type == api.OrderType.trailing_stop:
+        new_options['peg_price_type'] = 'TrailingStopPeg'
+        stop_price = new_options.pop('stop_price')
+        price = options.get('price')
+        new_options['peg_offset_value'] = _calculate_peg_offset_value(price, stop_price)
+    elif order_type in (api.OrderType.take_profit_market, api.OrderType.take_profit_limit):
+        exec_inst_values.extend(['Close', 'LastPrice'])
+
+    if exec_inst_values:
+        new_options['exec_inst'] = ','.join(exec_inst_values)
     return new_options
 
 

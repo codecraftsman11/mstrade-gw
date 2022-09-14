@@ -53,8 +53,10 @@ PARAMETER_NAMES_MAP = {
     'ttl_type': 'timeInForce',
     'display_value': 'displayQty',
     'order_type': 'ordType',
-    'is_passive': 'execInst',
     'iceberg_volume': 'displayQty',
+    'exec_inst': 'execInst',
+    'peg_price_type': 'pegPriceType',
+    'peg_offset_value': 'pegOffsetValue',
     'H1': 'GoodTillCancel',
     'H4': 'GoodTillCancel',
     'D1': 'GoodTillCancel',
@@ -92,7 +94,10 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
     'Stop': {
         'params': [
             *DEFAULT_PARAMETERS,
-            'stopPx'
+            'stopPx',
+            'pegPriceType',
+            'pegOffsetValue',
+            'execInst'
         ],
         'additional_params': {}
     },
@@ -100,14 +105,16 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         'params': [
             *DEFAULT_PARAMETERS,
             'stopPx',
-            'price'
+            'price',
+            'execInst'
         ],
         'additional_params': {}
     },
     'MarketIfTouched': {
         'params': [
             *DEFAULT_PARAMETERS,
-            'stopPx'
+            'stopPx',
+            'execInst'
         ],
         'additional_params': {}
     },
@@ -115,7 +122,8 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         'params': [
             *DEFAULT_PARAMETERS,
             'stopPx',
-            'price'
+            'price',
+            'execInst'
         ],
         'additional_params': {}
     },
