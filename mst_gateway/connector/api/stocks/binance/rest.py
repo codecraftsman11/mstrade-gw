@@ -858,6 +858,8 @@ class BinanceRestApi(StockRestApi):
             resp = method(**kwargs)
             data = self.handler.handle_response(resp)
         except BinanceAPIException as exc:
+            import traceback
+            traceback.print_exc()
             if not self.ratelimit:
                 self.throttle.set(
                     key=self.throttle_hash_name(url),
@@ -875,6 +877,8 @@ class BinanceRestApi(StockRestApi):
             self.logger.warning(f"Binance api error. Detail: {exc}")
             raise ConnectorError(message)
         except Exception as exc:
+            import traceback
+            traceback.print_exc()
             self.logger.error(f"Binance api error. Detail: {exc}")
             raise ConnectorError("Binance api error.")
         return data
