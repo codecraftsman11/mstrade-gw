@@ -523,7 +523,6 @@ class TestOrderBinanceRestApi:
         'rest, schema, side, order_type, expect', [
             ('tbinance_spot', OrderSchema.exchange, BUY, OrderType.market, {
                  'active': True,
-                 'execution': OrderExec.market,
                  'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
                  'schema': OrderSchema.exchange,
                  'side': BUY,
@@ -540,7 +539,6 @@ class TestOrderBinanceRestApi:
              }),
             ('tbinance_spot', OrderSchema.exchange, SELL, OrderType.market, {
                  'active': True,
-                 'execution': OrderExec.market,
                  'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
                  'schema': OrderSchema.exchange,
                  'side': SELL,
@@ -557,7 +555,6 @@ class TestOrderBinanceRestApi:
              }),
             ('tbinance_spot', OrderSchema.exchange, BUY, OrderType.limit, {
                  'active': False,
-                 'execution': OrderExec.limit,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.exchange,
                  'side': BUY,
@@ -574,7 +571,6 @@ class TestOrderBinanceRestApi:
              }),
             ('tbinance_spot', OrderSchema.exchange, SELL, OrderType.limit, {
                  'active': False,
-                 'execution': OrderExec.limit,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.exchange,
                  'side': SELL,
@@ -591,7 +587,6 @@ class TestOrderBinanceRestApi:
              }),
             ('tbinance_spot', OrderSchema.exchange, BUY, OrderType.stop_limit, {
                  'active': True,
-                 'execution': OrderExec.limit,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.exchange,
                  'side': BUY,
@@ -608,7 +603,6 @@ class TestOrderBinanceRestApi:
              }),
             ('tbinance_spot', OrderSchema.exchange, SELL, OrderType.stop_limit, {
                  'active': True,
-                 'execution': OrderExec.limit,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.exchange,
                  'side': SELL,
@@ -625,7 +619,6 @@ class TestOrderBinanceRestApi:
              }),
             ('tbinance_spot', OrderSchema.exchange, BUY, OrderType.stop_market, {
                 'active': True,
-                'execution': OrderExec.market,
                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
                 'schema': OrderSchema.exchange,
                 'side': BUY,
@@ -642,7 +635,6 @@ class TestOrderBinanceRestApi:
             }),
             ('tbinance_spot', OrderSchema.exchange, SELL, OrderType.stop_market, {
                 'active': True,
-                'execution': OrderExec.market,
                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
                 'schema': OrderSchema.exchange,
                 'side': SELL,
@@ -659,7 +651,6 @@ class TestOrderBinanceRestApi:
             }),
             ('tbinance_margin', OrderSchema.margin, BUY, OrderType.market, {
                  'active': False,
-                 'execution': OrderExec.market,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.margin,
                  'side': BUY,
@@ -676,7 +667,6 @@ class TestOrderBinanceRestApi:
              }),
             ('tbinance_margin', OrderSchema.margin, SELL, OrderType.market,  {
                  'active': False,
-                 'execution': OrderExec.market,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.margin,
                  'side': SELL,
@@ -693,7 +683,6 @@ class TestOrderBinanceRestApi:
              }),
             ('tbinance_margin', OrderSchema.margin, BUY, OrderType.limit, {
                  'active': False,
-                 'execution': OrderExec.limit,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.margin,
                  'side': BUY,
@@ -710,7 +699,6 @@ class TestOrderBinanceRestApi:
              }),
             ('tbinance_margin', OrderSchema.margin, SELL, OrderType.limit, {
                  'active': False,
-                 'execution': OrderExec.limit,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.margin,
                  'side': SELL,
@@ -727,7 +715,6 @@ class TestOrderBinanceRestApi:
              }),
             ('tbinance_margin', OrderSchema.margin, BUY, OrderType.stop_limit, {
                 'active': False,
-                'execution': OrderExec.limit,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': BUY,
@@ -744,7 +731,6 @@ class TestOrderBinanceRestApi:
             }),
             ('tbinance_margin', OrderSchema.margin, SELL, OrderType.stop_limit, {
                 'active': False,
-                'execution': OrderExec.limit,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': SELL,
@@ -761,7 +747,6 @@ class TestOrderBinanceRestApi:
             }),
             ('tbinance_margin', OrderSchema.margin, BUY, OrderType.stop_market, {
                 'active': False,
-                'execution': OrderExec.market,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': BUY,
@@ -778,7 +763,6 @@ class TestOrderBinanceRestApi:
             }),
             ('tbinance_margin', OrderSchema.margin, SELL, OrderType.stop_market, {
                 'active': False,
-                'execution': OrderExec.market,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': SELL,
@@ -795,7 +779,6 @@ class TestOrderBinanceRestApi:
             }),
             ('tbinance_margin', OrderSchema.margin_coin, BUY, OrderType.market, {
                  'active': False,
-                 'execution': OrderExec.market,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.margin_coin,
                  'side': BUY,
@@ -812,7 +795,6 @@ class TestOrderBinanceRestApi:
              }),
             ('tbinance_margin', OrderSchema.margin_coin, SELL, OrderType.market, {
                  'active': False,
-                 'execution': OrderExec.market,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.margin_coin,
                  'side': SELL,
@@ -829,7 +811,6 @@ class TestOrderBinanceRestApi:
              }),
             ('tbinance_margin', OrderSchema.margin_coin, BUY, OrderType.limit, {
                  'active': False,
-                 'execution': OrderExec.limit,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.margin_coin,
                  'side': BUY,
@@ -846,7 +827,6 @@ class TestOrderBinanceRestApi:
              }),
             ('tbinance_margin', OrderSchema.margin_coin, SELL, OrderType.limit, {
                  'active': False,
-                 'execution': OrderExec.limit,
                  'filled_volume': 0.0,
                  'schema': OrderSchema.margin_coin,
                  'side': SELL,
@@ -863,7 +843,6 @@ class TestOrderBinanceRestApi:
              }),
             ('tbinance_margin', OrderSchema.margin_coin, BUY, OrderType.stop_limit, {
                 'active': False,
-                'execution': OrderExec.limit,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin_coin,
                 'side': BUY,
@@ -880,7 +859,6 @@ class TestOrderBinanceRestApi:
             }),
             ('tbinance_margin', OrderSchema.margin_coin, SELL, OrderType.stop_limit, {
                 'active': False,
-                'execution': OrderExec.limit,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin_coin,
                 'side': SELL,
@@ -897,7 +875,6 @@ class TestOrderBinanceRestApi:
             }),
             ('tbinance_margin', OrderSchema.margin_coin, BUY, OrderType.stop_market, {
                 'active': False,
-                'execution': OrderExec.market,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin_coin,
                 'side': BUY,
@@ -914,7 +891,6 @@ class TestOrderBinanceRestApi:
             }),
             ('tbinance_margin', OrderSchema.margin_coin, SELL, OrderType.stop_market, {
                 'active': False,
-                'execution': OrderExec.market,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin_coin,
                 'side': SELL,
@@ -990,7 +966,6 @@ class TestOrderBinanceRestApi:
         'rest, schema, expect', [
             ('tbinance_spot', OrderSchema.exchange, {
                 'active': False,
-                'execution': OrderExec.limit,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.exchange,
                 'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
@@ -1007,7 +982,6 @@ class TestOrderBinanceRestApi:
             }),
             ('tbinance_margin', OrderSchema.margin, {
                 'active': False,
-                'execution': OrderExec.limit,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
@@ -1024,7 +998,6 @@ class TestOrderBinanceRestApi:
             }),
             ('tbinance_margin', OrderSchema.margin_coin, {
                 'active': False,
-                'execution': OrderExec.limit,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin_coin,
                 'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
@@ -1062,7 +1035,6 @@ class TestOrderBinanceRestApi:
         'rest, schema, expect', [
             ('tbinance_spot', OrderSchema.exchange, {
                 'active': True,
-                'execution': OrderExec.limit,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.exchange,
                 'side': order_data.DEFAULT_ORDER_SIDE,
@@ -1079,7 +1051,6 @@ class TestOrderBinanceRestApi:
             }),
             ('tbinance_margin', OrderSchema.margin, {
                 'active': True,
-                'execution': OrderExec.limit,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': order_data.DEFAULT_ORDER_SIDE,
@@ -1096,7 +1067,6 @@ class TestOrderBinanceRestApi:
             }),
             ('tbinance_margin', OrderSchema.margin_coin, {
                 'active': True,
-                'execution': OrderExec.limit,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin_coin,
                 'side': order_data.DEFAULT_ORDER_SIDE,
