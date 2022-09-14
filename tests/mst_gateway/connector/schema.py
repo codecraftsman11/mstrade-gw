@@ -7,7 +7,6 @@ from .validators import (
     side_valid,
     type_valid,
     schema_valid,
-    execution_valid,
     leverage_type_valid,
     state_valid,
     float_valid,
@@ -72,7 +71,6 @@ ORDER_FIELDS = {
     'time': Use(datetime_valid),
     'active': bool,
     'schema': Or(None, Use(schema_valid)),
-    'execution': Use(execution_valid),
     'system_symbol': Or(None, str),
     'ttl': str,
     'is_iceberg': bool,
@@ -362,7 +360,6 @@ WS_MESSAGE_DATA_FIELDS = {
         'stp': Or(None, float),
         Optional('crt'): Or(None, Use(datetime_valid)),
         't': Use(type_valid),
-        'exc': Use(execution_valid),
         'ss': Or(None, str),
     },
     'order_book': {
