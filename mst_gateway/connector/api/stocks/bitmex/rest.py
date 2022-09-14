@@ -450,7 +450,8 @@ class BitmexRestApi(StockRestApi):
                     method=rest_method, url=str(url), hashed_uid=self._generate_hashed_uid()
                 )
             except ConnectionError:
-                raise ConnectorError(f"Proxy list error. {rest_method} {url}")
+                self.logger.warning(f"Proxy list error. {rest_method} {url}")
+                raise ConnectorError(f"Proxy list error.")
         headers = {}
         if self._keepalive:
             headers['Connection'] = "keep-alive"
@@ -482,9 +483,10 @@ class BitmexRestApi(StockRestApi):
                 self.logger.critical(f"{self.__class__.__name__}: {exc}")
             elif exc.status_code == 404:
                 raise NotFoundError(message)
+            self.logger.warning(f"Bitmex api error. Details: {exc}")
             raise ConnectorError(message)
         except Exception as exc:
-            self.logger.error(f"Bitmex api error. Details: {exc}")
+            self.logger.exception(f"Bitmex adapter error. Detail: {exc}. Proxies: {kwargs.get('proxies', None)}")
             raise ConnectorError("Bitmex api error.")
 
     def _generate_hashed_uid(self):
