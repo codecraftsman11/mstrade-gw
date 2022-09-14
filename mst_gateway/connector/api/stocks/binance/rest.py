@@ -852,7 +852,8 @@ class BinanceRestApi(StockRestApi):
                     method=rest_method, url=str(url), hashed_uid=self._generate_hashed_uid()
                 )
             except ConnectionError:
-                raise ConnectorError(f"Proxy list error. {rest_method} {url}")
+                self.logger.warning(f"Proxy list error. {rest_method} {url}")
+                raise ConnectorError(f"Proxy list error.")
         try:
             resp = method(**kwargs)
             data = self.handler.handle_response(resp)
@@ -871,6 +872,7 @@ class BinanceRestApi(StockRestApi):
                 raise SuccessFullError(message, exc.code)
             if exc.status_code in (418, 429) or exc.status_code >= 500:
                 raise RecoverableError(message)
+            self.logger.warning(f"Binance api error. Detail: {exc}")
             raise ConnectorError(message)
         except Exception as exc:
             self.logger.error(f"Binance api error. Detail: {exc}")
