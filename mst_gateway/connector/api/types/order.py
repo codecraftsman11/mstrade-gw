@@ -17,6 +17,8 @@ class OrderType(ClassWithAttributes):
     position = 'position'
     stop_limit = 'stop_limit'
     stop_market = 'stop_market'
+    take_profit_market = 'take_profit_market'
+    take_profit_limit = 'take_profit_limit'
 
 
 class OrderSchema(ClassWithAttributes):
@@ -58,7 +60,7 @@ class OrderSchemaTradeMode(ClassWithAttributes):
 
 class OrderState(ClassWithAttributes):
     waiting = 'waiting'         # Algorithm is waiting for start
-    started = 'started'         # Algorithm is strarted
+    started = 'started'         # Algorithm is started
     canceled = 'canceled'       # Algorithm is canceled
     expired = 'expired'         # Limit order is expired
     pending = 'pending'         # Limit order is waiting to activate
@@ -176,7 +178,9 @@ ORDER_CLOSE_TYPES = (
     OrderType.take_profit,
     OrderType.noloss,
     OrderType.trailing_stop,
-    OrderType.trailing_trigger_stop
+    OrderType.trailing_trigger_stop,
+    OrderType.take_profit_limit,
+    OrderType.take_profit_market,
 )
 
 
