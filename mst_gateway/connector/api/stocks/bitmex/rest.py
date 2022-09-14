@@ -486,8 +486,7 @@ class BitmexRestApi(StockRestApi):
             self.logger.warning(f"Bitmex api error. Details: {exc}")
             raise ConnectorError(message)
         except Exception as exc:
-            self.logger.exception('Bitmex api exception.')
-            self.logger.error(f"Bitmex api error. Details: {exc}")
+            self.logger.exception(f"Bitmex adapter error. Detail: {exc}. Proxies: {kwargs.get('proxies', None)}")
             raise ConnectorError("Bitmex api error.")
 
     def _generate_hashed_uid(self):

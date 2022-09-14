@@ -851,7 +851,6 @@ class BinanceRestApi(StockRestApi):
                 kwargs['proxies'] = self.ratelimit.get_proxies(
                     method=rest_method, url=str(url), hashed_uid=self._generate_hashed_uid()
                 )
-                print(kwargs.pop('proxies', None))
             except ConnectionError:
                 self.logger.warning(f"Proxy list error. {rest_method} {url}")
                 raise ConnectorError(f"Proxy list error.")
@@ -876,8 +875,7 @@ class BinanceRestApi(StockRestApi):
             self.logger.warning(f"Binance api error. Detail: {exc}")
             raise ConnectorError(message)
         except Exception as exc:
-            self.logger.exception('Binance api exception.')
-            self.logger.error(f"Binance api error. Detail: {exc}")
+            self.logger.exception(f"Binance adapter error. Detail: {exc}. Proxies: {kwargs.get('proxies', None)}")
             raise ConnectorError("Binance api error.")
         return data
 
