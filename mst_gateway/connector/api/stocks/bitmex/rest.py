@@ -486,6 +486,7 @@ class BitmexRestApi(StockRestApi):
             self.logger.warning(f"Bitmex api error. Details: {exc}")
             raise ConnectorError(message)
         except Exception as exc:
+            self.logger.exception('Bitmex api exception.')
             self.logger.error(f"Bitmex api error. Details: {exc}")
             raise ConnectorError("Bitmex api error.")
 
