@@ -1,4 +1,4 @@
-from mst_gateway.connector.api import OrderSchema
+from mst_gateway.connector.api import OrderSchema, PositionSide
 
 DEFAULT_POSITION_DATA = {
     OrderSchema.margin: [
@@ -20,6 +20,7 @@ DEFAULT_POSITION_DATA = {
                             "lp": 0.0,
                             "ep": 0.0,
                             "sd": None,
+                            "ps": PositionSide.both,
                             "lvrp": "cross",
                             "lvr": 100.0,
                             "act": "update",
@@ -47,6 +48,7 @@ DEFAULT_POSITION_DATA = {
                             "lp": 6125.5,
                             "ep": 46976.0,
                             "sd": 0,
+                            "ps": PositionSide.both,
                             "lvrp": "cross",
                             "lvr": 100.0,
                             "act": "create",
@@ -74,6 +76,7 @@ DEFAULT_POSITION_DATA = {
                             "lp": 6125.5,
                             "ep": 46976.0,
                             "sd": 0,
+                            "ps": PositionSide.both,
                             "lvrp": "cross",
                             "lvr": 100.0,
                             "act": "update",
@@ -101,6 +104,7 @@ DEFAULT_POSITION_DATA = {
                             "lp": 6134.5,
                             "ep": 46976.0,
                             "sd": 0,
+                            "ps": PositionSide.both,
                             "lvrp": "cross",
                             "lvr": 100.0,
                             "act": "update",

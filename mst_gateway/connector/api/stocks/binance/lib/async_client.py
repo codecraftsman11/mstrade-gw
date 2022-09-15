@@ -348,12 +348,6 @@ class AsyncBinanceApiClient(BaseBinanceApiClient):
 
     async def get_futures_coin_position_info(self, **kwargs) -> httpx.Response:
         method, url = self.get_method_info('get_futures_coin_position_info')
-        # TODO: fix implamentation
-        # if symbol := kwargs.pop('symbol', None):
-        #     kwargs['pair'] = symbol.split('_')[0]
-        #     return [position for position in await self._request(
-        #         method, url, signed=True, force_params=True, data=kwargs
-        #     ) if position.get('symbol', '').lower() == symbol.lower()]
         return await self._request(method, url, signed=True, force_params=True, data=kwargs)
 
     async def get_futures_position_mode(self, **kwargs) -> httpx.Response:

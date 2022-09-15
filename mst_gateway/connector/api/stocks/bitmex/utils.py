@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector import api
 from mst_gateway.exceptions import ConnectorError
-from mst_gateway.connector.api.types.order import LeverageType, OrderSchema
+from mst_gateway.connector.api.types.order import LeverageType, OrderSchema, PositionSide
 from mst_gateway.utils import delta
 from . import var
 from .converter import BitmexOrderTypeConverter
@@ -235,8 +235,9 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
         'schema': schema,
         'volume': to_int(raw_data.get('orderQty')),
         'filled_volume': to_int(raw_data.get('cumQty')),
-        'stop': to_float(raw_data.get('stopPx')),
+        'stop_price': to_float(raw_data.get('stopPx')),
         'side': load_order_side(raw_data.get('side')),
+        'position_side': PositionSide.both,
         'price': to_float(raw_data.get('price')),
         'time': order_time,
         'active': bool(raw_data.get('ordStatus') != "New"),
@@ -258,6 +259,7 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     data = {
         'eoid': raw_data.get('orderID'),
         'sd': load_order_side(raw_data.get('side')),
+        'ps': PositionSide.both,
         'tv': to_float(raw_data.get('lastQty')),
         'tp': to_float(raw_data.get('lastPx')),
         'vl': to_float(raw_data.get('orderQty')),
@@ -318,6 +320,7 @@ def load_position_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
     data = {
         'tm': to_iso_datetime(_timestamp),
         's': raw_data.get('symbol'),
+        'ps': PositionSide.both,
         'mp': to_float(raw_data.get('markPrice')),
         'upnl': unrealised_pnl,
         'vl': volume,
@@ -810,6 +813,7 @@ def load_position(raw_data: dict, schema: str) -> dict:
         'schema': schema,
         'symbol': raw_data.get('symbol'),
         'side': load_position_side_by_volume(to_float(raw_data.get('currentQty'))),
+        'position_side': PositionSide.both,
         'volume': to_float(raw_data.get('currentQty')),
         'entry_price': to_float(raw_data.get('avgEntryPrice')),
         'mark_price': to_float(raw_data.get('markPrice')),

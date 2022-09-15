@@ -54,6 +54,7 @@ PARAMETER_NAMES_MAP = {
     'callback_rate': 'callbackRate',
     'reduce_only': 'reduceOnly',
     'new_order_resp_type': 'newOrderRespType',
+    'position_side': 'positionSide',
     'ttl': 'timeInForce',
     'H1': 'GTC',
     'H4': 'GTC',
@@ -270,6 +271,7 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         'STOP': {
             'params': [
                 *DEFAULT_PARAMETERS,
+                'positionSide',
                 'stopPrice',
                 'quantity',
                 'price',
@@ -281,8 +283,8 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
             'params': [
                 *DEFAULT_PARAMETERS,
                 'stopPrice',
-                'reduceOnly'
-
+                'reduceOnly',
+                'positionSide'
             ],
             'additional_params': {}
         },
@@ -337,13 +339,15 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
             'params': [
                 *DEFAULT_PARAMETERS,
                 'stopPrice',
-                'reduceOnly'
+                'reduceOnly',
+                'positionSide'
             ],
             'additional_params': {}
         },
         'STOP': {
             'params': [
                 *DEFAULT_PARAMETERS,
+                'positionSide',
                 'stopPrice',
                 'price',
                 'reduceOnly'

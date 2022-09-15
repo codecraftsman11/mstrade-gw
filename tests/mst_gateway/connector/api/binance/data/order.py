@@ -1,8 +1,8 @@
-import datetime
-from mst_gateway.connector.api.types import OrderSchema, OrderType, OrderTTL, BUY, SELL
+from mst_gateway.connector.api.types import OrderSchema, OrderType, OrderTTL, BUY, SELL, PositionSide
 
 DEFAULT_ORDER_SIDE = BUY
 DEFAULT_ORDER_OPPOSITE_SIDE = SELL
+DEFAULT_ORDER_POSITION_SIDE = PositionSide.both
 DEFAULT_ORDER_VOLUME = {
     OrderSchema.exchange: 0.001,
     OrderSchema.margin: 0.001,
@@ -21,9 +21,10 @@ DEFAULT_ORDER = {
         'filled_volume': 0.0,
         'schema': OrderSchema.exchange,
         'side': DEFAULT_ORDER_SIDE,
-        'stop': 0.0,
+        'position_side': PositionSide.both,
+        'stop_price': 0.0,
         'symbol': 'BTCUSDT',
-        'system_symbol': 'btcusd',
+        'system_symbol': 'btcusdt',
         'type': OrderType.limit,
         'volume': DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
         'ttl': OrderTTL.GTC,
@@ -37,9 +38,10 @@ DEFAULT_ORDER = {
         'filled_volume': 0.0,
         'schema': OrderSchema.margin,
         'side': DEFAULT_ORDER_SIDE,
-        'stop': 0.0,
+        'position_side': PositionSide.both,
+        'stop_price': 0.0,
         'symbol': 'BTCUSDT',
-        'system_symbol': 'btcusd',
+        'system_symbol': 'btcusdt',
         'type': OrderType.limit,
         'volume': DEFAULT_ORDER_VOLUME[OrderSchema.margin],
         'ttl': OrderTTL.GTC,
@@ -53,7 +55,8 @@ DEFAULT_ORDER = {
         'filled_volume': 0.0,
         'schema': OrderSchema.margin_coin,
         'side': DEFAULT_ORDER_SIDE,
-        'stop': 0.0,
+        'position_side': PositionSide.both,
+        'stop_price': 0.0,
         'symbol': 'BTCUSD_PERP',
         'system_symbol': 'btcusd',
         'type': OrderType.limit,
@@ -444,6 +447,7 @@ DEFAULT_ORDER_GET_DATA_RESULT = {
                     {
                         'eoid': '2352852',
                         'sd': 0,
+                        'ps': PositionSide.both,
                         'tv': 0.0,
                         'tp': 0.0,
                         'vl': 0.001,
@@ -457,7 +461,7 @@ DEFAULT_ORDER_GET_DATA_RESULT = {
                         'stp': 0.0,
                         'crt': '2021-12-09T13:49:10.402000',
                         't': 'limit',
-                        'ss': 'btcusd',
+                        'ss': 'btcusdt',
                     }
                 ],
             }
@@ -474,6 +478,7 @@ DEFAULT_ORDER_GET_DATA_RESULT = {
                     {
                         'eoid': '2939862341',
                         'sd': 0,
+                        'ps': PositionSide.both,
                         'tv': 0.0,
                         'tp': 0.0,
                         'vl': 0.001,
@@ -485,9 +490,9 @@ DEFAULT_ORDER_GET_DATA_RESULT = {
                         'tm': '2021-12-09T13:56:36.460000',
                         's': 'BTCUSDT',
                         'stp': 0.0,
-                        'crt': datetime.datetime(2021, 12, 9, 13, 56, 36, 458000, tzinfo=datetime.timezone.utc),
+                        'crt': '2021-12-09T13:56:36.458000',
                         't': 'limit',
-                        'ss': 'btcusd',
+                        'ss': 'btcusdt',
                     }
                 ],
             }
@@ -504,6 +509,7 @@ DEFAULT_ORDER_GET_DATA_RESULT = {
                     {
                         'eoid': '229157580',
                         'sd': 0,
+                        'ps': PositionSide.both,
                         'tv': 0.0,
                         'tp': 0.0,
                         'vl': 1.0,
@@ -515,7 +521,7 @@ DEFAULT_ORDER_GET_DATA_RESULT = {
                         'tm': '2021-12-09T13:59:54.219000',
                         's': 'BTCUSD_PERP',
                         'stp': 0.0,
-                        'crt': datetime.datetime(2021, 12, 9, 13, 59, 54, 216000, tzinfo=datetime.timezone.utc),
+                        'crt': '2021-12-09T13:59:54.216000',
                         't': 'limit',
                         'ss': 'btcusd',
                     }
