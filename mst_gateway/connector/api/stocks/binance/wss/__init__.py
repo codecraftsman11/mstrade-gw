@@ -129,8 +129,7 @@ class BinanceWssApi(StockWssApi):
     def __split_message_map(self, key: str) -> Optional[callable]:
         _map = {
             'depthUpdate': self.split_order_book,
-            'executionReport': self.split_order,
-            'outboundAccountPosition': self.split_wallet,
+            'executionReport': self.split_order
         }
         return _map.get(key)
 
@@ -162,22 +161,6 @@ class BinanceWssApi(StockWssApi):
             _messages.append(dict(**message, action='update', data=_data_update))
         return _messages
 
-    def split_wallet(self, message):
-        subscr_name = self.router_class.table_route_map.get('outboundAccountPosition')
-        if subscr_name not in self._subscriptions:
-            return None
-        if "*" not in self._subscriptions[subscr_name]:
-            _balances = []
-            _new_data = []
-            for item in message.pop('data', []):
-                for b in item.pop('B', []):
-                    if b['a'].lower() in self._subscriptions[subscr_name]:
-                        _balances.append(b)
-                item['B'] = _balances
-                _new_data.append(item)
-            message['data'] = _new_data
-        return message
-
     def split_order(self, message):
         message.pop('action', None)
         _messages = []
@@ -194,6 +177,16 @@ class BinanceWssApi(StockWssApi):
         return 'update'
 
 
+class BinanceMarginCrossWssApi(BinanceWssApi):
+
+    auth_subscribers = {
+        'wallet': subscr_class.BinanceWalletSubscriber(),
+        'wallet_extra': subscr_class.BinanceWalletExtraSubscriber(),
+        'order': subscr_class.BinanceOrderSubscriber(),
+        'position': subscr_class.BinancePositionSubscriber(),
+    }
+
+
 class BinanceMarginWssApi(BinanceWssApi):
     BASE_URL = 'wss://fstream.binance.com/ws'
     TEST_URL = 'wss://stream.binancefuture.com/ws'
@@ -206,6 +199,7 @@ class BinanceMarginWssApi(BinanceWssApi):
     }
     auth_subscribers = {
         'wallet': subscr_class.BinanceWalletSubscriber(),
+        'wallet_extra': subscr_class.BinanceWalletExtraSubscriber(),
         'order': subscr_class.BinanceOrderSubscriber(),
         'position': subscr_class.BinanceMarginPositionSubscriber(),
     }

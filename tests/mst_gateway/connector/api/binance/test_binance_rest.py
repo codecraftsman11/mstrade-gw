@@ -82,10 +82,10 @@ def clear_stock_order_data(order):
 
 def get_liquidation_kwargs(schema, hedge_mode=False):
     if hedge_mode:
-        return symbol_data.DEFAULT_LEVERAGE_BRACKETS.get(schema, {}), \
-               position_data.HEDGE_MODE_POSITIONS_STATE.get(schema, {})
-    return symbol_data.DEFAULT_LEVERAGE_BRACKETS.get(schema, {}), \
-        position_data.DEFAULT_POSITIONS_STATE.get(schema, {})
+        return deepcopy(symbol_data.DEFAULT_LEVERAGE_BRACKETS.get(schema, {})), \
+               deepcopy(position_data.HEDGE_MODE_POSITIONS_STATE.get(schema, {}))
+    return deepcopy(symbol_data.DEFAULT_LEVERAGE_BRACKETS.get(schema, {})), \
+        deepcopy(position_data.DEFAULT_POSITIONS_STATE.get(schema, {}))
 
 
 class TestBinanceRestApi:

@@ -10,28 +10,28 @@ if TYPE_CHECKING:
 
 class BinanceWalletSerializer(BinanceSerializer):
     subscription = "wallet"
+    table = 'outboundAccountPosition'
 
     def __init__(self, wss_api: BinanceWssApi):
         super().__init__(wss_api)
-        self._state_data = wss_api.partial_state_data[self.subscription]
+        self.state_data = wss_api.partial_state_data.get(self.subscription, {}).get(f"{self.subscription}_state", {})
 
     @property
-    def wallet_state(self):
-        return self._state_data.get('wallet_state', {})
+    def _initialized(self) -> bool:
+        return bool(self.subscription in self._wss_api.subscriptions)
 
-    def is_item_valid(self, message: dict, item) -> bool:
-        return message['table'] == 'outboundAccountPosition'
+    def is_item_valid(self, message: dict, item: dict) -> bool:
+        return bool(self._initialized and message['table'] == self.table)
 
-    async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
-        if not self.is_item_valid(message, item) or not self.wallet_state:
+    async def _load_data(self, message: dict, item: dict) -> Optional[list]:
+        if not self.is_item_valid(message, item):
             return None
         return self._wallet_list(item)
 
-    def _wallet_list(self, item):
+    def _wallet_list(self, item: dict):
         if self._wss_api.schema == OrderSchema.exchange:
-            return utils.ws_spot_wallet(item, self.wallet_state)
-        elif self._wss_api.schema == OrderSchema.margin_cross:
-            return utils.ws_margin_cross_wallet(item, self.wallet_state)
+            return utils.ws_spot_wallet(item, self.state_data)
+        return utils.ws_margin_cross_wallet(item, self.state_data)
 
     async def _append_item(self, data: list, message: dict, item: dict):
         valid_item = await self._load_data(message, item)
@@ -39,28 +39,21 @@ class BinanceWalletSerializer(BinanceSerializer):
             return None
         self._update_data(data, valid_item)
 
-    async def data(self, message) -> Optional[dict]:
-        (action, data) = await self._get_data(message)
-        if not data:
-            return None
-        data = data[0]
-        return {
-            'acc': self._wss_api.account_name,
-            'tb': self.subscription,
-            'sch': self._wss_api.schema,
-            'act': action,
-            'ex': data.pop('ex', None),
-            'd': data,
-        }
+
+class BinanceWalletExtraSerializer(BinanceWalletSerializer):
+    subscription = "wallet_extra"
+
+    def _wallet_list(self, item: dict):
+        return list(self.state_data.values())
 
 
 class BinanceMarginWalletSerializer(BinanceWalletSerializer):
+    table = 'ACCOUNT_UPDATE'
 
-    def is_item_valid(self, message: dict, item) -> bool:
-        return message['table'] == 'ACCOUNT_UPDATE' and self.subscription in self._wss_api.subscriptions
+    def _wallet_list(self, item: dict):
+        return utils.ws_futures_wallet(item, self.state_data)
 
-    def _wallet_list(self, item):
-        if self._wss_api.schema == OrderSchema.margin_coin:
-            return utils.ws_futures_coin_wallet(item, self.wallet_state)
-        else:
-            return utils.ws_futures_wallet(item, self.wallet_state)
+
+class BinanceMarginWalletExtraSerializer(BinanceWalletExtraSerializer):
+    table = 'ACCOUNT_UPDATE'
+

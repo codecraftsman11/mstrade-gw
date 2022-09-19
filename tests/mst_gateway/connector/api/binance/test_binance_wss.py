@@ -361,169 +361,103 @@ class TestBinanceWssApi:
         assert wss.define_action_by_order_status(status) == expect
 
     @pytest.mark.parametrize(
-        'wss, subscr_name, message, expect', [
-            ('tbinance_spot', 'order',
+        'wss, message, expect', [
+            ('tbinance_spot',
              order_message.DEFAULT_ORDER_LOOKUP_TABLE_RESULT[OrderSchema.exchange],
              order_message.DEFAULT_ORDER_SPLIT_MESSAGE_RESULT[OrderSchema.exchange]),
-            ('tbinance_spot', 'order_book',
+            ('tbinance_spot',
              order_book_message.DEFAULT_ORDER_BOOK_LOOKUP_TABLE_RESULT[OrderSchema.exchange],
              order_book_message.DEFAULT_ORDER_BOOK_SPLIT_MESSAGE_RESULT[OrderSchema.exchange]),
-            ('tbinance_spot', 'order',
+            ('tbinance_spot',
              quote_message.DEFAULT_QUOTE_BIN_LOOKUP_TABLE_RESULT[OrderSchema.exchange],
              quote_message.DEFAULT_QUOTE_BIN_SPLIT_MESSAGE_RESULT[OrderSchema.exchange]),
-            ('tbinance_spot', 'symbol',
+            ('tbinance_spot',
              symbol_message.DEFAULT_SYMBOL_DETAIL_LOOKUP_TABLE_RESULT[OrderSchema.exchange],
              symbol_message.DEFAULT_SYMBOL_DETAIL_SPLIT_MESSAGE_RESULT[OrderSchema.exchange]),
-            ('tbinance_spot', 'symbol',
+            ('tbinance_spot',
              symbol_message.DEFAULT_SYMBOL_LOOKUP_TABLE_RESULT[OrderSchema.exchange],
              symbol_message.DEFAULT_SYMBOL_SPLIT_MESSAGE_RESULT[OrderSchema.exchange]),
-            ('tbinance_spot', 'trade',
+            ('tbinance_spot',
              trade_message.DEFAULT_TRADE_LOOKUP_TABLE_RESULT[OrderSchema.exchange],
              trade_message.DEFAULT_TRADE_SPLIT_MESSAGE_RESULT[OrderSchema.exchange]),
-            ('tbinance_spot', 'wallet',
+            ('tbinance_spot',
              wallet_message.DEFAULT_WALLET_LOOKUP_TABLE_RESULT[OrderSchema.exchange],
              wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.exchange]),
-            ('tbinance_margin', 'order',
+            ('tbinance_margin',
              order_message.DEFAULT_ORDER_LOOKUP_TABLE_RESULT[OrderSchema.margin],
              order_message.DEFAULT_ORDER_SPLIT_MESSAGE_RESULT[OrderSchema.margin]),
-            ('tbinance_margin', 'order_book',
+            ('tbinance_margin',
              order_book_message.DEFAULT_ORDER_BOOK_LOOKUP_TABLE_RESULT[OrderSchema.margin],
              order_book_message.DEFAULT_ORDER_BOOK_SPLIT_MESSAGE_RESULT[OrderSchema.margin]),
-            ('tbinance_margin', 'position',
+            ('tbinance_margin',
              position_message.DEFAULT_POSITION_LOOKUP_TABLE_RESULT[OrderSchema.margin],
              position_message.DEFAULT_POSITION_SPLIT_MESSAGE_RESULT[OrderSchema.margin]),
-            ('tbinance_margin', 'symbol',
+            ('tbinance_margin',
              quote_message.DEFAULT_QUOTE_BIN_LOOKUP_TABLE_RESULT[OrderSchema.margin],
              quote_message.DEFAULT_QUOTE_BIN_SPLIT_MESSAGE_RESULT[OrderSchema.margin]),
-            ('tbinance_margin', 'symbol',
+            ('tbinance_margin',
+             quote_message.DEFAULT_QUOTE_BIN_LOOKUP_TABLE_RESULT[OrderSchema.margin],
+             quote_message.DEFAULT_QUOTE_BIN_SPLIT_MESSAGE_RESULT[OrderSchema.margin]),
+            ('tbinance_margin',
              symbol_message.DEFAULT_SYMBOL_DETAIL_LOOKUP_TABLE_RESULT[OrderSchema.margin],
              symbol_message.DEFAULT_SYMBOL_DETAIL_SPLIT_MESSAGE_RESULT[OrderSchema.margin]),
-            ('tbinance_margin', 'trade',
+            ('tbinance_margin',
              symbol_message.DEFAULT_SYMBOL_LOOKUP_TABLE_RESULT[OrderSchema.margin],
              symbol_message.DEFAULT_SYMBOL_SPLIT_MESSAGE_RESULT[OrderSchema.margin]),
-            ('tbinance_margin', 'wallet',
+            ('tbinance_margin',
              trade_message.DEFAULT_TRADE_LOOKUP_TABLE_RESULT[OrderSchema.margin],
              trade_message.DEFAULT_TRADE_SPLIT_MESSAGE_RESULT[OrderSchema.margin]),
-            ('tbinance_margin', 'order',
+            ('tbinance_margin',
              wallet_message.DEFAULT_WALLET_LOOKUP_TABLE_RESULT[OrderSchema.margin],
              wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.margin]),
-            ('tbinance_margin_coin', 'order',
+            ('tbinance_margin_coin',
              order_message.DEFAULT_ORDER_LOOKUP_TABLE_RESULT[OrderSchema.margin_coin],
              order_message.DEFAULT_ORDER_SPLIT_MESSAGE_RESULT[OrderSchema.margin_coin]),
-            ('tbinance_margin_coin', 'order_book',
+            ('tbinance_margin_coin',
              order_book_message.DEFAULT_ORDER_BOOK_LOOKUP_TABLE_RESULT[OrderSchema.margin_coin],
              order_book_message.DEFAULT_ORDER_BOOK_SPLIT_MESSAGE_RESULT[OrderSchema.margin_coin]),
-            ('tbinance_margin_coin', 'position',
+            ('tbinance_margin_coin',
              position_message.DEFAULT_POSITION_LOOKUP_TABLE_RESULT[OrderSchema.margin_coin],
              position_message.DEFAULT_POSITION_SPLIT_MESSAGE_RESULT[OrderSchema.margin_coin]),
-            ('tbinance_margin_coin', 'quote_bin',
+            ('tbinance_margin_coin',
              quote_message.DEFAULT_QUOTE_BIN_LOOKUP_TABLE_RESULT[OrderSchema.margin_coin],
              quote_message.DEFAULT_QUOTE_BIN_SPLIT_MESSAGE_RESULT[OrderSchema.margin_coin]),
-            ('tbinance_margin_coin', 'symbol',
+            ('tbinance_margin_coin',
              symbol_message.DEFAULT_SYMBOL_DETAIL_LOOKUP_TABLE_RESULT[OrderSchema.margin_coin],
              symbol_message.DEFAULT_SYMBOL_DETAIL_SPLIT_MESSAGE_RESULT[OrderSchema.margin_coin]),
-            ('tbinance_margin_coin', 'symbol',
+            ('tbinance_margin_coin',
              symbol_message.DEFAULT_SYMBOL_LOOKUP_TABLE_RESULT[OrderSchema.margin_coin],
              symbol_message.DEFAULT_SYMBOL_SPLIT_MESSAGE_RESULT[OrderSchema.margin_coin]),
-            ('tbinance_margin_coin', 'trade',
+            ('tbinance_margin_coin',
              trade_message.DEFAULT_TRADE_LOOKUP_TABLE_RESULT[OrderSchema.margin_coin],
              trade_message.DEFAULT_TRADE_SPLIT_MESSAGE_RESULT[OrderSchema.margin_coin]),
-            ('tbinance_margin_coin', 'wallet',
+            ('tbinance_margin_coin',
              wallet_message.DEFAULT_WALLET_LOOKUP_TABLE_RESULT[OrderSchema.margin_coin],
              wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.margin_coin]),
         ],
         indirect=['wss'],
     )
-    def test__split_message(self, wss: BinanceWssApi, subscr_name, message, expect):
-        if subscr_name == 'wallet' and wss.schema == OrderSchema.exchange:
-            assert wss._split_message(deepcopy(message)) == []
-            wss._subscriptions = {subscr_name: {'*': {'1'}}}
+    def test__split_message(self, wss: BinanceWssApi, message, expect):
         assert wss._split_message(deepcopy(message)) == expect
-        if subscr_name == 'wallet' and wss.schema == OrderSchema.exchange:
-            wss._subscriptions = {subscr_name: {'btc': {'1'}}}
-            _expect = deepcopy(expect)
-            _expect[0]['data'][0]['B'].pop(1)
-            assert wss._split_message(deepcopy(message)) == _expect
-
-    @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        'wss, messages, expect', [('tbinance_spot',
-                                   wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.exchange],
-                                   wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.exchange]),
-                                  ('tbinance_margin',
-                                   wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.margin],
-                                   wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.margin]),
-                                  ('tbinance_margin_coin',
-                                   wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.margin_coin],
-                                   wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.margin_coin])],
-        indirect=['wss'],
-    )
-    async def test_get_wallet_data(self, wss: BinanceWssApi, messages, expect):
-        subscr_name = 'wallet'
-        schema = wss.schema
-        self.init_partial_state(wss, subscr_name)
-        header_schema = Schema(fields.WS_WALLET_MESSAGE_HEADER_FIELDS)
-        data_schema = Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name])
-        for message in messages:
-            assert await wss.get_data(deepcopy(message)) == {}
-
-        wss._subscriptions = {subscr_name: {'*': {'1'}}}
-        for i, message in enumerate(messages):
-            data = await wss.get_data(deepcopy(message))
-            _data = data[subscr_name]
-            assert header_schema.validate(_data) == _data
-            d = _data['d']
-            assert data_schema.validate(d) == d
-            if ex := _data['ex']:
-                assert Schema(fields.WS_WALLET_EXTRA_FIELDS[schema]).validate(ex) == ex
-            assert data == expect[i]
 
     @classmethod
     def init_partial_state(cls, wss: BinanceWssApi, subscr_name):
         schema = wss.schema
-        if subscr_name == 'position':
+        if schema in (OrderSchema.margin, OrderSchema.margin_coin) and subscr_name == 'position':
             leverage_brackets, position_state = get_position_partial_state_data(schema)
             wss.partial_state_data[subscr_name].update({
                 'position_state': position_state,
                 'leverage_brackets': leverage_brackets,
             })
-        if subscr_name == 'wallet':
+        if schema in (OrderSchema.margin_cross, OrderSchema.margin,
+                      OrderSchema.margin_coin) and subscr_name == 'wallet':
             wss.partial_state_data[subscr_name].update({
-                'wallet_state': wallet_message.DEFAULT_WALLET_STATE[schema]
+                'wallet_state': deepcopy(wallet_message.DEFAULT_WALLET_STATE[schema])
             })
-
-    @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        'wss, messages, expect', [('tbinance_margin',
-                                   position_message.DEFAULT_POSITION_SPLIT_MESSAGE_RESULT[OrderSchema.margin],
-                                   position_message.DEFAULT_POSITION_GET_DATA_RESULT[OrderSchema.margin]),
-                                  ('tbinance_margin_coin',
-                                   position_message.DEFAULT_POSITION_SPLIT_MESSAGE_RESULT[OrderSchema.margin_coin],
-                                   position_message.DEFAULT_POSITION_GET_DATA_RESULT[OrderSchema.margin_coin])],
-        indirect=['wss'],
-    )
-    async def test_get_position_data(self, wss: BinanceWssApi, messages, expect):
-        subscr_name = 'position'
-        self.init_partial_state(wss, subscr_name)
-        for message in messages:
-            assert await wss.get_data(deepcopy(message)) == {}
-
-        self.init_partial_state(wss, subscr_name)
-        wss._subscriptions = {subscr_name: {'*': {'1'}}}
-        for i, message in enumerate(messages):
-            data = await wss.get_data(deepcopy(message))
-            self.validate_data(data, subscr_name)
-            assert data == expect[i]
-
-        self.init_partial_state(wss, subscr_name)
-        schema = wss.schema
-        symbol = get_symbol(schema)
-        wss._subscriptions = {subscr_name: {symbol.lower(): {'1'}}}
-        if schema in (OrderSchema.margin, OrderSchema.margin_coin):
-            for i, message in enumerate(position_message.DEFAULT_POSITION_DETAIL_MESSAGES[schema]):
-                data = await wss.get_data(deepcopy(message))
-                self.validate_data(data, subscr_name)
-                assert data == position_message.DEFAULT_POSITION_DETAIL_GET_DATA_RESULT[schema][i]
+        if schema in (OrderSchema.margin_cross, OrderSchema.margin) and subscr_name == 'wallet_extra':
+            wss.partial_state_data[subscr_name].update({
+                'wallet_extra_state': deepcopy(wallet_message.DEFAULT_WALLET_EXTRA_STATE[schema])
+            })
 
     @classmethod
     def validate_data(cls, data, subscr_name):
@@ -555,12 +489,21 @@ class TestBinanceWssApi:
             ('tbinance_spot', 'trade',
              trade_message.DEFAULT_TRADE_SPLIT_MESSAGE_RESULT[OrderSchema.exchange],
              trade_message.DEFAULT_TRADE_GET_DATA_RESULT[OrderSchema.exchange]),
+            ('tbinance_spot', 'wallet',
+             wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.exchange],
+             wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.exchange]),
             ('tbinance_margin', 'order',
              order_message.DEFAULT_ORDER_SPLIT_MESSAGE_RESULT[OrderSchema.margin],
              order_message.DEFAULT_ORDER_GET_DATA_RESULT[OrderSchema.margin]),
             ('tbinance_margin', 'order_book',
              order_book_message.DEFAULT_ORDER_BOOK_SPLIT_MESSAGE_RESULT[OrderSchema.margin],
              order_book_message.DEFAULT_ORDER_BOOK_GET_DATA_RESULT[OrderSchema.margin]),
+            ('tbinance_margin', 'position',
+             position_message.DEFAULT_POSITION_SPLIT_MESSAGE_RESULT[OrderSchema.margin],
+             position_message.DEFAULT_POSITION_GET_DATA_RESULT[OrderSchema.margin]),
+            ('tbinance_margin', 'position',
+             position_message.DEFAULT_POSITION_DETAIL_MESSAGES[OrderSchema.margin],
+             position_message.DEFAULT_POSITION_DETAIL_GET_DATA_RESULT[OrderSchema.margin]),
             ('tbinance_margin', 'quote_bin',
              quote_message.DEFAULT_QUOTE_BIN_SPLIT_MESSAGE_RESULT[OrderSchema.margin],
              quote_message.DEFAULT_QUOTE_BIN_GET_DATA_RESULT[OrderSchema.margin]),
@@ -573,12 +516,24 @@ class TestBinanceWssApi:
             ('tbinance_margin', 'trade',
              trade_message.DEFAULT_TRADE_SPLIT_MESSAGE_RESULT[OrderSchema.margin],
              trade_message.DEFAULT_TRADE_GET_DATA_RESULT[OrderSchema.margin]),
+            ('tbinance_margin', 'wallet',
+             wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.margin],
+             wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.margin]),
+            ('tbinance_margin', 'wallet_extra',
+             wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.margin],
+             wallet_message.DEFAULT_WALLET_EXTRA_GET_DATA_RESULT[OrderSchema.margin]),
             ('tbinance_margin_coin', 'order',
              order_message.DEFAULT_ORDER_SPLIT_MESSAGE_RESULT[OrderSchema.margin_coin],
              order_message.DEFAULT_ORDER_GET_DATA_RESULT[OrderSchema.margin_coin]),
             ('tbinance_margin_coin', 'order_book',
              order_book_message.DEFAULT_ORDER_BOOK_SPLIT_MESSAGE_RESULT[OrderSchema.margin_coin],
              order_book_message.DEFAULT_ORDER_BOOK_GET_DATA_RESULT[OrderSchema.margin_coin]),
+            ('tbinance_margin_coin', 'position',
+             position_message.DEFAULT_POSITION_SPLIT_MESSAGE_RESULT[OrderSchema.margin_coin],
+             position_message.DEFAULT_POSITION_GET_DATA_RESULT[OrderSchema.margin_coin]),
+            ('tbinance_margin_coin', 'position',
+             position_message.DEFAULT_POSITION_DETAIL_MESSAGES[OrderSchema.margin_coin],
+             position_message.DEFAULT_POSITION_DETAIL_GET_DATA_RESULT[OrderSchema.margin_coin]),
             ('tbinance_margin_coin', 'quote_bin',
              quote_message.DEFAULT_QUOTE_BIN_SPLIT_MESSAGE_RESULT[OrderSchema.margin_coin],
              quote_message.DEFAULT_QUOTE_BIN_GET_DATA_RESULT[OrderSchema.margin_coin]),
@@ -591,21 +546,19 @@ class TestBinanceWssApi:
             ('tbinance_margin_coin', 'trade',
              trade_message.DEFAULT_TRADE_SPLIT_MESSAGE_RESULT[OrderSchema.margin_coin],
              trade_message.DEFAULT_TRADE_GET_DATA_RESULT[OrderSchema.margin_coin]),
+            ('tbinance_margin_coin', 'wallet',
+             wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.margin_coin],
+             wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.margin_coin])
         ],
         indirect=['wss'],
     )
     async def test_get_data(self, wss: BinanceWssApi, subscr_name, messages, expect):
+        self.init_partial_state(wss, subscr_name)
         for message in messages:
             assert await wss.get_data(deepcopy(message)) == {}
 
+        self.init_partial_state(wss, subscr_name)
         wss._subscriptions = {subscr_name: {'*': {'1'}}}
-        for i, message in enumerate(messages):
-            data = await wss.get_data(deepcopy(message))
-            self.validate_data(data, subscr_name)
-            assert data == expect[i]
-
-        symbol = get_symbol(wss.schema)
-        wss._subscriptions = {subscr_name: {symbol.lower(): {'1'}}}
         for i, message in enumerate(messages):
             data = await wss.get_data(deepcopy(message))
             self.validate_data(data, subscr_name)
@@ -646,15 +599,6 @@ class TestSubscriptionBinanceWssApi:
             for data in header['d']:
                 assert Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name]).validate(data) == data
 
-    def validate_wallet_messages(self, subscr_name, schema):
-        for message in self.messages:
-            header = message[subscr_name]
-            assert Schema(fields.WS_WALLET_MESSAGE_HEADER_FIELDS).validate(header) == header
-            data = header['d']
-            assert Schema(fields.WS_MESSAGE_DATA_FIELDS[subscr_name]).validate(data) == data
-            if extra_data := header['ex']:
-                assert Schema(fields.WS_WALLET_EXTRA_FIELDS[schema]).validate(extra_data) == extra_data
-
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
         'wss_auth, subscr_name, symbol', [
@@ -683,13 +627,8 @@ class TestSubscriptionBinanceWssApi:
     async def test_subscription(self, wss_auth: BinanceWssApi, subscr_name, symbol: Optional[str]):
         subscr_channel = '1'
         self.reset()
-        if subscr_name == 'wallet':
-            symbol = None
         await self.subscribe(wss_auth, subscr_channel, subscr_name, symbol)
-        if subscr_name == 'wallet':
-            self.validate_wallet_messages(subscr_name, wss_auth.schema)
-        else:
-            self.validate_messages(subscr_name)
+        self.validate_messages(subscr_name)
         self.reset()
         assert wss_auth._subscriptions == {subscr_name: {f"{symbol or '*'}".lower(): {subscr_channel}}}
         assert await wss_auth.unsubscribe(subscr_channel, subscr_name, symbol)

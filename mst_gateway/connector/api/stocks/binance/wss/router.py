@@ -11,7 +11,7 @@ class BinanceWssRouter(Router):
         'depthUpdate': 'order_book',
         'kline': 'quote_bin',
         '24hrTicker': ['symbol', 'position'],
-        'outboundAccountPosition': 'wallet',
+        'outboundAccountPosition': ['wallet', 'wallet_extra'],
         'executionReport': 'order'
     }
 
@@ -21,6 +21,7 @@ class BinanceWssRouter(Router):
         'quote_bin': serializers.BinanceQuoteBinSerializer,
         'symbol': serializers.BinanceSymbolSerializer,
         'wallet': serializers.BinanceWalletSerializer,
+        'wallet_extra': serializers.BinanceWalletExtraSerializer,
         'order': serializers.BinanceOrderSerializer,
         'position': serializers.BinancePositionSerializer,
     }
@@ -63,7 +64,7 @@ class BinanceMarginWssRouter(BinanceWssRouter):
         'kline': 'quote_bin',
         '24hrTicker': 'symbol',
         'bookTicker': 'symbol',
-        'ACCOUNT_UPDATE': ['wallet', 'position'],
+        'ACCOUNT_UPDATE': ['position', 'wallet', 'wallet_extra'],
         'ORDER_TRADE_UPDATE': 'order',
         'markPriceUpdate': ['position', 'symbol'],
         'ACCOUNT_CONFIG_UPDATE': 'position',
@@ -75,6 +76,7 @@ class BinanceMarginWssRouter(BinanceWssRouter):
         'quote_bin': serializers.BinanceQuoteBinSerializer,
         'symbol': serializers.BinanceMarginSymbolSerializer,
         'wallet': serializers.BinanceMarginWalletSerializer,
+        'wallet_extra': serializers.BinanceMarginWalletExtraSerializer,
         'order': serializers.BinanceOrderSerializer,
         'position': serializers.BinanceMarginPositionSerializer,
     }
