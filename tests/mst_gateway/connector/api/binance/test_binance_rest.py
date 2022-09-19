@@ -8,7 +8,7 @@ from mst_gateway.logging import init_logger
 from mst_gateway.calculator import BinanceFinFactory
 from mst_gateway.connector.api.stocks.binance.rest import BinanceRestApi
 from mst_gateway.connector.api.types import (
-    LeverageType, OrderExec, OrderSchema, OrderType, BUY, SELL,
+    LeverageType, OrderSchema, OrderType, BUY, SELL,
     PositionSide, OrderTTL, PositionMode
 )
 from mst_gateway.exceptions import ConnectorError

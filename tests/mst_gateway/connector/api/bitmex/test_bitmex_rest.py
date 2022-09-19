@@ -10,7 +10,7 @@ from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector.api.stocks.bitmex import BitmexRestApi
 from mst_gateway.exceptions import ConnectorError
 from mst_gateway.connector.api import (
-    BUY, SELL, OrderType, OrderSchema, LeverageType, OrderExec, OrderTTL,
+    BUY, SELL, OrderType, OrderSchema, LeverageType, OrderTTL,
     PositionSide, PositionMode
 )
 from tests.mst_gateway.connector import schema as fields

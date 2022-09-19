@@ -16,7 +16,6 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
             'STOP_LOSS': OrderType.stop_market,
             'TAKE_PROFIT_LIMIT': OrderType.take_profit_limit,
             'TAKE_PROFIT': OrderType.take_profit_market,
-            'LIMIT_MAKER': OrderType.limit,
             # used if exchange order data contain a trailingDelta field with LONG type value
             'TRAILING_STOP': OrderType.trailing_stop,
         },
@@ -27,7 +26,6 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
             'STOP_LOSS': OrderType.stop_market,
             'TAKE_PROFIT_LIMIT': OrderType.take_profit_limit,
             'TAKE_PROFIT': OrderType.take_profit_market,
-            'LIMIT_MAKER': OrderType.limit,
             # used if exchange order data contain a trailingDelta field with LONG type value
             'TRAILING_STOP': OrderType.trailing_stop,
         },
@@ -38,7 +36,6 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
             'STOP_LOSS': OrderType.stop_market,
             'TAKE_PROFIT_LIMIT': OrderType.take_profit_limit,
             'TAKE_PROFIT': OrderType.take_profit_market,
-            'LIMIT_MAKER': OrderType.limit,
             # used if exchange order data contain a trailingDelta field with LONG type value
             'TRAILING_STOP': OrderType.trailing_stop,
         },

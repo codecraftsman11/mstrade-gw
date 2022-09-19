@@ -4,21 +4,11 @@ from mst_gateway.utils import ClassWithAttributes
 class OrderType(ClassWithAttributes):
     market = 'market'
     limit = 'limit'
-    stop_loss = 'stop_loss'
-    take_profit = 'take_profit'
-    noloss = 'noloss'
-    trailing_stop = 'trailing_stop'
-    trailing_trigger_stop = 'trailing_trigger_stop'
-    box_top = 'box_top'
-    limit_turn = 'limit_turn'
-    stop_turn = 'stop_turn'
-    squeeze = 'squeeze'
-    limit_smart = 'limit_smart'
-    position = 'position'
-    stop_limit = 'stop_limit'
     stop_market = 'stop_market'
+    stop_limit = 'stop_limit'
     take_profit_market = 'take_profit_market'
     take_profit_limit = 'take_profit_limit'
+    trailing_stop = 'trailing_stop'
 
 
 class OrderSchema(ClassWithAttributes):
@@ -75,14 +65,6 @@ class OrderTTL(ClassWithAttributes):
     GTC = 'GTC'
     IOC = 'IOC'
     FOK = 'FOK'
-    H1 = 'H1'
-    H4 = 'H4'
-    D1 = 'D1'
-
-
-class OrderExec(ClassWithAttributes):
-    market = 'market'
-    limit = 'limit'
 
 
 class OrderParams(ClassWithAttributes):
@@ -90,45 +72,6 @@ class OrderParams(ClassWithAttributes):
     passive = 'passive'
     post_only = 'post_only'
     reduce_only = 'reduce_only'
-
-
-class OrderPositionPeriod(ClassWithAttributes):
-    M1 = 'M1'
-    M15 = 'M15'
-    M30 = 'M30'
-    H1 = 'H1'
-    H4 = 'H4'
-    D1 = 'D1'
-
-
-class OrderPositionTrendType(ClassWithAttributes):
-    direct = 'direct'
-    opposite = 'opposite'
-    flat = 'flat'
-
-
-class OrderPositionOpenedBy(ClassWithAttributes):
-    limit = 'limit'
-    market = 'market'
-    box_top = 'box_top'
-    limit_turn = 'limit_turn'
-    stop_turn = 'stop_turn'
-    squeeze = 'squeeze'
-    limit_smart = 'limit_smart'
-
-
-class OrderPositionClosedBy(ClassWithAttributes):
-    take_profit = 'take_profit'
-    stop_loss = 'stop_loss'
-    market = 'market'
-    liquidation = 'liquidation'
-    noloss = 'noloss'
-    trailing_stop = 'trailing_stop'
-
-
-class OrderStandardTypes(ClassWithAttributes):
-    limit = OrderType.limit
-    market = OrderType.market
 
 
 class LeverageType(ClassWithAttributes):
@@ -146,47 +89,6 @@ class PositionSide(ClassWithAttributes):
     long = 'long'
     short = 'short'
 
-
-ORDER_STANDARD_TYPES = (
-    OrderType.limit,
-    OrderType.market,
-)
-
-
-ORDER_ALGORITHM_TYPES = (
-    OrderType.box_top,
-    OrderType.limit_turn,
-    OrderType.stop_turn,
-    OrderType.squeeze,
-    OrderType.limit_smart
-)
-
-
-ORDER_OPEN_TYPES = (
-    OrderType.limit,
-    OrderType.market,
-    OrderType.box_top,
-    OrderType.limit_turn,
-    OrderType.stop_turn,
-    OrderType.squeeze,
-    OrderType.limit_smart
-)
-
-
-ORDER_CLOSE_TYPES = (
-    OrderType.stop_loss,
-    OrderType.take_profit,
-    OrderType.noloss,
-    OrderType.trailing_stop,
-    OrderType.trailing_trigger_stop,
-    OrderType.take_profit_limit,
-    OrderType.take_profit_market,
-)
-
-
-ORDER_POSITION_TYPES = (
-    OrderType.position,
-)
 
 # Sides
 BUY = 0
