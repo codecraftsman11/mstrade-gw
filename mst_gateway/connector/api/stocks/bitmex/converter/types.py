@@ -42,13 +42,19 @@ class BitmexOrderTypeConverter(BaseOrderTypeConverter):
     def prefetch_request_data(cls, schema: str, params: dict) -> dict:
         # TODO: remove mock, calc real pegOffsetValue
         if params['order_type'] == 'TrailingStop':
-            params['pegOffsetValue'] = 1
+            params['pegOffsetValue'] = 100
             if params['side'] == 'Sell':
-                params['pegOffsetValue'] *= -1
+                params['pegOffsetValue'] *= -100
         return params
 
     @classmethod
     def prefetch_response_data(cls, schema: str, raw_data: dict) -> dict:
         if raw_data.get('pegPriceType') == 'TrailingStopPeg':
-            raw_data['ordType'] = "TrailingStop"
+            raw_data['ordType'] = 'TrailingStop'
         return raw_data
+
+    @classmethod
+    def prefetch_message_data(cls, schema: str, item: dict) -> dict:
+        if item.get('pegPriceType') == 'TrailingStopPeg':
+            item['ordType'] = 'TrailingStop'
+        return item

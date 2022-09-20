@@ -224,7 +224,7 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
         'price': to_float(raw_data.get('price')),
         'time': to_date(raw_data.get('timestamp')),
         'active': bool(raw_data.get('ordStatus') != "New"),
-        'type': raw_data.get('ordType')
+        'type': BitmexOrderTypeConverter.load_order_type(schema, raw_data.get('ordType'))
     }
     if isinstance(state_data, dict):
         data.update({

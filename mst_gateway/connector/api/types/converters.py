@@ -38,3 +38,7 @@ class BaseOrderTypeConverter:
     @classmethod
     def prefetch_response_data(cls, schema: str, raw_data: dict) -> dict:
         return raw_data
+
+    @classmethod
+    def prefetch_message_data(cls, schema: str, item: dict) -> dict:
+        return item

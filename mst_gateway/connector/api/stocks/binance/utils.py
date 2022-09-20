@@ -358,7 +358,7 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
         'iceberg_volume': iceberg_volume,
         'is_passive': load_order_passive(raw_data.get('timeInForce')),
         'comments': None,
-        'type': raw_data.get('type')
+        'type': BinanceOrderTypeConverter.load_order_type(schema, raw_data.get('type'))
     }
     if fills := raw_data.get('fills'):
         data.update(
@@ -1395,7 +1395,7 @@ def load_order_ws_data(schema: str, raw_data: dict, state_data: Optional[dict]) 
         's': raw_data.get('s'),
         'stp': to_float(raw_data['P']) if raw_data.get('P') else to_float(raw_data.get('sp')),
         'crt': to_iso_datetime(raw_data['O']) if raw_data.get('O') else to_iso_datetime(raw_data.get('T')),
-        't': raw_data.get('o', '').lower(),
+        't': BinanceOrderTypeConverter.load_order_type(schema, raw_data.get('o'))
     }
     if isinstance(state_data, dict):
         data.update({

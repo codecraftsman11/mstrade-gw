@@ -123,3 +123,10 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
             if raw_data['type'].upper() == 'STOP_LOSS' and raw_data.get('trailingDelta'):
                 raw_data['type'] = 'TRAILING_STOP_MARKET'
         return raw_data
+
+    @classmethod
+    def prefetch_message_data(cls, schema: str, item: dict) -> dict:
+        if schema in [OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin_isolated]:
+            if item['t'].upper() == 'STOP_LOSS' and item.get('trailingDelta'):
+                item['t'] = 'TRAILING_STOP_MARKET'
+        return item
