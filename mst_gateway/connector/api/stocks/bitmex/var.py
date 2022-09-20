@@ -54,15 +54,13 @@ PARAMETER_NAMES_MAP = {
     'display_value': 'displayQty',
     'order_type': 'ordType',
     'iceberg_volume': 'displayQty',
-    'exec_inst': 'execInst',
-    'peg_price_type': 'pegPriceType',
-    'peg_offset_value': 'pegOffsetValue',
     'H1': 'GoodTillCancel',
     'H4': 'GoodTillCancel',
     'D1': 'GoodTillCancel',
     'GTC': 'GoodTillCancel',
     'FOK': 'FillOrKill',
     'IOC': 'ImmediateOrCancel',
+    'reduce_only': 'ReduceOnly'
 }
 
 DEFAULT_PARAMETERS = [
@@ -88,6 +86,7 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
             'execInst',
             'displayQty',
             'price',
+            'ReduceOnly'
         ],
         'additional_params': {}
     },
@@ -95,9 +94,8 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         'params': [
             *DEFAULT_PARAMETERS,
             'stopPx',
-            'pegPriceType',
-            'pegOffsetValue',
-            'execInst'
+            'execInst',
+            'ReduceOnly'
         ],
         'additional_params': {}
     },
@@ -106,7 +104,8 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
             *DEFAULT_PARAMETERS,
             'stopPx',
             'price',
-            'execInst'
+            'execInst',
+            'ReduceOnly'
         ],
         'additional_params': {}
     },
@@ -114,7 +113,8 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         'params': [
             *DEFAULT_PARAMETERS,
             'stopPx',
-            'execInst'
+            'execInst',
+            'ReduceOnly'
         ],
         'additional_params': {}
     },
@@ -123,10 +123,26 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
             *DEFAULT_PARAMETERS,
             'stopPx',
             'price',
-            'execInst'
+            'execInst',
+            'ReduceOnly'
         ],
         'additional_params': {}
     },
+    'TrailingStop': {
+        'params': [
+            *DEFAULT_PARAMETERS,
+            'stopPx',
+            'pegOffsetValue',
+            'pegPriceType',
+            'execInst',
+            'ReduceOnly'
+        ],
+        'additional_params': {
+            'pegPriceType': 'TrailingStopPeg',
+            'execInst': 'LastPrice',
+            'ordType': 'Stop'
+        }
+    }
 
 }
 

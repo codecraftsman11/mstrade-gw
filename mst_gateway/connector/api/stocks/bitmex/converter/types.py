@@ -6,7 +6,12 @@ from mst_gateway.connector.api import (
 
 
 class BitmexOrderTypeConverter(BaseOrderTypeConverter):
-    """ Order type converter for Bitmex """
+    """
+    Order type converter for Bitmex
+
+    custom args:
+        ordType: TrailingStop
+    """
 
     LOAD_TYPE_MAP = {
         OrderSchema.margin: {
@@ -27,8 +32,23 @@ class BitmexOrderTypeConverter(BaseOrderTypeConverter):
             OrderType.market: 'Market',
             OrderType.stop_market: 'Stop',
             OrderType.stop_limit: 'StopLimit',
-            OrderType.trailing_stop: 'Stop',
             OrderType.take_profit_limit: 'LimitIfTouched',
-            OrderType.take_profit_market: 'MarketIfTouched'
+            OrderType.take_profit_market: 'MarketIfTouched',
+            OrderType.trailing_stop: 'TrailingStop'
         }
     }
+
+    @classmethod
+    def prefetch_request_data(cls, schema: str, params: dict) -> dict:
+        # TODO: remove mock, calc real pegOffsetValue
+        if params['order_type'] == 'TrailingStop':
+            params['pegOffsetValue'] = 1
+            if params['side'] == 'Sell':
+                params['pegOffsetValue'] *= -1
+        return params
+
+    @classmethod
+    def prefetch_response_data(cls, schema: str, raw_data: dict) -> dict:
+        if raw_data.get('pegPriceType') == 'TrailingStopPeg':
+            raw_data['ordType'] = "TrailingStop"
+        return raw_data

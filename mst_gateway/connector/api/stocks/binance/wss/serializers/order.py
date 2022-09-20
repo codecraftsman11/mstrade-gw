@@ -17,4 +17,4 @@ class BinanceOrderSerializer(BinanceSerializer):
         if self._wss_api.register_state:
             if (state_data := self._wss_api.get_state_data(item.get('s'))) is None:
                 return None
-        return utils.load_order_ws_data(item, state_data)
+        return utils.load_order_ws_data(self._wss_api.schema, item, state_data)
