@@ -55,7 +55,7 @@ class BinanceRestApi(StockRestApi):
         except ConnectorError as e:
             if not self.name.startswith('t'):
                 raise ConnectorError(e)
-            data = {'address': sha256('|'.join(self.auth.values()).encode()).hexdigest()}
+            data = {'address': self._generate_hashed_uid()}
         return utils.load_user_data(data)
 
     def get_api_key_permissions(self, schemas: list, **kwargs) -> Tuple[dict, Optional[int]]:
