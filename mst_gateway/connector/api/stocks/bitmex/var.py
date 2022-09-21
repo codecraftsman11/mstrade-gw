@@ -53,7 +53,6 @@ PARAMETER_NAMES_MAP = {
     'ttl_type': 'timeInForce',
     'display_value': 'displayQty',
     'order_type': 'ordType',
-    'is_passive': 'execInst',
     'iceberg_volume': 'displayQty',
     'H1': 'GoodTillCancel',
     'H4': 'GoodTillCancel',
@@ -61,6 +60,7 @@ PARAMETER_NAMES_MAP = {
     'GTC': 'GoodTillCancel',
     'FOK': 'FillOrKill',
     'IOC': 'ImmediateOrCancel',
+    'reduce_only': 'ReduceOnly'
 }
 
 DEFAULT_PARAMETERS = [
@@ -87,13 +87,16 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
             'execInst',
             'displayQty',
             'price',
+            'ReduceOnly'
         ],
         'additional_params': {}
     },
     'Stop': {
         'params': [
             *DEFAULT_PARAMETERS,
-            'stopPx'
+            'stopPx',
+            'execInst',
+            'ReduceOnly'
         ],
         'additional_params': {}
     },
@@ -101,14 +104,18 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         'params': [
             *DEFAULT_PARAMETERS,
             'stopPx',
-            'price'
+            'price',
+            'execInst',
+            'ReduceOnly'
         ],
         'additional_params': {}
     },
     'MarketIfTouched': {
         'params': [
             *DEFAULT_PARAMETERS,
-            'stopPx'
+            'stopPx',
+            'execInst',
+            'ReduceOnly'
         ],
         'additional_params': {}
     },
@@ -116,10 +123,27 @@ PARAMETERS_BY_ORDER_TYPE_MAP = {
         'params': [
             *DEFAULT_PARAMETERS,
             'stopPx',
-            'price'
+            'price',
+            'execInst',
+            'ReduceOnly'
         ],
         'additional_params': {}
     },
+    'TrailingStop': {
+        'params': [
+            *DEFAULT_PARAMETERS,
+            'stopPx',
+            'pegOffsetValue',
+            'pegPriceType',
+            'execInst',
+            'ReduceOnly'
+        ],
+        'additional_params': {
+            'pegPriceType': 'TrailingStopPeg',
+            'execInst': 'LastPrice',
+            'ordType': 'Stop'
+        }
+    }
 
 }
 

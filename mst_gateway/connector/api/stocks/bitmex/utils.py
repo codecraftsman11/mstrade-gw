@@ -197,14 +197,6 @@ def load_assets_precision(base_asset: str, quote_asset: str, assets_config: list
     return base_asset_precision, quote_asset_precision
 
 
-def store_order_type(order_type: str, schema: str) -> str:
-    return BitmexOrderTypeConverter.store_type(order_type, schema)
-
-
-def load_order_type_and_exec(schema: str, exchange_order_type: str) -> dict:
-    return BitmexOrderTypeConverter.load_type_and_exec(schema, exchange_order_type)
-
-
 def store_order_side(order_side: int) -> Optional[str]:
     if order_side is None:
         return None
@@ -220,9 +212,6 @@ def load_order_side(order_side: str) -> int:
 
 
 def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
-    order_time = to_date(raw_data.get('timestamp'))
-    order_type_and_exec = load_order_type_and_exec(schema, raw_data.get('ordType'))
-    iceberg_volume = to_float(raw_data.get('displayQty'))
     data = {
         'order_id': raw_data.get('clOrdID'),
         'exchange_order_id': raw_data.get('orderID'),
@@ -234,14 +223,9 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
         'side': load_order_side(raw_data.get('side')),
         'position_side': PositionSide.both,
         'price': to_float(raw_data.get('price')),
-        'time': order_time,
+        'time': to_date(raw_data.get('timestamp')),
         'active': bool(raw_data.get('ordStatus') != "New"),
-        'ttl': var.BITMEX_ORDER_TTL_MAP.get(raw_data.get('timeInForce')),
-        'is_iceberg': bool(iceberg_volume),
-        'iceberg_volume': iceberg_volume,
-        'is_passive': bool(raw_data.get('execInst')),
-        'comments': raw_data.get('text'),
-        **order_type_and_exec,
+        'type': BitmexOrderTypeConverter.load_order_type(schema, raw_data.get('ordType'))
     }
     if isinstance(state_data, dict):
         data.update({
@@ -250,7 +234,7 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
     return data
 
 
-def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+def load_order_ws_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
     data = {
         'oid': raw_data.get('clOrdID'),
         'eoid': raw_data.get('orderID'),
@@ -267,15 +251,11 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         's': raw_data.get('symbol'),
         'stp': to_float(raw_data.get('stopPx')),
         'tm': to_iso_datetime(raw_data.get('timestamp')),
-        't': raw_data.get('ordType', '').lower(),
-        'exc': raw_data.get('ordType', '').lower(),
+        't': BitmexOrderTypeConverter.load_order_type(schema, raw_data.get('ordType')),
     }
     if isinstance(state_data, dict):
-        order_type_and_exec = load_order_type_and_exec(state_data.get('schema'), raw_data.get('ordType'))
         data.update({
-            'ss': state_data.get('system_symbol'),
-            't': order_type_and_exec.get('type'),
-            'exc': order_type_and_exec.get('execution')
+            'ss': state_data.get('system_symbol')
         })
     return data
 
@@ -712,13 +692,14 @@ def generate_parameters_by_order_type(main_params: dict, options: dict, schema: 
 
     """
     order_type = main_params.pop('order_type', None)
-    exchange_order_type = store_order_type(order_type, schema)
+    exchange_order_type = BitmexOrderTypeConverter.store_type(schema, order_type)
     mapping_parameters = store_order_mapping_parameters(exchange_order_type)
-    options = assign_custom_parameter_values(options)
+    options = assign_custom_parameter_values(schema, options)
     all_params = map_api_parameter_names(
+        schema,
         {'order_type': exchange_order_type, **main_params, **options}
     )
-    new_params = dict()
+    new_params = {}
     for param_name in mapping_parameters:
         value = all_params.get(param_name)
         if value:
@@ -729,35 +710,38 @@ def generate_parameters_by_order_type(main_params: dict, options: dict, schema: 
     return new_params
 
 
-def assign_custom_parameter_values(options: Optional[dict]) -> dict:
+def assign_custom_parameter_values(schema: str, options: Optional[dict]) -> dict:
     """
-    Changes the value of certain parameters according to Binance's specification.
+    Changes the value of certain parameters according to Bitmex's specification.
 
     """
-    new_options = dict()
+    new_options = {}
     if options is None:
         return new_options
-    if options.get('comments'):
-        new_options['text'] = options['comments']
-    if options.get('ttl'):
-        new_options['ttl'] = var.PARAMETER_NAMES_MAP.get(options.get('ttl'))
-    if options.get('is_iceberg'):
-        new_options['iceberg_volume'] = options['iceberg_volume'] or 0
 
-    if options.get('is_passive'):
-        new_options['is_passive'] = 'ParticipateDoNotInitiate'
-    if 'stop_price' in options:
-        new_options['stop_price'] = options['stop_price']
+    for k, v in options.items():
+        if k == 'comments':
+            new_options['text'] = v
+        elif k == 'ttl':
+            new_options['ttl'] = var.PARAMETER_NAMES_MAP.get(v)
+        elif k == 'is_iceberg' and v:
+            new_options['iceberg_volume'] = options['iceberg_volume'] or 0
+        elif k == 'is_passive' and v:
+            new_options['is_passive'] = 'ParticipateDoNotInitiate'
+        else:
+            new_options[k] = v
     return new_options
 
 
-def map_api_parameter_names(params: dict) -> Optional[dict]:
+def map_api_parameter_names(schema: str, params: dict) -> Optional[dict]:
     """
     Changes the name (key) of any parameters that have a different name in the Bitmex API.
     Example: 'ttl' becomes 'timeInForce'
 
     """
-    tmp_params = dict()
+    tmp_params = {}
+    params = BitmexOrderTypeConverter.prefetch_request_data(schema, params)
+    print(f"map {params=}")
     for param, value in params.items():
         if value is None:
             continue

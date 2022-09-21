@@ -11,7 +11,7 @@ from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector.api.stocks.bitmex import BitmexRestApi
 from mst_gateway.exceptions import ConnectorError
 from mst_gateway.connector.api import (
-    BUY, SELL, OrderType, OrderSchema, LeverageType, OrderExec, OrderTTL,
+    BUY, SELL, OrderType, OrderSchema, LeverageType, OrderTTL,
     PositionSide, PositionMode
 )
 from tests.mst_gateway.connector import schema as fields
@@ -487,7 +487,6 @@ class TestOrderBitmexRestApi:
     @pytest.mark.parametrize(
         'rest, schema, side, order_type, expect', [
             ('tbitmex', OrderSchema.margin, BUY, OrderType.market, {
-                'execution': OrderExec.market,
                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
                 'schema': OrderSchema.margin,
                 'side': BUY,
@@ -504,7 +503,6 @@ class TestOrderBitmexRestApi:
                 'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, SELL, OrderType.market, {
-                'execution': OrderExec.market,
                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
                 'schema': OrderSchema.margin,
                 'side': SELL,
@@ -521,7 +519,6 @@ class TestOrderBitmexRestApi:
                 'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, BUY, OrderType.stop_market, {
-                'execution': OrderExec.market,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': BUY,
@@ -538,7 +535,6 @@ class TestOrderBitmexRestApi:
                 'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, SELL, OrderType.stop_market, {
-                'execution': OrderExec.market,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': SELL,
@@ -555,7 +551,6 @@ class TestOrderBitmexRestApi:
                 'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, BUY, OrderType.limit, {
-                'execution': OrderExec.limit,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': BUY,
@@ -572,7 +567,6 @@ class TestOrderBitmexRestApi:
                 'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, SELL, OrderType.limit, {
-                'execution': OrderExec.limit,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': SELL,
@@ -589,7 +583,6 @@ class TestOrderBitmexRestApi:
                 'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, BUY, OrderType.stop_limit, {
-                'execution': OrderExec.limit,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': BUY,
@@ -606,7 +599,6 @@ class TestOrderBitmexRestApi:
                 'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, SELL, OrderType.stop_limit, {
-                'execution': OrderExec.limit,
                 'filled_volume': 0.0,
                 'schema': OrderSchema.margin,
                 'side': SELL,
@@ -692,7 +684,6 @@ class TestOrderBitmexRestApi:
     @pytest.mark.parametrize(
         'rest, schema, expect', [
             ('tbitmex', OrderSchema.margin, {
-                'execution': OrderExec.market,
                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin] * 2,
                 'schema': OrderSchema.margin,
                 'side': order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
@@ -734,8 +725,7 @@ class TestOrderBitmexRestApi:
     @pytest.mark.parametrize(
         'rest, schema, expect', [
             ('tbitmex', OrderSchema.margin, {
-                'execution': OrderExec.limit,
-                'filled_volume': 0.0,
+                'filled_volume': 0,
                 'schema': OrderSchema.margin,
                 'side': order_data.DEFAULT_ORDER_SIDE,
                 'position_side': PositionSide.both,

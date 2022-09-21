@@ -21,12 +21,6 @@ def schema_valid(value):
     raise SchemaError('Invalid schema field')
 
 
-def execution_valid(value):
-    if api.OrderExec.is_valid(value):
-        return value
-    raise SchemaError('Invalid execution')
-
-
 def datetime_valid(value):
     if isinstance(value, datetime):
         return value

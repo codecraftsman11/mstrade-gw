@@ -6,9 +6,11 @@ from typing import Optional, Union, Tuple
 from mst_gateway.storage import StateStorageKey
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector.api.types import OrderSchema, ExchangeDrivers, PositionMode
+from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
 from mst_gateway.connector.api.stocks.bitmex.lib import BitmexApiClient
 from mst_gateway.connector.api.stocks.bitmex.lib.exceptions import BitmexAPIException
 from . import utils, var
+from .converter import BitmexOrderTypeConverter
 from .utils import binsize2timedelta
 from ...rest import StockRestApi
 from .... import api
@@ -174,71 +176,67 @@ class BitmexRestApi(StockRestApi):
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def create_order(self, symbol: str, schema: str, side: int, volume: float, order_type: str = api.OrderType.market,
-                     price: float = None, options: dict = None, position_side: str = api.PositionSide.both,
-                     order_id: str = None) -> dict:
+                     price: float = None, options: dict = None, position_side: str = api.PositionSide.both) -> dict:
         params = dict(
             symbol=utils.symbol2stock(symbol),
             order_type=order_type,
             side=utils.store_order_side(side),
             volume=volume,
-            price=price,
-            order_id=order_id
+            price=price
         )
         params = utils.generate_parameters_by_order_type(params, options, schema)
-        data = self._bitmex_api(self._handler.create_order, **params)
+        data = BitmexOrderTypeConverter.prefetch_response_data(
+            schema, self._bitmex_api(self._handler.create_order, **params))
         state_data = self.storage.get(
             f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin}"
-        ).get(symbol.lower(), dict())
+        ).get(symbol.lower(), {})
         return utils.load_order_data(schema, data, state_data)
 
-    def update_order(self, symbol: str, schema: str, side: int, volume: float, order_type: str = api.OrderType.market,
-                     price: float = None, options: dict = None, position_side: str = api.PositionSide.both,
-                     order_id: str = None, new_order_id: str = None, exchange_order_id: str = None) -> dict:
+    def update_order(self, exchange_order_id: str, symbol: str, schema: str, side: int, volume: float,
+                     order_type: str = api.OrderType.market, price: float = None, options: dict = None,
+                     position_side: str = api.PositionSide.both) -> dict:
         """
         Updates an order by deleting an existing order and creating a new one.
 
         """
-        self.cancel_order(symbol, schema, order_id, exchange_order_id)
+        self.cancel_order(exchange_order_id, symbol, schema)
         return self.create_order(symbol, schema, side, volume, order_type, price, options=options,
-                                 position_side=position_side, order_id=new_order_id)
+                                 position_side=position_side)
 
     def cancel_all_orders(self, schema: str):
         data = self._bitmex_api(self._handler.cancel_all_orders)
         return bool(data)
 
-    def cancel_order(self, symbol: str, schema: str, order_id: str = None, exchange_order_id: str = None) -> dict:
-        params = dict(
-            order_id=order_id,
-            exchange_order_id=exchange_order_id
-        )
-        params = utils.map_api_parameter_names(params)
-        data = self._bitmex_api(self._handler.cancel_order, **params)
-        if isinstance(data[0], dict) and data[0].get('error'):
-            error = data[0].get('error')
-            status = data[0].get('ordStatus')
+    def cancel_order(self, exchange_order_id: str, symbol: str, schema: str) -> dict:
+        validate_exchange_order_id(exchange_order_id)
+        params = dict(exchange_order_id=exchange_order_id)
+        params = utils.map_api_parameter_names(schema, params)
+
+        data = BitmexOrderTypeConverter.prefetch_response_data(
+            schema, self._bitmex_api(self._handler.cancel_order, **params)[-1])
+        if isinstance(data, dict) and data.get('error'):
+            error = data.get('error')
+            status = data.get('ordStatus')
             if status in ('Filled', 'Canceled', None):
                 raise NotFoundError(error)
             raise ConnectorError(error)
         state_data = self.storage.get(
             f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin}"
-        ).get(data[0]['symbol'].lower(), dict())
-        return utils.load_order_data(schema, data[0], state_data)
+        ).get(data['symbol'].lower(), {})
+        return utils.load_order_data(schema, data, state_data)
 
-    def get_order(self, symbol: str, schema: str, order_id: str = None,
-                  exchange_order_id: str = None) -> Optional[dict]:
-        params = {}
-        if order_id:
-            params['order_id'] = order_id
-        if exchange_order_id:
-            params['exchange_order_id'] = exchange_order_id
-        params = utils.map_api_parameter_names(params)
-        data = self._bitmex_api(self._handler.get_orders, reverse=True, filter=j_dumps(params))
+    def get_order(self, exchange_order_id: str, symbol: str,
+                  schema: str) -> Optional[dict]:
+        params = dict(exchange_order_id=exchange_order_id)
+        params = utils.map_api_parameter_names(schema, params)
+        data = BitmexOrderTypeConverter.prefetch_response_data(
+            schema, self._bitmex_api(self._handler.get_orders, reverse=True, filter=j_dumps(params))[-1])
         if not data:
             return None
         state_data = self.storage.get(
             f"{StateStorageKey.symbol}.{self.name}.{OrderSchema.margin}"
-        ).get(data[0]['symbol'].lower(), dict())
-        return utils.load_order_data(schema, data[0], state_data)
+        ).get(data['symbol'].lower(), {})
+        return utils.load_order_data(schema, data, state_data)
 
     def list_orders(self, schema: str, symbol: str = None, active_only: bool = True,
                     count: int = None, offset: int = 0) -> list:
@@ -257,7 +255,11 @@ class BitmexRestApi(StockRestApi):
             options['start'] = offset
         options['filter'] = j_dumps(options['filter'])
         orders = self._bitmex_api(self._handler.get_orders, reverse=True, **options)
-        return [utils.load_order_data(schema, data, state_data) for data in orders]
+        _orders = []
+        for order in orders:
+            order = BitmexOrderTypeConverter.prefetch_response_data(schema, order)
+            _orders.append(utils.load_order_data(schema, order, state_data))
+        return _orders
 
     def list_trades(self, symbol: str, schema: str, **kwargs) -> list:
         trades = self._bitmex_api(self._handler.get_trade,
@@ -269,8 +271,8 @@ class BitmexRestApi(StockRestApi):
         ).get(symbol.lower(), dict())
         return [utils.load_trade_data(data, state_data) for data in trades]
 
-    def close_order(self, symbol: str, schema: str, order_id: str = None, exchange_order_id: str = None) -> bool:
-        order = self.get_order(symbol, schema, order_id, exchange_order_id)
+    def close_order(self, exchange_order_id: str, symbol: str, schema: str) -> bool:
+        order = self.get_order(exchange_order_id, symbol, schema)
         return self.close_all_orders(order['symbol'], schema)
 
     def close_all_orders(self, symbol: str, schema: str) -> bool:
@@ -456,7 +458,8 @@ class BitmexRestApi(StockRestApi):
                     method=rest_method, url=str(url), hashed_uid=self._generate_hashed_uid()
                 )
             except ConnectionError:
-                raise ConnectorError(f"Proxy list error. {rest_method} {url}")
+                self.logger.warning(f"Proxy list error. {rest_method} {url}")
+                raise ConnectorError(f"Proxy list error.")
         headers = {}
         if self._keepalive:
             headers['Connection'] = "keep-alive"
@@ -488,9 +491,10 @@ class BitmexRestApi(StockRestApi):
                 self.logger.critical(f"{self.__class__.__name__}: {exc}")
             elif exc.status_code == 404:
                 raise NotFoundError(message)
+            self.logger.warning(f"Bitmex api error. Details: {exc}")
             raise ConnectorError(message)
         except Exception as exc:
-            self.logger.error(f"Bitmex api error. Details: {exc}")
+            self.logger.exception(f"Bitmex adapter error. Detail: {exc}. Proxies: {kwargs.get('proxies', None)}")
             raise ConnectorError("Bitmex api error.")
 
     def _generate_hashed_uid(self):

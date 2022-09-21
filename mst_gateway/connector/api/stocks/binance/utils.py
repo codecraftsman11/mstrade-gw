@@ -235,10 +235,6 @@ def store_order_side(side: int) -> str:
     return var.BINANCE_ORDER_SIDE_BUY
 
 
-def store_order_type(order_type: str, schema: str) -> str:
-    return BinanceOrderTypeConverter.store_type(order_type, schema)
-
-
 def load_order_book_side(order_side: str) -> int:
     if order_side == 'bids':
         return api.BUY
@@ -340,34 +336,29 @@ def _load_price_and_filled_volume(fills: list) -> dict:
     return data
 
 
-def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict], payload: dict = None) -> dict:
-    if not payload:
-        payload = dict()
+def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
     _time_field = raw_data.get('time') or raw_data.get('transactTime') or raw_data.get('updateTime')
     _time = to_date(_time_field) or datetime.now()
-    order_type = raw_data.get('type') or payload.get('type')
-    order_type_and_exec = load_order_type_and_exec(schema, order_type.upper())
     iceberg_volume = to_float(raw_data.get('icebergQty', 0.0))
     position_side = raw_data.get('positionSide') or PositionSide.both
     data = {
-        'order_id': raw_data.get('origClientOrderId') or raw_data.get('clientOrderId'),
         'time': _time,
         'exchange_order_id': str(raw_data.get('orderId')),
         'symbol': raw_data.get('symbol'),
         'schema': schema,
-        'volume': to_float(raw_data.get('origQty') or payload.get('quantity')),
+        'volume': to_float(raw_data.get('origQty')),
         'filled_volume': to_float(raw_data.get('executedQty')),
-        'stop_price': to_float(raw_data.get('stopPrice') or payload.get('stopPrice')),
-        'side': load_order_side(raw_data.get('side') or payload.get('side')),
+        'stop_price': to_float(raw_data.get('stopPrice')),
+        'side': load_order_side(raw_data.get('side')),
         'position_side': position_side.lower(),
-        'price': to_float(raw_data.get('price') or payload.get('price')),
+        'price': to_float(raw_data.get('price')),
         'active': raw_data.get('status') != "NEW",
-        'ttl': var.BINANCE_ORDER_TTL_MAP.get(raw_data.get('timeInForce') or payload.get('timeInForce')),
+        'ttl': var.BINANCE_ORDER_TTL_MAP.get(raw_data.get('timeInForce')),
         'is_iceberg': bool(iceberg_volume),
         'iceberg_volume': iceberg_volume,
-        'is_passive': load_order_passive(raw_data.get('timeInForce') or payload.get('timeInForce')),
+        'is_passive': load_order_passive(raw_data.get('timeInForce')),
         'comments': None,
-        **order_type_and_exec
+        'type': BinanceOrderTypeConverter.load_order_type(schema, raw_data.get('type'))
     }
     if fills := raw_data.get('fills'):
         data.update(
@@ -1386,10 +1377,9 @@ def load_ws_order_side(order_side: Optional[str]) -> Optional[int]:
         return None
 
 
-def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
+def load_order_ws_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
     position_side = raw_data.get('ps') or PositionSide.both
     data = {
-        'oid': raw_data.get('c'),
         'eoid': str(raw_data.get('i')),
         'sd': load_ws_order_side(raw_data.get('S')),
         'ps': position_side.lower(),
@@ -1405,15 +1395,11 @@ def load_order_ws_data(raw_data: dict, state_data: Optional[dict]) -> dict:
         's': raw_data.get('s'),
         'stp': to_float(raw_data['P']) if raw_data.get('P') else to_float(raw_data.get('sp')),
         'crt': to_iso_datetime(raw_data['O']) if raw_data.get('O') else to_iso_datetime(raw_data.get('T')),
-        't': raw_data.get('o', '').lower(),
-        'exc': raw_data.get('o', '').lower(),
+        't': BinanceOrderTypeConverter.load_order_type(schema, raw_data.get('o'))
     }
     if isinstance(state_data, dict):
-        order_type_and_exec = load_order_type_and_exec(state_data.get('schema'), raw_data.get('o', '').upper())
         data.update({
-            'ss': state_data.get('system_symbol'),
-            't': order_type_and_exec.get('type'),
-            'exc':  order_type_and_exec.get('execution')
+            'ss': state_data.get('system_symbol')
         })
     return data
 
@@ -1446,10 +1432,6 @@ def load_funding_rates(funding_rates: list) -> list:
             'time': to_date(funding_rate['fundingTime']),
         } for funding_rate in funding_rates
     ]
-
-
-def load_order_type_and_exec(schema: str, exchange_order_type: str) -> dict:
-    return BinanceOrderTypeConverter.load_type_and_exec(schema, exchange_order_type)
 
 
 def get_mapping_for_schema(schema: str) -> Optional[dict]:
@@ -1486,14 +1468,14 @@ def generate_parameters_by_order_type(main_params: dict, options: dict, schema: 
 
     """
     order_type = main_params.pop('order_type', None)
-    exchange_order_type = store_order_type(order_type, schema)
+    exchange_order_type = BinanceOrderTypeConverter.store_type(schema, order_type)
     mapping_parameters = store_order_mapping_parameters(exchange_order_type, schema)
-    options = assign_custom_parameter_values(options, schema)
+    options = assign_custom_parameter_values(schema, options)
     all_params = map_api_parameter_names(
-        {'order_type': exchange_order_type, **main_params, **options},
-        create_params=True
+        schema,
+        {'order_type': exchange_order_type, **main_params, **options}
     )
-    new_params = dict()
+    new_params = {}
     for param_name in mapping_parameters:
         value = all_params.get(param_name)
         if value:
@@ -1504,38 +1486,45 @@ def generate_parameters_by_order_type(main_params: dict, options: dict, schema: 
     return new_params
 
 
-def assign_custom_parameter_values(options: Optional[dict], schema: Optional[str]) -> dict:
+def assign_custom_parameter_values(schema: str, options: Optional[dict]) -> dict:
     """
     Changes the value of certain parameters according to Binance's specification.
 
     """
-    new_options = dict()
-    if 'ttl' in options:
-        new_options['ttl'] = var.PARAMETER_NAMES_MAP.get(options.get('ttl'))
-    if options.get('is_iceberg'):
-        new_options['iceberg_volume'] = options['iceberg_volume'] or 0
+    new_options = {'new_order_resp_type': 'RESULT'}
 
-    if options.get('is_passive') and schema in [api.OrderSchema.margin_coin, api.OrderSchema.margin]:
-        new_options['ttl'] = var.PARAMETER_NAMES_MAP.get('GTX')
-    if 'stop_price' in options:
-        new_options['stop_price'] = options['stop_price']
+    if schema in [OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin_isolated]:
+        _param_names_map = var.SPOT_PARAMETER_NAMES_MAP
+    else:
+        _param_names_map = var.FUTURES_PARAMETER_NAMES_MAP
+    for k, v in options.items():
+        if k == 'is_passive' and v:
+            new_options['ttl'] = _param_names_map.get('GTX')
+        elif k == 'ttl':
+            new_options['ttl'] = _param_names_map.get(v)
+        elif k == 'is_iceberg' and v:
+            new_options['iceberg_volume'] = options['iceberg_volume'] or 0
+        else:
+            new_options[k] = v
     return new_options
 
 
-def map_api_parameter_names(params: dict, create_params: bool = False) -> Optional[dict]:
+def map_api_parameter_names(schema: str, params: dict) -> Optional[dict]:
     """
     Changes the name (key) of any parameters that have a different name in the Binance API.
     Example: 'ttl' becomes 'timeInForce'
 
     """
-    tmp_params = dict()
-    mapped_names = deepcopy(var.PARAMETER_NAMES_MAP)
-    if create_params:
-        mapped_names.update(var.CREATE_PARAMETER_NAMES_MAP)
+    if schema in [OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin_isolated]:
+        _param_names_map = var.SPOT_PARAMETER_NAMES_MAP
+    else:
+        _param_names_map = var.FUTURES_PARAMETER_NAMES_MAP
+    tmp_params = {}
+    params = BinanceOrderTypeConverter.prefetch_request_data(schema, params)
     for param, value in params.items():
         if value is None:
             continue
-        _param = mapped_names.get(param) or param
+        _param = _param_names_map.get(param) or param
         tmp_params[_param] = value
     return tmp_params
 

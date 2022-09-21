@@ -1,4 +1,4 @@
-from mst_gateway.connector.api import BUY, SELL, OrderSchema, OrderExec, OrderType, OrderTTL, PositionSide
+from mst_gateway.connector.api import BUY, SELL, OrderSchema, OrderType, OrderTTL, PositionSide
 
 DEFAULT_SYMBOL = "XBTUSD"
 DEFAULT_SYSTEM_SYMBOL = "btcusd"
@@ -39,7 +39,6 @@ DEFAULT_ORDER_DATA = {
                             "stp": 0.0,
                             "tm": "2021-12-21T08:17:02.423000",
                             "t": "market",
-                            "exc": "market",
                             "ss": "btcusd",
                         },
                         {
@@ -59,7 +58,6 @@ DEFAULT_ORDER_DATA = {
                             "stp": 0.0,
                             "tm": "2021-12-21T08:17:02.423000",
                             "t": "market",
-                            "exc": "market",
                             "ss": "btcusd",
                         },
                     ],
@@ -92,7 +90,6 @@ DEFAULT_ORDER_DATA = {
                             "stp": 0.0,
                             "tm": "2021-12-21T08:18:00.153000",
                             "t": "market",
-                            "exc": "market",
                             "ss": "btcusd",
                         },
                         {
@@ -112,7 +109,6 @@ DEFAULT_ORDER_DATA = {
                             "stp": 0.0,
                             "tm": "2021-12-21T08:18:00.153000",
                             "t": "market",
-                            "exc": "market",
                             "ss": "btcusd",
                         },
                     ],
@@ -354,7 +350,6 @@ DEFAULT_ORDER_SPLIT_DATA = {
 
 DEFAULT_ORDER = {
     OrderSchema.margin: {
-        'execution': OrderExec.limit,
         'filled_volume': 0.0,
         'schema': OrderSchema.margin,
         'side': DEFAULT_ORDER_SIDE,

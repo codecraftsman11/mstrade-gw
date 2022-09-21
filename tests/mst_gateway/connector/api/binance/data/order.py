@@ -1,4 +1,4 @@
-from mst_gateway.connector.api.types import OrderExec, OrderSchema, OrderType, OrderTTL, BUY, SELL, PositionSide
+from mst_gateway.connector.api.types import OrderSchema, OrderType, OrderTTL, BUY, SELL, PositionSide
 
 DEFAULT_ORDER_SIDE = BUY
 DEFAULT_ORDER_OPPOSITE_SIDE = SELL
@@ -18,7 +18,6 @@ DEFAULT_ORDER_OPTIONS = {
 DEFAULT_ORDER = {
     OrderSchema.exchange: {
         'active': False,
-        'execution': OrderExec.limit,
         'filled_volume': 0.0,
         'schema': OrderSchema.exchange,
         'side': DEFAULT_ORDER_SIDE,
@@ -36,7 +35,6 @@ DEFAULT_ORDER = {
     },
     OrderSchema.margin: {
         'active': False,
-        'execution': OrderExec.limit,
         'filled_volume': 0.0,
         'schema': OrderSchema.margin,
         'side': DEFAULT_ORDER_SIDE,
@@ -54,7 +52,6 @@ DEFAULT_ORDER = {
     },
     OrderSchema.margin_coin: {
         'active': False,
-        'execution': OrderExec.limit,
         'filled_volume': 0.0,
         'schema': OrderSchema.margin_coin,
         'side': DEFAULT_ORDER_SIDE,
@@ -465,7 +462,6 @@ DEFAULT_ORDER_GET_DATA_RESULT = {
                         'stp': 0.0,
                         'crt': '2021-12-09T13:49:10.402000',
                         't': 'limit',
-                        'exc': 'limit',
                         'ss': 'btcusdt',
                     }
                 ],
@@ -498,7 +494,6 @@ DEFAULT_ORDER_GET_DATA_RESULT = {
                         'stp': 0.0,
                         'crt': '2021-12-09T13:56:36.458000',
                         't': 'limit',
-                        'exc': 'limit',
                         'ss': 'btcusdt',
                     }
                 ],
@@ -531,7 +526,6 @@ DEFAULT_ORDER_GET_DATA_RESULT = {
                         'stp': 0.0,
                         'crt': '2021-12-09T13:59:54.216000',
                         't': 'limit',
-                        'exc': 'limit',
                         'ss': 'btcusd',
                     }
                 ],
