@@ -739,7 +739,6 @@ def map_api_parameter_names(schema: str, params: dict) -> Optional[dict]:
     """
     tmp_params = {}
     params = BitmexOrderTypeConverter.prefetch_request_data(schema, params)
-    print(f"map {params=}")
     for param, value in params.items():
         if value is None:
             continue
