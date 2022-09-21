@@ -2,21 +2,27 @@ from mst_gateway.connector.api import (
     BaseOrderTypeConverter,
     OrderType,
     OrderSchema,
-    OrderExec,
 )
 
 
 class BitmexOrderTypeConverter(BaseOrderTypeConverter):
-    """ Order type converter for Bitmex """
+    """
+    Order type converter for Bitmex
 
-    LOAD_TYPE_AND_EXECUTION_MAP = {
+    custom args:
+        ordType: TrailingStop
+    """
+
+    LOAD_TYPE_MAP = {
         OrderSchema.margin: {
-            'Market': {'type': OrderType.market, 'execution': OrderExec.market},
-            'Limit': {'type': OrderType.limit, 'execution': OrderExec.limit},
-            'Stop': {'type': OrderType.stop_market, 'execution': OrderExec.market},
-            'StopLimit': {'type': OrderType.stop_limit, 'execution': OrderExec.limit},
-            # 'MarketIfTouched': {'type': OrderType.take_profit, 'execution': OrderExec.market},
-            # 'LimitIfTouched': {'type': OrderType.take_profit, 'execution': OrderExec.limit},
+            'Market': OrderType.market,
+            'Limit': OrderType.limit,
+            'Stop': OrderType.stop_market,
+            'StopLimit': OrderType.stop_limit,
+            'MarketIfTouched': OrderType.take_profit_market,
+            'LimitIfTouched': OrderType.take_profit_limit,
+            # use TrailingStop if exchange order data contain a pegPriceType field with value "TrailingStopPeg"
+            'TrailingStop': OrderType.trailing_stop,
         }
     }
 
@@ -25,6 +31,30 @@ class BitmexOrderTypeConverter(BaseOrderTypeConverter):
             OrderType.limit: 'Limit',
             OrderType.market: 'Market',
             OrderType.stop_market: 'Stop',
-            OrderType.stop_limit: 'StopLimit'
+            OrderType.stop_limit: 'StopLimit',
+            OrderType.take_profit_limit: 'LimitIfTouched',
+            OrderType.take_profit_market: 'MarketIfTouched',
+            OrderType.trailing_stop: 'TrailingStop'
         }
     }
+
+    @classmethod
+    def prefetch_request_data(cls, schema: str, params: dict) -> dict:
+        # TODO: remove mock, calc real pegOffsetValue
+        if params['order_type'] == 'TrailingStop':
+            params['pegOffsetValue'] = 100
+            if params['side'] == 'Sell':
+                params['pegOffsetValue'] *= -100
+        return params
+
+    @classmethod
+    def prefetch_response_data(cls, schema: str, raw_data: dict) -> dict:
+        if raw_data.get('pegPriceType') == 'TrailingStopPeg':
+            raw_data['ordType'] = 'TrailingStop'
+        return raw_data
+
+    @classmethod
+    def prefetch_message_data(cls, schema: str, item: dict) -> dict:
+        if item.get('pegPriceType') == 'TrailingStopPeg':
+            item['ordType'] = 'TrailingStop'
+        return item
