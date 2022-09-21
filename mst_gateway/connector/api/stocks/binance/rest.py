@@ -1,6 +1,5 @@
 import httpx
 from hashlib import sha256
-from uuid import uuid4
 from datetime import datetime, timedelta
 from typing import Union, Tuple, Optional
 from mst_gateway.connector.api.utils import time2timestamp
@@ -56,7 +55,7 @@ class BinanceRestApi(StockRestApi):
         except ConnectorError as e:
             if not self.name.startswith('t'):
                 raise ConnectorError(e)
-            data = {'address': uuid4()}
+            data = {'address': sha256('|'.join(self.auth.values()).encode()).hexdigest()}
         return utils.load_user_data(data)
 
     def get_api_key_permissions(self, schemas: list, **kwargs) -> Tuple[dict, Optional[int]]:
