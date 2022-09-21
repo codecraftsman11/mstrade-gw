@@ -323,23 +323,6 @@ DEFAULT_WALLET_GET_DATA_RESULT = {
                     ],
                 },
                 'ex': {
-                    'bls': [
-                        {
-                            'cur': 'USDT',
-                            'bor': 0.0,
-                            'ist': 0.0
-                        },
-                        {
-                            'cur': 'BNB',
-                            'bor': 0.0,
-                            'ist': 0.0
-                        },
-                        {
-                            'cur': 'BUSD',
-                            'bor': 0.0,
-                            'ist': 0.0
-                        },
-                    ],
                     'tre': True
                 }
             }
@@ -454,23 +437,6 @@ DEFAULT_WALLET_STATE = {
             }
         },
         'ex': {
-            'bls': {
-                'usdt': {
-                    'cur': 'USDT',
-                    'bor': 0.0,
-                    'ist': 0.0
-                },
-                'bnb': {
-                    'cur': 'BNB',
-                    'bor': 0.0,
-                    'ist': 0.0
-                },
-                'busd': {
-                    'cur': 'BUSD',
-                    'bor': 0.0,
-                    'ist': 0.0
-                }
-            },
             'tre': True
         }
     },
