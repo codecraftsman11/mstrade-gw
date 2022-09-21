@@ -1,5 +1,6 @@
 from typing import Optional
 from .base import BitmexSerializer
+from ...converter import BitmexOrderTypeConverter
 from ...utils import load_order_ws_data
 
 
@@ -16,4 +17,5 @@ class BitmexOrderSerializer(BitmexSerializer):
         if self._wss_api.register_state:
             if (state_data := self._wss_api.get_state_data(item.get('symbol'))) is None:
                 return None
-        return load_order_ws_data(item, state_data)
+        item = BitmexOrderTypeConverter.prefetch_message_data(self._wss_api.schema, item)
+        return load_order_ws_data(self._wss_api.schema, item, state_data)

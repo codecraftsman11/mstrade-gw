@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Optional
 from .base import BinanceSerializer
 from ... import utils
+from ...converter import BinanceOrderTypeConverter
 
 
 class BinanceOrderSerializer(BinanceSerializer):
@@ -17,4 +18,5 @@ class BinanceOrderSerializer(BinanceSerializer):
         if self._wss_api.register_state:
             if (state_data := self._wss_api.get_state_data(item.get('s'))) is None:
                 return None
-        return utils.load_order_ws_data(item, state_data)
+        item = BinanceOrderTypeConverter.prefetch_message_data(self._wss_api.schema, item)
+        return utils.load_order_ws_data(self._wss_api.schema, item, state_data)
