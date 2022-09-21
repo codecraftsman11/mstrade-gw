@@ -113,7 +113,7 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
     @classmethod
     def prefetch_request_data(cls, schema: str, params: dict) -> dict:
         if schema in [OrderSchema.margin, OrderSchema.margin_coin]:
-            if params['order_type'] in ['TRAILING_STOP_MARKET']:
+            if params.get('order_type') in ['TRAILING_STOP_MARKET']:
                 params['activationPrice'] = params['stop_price']
         return params
 
@@ -127,6 +127,6 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
     @classmethod
     def prefetch_message_data(cls, schema: str, item: dict) -> dict:
         if schema in [OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin_isolated]:
-            if item['t'].upper() == 'STOP_LOSS' and item.get('trailingDelta'):
-                item['t'] = 'TRAILING_STOP_MARKET'
+            if item['o'].upper() == 'STOP_LOSS' and item.get('d'):
+                item['o'] = 'TRAILING_STOP_MARKET'
         return item

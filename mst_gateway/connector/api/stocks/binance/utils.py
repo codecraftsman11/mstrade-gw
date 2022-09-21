@@ -1498,11 +1498,11 @@ def assign_custom_parameter_values(schema: str, options: Optional[dict]) -> dict
     else:
         _param_names_map = var.FUTURES_PARAMETER_NAMES_MAP
     for k, v in options.items():
-        if k == 'is_passive':
+        if k == 'is_passive' and v:
             new_options['ttl'] = _param_names_map.get('GTX')
         elif k == 'ttl':
             new_options['ttl'] = _param_names_map.get(v)
-        elif k == 'is_iceberg':
+        elif k == 'is_iceberg' and v:
             new_options['iceberg_volume'] = options['iceberg_volume'] or 0
         else:
             new_options[k] = v
