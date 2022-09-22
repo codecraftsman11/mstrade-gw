@@ -9,7 +9,12 @@ DEFAULT_ORDER_OPPOSITE_SIDE = SELL
 DEFAULT_ORDER_VOLUME = {
     OrderSchema.margin: 100
 }
-DEFAULT_ORDER_OPTIONS = {}
+DEFAULT_ORDER_OPTIONS = {
+    'iceberg_volume': 0.0,
+    'is_iceberg': False,
+    'is_passive': False,
+    'comments': "Submitted via API."
+}
 
 DEFAULT_ORDER_DATA = {
     OrderSchema.margin: [

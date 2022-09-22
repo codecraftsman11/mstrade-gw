@@ -212,6 +212,7 @@ def load_order_side(order_side: str) -> int:
 
 
 def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
+    iceberg_volume = to_float(raw_data.get('displayQty'))
     data = {
         'exchange_order_id': raw_data.get('orderID'),
         'symbol': raw_data.get('symbol'),
@@ -224,7 +225,12 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
         'price': to_float(raw_data.get('price')),
         'time': to_date(raw_data.get('timestamp')),
         'active': bool(raw_data.get('ordStatus') != "New"),
-        'type': BitmexOrderTypeConverter.load_order_type(schema, raw_data.get('ordType'))
+        'type': BitmexOrderTypeConverter.load_order_type(schema, raw_data.get('ordType')),
+        'ttl': var.BITMEX_ORDER_TTL_MAP.get(raw_data.get('timeInForce')),
+        'is_iceberg': bool(iceberg_volume),
+        'iceberg_volume': iceberg_volume,
+        'is_passive': bool(raw_data.get('execInst') == 'ParticipateDoNotInitiate'),
+        'comments': raw_data.get('text')
     }
     if isinstance(state_data, dict):
         data.update({
@@ -718,9 +724,7 @@ def assign_custom_parameter_values(schema: str, options: Optional[dict]) -> dict
         return new_options
 
     for k, v in options.items():
-        if k == 'comments':
-            new_options['text'] = v
-        elif k == 'ttl':
+        if k == 'ttl':
             new_options['ttl'] = var.PARAMETER_NAMES_MAP.get(v)
         elif k == 'is_iceberg' and v:
             new_options['iceberg_volume'] = options['iceberg_volume'] or 0
@@ -739,7 +743,6 @@ def map_api_parameter_names(schema: str, params: dict) -> Optional[dict]:
     """
     tmp_params = {}
     params = BitmexOrderTypeConverter.prefetch_request_data(schema, params)
-    print(f"map {params=}")
     for param, value in params.items():
         if value is None:
             continue
