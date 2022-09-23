@@ -1173,7 +1173,7 @@ class TestOrderBinanceRestApi:
     def test_update_order(self, rest: BinanceRestApi, schema: str, expect):
         default_order = create_default_order(rest, schema)
         symbol = default_order['symbol']
-        new_order_id = uuid4().hex
+        new_order_id = str(uuid4())
         expect['order_id'] = new_order_id
         order = rest.update_order(symbol, schema,
                                   side=order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
