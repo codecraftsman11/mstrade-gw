@@ -73,7 +73,7 @@ def create_default_order(rest: BinanceRestApi, schema):
         order_type=OrderType.limit,
         price=get_order_price(rest, schema, symbol, order_data.DEFAULT_ORDER_SIDE),
         options=order_data.DEFAULT_ORDER_OPTIONS,
-        order_id=uuid4().hex
+        order_id=str(uuid4())
     )
 
 
@@ -1058,7 +1058,7 @@ class TestOrderBinanceRestApi:
         symbol = get_symbol(schema)
         options = deepcopy(order_data.DEFAULT_ORDER_OPTIONS)
         price = get_order_price(rest, schema, symbol, side)
-        order_id = uuid4().hex
+        order_id = str(uuid4())
         expect.update({
             'price': price,
             'order_id': order_id
@@ -1094,7 +1094,7 @@ class TestOrderBinanceRestApi:
             'price': default_order['price'],
             'order_id': order_id
         })
-        order = rest.get_order(default_order['symbol'], schema, order_id=order_id)
+        order = rest.get_order(default_order['symbol'], schema, order_id)
         assert Schema(fields.ORDER_FIELDS).validate(order) == order
         clear_stock_order_data(order)
         assert order == expect
@@ -1253,7 +1253,7 @@ class TestOrderBinanceRestApi:
             'price': default_order['price'],
             'order_id': order_id
         })
-        order = rest.cancel_order(default_order['symbol'], schema, order_id=order_id)
+        order = rest.cancel_order(default_order['symbol'], schema, order_id)
         assert Schema(fields.ORDER_FIELDS).validate(order) == order
         clear_stock_order_data(order)
         assert order == expect

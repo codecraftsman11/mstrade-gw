@@ -129,7 +129,7 @@ def create_default_order(rest: BitmexRestApi,
         order_type=order_type,
         price=price,
         options=options,
-        order_id=uuid4().hex
+        order_id=str(uuid4())
     )
     return order
 
@@ -621,7 +621,7 @@ class TestOrderBitmexRestApi:
         symbol = get_symbol(schema)
         options = deepcopy(order_data.DEFAULT_ORDER_OPTIONS)
         price = get_order_price(rest, schema, symbol, side)
-        order_id = uuid4().hex
+        order_id = str(uuid4())
         expect.update({
             'price': price,
             'order_id': order_id
@@ -656,7 +656,7 @@ class TestOrderBitmexRestApi:
             'order_id': order_id
         })
         order_schema = Schema(fields.ORDER_FIELDS)
-        order = rest.get_order(default_order['symbol'], schema, order_id=order_id)
+        order = rest.get_order(default_order['symbol'], schema, order_id)
         assert order_schema.validate(order) == order
         clear_stock_order_data(order)
         assert order == expect
@@ -706,7 +706,7 @@ class TestOrderBitmexRestApi:
         default_order = create_default_order(rest, schema)
         order_schema = Schema(fields.ORDER_FIELDS)
         symbol = default_order['symbol']
-        new_order_id = uuid4().hex
+        new_order_id = str(uuid4())
         expect['order_id'] = new_order_id
         order = rest.update_order(symbol, schema,
                                   price=get_order_price(rest, schema, symbol, default_order['side']),
@@ -751,7 +751,7 @@ class TestOrderBitmexRestApi:
             'order_id': order_id
         })
         order_schema = Schema(fields.ORDER_FIELDS)
-        order = rest.cancel_order(default_order['symbol'], schema, order_id=order_id)
+        order = rest.cancel_order(default_order['symbol'], schema, order_id)
         assert order_schema.validate(order) == order
         clear_stock_order_data(order)
         assert order == expect

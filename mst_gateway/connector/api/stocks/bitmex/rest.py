@@ -6,7 +6,6 @@ from typing import Optional, Union, Tuple
 from mst_gateway.storage import StateStorageKey
 from mst_gateway.calculator import BitmexFinFactory
 from mst_gateway.connector.api.types import OrderSchema, ExchangeDrivers, PositionMode
-from mst_gateway.connector.api.utils.rest import validate_exchange_order_id
 from mst_gateway.connector.api.stocks.bitmex.lib import BitmexApiClient
 from mst_gateway.connector.api.stocks.bitmex.lib.exceptions import BitmexAPIException
 from . import utils, var
@@ -176,8 +175,10 @@ class BitmexRestApi(StockRestApi):
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def create_order(self, symbol: str, schema: str, side: int, volume: float, order_type: str = api.OrderType.market,
-                     price: float = None, options: dict = None, position_side: str = api.PositionSide.both) -> dict:
+                     price: float = None, options: dict = None, position_side: str = api.PositionSide.both,
+                     order_id: str = None) -> dict:
         params = dict(
+            order_id=order_id,
             symbol=utils.symbol2stock(symbol),
             order_type=order_type,
             side=utils.store_order_side(side),
@@ -192,24 +193,23 @@ class BitmexRestApi(StockRestApi):
         ).get(symbol.lower(), {})
         return utils.load_order_data(schema, data, state_data)
 
-    def update_order(self, exchange_order_id: str, symbol: str, schema: str, side: int, volume: float,
-                     order_type: str = api.OrderType.market, price: float = None, options: dict = None,
-                     position_side: str = api.PositionSide.both) -> dict:
+    def update_order(self, symbol: str, schema: str, side: int, volume: float, order_type: str = api.OrderType.market,
+                     price: float = None, options: dict = None, position_side: str = api.PositionSide.both,
+                     order_id: str = None, new_order_id: str = None, exchange_order_id: str = None) -> dict:
         """
         Updates an order by deleting an existing order and creating a new one.
 
         """
-        self.cancel_order(exchange_order_id, symbol, schema)
+        self.cancel_order(symbol, schema, order_id, exchange_order_id)
         return self.create_order(symbol, schema, side, volume, order_type, price, options=options,
-                                 position_side=position_side)
+                                 position_side=position_side, order_id=new_order_id)
 
     def cancel_all_orders(self, schema: str):
         data = self._bitmex_api(self._handler.cancel_all_orders)
         return bool(data)
 
-    def cancel_order(self, exchange_order_id: str, symbol: str, schema: str) -> dict:
-        validate_exchange_order_id(exchange_order_id)
-        params = dict(exchange_order_id=exchange_order_id)
+    def cancel_order(self, symbol: str, schema: str, order_id: str = None, exchange_order_id: str = None) -> dict:
+        params = dict(order_id=order_id, exchange_order_id=exchange_order_id)
         params = utils.map_api_parameter_names(schema, params)
 
         data = BitmexOrderTypeConverter.prefetch_response_data(
@@ -225,8 +225,8 @@ class BitmexRestApi(StockRestApi):
         ).get(data['symbol'].lower(), {})
         return utils.load_order_data(schema, data, state_data)
 
-    def get_order(self, exchange_order_id: str, symbol: str,
-                  schema: str) -> Optional[dict]:
+    def get_order(self, symbol: str, schema: str, order_id: str = None,
+                  exchange_order_id: str = None) -> Optional[dict]:
         params = dict(exchange_order_id=exchange_order_id)
         params = utils.map_api_parameter_names(schema, params)
         data = BitmexOrderTypeConverter.prefetch_response_data(
@@ -271,8 +271,8 @@ class BitmexRestApi(StockRestApi):
         ).get(symbol.lower(), dict())
         return [utils.load_trade_data(data, state_data) for data in trades]
 
-    def close_order(self, exchange_order_id: str, symbol: str, schema: str) -> bool:
-        order = self.get_order(exchange_order_id, symbol, schema)
+    def close_order(self, symbol: str, schema: str, order_id: str = None, exchange_order_id: str = None) -> bool:
+        order = self.get_order(symbol, schema, order_id, exchange_order_id)
         return self.close_all_orders(order['symbol'], schema)
 
     def close_all_orders(self, symbol: str, schema: str) -> bool:

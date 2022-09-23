@@ -343,6 +343,7 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
     position_side = raw_data.get('positionSide') or PositionSide.both
     data = {
         'time': _time,
+        'order_id': raw_data.get('origClientOrderId') or raw_data.get('clientOrderId'),
         'exchange_order_id': str(raw_data.get('orderId')),
         'symbol': raw_data.get('symbol'),
         'schema': schema,
@@ -1380,6 +1381,7 @@ def load_ws_order_side(order_side: Optional[str]) -> Optional[int]:
 def load_order_ws_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
     position_side = raw_data.get('ps') or PositionSide.both
     data = {
+        'oid': raw_data.get('c'),
         'eoid': str(raw_data.get('i')),
         'sd': load_ws_order_side(raw_data.get('S')),
         'ps': position_side.lower(),
@@ -1473,7 +1475,8 @@ def generate_parameters_by_order_type(main_params: dict, options: dict, schema: 
     options = assign_custom_parameter_values(schema, options)
     all_params = map_api_parameter_names(
         schema,
-        {'order_type': exchange_order_type, **main_params, **options}
+        {'order_type': exchange_order_type, **main_params, **options},
+        create_params=True
     )
     new_params = {}
     for param_name in mapping_parameters:
@@ -1509,16 +1512,18 @@ def assign_custom_parameter_values(schema: str, options: Optional[dict]) -> dict
     return new_options
 
 
-def map_api_parameter_names(schema: str, params: dict) -> Optional[dict]:
+def map_api_parameter_names(schema: str, params: dict, create_params: bool = False) -> Optional[dict]:
     """
     Changes the name (key) of any parameters that have a different name in the Binance API.
     Example: 'ttl' becomes 'timeInForce'
 
     """
     if schema in [OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin_isolated]:
-        _param_names_map = var.SPOT_PARAMETER_NAMES_MAP
+        _param_names_map = deepcopy(var.SPOT_PARAMETER_NAMES_MAP)
     else:
-        _param_names_map = var.FUTURES_PARAMETER_NAMES_MAP
+        _param_names_map = deepcopy(var.FUTURES_PARAMETER_NAMES_MAP)
+    if create_params:
+        _param_names_map.update(var.CREATE_PARAMETER_NAMES_MAP)
     tmp_params = {}
     params = BinanceOrderTypeConverter.prefetch_request_data(schema, params)
     for param, value in params.items():

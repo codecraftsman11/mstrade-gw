@@ -44,7 +44,7 @@ BINANCE_ORDER_TTL_MAP = {
 }
 
 BASE_PARAMETER_NAMES_MAP = {
-    'order_id': 'newClientOrderId',
+    'order_id': 'origClientOrderId',
     'exchange_order_id': 'orderId',
     'order_type': 'type',
     'volume': 'quantity',
@@ -73,6 +73,9 @@ FUTURES_PARAMETER_NAMES_MAP = {
     'step': 'callbackRate'
 }
 
+CREATE_PARAMETER_NAMES_MAP = {
+    'order_id': 'newClientOrderId',
+}
 
 DEFAULT_PARAMETERS = [
     'newClientOrderId',
