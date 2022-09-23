@@ -879,8 +879,6 @@ class BinanceRestApi(StockRestApi):
             resp = method(**kwargs)
             data = self.handler.handle_response(resp)
         except BinanceAPIException as exc:
-            import traceback
-            traceback.print_exc()
             if not self.ratelimit:
                 self.throttle.set(
                     key=self.throttle_hash_name(url),
