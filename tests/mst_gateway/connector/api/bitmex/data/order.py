@@ -1,4 +1,4 @@
-from mst_gateway.connector.api import BUY, SELL, OrderSchema, OrderType, OrderTTL, PositionSide
+from mst_gateway.connector.api import BUY, SELL, OrderSchema, OrderType, PositionSide
 
 DEFAULT_SYMBOL = "XBTUSD"
 DEFAULT_SYSTEM_SYMBOL = "btcusd"
@@ -355,10 +355,5 @@ DEFAULT_ORDER = {
         'system_symbol': DEFAULT_SYSTEM_SYMBOL,
         'type': OrderType.limit,
         'volume': DEFAULT_ORDER_VOLUME[OrderSchema.margin],
-        'ttl': OrderTTL.GTC,
-        'iceberg_volume': 0.0,
-        'is_iceberg': False,
-        'is_passive': False,
-        'comments': "Submitted via API."
     }
 }
