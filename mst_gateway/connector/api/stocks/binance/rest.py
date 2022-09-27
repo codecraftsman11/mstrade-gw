@@ -290,7 +290,7 @@ class BinanceRestApi(StockRestApi):
             'volume': volume,
             'price': str(price) if price else None,
         }
-        params = utils.generate_parameters_by_order_type(main_params, options, schema)
+        params = BinanceOrderTypeConverter.generate_parameters_by_order_type(main_params, options, schema)
         data = BinanceOrderTypeConverter.prefetch_response_data(
             schema, self._binance_api(schema_handlers[schema.lower()], **params))
         state_data = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}").get(symbol.lower(), {})
@@ -325,7 +325,7 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin_coin: self._handler.cancel_futures_coin_order,
         }
         validate_schema(schema, schema_handlers)
-        params = utils.map_api_parameter_names(
+        params = BinanceOrderTypeConverter.map_api_parameter_names(
             schema,
             {'exchange_order_id': int(exchange_order_id), 'symbol': utils.symbol2stock(symbol)}
         )
@@ -343,7 +343,7 @@ class BinanceRestApi(StockRestApi):
             OrderSchema.margin_coin: self._handler.get_futures_coin_order,
         }
         validate_schema(schema, schema_handlers)
-        params = utils.map_api_parameter_names(
+        params = BinanceOrderTypeConverter.map_api_parameter_names(
             schema,
             {'exchange_order_id': int(exchange_order_id), 'symbol': utils.symbol2stock(symbol)}
         )

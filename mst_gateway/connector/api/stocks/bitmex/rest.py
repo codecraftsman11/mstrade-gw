@@ -184,7 +184,7 @@ class BitmexRestApi(StockRestApi):
             volume=volume,
             price=price
         )
-        params = utils.generate_parameters_by_order_type(params, options, schema)
+        params = BitmexOrderTypeConverter.generate_parameters_by_order_type(params, options, schema)
         data = BitmexOrderTypeConverter.prefetch_response_data(
             schema, self._bitmex_api(self._handler.create_order, **params))
         state_data = self.storage.get(
@@ -210,7 +210,7 @@ class BitmexRestApi(StockRestApi):
     def cancel_order(self, exchange_order_id: str, symbol: str, schema: str) -> dict:
         validate_exchange_order_id(exchange_order_id)
         params = dict(exchange_order_id=exchange_order_id)
-        params = utils.map_api_parameter_names(schema, params)
+        params = BitmexOrderTypeConverter.map_api_parameter_names(schema, params)
 
         data = BitmexOrderTypeConverter.prefetch_response_data(
             schema, self._bitmex_api(self._handler.cancel_order, **params)[-1])
@@ -228,7 +228,7 @@ class BitmexRestApi(StockRestApi):
     def get_order(self, exchange_order_id: str, symbol: str,
                   schema: str) -> Optional[dict]:
         params = dict(exchange_order_id=exchange_order_id)
-        params = utils.map_api_parameter_names(schema, params)
+        params = BitmexOrderTypeConverter.map_api_parameter_names(schema, params)
         data = BitmexOrderTypeConverter.prefetch_response_data(
             schema, self._bitmex_api(self._handler.get_orders, reverse=True, filter=j_dumps(params))[-1])
         if not data:
