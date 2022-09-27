@@ -493,7 +493,12 @@ class TestOrderBitmexRestApi:
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.market,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.IOC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, SELL, OrderType.market, {
                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
@@ -504,7 +509,12 @@ class TestOrderBitmexRestApi:
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.market,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.IOC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, BUY, OrderType.stop_market, {
                 'filled_volume': 0,
@@ -515,7 +525,12 @@ class TestOrderBitmexRestApi:
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.stop_market,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.IOC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, SELL, OrderType.stop_market, {
                 'filled_volume': 0,
@@ -526,7 +541,12 @@ class TestOrderBitmexRestApi:
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.stop_market,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.IOC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, BUY, OrderType.limit, {
                 'filled_volume': 0,
@@ -537,7 +557,12 @@ class TestOrderBitmexRestApi:
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.limit,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],                'ttl': OrderTTL.GTC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
+
             }),
             ('tbitmex', OrderSchema.margin, SELL, OrderType.limit, {
                 'filled_volume': 0,
@@ -548,7 +573,12 @@ class TestOrderBitmexRestApi:
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.limit,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, BUY, OrderType.stop_limit, {
                 'filled_volume': 0,
@@ -559,7 +589,12 @@ class TestOrderBitmexRestApi:
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.stop_limit,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, SELL, OrderType.stop_limit, {
                 'filled_volume': 0,
@@ -570,7 +605,12 @@ class TestOrderBitmexRestApi:
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.stop_limit,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, BUY, OrderType.take_profit_limit, {
                 'filled_volume': 0,
@@ -581,7 +621,12 @@ class TestOrderBitmexRestApi:
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.take_profit_limit,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, SELL, OrderType.take_profit_limit, {
                 'filled_volume': 0,
@@ -592,7 +637,12 @@ class TestOrderBitmexRestApi:
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.take_profit_limit,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, BUY, OrderType.take_profit_market, {
                 'filled_volume': 0,
@@ -603,7 +653,12 @@ class TestOrderBitmexRestApi:
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.take_profit_market,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.IOC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, SELL, OrderType.take_profit_market, {
                 'filled_volume': 0,
@@ -614,7 +669,12 @@ class TestOrderBitmexRestApi:
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.take_profit_market,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.IOC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, BUY, OrderType.trailing_stop, {
                 'filled_volume': 0,
@@ -625,7 +685,12 @@ class TestOrderBitmexRestApi:
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.trailing_stop,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.IOC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, SELL, OrderType.trailing_stop, {
                 'filled_volume': 0,
@@ -636,7 +701,12 @@ class TestOrderBitmexRestApi:
                 'symbol': data.SYMBOL,
                 'system_symbol': data.SYSTEM_SYMBOL,
                 'type': OrderType.trailing_stop,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.IOC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
             })
         ],
         indirect=['rest'],
@@ -645,10 +715,11 @@ class TestOrderBitmexRestApi:
         symbol = get_symbol(schema)
         default_order_data = deepcopy(order_data.DEFAULT_ORDER_OPTIONS)
         price, last_price = get_order_price(rest, schema, symbol, side)
+        if order_type in (OrderType.stop_market, OrderType.take_profit_market, OrderType.trailing_stop):
+            price = last_price
         if order_type in (OrderType.stop_market, OrderType.stop_limit, OrderType.trailing_stop,
                           OrderType.take_profit_limit, OrderType.take_profit_market):
-            price = last_price
-            stop_price = get_order_stop_price(price, side, order_type)
+            stop_price = get_order_stop_price(last_price, side, order_type)
             default_order_data.update({'stop_price': stop_price})
             expect['stop_price'] = stop_price
 
@@ -713,6 +784,11 @@ class TestOrderBitmexRestApi:
                 'system_symbol': order_data.DEFAULT_SYSTEM_SYMBOL,
                 'type': OrderType.market,
                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin] * 2,
+                'ttl': OrderTTL.IOC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
             }),
         ],
         indirect=['rest'],
@@ -744,7 +820,12 @@ class TestOrderBitmexRestApi:
                 'symbol': order_data.DEFAULT_SYMBOL,
                 'system_symbol': order_data.DEFAULT_SYSTEM_SYMBOL,
                 'type': OrderType.limit,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin]
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Canceled: Canceled via API.\nSubmitted via API."
             }),
         ],
         indirect=['rest'],

@@ -74,11 +74,11 @@ ORDER_FIELDS = {
     'schema': Or(None, Use(schema_valid)),
     'system_symbol': Or(None, str),
     'position_side': Use(position_side_valid),
-    Optional('ttl'): str,
-    Optional('is_iceberg'): bool,
-    Optional('iceberg_volume'): float,
-    Optional('is_passive'): bool,
-    Optional('comments'): Or(None, str)
+    'ttl': str,
+    'is_iceberg': bool,
+    'iceberg_volume': float,
+    'is_passive': bool,
+    'comments': Or(None, str)
 }
 
 ORDER_BOOK_FIELDS = {

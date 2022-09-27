@@ -1371,12 +1371,14 @@ class TestOrderBinanceRestApi:
                           OrderType.take_profit_limit, OrderType.take_profit_market, OrderType.trailing_stop):
             stop_price = get_order_stop_price(last_price, side, order_type)
             default_order_data.update({'stop_price': stop_price})
-            if order_type != OrderType.trailing_stop:
-                expect['stop_price'] = stop_price
+            expect['stop_price'] = stop_price
 
+        expect['price'] = price
         order = rest.create_order(symbol, schema, side, order_data.DEFAULT_ORDER_VOLUME[schema], order_type, price,
                                   default_order_data, PositionSide.both)
-        expect['price'] = price
+
+        if order_type == OrderType.trailing_stop:
+            expect['stop_price'] = order['stop_price']
 
         if order_type in (OrderType.market, OrderType.stop_market, OrderType.trailing_stop,
                           OrderType.take_profit_limit, OrderType.take_profit_market, OrderType.trailing_stop):
