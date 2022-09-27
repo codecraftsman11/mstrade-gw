@@ -227,7 +227,7 @@ class BitmexRestApi(StockRestApi):
 
     def get_order(self, symbol: str, schema: str, order_id: str = None,
                   exchange_order_id: str = None) -> Optional[dict]:
-        params = dict(exchange_order_id=exchange_order_id)
+        params = dict(order_id=order_id, exchange_order_id=exchange_order_id)
         params = utils.map_api_parameter_names(schema, params)
         data = BitmexOrderTypeConverter.prefetch_response_data(
             schema, self._bitmex_api(self._handler.get_orders, reverse=True, filter=j_dumps(params))[-1])
