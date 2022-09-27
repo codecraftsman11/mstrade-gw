@@ -1118,41 +1118,6 @@ class TestOrderBinanceRestApi:
                 'is_passive': False,
                 'comments': None
             }),
-            # # TODO: "Take profit market" not supported for spot
-            # ('tbinance_spot', OrderSchema.exchange, BUY, OrderType.take_profit_market, {
-            #     'active': False,
-            #     'filled_volume': 0.0,
-            #     'schema': OrderSchema.exchange,
-            #     'side': BUY,
-            #     'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-            #     'stop_price': 0.0,
-            #     'symbol': 'BTCUSDT',
-            #     'system_symbol': 'btcusdt',
-            #     'type': OrderType.take_profit_market,
-            #     'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
-            #     'ttl': OrderTTL.GTC,
-            #     'is_iceberg': False,
-            #     'iceberg_volume': 0.0,
-            #     'is_passive': False,
-            #     'comments': None
-            # }),
-            # ('tbinance_spot', OrderSchema.exchange, SELL, OrderType.take_profit_market, {
-            #     'active': False,
-            #     'filled_volume': 0.0,
-            #     'schema': OrderSchema.exchange,
-            #     'side': SELL,
-            #     'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-            #     'stop_price': 0.0,
-            #     'symbol': 'BTCUSDT',
-            #     'system_symbol': 'btcusdt',
-            #     'type': OrderType.take_profit_market,
-            #     'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
-            #     'ttl': OrderTTL.GTC,
-            #     'is_iceberg': False,
-            #     'iceberg_volume': 0.0,
-            #     'is_passive': False,
-            #     'comments': None
-            # }),
             ('tbinance_margin', OrderSchema.margin, BUY, OrderType.take_profit_limit, {
                 'active': False,
                 'filled_volume': 0.0,
@@ -1323,41 +1288,6 @@ class TestOrderBinanceRestApi:
                 'is_passive': False,
                 'comments': None
             }),
-            # TODO: "Stop market" not supported for spot
-            # ('tbinance_spot', OrderSchema.exchange, BUY, OrderType.trailing_stop, {
-            #     'active': False,
-            #     'filled_volume': 0.0,
-            #     'schema': OrderSchema.exchange,
-            #     'side': BUY,
-            #     'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-            #     'stop_price': 0.0,
-            #     'symbol': 'BTCUSDT',
-            #     'system_symbol': 'btcusdt',
-            #     'type': OrderType.trailing_stop,
-            #     'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
-            #     'ttl': OrderTTL.GTC,
-            #     'is_iceberg': False,
-            #     'iceberg_volume': 0.0,
-            #     'is_passive': False,
-            #     'comments': None
-            # }),
-            # ('tbinance_spot', OrderSchema.exchange, SELL, OrderType.trailing_stop, {
-            #     'active': False,
-            #     'filled_volume': 0.0,
-            #     'schema': OrderSchema.exchange,
-            #     'side': SELL,
-            #     'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-            #     'stop_price': 0.0,
-            #     'symbol': 'BTCUSDT',
-            #     'system_symbol': 'btcusdt',
-            #     'type': OrderType.trailing_stop,
-            #     'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
-            #     'ttl': OrderTTL.GTC,
-            #     'is_iceberg': False,
-            #     'iceberg_volume': 0.0,
-            #     'is_passive': False,
-            #     'comments': None
-            # }),
         ],
         indirect=['rest'],
     )
