@@ -522,14 +522,6 @@ class BinanceMethodFactory:
         return cls.GET, httpx.URL(f"{cls._margin_api_url(testnet)}/{cls.V1}/margin/maxBorrowable", params=params)
 
     @classmethod
-    def get_futures_loan_configs(cls, testnet=False, **params):
-        return cls.GET, httpx.URL(f"{cls._margin_api_url(testnet)}/{cls.V2}/futures/loan/configs", params=params)
-
-    @classmethod
-    def get_futures_loan_wallet(cls, testnet=False, **params):
-        return cls.GET, httpx.URL(f"{cls._margin_api_url(testnet)}/{cls.V2}/futures/loan/wallet", params=params)
-
-    @classmethod
     def create_margin_loan(cls, testnet=False, **params):
         return cls.POST, httpx.URL(f"{cls._margin_api_url(testnet)}/{cls.V1}/margin/loan", params=params)
 
@@ -538,17 +530,9 @@ class BinanceMethodFactory:
         return cls.POST, httpx.URL(f"{cls._margin_api_url(testnet)}/{cls.V1}/margin/loan", params=params)
 
     @classmethod
-    def create_futures_loan(cls, testnet=False, **params):
-        return cls.POST, httpx.URL(f"{cls._margin_api_url(testnet)}/{cls.V1}/futures/loan/borrow", params=params)
-
-    @classmethod
     def repay_margin_loan(cls, testnet=False, **params):
         return cls.POST, httpx.URL(f"{cls._margin_api_url(testnet)}/{cls.V1}/margin/repay", params=params)
 
     @classmethod
     def repay_isolated_margin_loan(cls, testnet=False, **params):
         return cls.POST, httpx.URL(f"{cls._margin_api_url(testnet)}/{cls.V1}/margin/repay", params=params)
-
-    @classmethod
-    def repay_futures_loan(cls, testnet=False, **params):
-        return cls.POST, httpx.URL(f"{cls._margin_api_url(testnet)}/{cls.V1}/futures/loan/repay", params=params)
