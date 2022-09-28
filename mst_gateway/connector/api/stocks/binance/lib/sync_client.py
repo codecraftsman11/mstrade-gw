@@ -553,14 +553,6 @@ class BinanceApiClient(BaseBinanceApiClient):
         method, url = self.get_method_info('get_max_margin_loan')
         return self._request(method, url, signed=True, data=kwargs)
 
-    def get_futures_loan_configs(self, **kwargs) -> httpx.Response:
-        method, url = self.get_method_info('get_futures_loan_configs')
-        return self._request(method, url, signed=True, data=kwargs)
-
-    def get_futures_loan_wallet(self, **kwargs) -> httpx.Response:
-        method, url = self.get_method_info('get_futures_loan_wallet')
-        return self._request(method, url, signed=True, data=kwargs)
-
     def create_margin_loan(self, asset: str, amount: float, **kwargs) -> httpx.Response:
         method, url = self.get_method_info('create_margin_loan')
         kwargs.update({
@@ -578,14 +570,6 @@ class BinanceApiClient(BaseBinanceApiClient):
         })
         return self._request(method, url, signed=True, data=kwargs)
 
-    def create_futures_loan(self, coin: str, collateral_coin: str, **kwargs) -> httpx.Response:
-        method, url = self.get_method_info('create_futures_loan')
-        kwargs.update({
-            'coin': coin,
-            'collateralCoin': collateral_coin
-        })
-        return self._request(method, url, signed=True, data=kwargs)
-
     def repay_margin_loan(self, asset: str, amount: float, **kwargs) -> httpx.Response:
         method, url = self.get_method_info('repay_margin_loan')
         kwargs.update({
@@ -600,15 +584,6 @@ class BinanceApiClient(BaseBinanceApiClient):
             'asset': asset,
             'amount': amount,
             'isIsolated': 'TRUE'
-        })
-        return self._request(method, url, signed=True, data=kwargs)
-
-    def repay_futures_loan(self, coin: str, collateral_coin: str, amount: float, **kwargs) -> httpx.Response:
-        method, url = self.get_method_info('repay_futures_loan')
-        kwargs.update({
-            'coin': coin,
-            'collateralCoin': collateral_coin,
-            'amount': amount
         })
         return self._request(method, url, signed=True, data=kwargs)
 

@@ -473,11 +473,7 @@ class BinanceRestApi(StockRestApi):
 
     def _futures_wallet(self, **kwargs):
         data = self._binance_api(self._handler.get_futures_account, **kwargs)
-        try:
-            cross_collaterals = self._binance_api(self._handler.get_futures_loan_wallet, **kwargs)
-        except ConnectorError:
-            cross_collaterals = {}
-        return utils.load_futures_wallet_data(data, cross_collaterals.get('crossCollaterals', []))
+        return utils.load_futures_wallet_data(data)
 
     def _futures_coin_wallet(self, **kwargs):
         data = self._binance_api(self._handler.get_futures_coin_account, **kwargs)
@@ -497,12 +493,6 @@ class BinanceRestApi(StockRestApi):
         return schema_handlers[schema][1](data, asset)
 
     def get_wallet_extra_data(self, schema: str, **kwargs) -> dict:
-        if schema == OrderSchema.margin:
-            try:
-                cross_collaterals = self._binance_api(self._handler.get_futures_loan_wallet, **kwargs)
-            except ConnectorError:
-                return {}
-            return {'cross_collaterals': utils.load_margin_cross_collaterals_data(cross_collaterals)}
         return {}
 
     def get_wallet_detail_extra_data(self, schema: str, asset: str, **kwargs) -> dict:
@@ -523,15 +513,6 @@ class BinanceRestApi(StockRestApi):
             except ConnectorError:
                 _interest_rate = None
             return utils.load_margin_cross_wallet_extra_data(_margin, asset, _borrow, _interest_rate)
-        if schema == OrderSchema.margin:
-            try:
-                cross_collaterals = self._binance_api(self._handler.get_futures_loan_wallet)
-                collateral_configs = self._binance_api(self._handler.get_futures_loan_configs,
-                                                       loanCoin=asset.upper())
-            except ConnectorError:
-                cross_collaterals = {}
-                collateral_configs = []
-            return utils.load_futures_wallet_extra_data(cross_collaterals, collateral_configs, asset)
         return {}
 
     def get_assets_balance(self, schema: str, **kwargs) -> dict:
@@ -584,19 +565,6 @@ class BinanceRestApi(StockRestApi):
                 symbol=symbol.upper()
             )
             return utils.load_transaction_id(data)
-        elif schema.lower() == OrderSchema.margin:
-            collateral_asset = kwargs.get('collateral_asset', '')
-            collateral_amount = kwargs.get('collateral_amount')
-            amount_kwargs = {}
-            if amount is not None:
-                amount_kwargs['amount'] = amount
-            if collateral_amount is not None:
-                amount_kwargs['collateralAmount'] = collateral_amount
-            data = self._binance_api(
-                self._handler.create_futures_loan, coin=asset.upper(),
-                collateral_coin=collateral_asset.upper(), **amount_kwargs
-            )
-            return utils.load_borrow_data(data)
         raise ConnectorError(f"Invalid schema {schema}.")
 
     def wallet_repay(self, schema: str, asset: str, amount: float, **kwargs):
@@ -609,12 +577,6 @@ class BinanceRestApi(StockRestApi):
                 asset=asset.upper(),
                 amount=amount,
                 symbol=symbol.upper()
-            )
-        elif schema.lower() == OrderSchema.margin:
-            collateral_asset = kwargs.get('collateral_asset', '')
-            data = self._binance_api(
-                self._handler.repay_futures_loan, coin=asset.upper(),
-                amount=amount, collateralCoin=collateral_asset.upper()
             )
         else:
             raise ConnectorError(f"Invalid schema {schema}.")
