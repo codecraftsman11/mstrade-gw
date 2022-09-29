@@ -69,7 +69,6 @@ DEFAULT_ORDER = {
     },
 }
 
-
 DEFAULT_ORDER_MESSAGE = {
     OrderSchema.exchange: {
         'e': 'executionReport',

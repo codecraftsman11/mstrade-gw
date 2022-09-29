@@ -73,12 +73,12 @@ ORDER_FIELDS = {
     'active': bool,
     'schema': Or(None, Use(schema_valid)),
     'system_symbol': Or(None, str),
+    'position_side': Use(position_side_valid),
     'ttl': str,
     'is_iceberg': bool,
     'iceberg_volume': float,
     'is_passive': bool,
-    'comments': Or(None, str),
-    'position_side': Use(position_side_valid)
+    'comments': Or(None, str)
 }
 
 ORDER_BOOK_FIELDS = {
@@ -135,13 +135,6 @@ WALLET_EXTRA_FIELDS = {
         'margin_level': Use(float_valid)
     },
     OrderSchema.margin: {
-        'balances': [
-            {
-                'currency': str,
-                'borrowed': Use(float_valid),
-                'interest': Use(float_valid),
-            }
-        ],
         'trade_enabled': bool
     },
     OrderSchema.margin_coin: {
@@ -149,21 +142,7 @@ WALLET_EXTRA_FIELDS = {
     }
 }
 
-WALLET_EXTRA_DATA_FIELDS = {
-    OrderSchema.margin_cross: {
-        'currency': str,
-        'borrowed': Use(float_valid),
-        'interest': Use(float_valid),
-        'interest_rate': Use(float_valid),
-        'available_borrow': Use(float_valid)
-    },
-    OrderSchema.margin: {
-        'currency': str,
-        'borrowed': Use(float_valid),
-        'interest': Use(float_valid),
-        'cross_collaterals': list
-    }
-}
+WALLET_EXTRA_DATA_FIELDS = {}
 
 
 USER_FIELDS = {
@@ -440,15 +419,14 @@ WS_MESSAGE_DATA_FIELDS = {
     }
 }
 
-WS_WALLET_EXTRA_BALANCE_FIELDS = {
-    'cur': str,
-    'bor': Use(float_valid),
-    'ist': Use(float_valid)
-}
 WS_WALLET_EXTRA_FIELDS = {
     OrderSchema.margin_cross: {
         'bls': [
-            WS_WALLET_EXTRA_BALANCE_FIELDS
+            {
+                'cur': str,
+                'bor': Use(float_valid),
+                'ist': Use(float_valid)
+            }
         ],
         'tre': bool,
         'trse': bool,
@@ -456,9 +434,6 @@ WS_WALLET_EXTRA_FIELDS = {
         'mlvl': Use(float_valid)
     },
     OrderSchema.margin: {
-        'bls': [
-            WS_WALLET_EXTRA_BALANCE_FIELDS
-        ],
         'tre': bool
     },
     OrderSchema.margin_coin: {

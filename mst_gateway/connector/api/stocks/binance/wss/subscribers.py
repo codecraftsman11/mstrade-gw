@@ -181,13 +181,6 @@ class BinanceWalletSubscriber(BinanceSubscriber):
             kwargs['raw_data'] = client.handler.handle_response(resp)
         except (GatewayError, BinanceAPIException):
             return None, None
-        if schema in (OrderSchema.margin,):
-            try:
-                resp = client.handler.get_futures_loan_wallet()
-                cross_collaterals = client.handler.handle_response(resp)
-            except (GatewayError, BinanceAPIException):
-                cross_collaterals = {}
-            kwargs['cross_collaterals'] = utils.load_margin_cross_collaterals_data(cross_collaterals)
         wallet_data = schema_handlers[schema][1](**kwargs)
         wallet_state = self.mapping_wallet_data(wallet_data)
         return wallet_data, wallet_state

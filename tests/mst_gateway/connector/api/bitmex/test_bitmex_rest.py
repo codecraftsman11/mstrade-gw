@@ -117,7 +117,7 @@ def get_asset(schema: str) -> Optional[str]:
 
 def create_default_order(rest: BitmexRestApi,
                          schema: str, order_type: str = order_data.DEFAULT_ORDER_TYPE, options: dict = None) -> dict:
-    price = get_order_price(rest=rest, schema=schema, symbol=order_data.DEFAULT_SYMBOL,
+    price, _ = get_order_price(rest=rest, schema=schema, symbol=order_data.DEFAULT_SYMBOL,
                             side=order_data.DEFAULT_ORDER_SIDE)
     options = options if options else order_data.DEFAULT_ORDER_OPTIONS
     order = rest.create_order(
@@ -517,7 +517,7 @@ class TestOrderBitmexRestApi:
                 'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, BUY, OrderType.stop_market, {
-                'filled_volume': 0.0,
+                'filled_volume': 0,
                 'schema': OrderSchema.margin,
                 'side': BUY,
                 'position_side': PositionSide.both,
@@ -533,7 +533,7 @@ class TestOrderBitmexRestApi:
                 'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, SELL, OrderType.stop_market, {
-                'filled_volume': 0.0,
+                'filled_volume': 0,
                 'schema': OrderSchema.margin,
                 'side': SELL,
                 'position_side': PositionSide.both,
@@ -549,7 +549,7 @@ class TestOrderBitmexRestApi:
                 'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, BUY, OrderType.limit, {
-                'filled_volume': 0.0,
+                'filled_volume': 0,
                 'schema': OrderSchema.margin,
                 'side': BUY,
                 'position_side': PositionSide.both,
@@ -563,9 +563,10 @@ class TestOrderBitmexRestApi:
                 'is_iceberg': False,
                 'is_passive': False,
                 'comments': "Submitted via API."
+
             }),
             ('tbitmex', OrderSchema.margin, SELL, OrderType.limit, {
-                'filled_volume': 0.0,
+                'filled_volume': 0,
                 'schema': OrderSchema.margin,
                 'side': SELL,
                 'position_side': PositionSide.both,
@@ -581,7 +582,7 @@ class TestOrderBitmexRestApi:
                 'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, BUY, OrderType.stop_limit, {
-                'filled_volume': 0.0,
+                'filled_volume': 0,
                 'schema': OrderSchema.margin,
                 'side': BUY,
                 'position_side': PositionSide.both,
@@ -597,7 +598,7 @@ class TestOrderBitmexRestApi:
                 'comments': "Submitted via API."
             }),
             ('tbitmex', OrderSchema.margin, SELL, OrderType.stop_limit, {
-                'filled_volume': 0.0,
+                'filled_volume': 0,
                 'schema': OrderSchema.margin,
                 'side': SELL,
                 'position_side': PositionSide.both,
@@ -612,28 +613,131 @@ class TestOrderBitmexRestApi:
                 'is_passive': False,
                 'comments': "Submitted via API."
             }),
+            ('tbitmex', OrderSchema.margin, BUY, OrderType.take_profit_limit, {
+                'filled_volume': 0,
+                'schema': OrderSchema.margin,
+                'side': BUY,
+                'position_side': PositionSide.both,
+                'stop_price': 0.0,
+                'symbol': data.SYMBOL,
+                'system_symbol': data.SYSTEM_SYMBOL,
+                'type': OrderType.take_profit_limit,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
+            }),
+            ('tbitmex', OrderSchema.margin, SELL, OrderType.take_profit_limit, {
+                'filled_volume': 0,
+                'schema': OrderSchema.margin,
+                'side': SELL,
+                'position_side': PositionSide.both,
+                'stop_price': 0.0,
+                'symbol': data.SYMBOL,
+                'system_symbol': data.SYSTEM_SYMBOL,
+                'type': OrderType.take_profit_limit,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
+            }),
+            ('tbitmex', OrderSchema.margin, BUY, OrderType.take_profit_market, {
+                'filled_volume': 0,
+                'schema': OrderSchema.margin,
+                'side': BUY,
+                'position_side': PositionSide.both,
+                'stop_price': 0.0,
+                'symbol': data.SYMBOL,
+                'system_symbol': data.SYSTEM_SYMBOL,
+                'type': OrderType.take_profit_market,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.IOC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
+            }),
+            ('tbitmex', OrderSchema.margin, SELL, OrderType.take_profit_market, {
+                'filled_volume': 0,
+                'schema': OrderSchema.margin,
+                'side': SELL,
+                'position_side': PositionSide.both,
+                'stop_price': 0.0,
+                'symbol': data.SYMBOL,
+                'system_symbol': data.SYSTEM_SYMBOL,
+                'type': OrderType.take_profit_market,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.IOC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
+            }),
+            ('tbitmex', OrderSchema.margin, BUY, OrderType.trailing_stop, {
+                'filled_volume': 0,
+                'schema': OrderSchema.margin,
+                'side': BUY,
+                'position_side': PositionSide.both,
+                'stop_price': 0.0,
+                'symbol': data.SYMBOL,
+                'system_symbol': data.SYSTEM_SYMBOL,
+                'type': OrderType.trailing_stop,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.IOC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
+            }),
+            ('tbitmex', OrderSchema.margin, SELL, OrderType.trailing_stop, {
+                'filled_volume': 0,
+                'schema': OrderSchema.margin,
+                'side': SELL,
+                'position_side': PositionSide.both,
+                'stop_price': 0.0,
+                'symbol': data.SYMBOL,
+                'system_symbol': data.SYSTEM_SYMBOL,
+                'type': OrderType.trailing_stop,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.IOC,
+                'iceberg_volume': 0.0,
+                'is_iceberg': False,
+                'is_passive': False,
+                'comments': "Submitted via API."
+            })
         ],
         indirect=['rest'],
     )
     def test_create_order(self, rest: BitmexRestApi, schema: str, side: int, order_type: str, expect: dict):
         symbol = get_symbol(schema)
         default_order_data = deepcopy(order_data.DEFAULT_ORDER_OPTIONS)
-        price = get_order_price(rest, schema, symbol, side)
-        expect['price'] = price
-        if order_type in (OrderType.stop_market, OrderType.stop_limit):
-            stop_price = get_order_stop_price(price, side)
+        price, last_price = get_order_price(rest, schema, symbol, side)
+        if order_type in (OrderType.stop_market, OrderType.take_profit_market, OrderType.trailing_stop):
+            price = last_price
+        if order_type in (OrderType.stop_market, OrderType.stop_limit, OrderType.trailing_stop,
+                          OrderType.take_profit_limit, OrderType.take_profit_market):
+            stop_price = get_order_stop_price(last_price, side, order_type)
             default_order_data.update({'stop_price': stop_price})
             expect['stop_price'] = stop_price
 
+        expect['price'] = price
         order_schema = Schema(fields.ORDER_FIELDS)
         order = rest.create_order(symbol, schema, side, order_data.DEFAULT_ORDER_VOLUME[schema], order_type, price,
                                   default_order_data)
-        assert order_schema.validate(order) == order
-        clear_stock_order_data(order)
 
-        if order_type in (OrderType.market, OrderType.stop_market):
+        if order_type in (OrderType.market, OrderType.stop_market, OrderType.take_profit_market):
             expect['price'] = order['price']
 
+        if order_type == OrderType.trailing_stop:
+            expect['price'] = order['price']
+            expect['stop_price'] = order['stop_price']
+
+        assert order_schema.validate(order) == order
+        clear_stock_order_data(order)
         assert order == expect
         rest.cancel_all_orders(schema)
 
@@ -694,8 +798,9 @@ class TestOrderBitmexRestApi:
         default_order = create_default_order(rest, schema)
         order_schema = Schema(fields.ORDER_FIELDS)
         symbol = get_symbol(schema)
+        price, _ = get_order_price(rest, schema, symbol, default_order['side'])
         order = rest.update_order(default_order['exchange_order_id'], default_order['symbol'], schema,
-                                  price=get_order_price(rest, schema, symbol, default_order['side']),
+                                  price=price,
                                   side=order_data.DEFAULT_ORDER_OPPOSITE_SIDE, volume=default_order['volume'] * 2,
                                   options=order_data.DEFAULT_ORDER_OPTIONS)
         assert order_schema.validate(order) == order

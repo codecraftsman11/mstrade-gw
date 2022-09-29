@@ -1,4 +1,4 @@
-from mst_gateway.connector.api import BUY, SELL, OrderSchema, OrderType, OrderTTL, PositionSide
+from mst_gateway.connector.api import BUY, SELL, OrderSchema, OrderType, PositionSide, OrderTTL
 
 DEFAULT_SYMBOL = "XBTUSD"
 DEFAULT_SYSTEM_SYMBOL = "btcusd"
