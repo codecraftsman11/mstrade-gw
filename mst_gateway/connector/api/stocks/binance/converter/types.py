@@ -399,31 +399,31 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
             'LIMIT': OrderType.limit,
             'MARKET': OrderType.market,
             'STOP_LOSS_LIMIT': OrderType.stop_limit,
-            'STOP_LOSS': OrderType.stop_market,
+            # 'STOP_LOSS': OrderType.stop_market,
             'TAKE_PROFIT_LIMIT': OrderType.take_profit_limit,
-            'TAKE_PROFIT': OrderType.take_profit_market,
+            # 'TAKE_PROFIT': OrderType.take_profit_market,
             # used if exchange order data contain a trailingDelta field with LONG type value
-            'TRAILING_STOP_MARKET': OrderType.trailing_stop,
+            # 'TRAILING_STOP_MARKET': OrderType.trailing_stop,
         },
         OrderSchema.margin_isolated: {
             'LIMIT': OrderType.limit,
             'MARKET': OrderType.market,
             'STOP_LOSS_LIMIT': OrderType.stop_limit,
-            'STOP_LOSS': OrderType.stop_market,
+            # 'STOP_LOSS': OrderType.stop_market,
             'TAKE_PROFIT_LIMIT': OrderType.take_profit_limit,
-            'TAKE_PROFIT': OrderType.take_profit_market,
+            # 'TAKE_PROFIT': OrderType.take_profit_market,
             # used if exchange order data contain a trailingDelta field with LONG type value
-            'TRAILING_STOP_MARKET': OrderType.trailing_stop,
+            # 'TRAILING_STOP_MARKET': OrderType.trailing_stop,
         },
         OrderSchema.exchange: {
             'LIMIT': OrderType.limit,
             'MARKET': OrderType.market,
             'STOP_LOSS_LIMIT': OrderType.stop_limit,
-            'STOP_LOSS': OrderType.stop_market,
+            # 'STOP_LOSS': OrderType.stop_market,
             'TAKE_PROFIT_LIMIT': OrderType.take_profit_limit,
-            'TAKE_PROFIT': OrderType.take_profit_market,
+            # 'TAKE_PROFIT': OrderType.take_profit_market,
             # used if exchange order data contain a trailingDelta field with number type value
-            'TRAILING_STOP_MARKET': OrderType.trailing_stop,
+            # 'TRAILING_STOP_MARKET': OrderType.trailing_stop,
         },
         OrderSchema.margin: {
             'LIMIT': OrderType.limit,
@@ -451,18 +451,18 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
             OrderType.market: 'MARKET',
             OrderType.stop_limit: 'STOP_LOSS_LIMIT',
             OrderType.stop_market: 'MARKET',
-            OrderType.take_profit_limit: 'TAKE_PROFIT',
+            # OrderType.take_profit_limit: 'TAKE_PROFIT',
             OrderType.take_profit_market: 'TAKE_PROFIT_MARKET',
-            OrderType.trailing_stop: 'TRAILING_STOP_MARKET',
+            # OrderType.trailing_stop: 'TRAILING_STOP_MARKET',
         },
         OrderSchema.margin_isolated: {
             OrderType.limit: 'LIMIT',
             OrderType.market: 'MARKET',
             OrderType.stop_limit: 'STOP_LOSS_LIMIT',
             OrderType.stop_market: 'MARKET',
-            OrderType.take_profit_limit: 'TAKE_PROFIT',
+            # OrderType.take_profit_limit: 'TAKE_PROFIT',
             OrderType.take_profit_market: 'TAKE_PROFIT_MARKET',
-            OrderType.trailing_stop: 'TRAILING_STOP_MARKET'
+            # OrderType.trailing_stop: 'TRAILING_STOP_MARKET'
         },
         OrderSchema.exchange: {
             OrderType.limit: 'LIMIT',
@@ -470,8 +470,8 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
             OrderType.stop_limit: 'STOP_LOSS_LIMIT',
             OrderType.stop_market: 'MARKET',
             OrderType.take_profit_limit: 'TAKE_PROFIT_LIMIT',
-            OrderType.take_profit_market: 'TAKE_PROFIT',
-            OrderType.trailing_stop: 'TRAILING_STOP_MARKET',
+            # OrderType.take_profit_market: 'TAKE_PROFIT',
+            # OrderType.trailing_stop: 'TRAILING_STOP_MARKET',
         },
         OrderSchema.margin: {
             OrderType.limit: 'LIMIT',
@@ -515,31 +515,6 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
         return item
 
     @classmethod
-    def generate_parameters_by_order_type(cls, main_params: dict, options: dict, schema: str) -> dict:
-        """
-        Fetches specific order parameters based on the order_type value and adds them
-        to the main parameters.
-
-        """
-        order_type = main_params.pop('order_type', None)
-        exchange_order_type = cls.store_type(schema, order_type)
-        mapping_parameters = cls._store_order_mapping_parameters(exchange_order_type, schema)
-        options = cls._assign_custom_parameter_values(schema, options)
-        all_params = cls.map_api_parameter_names(
-            schema,
-            {'order_type': exchange_order_type, **main_params, **options}
-        )
-        new_params = {}
-        for param_name in mapping_parameters:
-            value = all_params.get(param_name)
-            if value:
-                new_params[param_name] = value
-        new_params.update(
-            cls._store_order_additional_parameters(exchange_order_type, schema)
-        )
-        return new_params
-
-    @classmethod
     def map_api_parameter_names(cls, schema: str, params: dict) -> Optional[dict]:
         """
         Changes the name (key) of any parameters that have a different name in the Binance API.
@@ -551,13 +526,22 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
         else:
             _param_names_map = cls.FUTURES_PARAMETER_NAMES_MAP
         tmp_params = {}
-        params = cls.prefetch_request_data(schema, params)
         for param, value in params.items():
             if value is None:
                 continue
             _param = _param_names_map.get(param) or param
             tmp_params[_param] = value
         return tmp_params
+
+    @classmethod
+    def store_type(cls, schema: str, order_type: Optional[str]) -> str:
+        if schema in (
+                OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin_isolated
+        ) and order_type in (
+                OrderType.stop_market, OrderType.take_profit_market, OrderType.trailing_stop
+        ):
+            raise ConnectorError(f"Invalid order type: {order_type} with schema: {schema}")
+        return super().store_type(schema, order_type)
 
     @classmethod
     def _store_order_mapping_parameters(cls, exchange_order_type: str, schema: str) -> list:
@@ -580,12 +564,10 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
         else:
             _param_names_map = cls.FUTURES_PARAMETER_NAMES_MAP
         for k, v in options.items():
-            if k == 'is_passive' and v:
-                new_options['ttl'] = _param_names_map.get('GTX')
-            elif k == 'ttl':
+            if k == 'ttl':
                 new_options['ttl'] = _param_names_map.get(v)
-            elif k == 'is_iceberg' and v:
-                new_options['iceberg_volume'] = options['iceberg_volume'] or 0
+            elif k == 'is_passive' and v:
+                new_options['ttl'] = _param_names_map.get('GTX')
             else:
                 new_options[k] = v
         return new_options
