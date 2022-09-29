@@ -1,11 +1,10 @@
 import abc
 from typing import Optional
-
-from mst_gateway.exceptions import ConnectorError
 from .order import OrderType
 
 
 class BaseOrderTypeConverter:
+
     # Mapping must be defined in specific converters
     LOAD_TYPE_MAP = {}
     STORE_TYPE_BY_SCHEMA_MAP = {}

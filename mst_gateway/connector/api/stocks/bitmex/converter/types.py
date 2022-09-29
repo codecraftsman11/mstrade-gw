@@ -1,6 +1,4 @@
 from typing import Optional
-
-
 from mst_gateway.connector.api import (
     BaseOrderTypeConverter,
     OrderType,
