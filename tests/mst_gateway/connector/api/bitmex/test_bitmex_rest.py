@@ -1,6 +1,7 @@
 # pylint: disable=no-self-use
 import logging
 import pytest
+import ulid
 from copy import deepcopy
 from schema import Schema
 from typing import Union, Optional
@@ -118,7 +119,7 @@ def get_asset(schema: str) -> Optional[str]:
 def create_default_order(rest: BitmexRestApi,
                          schema: str, order_type: str = order_data.DEFAULT_ORDER_TYPE, options: dict = None) -> dict:
     price, _ = get_order_price(rest=rest, schema=schema, symbol=order_data.DEFAULT_SYMBOL,
-                            side=order_data.DEFAULT_ORDER_SIDE)
+                               side=order_data.DEFAULT_ORDER_SIDE)
     options = options if options else order_data.DEFAULT_ORDER_OPTIONS
     order = rest.create_order(
         schema=schema,
@@ -127,7 +128,8 @@ def create_default_order(rest: BitmexRestApi,
         volume=order_data.DEFAULT_ORDER_VOLUME[schema],
         order_type=order_type,
         price=price,
-        options=options
+        options=options,
+        order_id=f"mst{ulid.ULID()}"
     )
     return order
 
@@ -714,20 +716,24 @@ class TestOrderBitmexRestApi:
     )
     def test_create_order(self, rest: BitmexRestApi, schema: str, side: int, order_type: str, expect: dict):
         symbol = get_symbol(schema)
-        default_order_data = deepcopy(order_data.DEFAULT_ORDER_OPTIONS)
+        options = deepcopy(order_data.DEFAULT_ORDER_OPTIONS)
         price, last_price = get_order_price(rest, schema, symbol, side)
         if order_type in (OrderType.stop_market, OrderType.take_profit_market, OrderType.trailing_stop):
             price = last_price
         if order_type in (OrderType.stop_market, OrderType.stop_limit, OrderType.trailing_stop,
                           OrderType.take_profit_limit, OrderType.take_profit_market):
             stop_price = get_order_stop_price(last_price, side, order_type)
-            default_order_data.update({'stop_price': stop_price})
+            options.update({'stop_price': stop_price})
             expect['stop_price'] = stop_price
 
-        expect['price'] = price
+        order_id = f"mst{ulid.ULID()}"
+        expect.update({
+            'price': price,
+            'order_id': order_id
+        })
         order_schema = Schema(fields.ORDER_FIELDS)
         order = rest.create_order(symbol, schema, side, order_data.DEFAULT_ORDER_VOLUME[schema], order_type, price,
-                                  default_order_data)
+                                  options, order_id=order_id)
 
         if order_type in (OrderType.market, OrderType.stop_market, OrderType.take_profit_market):
             expect['price'] = order['price']
@@ -748,9 +754,13 @@ class TestOrderBitmexRestApi:
     def test_get_order(self, rest: BitmexRestApi, schema):
         default_order = create_default_order(rest, schema)
         expect = deepcopy(order_data.DEFAULT_ORDER[schema])
-        expect['price'] = default_order['price']
+        order_id = default_order['order_id']
+        expect.update({
+            'price': default_order['price'],
+            'order_id': order_id
+        })
         order_schema = Schema(fields.ORDER_FIELDS)
-        order = rest.get_order(default_order['exchange_order_id'], default_order['symbol'], schema)
+        order = rest.get_order(default_order['symbol'], schema, order_id)
         assert order_schema.validate(order) == order
         clear_stock_order_data(order)
         assert order == expect
@@ -763,7 +773,10 @@ class TestOrderBitmexRestApi:
     def test_list_orders(self, rest: BitmexRestApi, schema: str):
         default_order = create_default_order(rest, schema)
         expect = deepcopy(order_data.DEFAULT_ORDER[schema])
-        expect['price'] = default_order['price']
+        expect.update({
+            'price': default_order['price'],
+            'order_id': default_order['order_id']
+        })
         order_schema = Schema(fields.ORDER_FIELDS)
         orders = rest.list_orders(schema, default_order['symbol'])
         for order in orders:
@@ -771,7 +784,6 @@ class TestOrderBitmexRestApi:
         clear_stock_order_data(orders[0])
         assert orders[0] == expect
         rest.cancel_all_orders(schema)
-
 
     @pytest.mark.parametrize(
         'rest, schema, expect', [
@@ -798,11 +810,16 @@ class TestOrderBitmexRestApi:
         default_order = create_default_order(rest, schema)
         order_schema = Schema(fields.ORDER_FIELDS)
         symbol = get_symbol(schema)
+        new_order_id = f"mst{ulid.ULID()}"
+        expect['order_id'] = new_order_id
         price, _ = get_order_price(rest, schema, symbol, default_order['side'])
-        order = rest.update_order(default_order['exchange_order_id'], default_order['symbol'], schema,
+        order = rest.update_order(default_order['symbol'], schema,
+                                  side=order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
+                                  volume=default_order['volume'] * 2,
                                   price=price,
-                                  side=order_data.DEFAULT_ORDER_OPPOSITE_SIDE, volume=default_order['volume'] * 2,
-                                  options=order_data.DEFAULT_ORDER_OPTIONS)
+                                  options=order_data.DEFAULT_ORDER_OPTIONS,
+                                  order_id=default_order['order_id'],
+                                  new_order_id=new_order_id)
         assert order_schema.validate(order) == order
         clear_stock_order_data(order)
         order.pop('price')
@@ -833,9 +850,13 @@ class TestOrderBitmexRestApi:
     )
     def test_cancel_order(self, rest: BitmexRestApi, schema: str, expect: dict):
         default_order = create_default_order(rest, schema)
-        expect['price'] = default_order['price']
+        order_id = default_order['order_id']
+        expect.update({
+            'price': default_order['price'],
+            'order_id': order_id
+        })
         order_schema = Schema(fields.ORDER_FIELDS)
-        order = rest.cancel_order(default_order['exchange_order_id'], default_order['symbol'], schema)
+        order = rest.cancel_order(default_order['symbol'], schema, order_id)
         assert order_schema.validate(order) == order
         clear_stock_order_data(order)
         assert order == expect
@@ -854,7 +875,7 @@ class TestOrderBitmexRestApi:
     )
     def test_close_order(self, rest: BitmexRestApi, schema: str):
         default_order = create_default_order(rest, schema)
-        assert rest.close_order(default_order['exchange_order_id'], default_order['symbol'], schema)
+        assert rest.close_order(default_order['symbol'], schema, default_order['order_id'])
         rest.cancel_all_orders(schema)
 
     @pytest.mark.parametrize(
