@@ -199,7 +199,6 @@ class BinanceMarginWssApi(BinanceWssApi):
     }
     auth_subscribers = {
         'wallet': subscr_class.BinanceWalletSubscriber(),
-        'wallet_extra': subscr_class.BinanceWalletExtraSubscriber(),
         'order': subscr_class.BinanceOrderSubscriber(),
         'position': subscr_class.BinanceMarginPositionSubscriber(),
     }

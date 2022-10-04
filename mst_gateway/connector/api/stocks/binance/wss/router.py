@@ -64,7 +64,7 @@ class BinanceMarginWssRouter(BinanceWssRouter):
         'kline': 'quote_bin',
         '24hrTicker': 'symbol',
         'bookTicker': 'symbol',
-        'ACCOUNT_UPDATE': ['position', 'wallet', 'wallet_extra'],
+        'ACCOUNT_UPDATE': ['position', 'wallet'],
         'ORDER_TRADE_UPDATE': 'order',
         'markPriceUpdate': ['position', 'symbol'],
         'ACCOUNT_CONFIG_UPDATE': 'position',

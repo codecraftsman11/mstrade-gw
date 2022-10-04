@@ -1,7 +1,6 @@
 from __future__ import annotations
 import asyncio
 import json
-from copy import deepcopy
 from asyncio import CancelledError
 from typing import TYPE_CHECKING, Optional
 from websockets.exceptions import ConnectionClosedError
@@ -159,54 +158,52 @@ class BinanceWalletSubscriber(BinanceSubscriber):
     subscription = "wallet"
     subscriptions = ()
 
-    @classmethod
-    def mapping_wallet_data(cls, wallet_data: dict) -> dict:
-        wallet_state = deepcopy(wallet_data)
-        wallet_state['bls'] = {b['cur'].lower(): b for b in wallet_state.pop('bls', [])}
-        if wallet_state.get('ex'):
-            wallet_state['ex']['bls'] = {b['cur'].lower(): b for b in wallet_state['ex'].pop('bls', [])}
-        return wallet_state
-
-    async def get_wallet_state(self, api: BinanceWssApi, client: rest.BinanceRestApi):
+    async def get_state(self, api: BinanceWssApi, client: rest.BinanceRestApi):
         schema_handlers = {
-            OrderSchema.exchange: (client.handler.get_account, utils.load_ws_spot_wallet_data),
-            OrderSchema.margin_cross: (client.handler.get_margin_account, utils.load_ws_margin_cross_wallet_data),
-            OrderSchema.margin: (client.handler.get_futures_account, utils.load_ws_futures_wallet_data),
-            OrderSchema.margin_coin: (client.handler.get_futures_coin_account, utils.load_ws_futures_coin_wallet_data),
+            OrderSchema.exchange: (client.handler.get_account, utils.load_spot_wallet_state),
+            OrderSchema.margin_cross: (client.handler.get_margin_account, utils.load_margin_cross_wallet_state),
+            OrderSchema.margin: (client.handler.get_futures_account, utils.load_futures_wallet_state),
+            OrderSchema.margin_coin: (client.handler.get_futures_coin_account, utils.load_futures_coin_wallet_state)
         }
-        schema = api.schema
-        kwargs = {}
         try:
-            resp = schema_handlers[schema][0]()
-            kwargs['raw_data'] = client.handler.handle_response(resp)
+            data = client.handler.handle_response(schema_handlers[api.schema][0]())
         except (GatewayError, BinanceAPIException):
-            return None, None
-        wallet_data = schema_handlers[schema][1](**kwargs)
-        wallet_state = self.mapping_wallet_data(wallet_data)
-        return wallet_data, wallet_state
+            return {}
+        return schema_handlers[api.schema][1](data)
 
     async def subscribe_wallet_state(self, api: BinanceWssApi, client: rest.BinanceRestApi):
         while True:
-            wallet_data, wallet_state = await self.get_wallet_state(api, client)
-            if wallet_data and wallet_state:
-                api.partial_state_data[self.subscription].update({'wallet_state': wallet_state})
-
+            state = await self.get_state(api, client)
+            api.partial_state_data[self.subscription].update({f"{self.subscription}_state": state})
+            if api.subscriptions.get(self.subscription, {}):
                 message = {
                     'acc': api.account_name,
                     'tb': self.subscription,
                     'sch': api.schema,
                     'act': 'update',
-                    'ex': wallet_data.pop('ex', None),
-                    'd': wallet_data,
+                    'd': list(state.values()),
                 }
                 await api.send_message({self.subscription: message})
             await asyncio.sleep(30)
 
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
-        self.rest_client = rest.BinanceRestApi(auth=api.auth, test=api.test, ratelimit=api.ratelimit)
-        self.rest_client.open()
-        api.tasks.append(asyncio.create_task(self.subscribe_wallet_state(api, self.rest_client)))
+        with rest.BinanceRestApi(auth=api.auth, test=api.test, ratelimit=api.ratelimit) as client:
+            api.tasks.append(asyncio.create_task(self.subscribe_wallet_state(api, client)))
         return {}
+
+
+class BinanceWalletExtraSubscriber(BinanceWalletSubscriber):
+    subscription = "wallet_extra"
+
+    async def get_state(self, api: BinanceWssApi, client: rest.BinanceRestApi):
+        schema_handlers = {
+            OrderSchema.margin_cross: (client.handler.get_margin_account, utils.load_margin_cross_wallet_extra_state)
+        }
+        try:
+            data = client.handler.handle_response(schema_handlers[api.schema][0]())
+        except (GatewayError, BinanceAPIException):
+            return {}
+        return schema_handlers[api.schema][1](data)
 
 
 class BinanceOrderSubscriber(BinanceSubscriber):

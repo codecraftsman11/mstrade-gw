@@ -454,10 +454,6 @@ class TestBinanceWssApi:
             wss.partial_state_data[subscr_name].update({
                 'wallet_state': deepcopy(wallet_message.DEFAULT_WALLET_STATE[schema])
             })
-        if schema in (OrderSchema.margin_cross, OrderSchema.margin) and subscr_name == 'wallet_extra':
-            wss.partial_state_data[subscr_name].update({
-                'wallet_extra_state': deepcopy(wallet_message.DEFAULT_WALLET_EXTRA_STATE[schema])
-            })
 
     @classmethod
     def validate_data(cls, data, subscr_name):
@@ -519,9 +515,6 @@ class TestBinanceWssApi:
             ('tbinance_margin', 'wallet',
              wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.margin],
              wallet_message.DEFAULT_WALLET_GET_DATA_RESULT[OrderSchema.margin]),
-            ('tbinance_margin', 'wallet_extra',
-             wallet_message.DEFAULT_WALLET_SPLIT_MESSAGE_RESULT[OrderSchema.margin],
-             wallet_message.DEFAULT_WALLET_EXTRA_GET_DATA_RESULT[OrderSchema.margin]),
             ('tbinance_margin_coin', 'order',
              order_message.DEFAULT_ORDER_SPLIT_MESSAGE_RESULT[OrderSchema.margin_coin],
              order_message.DEFAULT_ORDER_GET_DATA_RESULT[OrderSchema.margin_coin]),
