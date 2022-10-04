@@ -248,30 +248,33 @@ DEFAULT_WALLET_GET_DATA_RESULT = {
                 'tb': 'wallet',
                 'sch': 'exchange',
                 'act': 'update',
-                'd': [
-                    {
-                        'cur': 'BTC',
-                        'bl': 0.991,
-                        'wbl': 0.991,
-                        'upnl': 0.0,
-                        'mbl': 0.991,
-                        'mm': 0.0,
-                        'im': 0.0,
-                        'am': 0.991,
-                        't': 'hold'
-                    },
-                    {
-                        'cur': 'USDT',
-                        'bl': 10873.42542493,
-                        'wbl': 10824.22542493,
-                        'upnl': 0.0,
-                        'mbl': 10873.42542493,
-                        'mm': 0.0,
-                        'im': 49.2,
-                        'am': 10824.22542493,
-                        't': 'hold'
-                    }
-                ]
+                'd': {
+                    'bls': [
+                        {
+                            'cur': 'BTC',
+                            'bl': 0.991,
+                            'wbl': 0.991,
+                            'upnl': 0.0,
+                            'mbl': 0.991,
+                            'mm': 0.0,
+                            'im': 0.0,
+                            'am': 0.991,
+                            't': 'hold'
+                        },
+                        {
+                            'cur': 'USDT',
+                            'bl': 10873.42542493,
+                            'wbl': 10824.22542493,
+                            'upnl': 0.0,
+                            'mbl': 10873.42542493,
+                            'mm': 0.0,
+                            'im': 49.2,
+                            'am': 10824.22542493,
+                            't': 'hold'
+                        }
+                    ],
+                },
+                'ex': None,
             }
         }
     ],
@@ -282,41 +285,46 @@ DEFAULT_WALLET_GET_DATA_RESULT = {
                 'tb': 'wallet',
                 'sch': OrderSchema.margin,
                 'act': 'update',
-                'd': [
-                    {
-                        'cur': 'USDT',
-                        'bl': 9999.96949206,
-                        'wbl': 9999.97513506,
-                        'upnl': 0.005643,
-                        'mbl': 9999.97513506,
-                        'mm': 0.0,
-                        'im': 0.0,
-                        'am': 9999.97513506,
-                        't': 'trade'
-                    },
-                    {
-                        'cur': 'BNB',
-                        'bl': 0.0,
-                        'wbl': 0.0,
-                        'upnl': 0.0,
-                        'mbl': 0.0,
-                        'mm': 0.0,
-                        'im': 0.0,
-                        'am': 0.0,
-                        't': 'trade'
-                    },
-                    {
-                        'cur': 'BUSD',
-                        'bl': 0.0,
-                        'wbl': 0.0,
-                        'upnl': 0.0,
-                        'mbl': 0.0,
-                        'mm': 0.0,
-                        'im': 0.0,
-                        'am': 0.0,
-                        't': 'trade'
-                    }
-                ]
+                'd': {
+                    'bls': [
+                        {
+                            'cur': 'USDT',
+                            'bl': 9999.96949206,
+                            'wbl': 9999.97513506,
+                            'upnl': 0.005643,
+                            'mbl': 9999.97513506,
+                            'mm': 0.0,
+                            'im': 0.0,
+                            'am': 9999.97513506,
+                            't': 'trade'
+                        },
+                        {
+                            'cur': 'BNB',
+                            'bl': 0.0,
+                            'wbl': 0.0,
+                            'upnl': 0.0,
+                            'mbl': 0.0,
+                            'mm': 0.0,
+                            'im': 0.0,
+                            'am': 0.0,
+                            't': 'trade'
+                        },
+                        {
+                            'cur': 'BUSD',
+                            'bl': 0.0,
+                            'wbl': 0.0,
+                            'upnl': 0.0,
+                            'mbl': 0.0,
+                            'mm': 0.0,
+                            'im': 0.0,
+                            'am': 0.0,
+                            't': 'trade'
+                        },
+                    ],
+                },
+                'ex': {
+                    'tre': True
+                }
             }
         }
     ],
@@ -325,168 +333,140 @@ DEFAULT_WALLET_GET_DATA_RESULT = {
             'wallet': {
                 'acc': 'tbinance.tbinance_margin',
                 'tb': 'wallet',
-                'sch': OrderSchema.margin_coin,
+                'sch': 'margin_coin',
                 'act': 'update',
-                'd': [
-                    {
-                        'cur': 'BTC',
-                        'bl': 9.99965786,
-                        'wbl': 9.99955475,
-                        'upnl': 3e-08,
-                        'mbl': 9.99965789,
-                        'mm': 8.25e-06,
-                        'im': 0.00010314,
-                        'am': 9.99955475,
-                        't': 'trade'
-                    },
-                    {
-                        'cur': 'ADA',
-                        'bl': 100000.0,
-                        'wbl': 100000.0,
-                        'upnl': 0.0,
-                        'mbl': 100000.0,
-                        'mm': 0.0,
-                        'im': 0.0,
-                        'am': 100000.0,
-                        't': 'hold'
-                    }
-                ]
+                'd': {
+                    'bls': [
+                        {
+                            'cur': 'BTC',
+                            'bl': 9.99965786,
+                            'wbl': 9.99955475,
+                            'upnl': 3e-08,
+                            'mbl': 9.99965789,
+                            'mm': 8.25e-06,
+                            'im': 0.00010314,
+                            'am': 9.99955475,
+                            't': 'trade'
+                        },
+                        {
+                            'cur': 'ADA',
+                            'bl': 100000.0,
+                            'wbl': 100000.0,
+                            'upnl': 0.0,
+                            'mbl': 100000.0,
+                            'mm': 0.0,
+                            'im': 0.0,
+                            'am': 100000.0,
+                            't': 'hold'
+                        }
+                    ],
+                },
+                'ex': {
+                    'tre': True
+                }
             }
         }
     ],
 }
-DEFAULT_WALLET_EXTRA_GET_DATA_RESULT = {
-    OrderSchema.margin: [
-        {
-            'wallet_extra': {
-                'acc': 'tbinance.tbinance_margin',
-                'tb': 'wallet_extra',
-                'sch': OrderSchema.margin,
-                'act': 'update',
-                'd': [
-                    {
-                        'cur': 'USDT',
-                        'bor': 0.0,
-                        'ist': 0.0
-                    },
-                    {
-                        'cur': 'BNB',
-                        'bor': 0.0,
-                        'ist': 0.0
-                    },
-                    {
-                        'cur': 'BUSD',
-                        'bor': 0.0,
-                        'ist': 0.0
-                    }
-                ]
-            }
-        }
-    ]
-}
 
 DEFAULT_WALLET_STATE = {
     OrderSchema.exchange: {
-        'btc': {
-            'cur': 'BTC',
-            'bl': 0.991,
-            'wbl': 0.991,
-            'upnl': 0.0,
-            'mbl': 0.991,
-            'mm': 0.0,
-            'im': 0.0,
-            'am': 0.991,
-            't': 'hold'
+        'tbl': {'btc': 0.20512901, 'usd': 9999.96949206},
+        'tupnl': {'btc': 0.0, 'usd': 0.0},
+        'tmbl': {'btc': 0.0, 'usd': 0.0},
+        'bls': {
+            'btc': {
+                'cur': 'BTC',
+                'bl': 0.991,
+                'wbl': 0.991,
+                'upnl': 0.0,
+                'mbl': 0.991,
+                'mm': 0.0,
+                'im': 0.0,
+                'am': 0.991,
+                't': 'hold'
+            },
+            'usdt': {
+                'cur': 'USDT',
+                'bl': 10873.42542493,
+                'wbl': 10824.22542493,
+                'upnl': 0.0,
+                'mbl': 10873.42542493,
+                'mm': 0.0,
+                'im': 49.2,
+                'am': 10824.22542493,
+                't': 'hold'
+            }
         },
-        'usdt': {
-            'cur': 'USDT',
-            'bl': 10873.42542493,
-            'wbl': 10824.22542493,
-            'upnl': 0.0,
-            'mbl': 10873.42542493,
-            'mm': 0.0,
-            'im': 49.2,
-            'am': 10824.22542493,
-            't': 'hold'
-        }
+        'ex': None
     },
     OrderSchema.margin: {
-        'usdt': {
-            'cur': 'USDT',
-            'bl': 9999.96949206,
-            'wbl': 9999.97513506,
-            'upnl': 0.0,
-            'mbl': 9999.97513506,
-            'mm': 0.0,
-            'im': 0.0,
-            'am': 9999.97513506,
-            't': 'trade'
+        'bls': {
+            'usdt': {
+                'cur': 'USDT',
+                'bl': 9999.96949206,
+                'wbl': 9999.97513506,
+                'upnl': 0.0,
+                'mbl': 9999.97513506,
+                'mm': 0.0,
+                'im': 0.0,
+                'am': 9999.97513506,
+                't': 'trade'
+            },
+            'bnb': {
+                'cur': 'BNB',
+                'bl': 0.0,
+                'wbl': 0.0,
+                'upnl': 0.0,
+                'mbl': 0.0,
+                'mm': 0.0,
+                'im': 0.0,
+                'am': 0.0,
+                't': 'trade'
+            },
+            'busd': {
+                'cur': 'BUSD',
+                'bl': 0.0,
+                'wbl': 0.0,
+                'upnl': 0.0,
+                'mbl': 0.0,
+                'mm': 0.0,
+                'im': 0.0,
+                'am': 0.0,
+                't': 'trade'
+            }
         },
-        'bnb': {
-            'cur': 'BNB',
-            'bl': 0.0,
-            'wbl': 0.0,
-            'upnl': 0.0,
-            'mbl': 0.0,
-            'mm': 0.0,
-            'im': 0.0,
-            'am': 0.0,
-            't': 'trade'
-        },
-        'busd': {
-            'cur': 'BUSD',
-            'bl': 0.0,
-            'wbl': 0.0,
-            'upnl': 0.0,
-            'mbl': 0.0,
-            'mm': 0.0,
-            'im': 0.0,
-            'am': 0.0,
-            't': 'trade'
+        'ex': {
+            'tre': True
         }
     },
     OrderSchema.margin_coin: {
-        'btc': {
-            'cur': 'BTC',
-            'bl': 9.99965786,
-            'wbl': 9.99951235,
-            'upnl': 3e-08,
-            'mbl': 9.99965789,
-            'mm': 8.25e-06,
-            'im': 0.00010314,
-            'am': 9.99964964,
-            't': 'trade'
+        'bls': {
+            'btc': {
+                'cur': 'BTC',
+                'bl': 9.99965786,
+                'wbl': 9.99951235,
+                'upnl': 3e-08,
+                'mbl': 9.99965789,
+                'mm': 8.25e-06,
+                'im': 0.00010314,
+                'am': 9.99964964,
+                't': 'trade'
+            },
+            'ada': {
+                'cur': 'ADA',
+                'bl': 100000.0,
+                'wbl': 100000.0,
+                'upnl': 0.0,
+                'mbl': 100000.0,
+                'mm': 0.0,
+                'im': 0.0,
+                'am': 100000.0,
+                't': 'hold'
+            }
         },
-        'ada': {
-            'cur': 'ADA',
-            'bl': 100000.0,
-            'wbl': 100000.0,
-            'upnl': 0.0,
-            'mbl': 100000.0,
-            'mm': 0.0,
-            'im': 0.0,
-            'am': 100000.0,
-            't': 'hold'
-        }
-    }
-}
-
-DEFAULT_WALLET_EXTRA_STATE = {
-    OrderSchema.margin: {
-        'usdt': {
-            'cur': 'USDT',
-            'bor': 0.0,
-            'ist': 0.0
-        },
-        'bnb': {
-            'cur': 'BNB',
-            'bor': 0.0,
-            'ist': 0.0
-        },
-        'busd': {
-            'cur': 'BUSD',
-            'bor': 0.0,
-            'ist': 0.0
+        'ex': {
+            'tre': True
         }
     }
 }
