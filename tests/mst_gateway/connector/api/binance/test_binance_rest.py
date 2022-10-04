@@ -1,7 +1,6 @@
 import logging
 import pytest
 from copy import deepcopy
-from uuid import uuid4
 from datetime import datetime, timedelta
 from typing import Optional
 from schema import Schema
@@ -64,6 +63,7 @@ def get_symbol(schema):
 
 def create_default_order(rest: BinanceRestApi, schema):
     symbol = get_symbol(schema)
+    price, _ = get_order_price(rest, schema, symbol, order_data.DEFAULT_ORDER_SIDE)
     return rest.create_order(
         schema=schema,
         symbol=symbol,
@@ -71,9 +71,8 @@ def create_default_order(rest: BinanceRestApi, schema):
         position_side=order_data.DEFAULT_ORDER_POSITION_SIDE,
         volume=order_data.DEFAULT_ORDER_VOLUME[schema],
         order_type=OrderType.limit,
-        price=get_order_price(rest, schema, symbol, order_data.DEFAULT_ORDER_SIDE),
+        price=price,
         options=order_data.DEFAULT_ORDER_OPTIONS,
-        order_id=str(uuid4())
     )
 
 
@@ -644,107 +643,107 @@ class TestOrderBinanceRestApi:
     @pytest.mark.parametrize(
         'rest, schema, side, order_type, expect', [
             ('tbinance_spot', OrderSchema.exchange, BUY, OrderType.market, {
-                 'active': True,
-                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
-                 'schema': OrderSchema.exchange,
-                 'side': BUY,
-                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop_price': 0.0,
-                 'symbol': 'BTCUSDT',
-                 'system_symbol': 'btcusdt',
-                 'type': OrderType.market,
-                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
-                 'ttl': OrderTTL.GTC,
-                 'is_iceberg': False,
-                 'iceberg_volume': 0.0,
-                 'is_passive': False,
-                 'comments': None
-             }),
+                'active': True,
+                'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
+                'schema': OrderSchema.exchange,
+                'side': BUY,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSDT',
+                'system_symbol': 'btcusdt',
+                'type': OrderType.market,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
             ('tbinance_spot', OrderSchema.exchange, SELL, OrderType.market, {
-                 'active': True,
-                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
-                 'schema': OrderSchema.exchange,
-                 'side': SELL,
-                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop_price': 0.0,
-                 'symbol': 'BTCUSDT',
-                 'system_symbol': 'btcusdt',
-                 'type': OrderType.market,
-                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
-                 'ttl': OrderTTL.GTC,
-                 'is_iceberg': False,
-                 'iceberg_volume': 0.0,
-                 'is_passive': False,
-                 'comments': None
-             }),
+                'active': True,
+                'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
+                'schema': OrderSchema.exchange,
+                'side': SELL,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSDT',
+                'system_symbol': 'btcusdt',
+                'type': OrderType.market,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
             ('tbinance_spot', OrderSchema.exchange, BUY, OrderType.limit, {
-                 'active': False,
-                 'filled_volume': 0.0,
-                 'schema': OrderSchema.exchange,
-                 'side': BUY,
-                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop_price': 0.0,
-                 'symbol': 'BTCUSDT',
-                 'system_symbol': 'btcusdt',
-                 'type': OrderType.limit,
-                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
-                 'ttl': OrderTTL.GTC,
-                 'is_iceberg': False,
-                 'iceberg_volume': 0.0,
-                 'is_passive': False,
-                 'comments': None
-             }),
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.exchange,
+                'side': BUY,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSDT',
+                'system_symbol': 'btcusdt',
+                'type': OrderType.limit,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
             ('tbinance_spot', OrderSchema.exchange, SELL, OrderType.limit, {
-                 'active': False,
-                 'filled_volume': 0.0,
-                 'schema': OrderSchema.exchange,
-                 'side': SELL,
-                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop_price': 0.0,
-                 'symbol': 'BTCUSDT',
-                 'system_symbol': 'btcusdt',
-                 'type': OrderType.limit,
-                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
-                 'ttl': OrderTTL.GTC,
-                 'is_iceberg': False,
-                 'iceberg_volume': 0.0,
-                 'is_passive': False,
-                 'comments': None
-             }),
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.exchange,
+                'side': SELL,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSDT',
+                'system_symbol': 'btcusdt',
+                'type': OrderType.limit,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
             ('tbinance_spot', OrderSchema.exchange, BUY, OrderType.stop_limit, {
-                 'active': False,
-                 'filled_volume': 0.0,
-                 'schema': OrderSchema.exchange,
-                 'side': BUY,
-                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop_price': 0.0,
-                 'symbol': 'BTCUSDT',
-                 'system_symbol': 'btcusdt',
-                 'type': OrderType.stop_limit,
-                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
-                 'ttl': OrderTTL.GTC,
-                 'is_iceberg': False,
-                 'iceberg_volume': 0.0,
-                 'is_passive': False,
-                 'comments': None
-             }),
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.exchange,
+                'side': BUY,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSDT',
+                'system_symbol': 'btcusdt',
+                'type': OrderType.stop_limit,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
             ('tbinance_spot', OrderSchema.exchange, SELL, OrderType.stop_limit, {
-                 'active': False,
-                 'filled_volume': 0.0,
-                 'schema': OrderSchema.exchange,
-                 'side': SELL,
-                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop_price': 0.0,
-                 'symbol': 'BTCUSDT',
-                 'system_symbol': 'btcusdt',
-                 'type': OrderType.stop_limit,
-                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
-                 'ttl': OrderTTL.GTC,
-                 'is_iceberg': False,
-                 'iceberg_volume': 0.0,
-                 'is_passive': False,
-                 'comments': None
-             }),
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.exchange,
+                'side': SELL,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSDT',
+                'system_symbol': 'btcusdt',
+                'type': OrderType.stop_limit,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
             ('tbinance_spot', OrderSchema.exchange, BUY, OrderType.stop_market, {
                 'active': True,
                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
@@ -780,73 +779,73 @@ class TestOrderBinanceRestApi:
                 'comments': None
             }),
             ('tbinance_margin', OrderSchema.margin, BUY, OrderType.market, {
-                 'active': True,
-                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
-                 'schema': OrderSchema.margin,
-                 'side': BUY,
-                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop_price': 0.0,
-                 'symbol': 'BTCUSDT',
-                 'system_symbol': 'btcusdt',
-                 'type': OrderType.market,
-                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
-                 'ttl': OrderTTL.GTC,
-                 'is_iceberg': False,
-                 'iceberg_volume': 0.0,
-                 'is_passive': False,
-                 'comments': None
-             }),
-            ('tbinance_margin', OrderSchema.margin, SELL, OrderType.market,  {
-                 'active': True,
-                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
-                 'schema': OrderSchema.margin,
-                 'side': SELL,
-                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop_price': 0.0,
-                 'symbol': 'BTCUSDT',
-                 'system_symbol': 'btcusdt',
-                 'type': OrderType.market,
-                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
-                 'ttl': OrderTTL.GTC,
-                 'is_iceberg': False,
-                 'iceberg_volume': 0.0,
-                 'is_passive': False,
-                 'comments': None
-             }),
+                'active': True,
+                'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'schema': OrderSchema.margin,
+                'side': BUY,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSDT',
+                'system_symbol': 'btcusdt',
+                'type': OrderType.market,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
+            ('tbinance_margin', OrderSchema.margin, SELL, OrderType.market, {
+                'active': True,
+                'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'schema': OrderSchema.margin,
+                'side': SELL,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSDT',
+                'system_symbol': 'btcusdt',
+                'type': OrderType.market,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
             ('tbinance_margin', OrderSchema.margin, BUY, OrderType.limit, {
-                 'active': False,
-                 'filled_volume': 0.0,
-                 'schema': OrderSchema.margin,
-                 'side': BUY,
-                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop_price': 0.0,
-                 'symbol': 'BTCUSDT',
-                 'system_symbol': 'btcusdt',
-                 'type': OrderType.limit,
-                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
-                 'ttl': OrderTTL.GTC,
-                 'is_iceberg': False,
-                 'iceberg_volume': 0.0,
-                 'is_passive': False,
-                 'comments': None
-             }),
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.margin,
+                'side': BUY,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSDT',
+                'system_symbol': 'btcusdt',
+                'type': OrderType.limit,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
             ('tbinance_margin', OrderSchema.margin, SELL, OrderType.limit, {
-                 'active': False,
-                 'filled_volume': 0.0,
-                 'schema': OrderSchema.margin,
-                 'side': SELL,
-                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop_price': 0.0,
-                 'symbol': 'BTCUSDT',
-                 'system_symbol': 'btcusdt',
-                 'type': OrderType.limit,
-                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
-                 'ttl': OrderTTL.GTC,
-                 'is_iceberg': False,
-                 'iceberg_volume': 0.0,
-                 'is_passive': False,
-                 'comments': None
-             }),
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.margin,
+                'side': SELL,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSDT',
+                'system_symbol': 'btcusdt',
+                'type': OrderType.limit,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
             ('tbinance_margin', OrderSchema.margin, BUY, OrderType.stop_limit, {
                 'active': False,
                 'filled_volume': 0.0,
@@ -916,73 +915,73 @@ class TestOrderBinanceRestApi:
                 'comments': None
             }),
             ('tbinance_margin', OrderSchema.margin_coin, BUY, OrderType.market, {
-                 'active': True,
-                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
-                 'schema': OrderSchema.margin_coin,
-                 'side': BUY,
-                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop_price': 0.0,
-                 'symbol': 'BTCUSD_PERP',
-                 'system_symbol': 'btcusd',
-                 'type': OrderType.market,
-                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
-                 'ttl': OrderTTL.GTC,
-                 'is_iceberg': False,
-                 'iceberg_volume': 0.0,
-                 'is_passive': False,
-                 'comments': None
-             }),
+                'active': True,
+                'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
+                'schema': OrderSchema.margin_coin,
+                'side': BUY,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSD_PERP',
+                'system_symbol': 'btcusd',
+                'type': OrderType.market,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
             ('tbinance_margin', OrderSchema.margin_coin, SELL, OrderType.market, {
-                 'active': True,
-                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
-                 'schema': OrderSchema.margin_coin,
-                 'side': SELL,
-                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop_price': 0.0,
-                 'symbol': 'BTCUSD_PERP',
-                 'system_symbol': 'btcusd',
-                 'type': OrderType.market,
-                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
-                 'ttl': OrderTTL.GTC,
-                 'is_iceberg': False,
-                 'iceberg_volume': 0.0,
-                 'is_passive': False,
-                 'comments': None
-             }),
+                'active': True,
+                'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
+                'schema': OrderSchema.margin_coin,
+                'side': SELL,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSD_PERP',
+                'system_symbol': 'btcusd',
+                'type': OrderType.market,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
             ('tbinance_margin', OrderSchema.margin_coin, BUY, OrderType.limit, {
-                 'active': False,
-                 'filled_volume': 0.0,
-                 'schema': OrderSchema.margin_coin,
-                 'side': BUY,
-                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop_price': 0.0,
-                 'symbol': 'BTCUSD_PERP',
-                 'system_symbol': 'btcusd',
-                 'type': OrderType.limit,
-                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
-                 'ttl': OrderTTL.GTC,
-                 'is_iceberg': False,
-                 'iceberg_volume': 0.0,
-                 'is_passive': False,
-                 'comments': None
-             }),
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.margin_coin,
+                'side': BUY,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSD_PERP',
+                'system_symbol': 'btcusd',
+                'type': OrderType.limit,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
             ('tbinance_margin', OrderSchema.margin_coin, SELL, OrderType.limit, {
-                 'active': False,
-                 'filled_volume': 0.0,
-                 'schema': OrderSchema.margin_coin,
-                 'side': SELL,
-                 'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                 'stop_price': 0.0,
-                 'symbol': 'BTCUSD_PERP',
-                 'system_symbol': 'btcusd',
-                 'type': OrderType.limit,
-                 'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
-                 'ttl': OrderTTL.GTC,
-                 'is_iceberg': False,
-                 'iceberg_volume': 0.0,
-                 'is_passive': False,
-                 'comments': None
-             }),
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.margin_coin,
+                'side': SELL,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSD_PERP',
+                'system_symbol': 'btcusd',
+                'type': OrderType.limit,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
             ('tbinance_margin', OrderSchema.margin_coin, BUY, OrderType.stop_limit, {
                 'active': False,
                 'filled_volume': 0.0,
@@ -1051,33 +1050,276 @@ class TestOrderBinanceRestApi:
                 'is_passive': False,
                 'comments': None
             }),
+            ('tbinance_margin', OrderSchema.margin, BUY, OrderType.take_profit_market, {
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.margin,
+                'side': BUY,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSDT',
+                'system_symbol': 'btcusdt',
+                'type': OrderType.take_profit_market,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
+            ('tbinance_margin', OrderSchema.margin, SELL, OrderType.take_profit_market, {
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.margin,
+                'side': SELL,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSDT',
+                'system_symbol': 'btcusdt',
+                'type': OrderType.take_profit_market,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
+            ('tbinance_margin', OrderSchema.margin_coin, BUY, OrderType.take_profit_market, {
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.margin_coin,
+                'side': BUY,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSD_PERP',
+                'system_symbol': 'btcusd',
+                'type': OrderType.take_profit_market,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
+            ('tbinance_margin', OrderSchema.margin_coin, SELL, OrderType.take_profit_market, {
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.margin_coin,
+                'side': SELL,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSD_PERP',
+                'system_symbol': 'btcusd',
+                'type': OrderType.take_profit_market,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
+            ('tbinance_margin', OrderSchema.margin, BUY, OrderType.take_profit_limit, {
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.margin,
+                'side': BUY,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSDT',
+                'system_symbol': 'btcusdt',
+                'type': OrderType.take_profit_limit,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
+            ('tbinance_margin', OrderSchema.margin, SELL, OrderType.take_profit_limit, {
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.margin,
+                'side': SELL,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSDT',
+                'system_symbol': 'btcusdt',
+                'type': OrderType.take_profit_limit,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
+            ('tbinance_margin', OrderSchema.margin_coin, BUY, OrderType.take_profit_limit, {
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.margin_coin,
+                'side': BUY,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSD_PERP',
+                'system_symbol': 'btcusd',
+                'type': OrderType.take_profit_limit,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
+            ('tbinance_margin', OrderSchema.margin_coin, SELL, OrderType.take_profit_limit, {
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.margin_coin,
+                'side': SELL,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSD_PERP',
+                'system_symbol': 'btcusd',
+                'type': OrderType.take_profit_limit,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
+            ('tbinance_spot', OrderSchema.exchange, BUY, OrderType.take_profit_limit, {
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.exchange,
+                'side': BUY,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSDT',
+                'system_symbol': 'btcusdt',
+                'type': OrderType.take_profit_limit,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
+            ('tbinance_spot', OrderSchema.exchange, SELL, OrderType.take_profit_limit, {
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.exchange,
+                'side': SELL,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSDT',
+                'system_symbol': 'btcusdt',
+                'type': OrderType.take_profit_limit,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
+            ('tbinance_margin', OrderSchema.margin, BUY, OrderType.trailing_stop, {
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.margin,
+                'side': BUY,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSDT',
+                'system_symbol': 'btcusdt',
+                'type': OrderType.trailing_stop,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
+            ('tbinance_margin', OrderSchema.margin, SELL, OrderType.trailing_stop, {
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.margin,
+                'side': SELL,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSDT',
+                'system_symbol': 'btcusdt',
+                'type': OrderType.trailing_stop,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
+            ('tbinance_margin', OrderSchema.margin_coin, BUY, OrderType.trailing_stop, {
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.margin_coin,
+                'side': BUY,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSD_PERP',
+                'system_symbol': 'btcusd',
+                'type': OrderType.trailing_stop,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
+            ('tbinance_margin', OrderSchema.margin_coin, SELL, OrderType.trailing_stop, {
+                'active': False,
+                'filled_volume': 0.0,
+                'schema': OrderSchema.margin_coin,
+                'side': SELL,
+                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
+                'stop_price': 0.0,
+                'symbol': 'BTCUSD_PERP',
+                'system_symbol': 'btcusd',
+                'type': OrderType.trailing_stop,
+                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin_coin],
+                'ttl': OrderTTL.GTC,
+                'is_iceberg': False,
+                'iceberg_volume': 0.0,
+                'is_passive': False,
+                'comments': None
+            }),
         ],
         indirect=['rest'],
     )
     def test_create_order(self, rest: BinanceRestApi, schema, side, order_type, expect):
         symbol = get_symbol(schema)
-        options = deepcopy(order_data.DEFAULT_ORDER_OPTIONS)
-        price = get_order_price(rest, schema, symbol, side)
-        order_id = str(uuid4())
-        expect.update({
-            'price': price,
-            'order_id': order_id
-        })
-        if order_type in (OrderType.stop_market, OrderType.stop_limit):
-            stop_price = get_order_stop_price(price, side)
-            options.update({'stop_price': stop_price})
+        default_order_data = deepcopy(order_data.DEFAULT_ORDER_OPTIONS)
+        price, last_price = get_order_price(rest, schema, symbol, side)
+        if order_type in (OrderType.stop_market, OrderType.take_profit_market, OrderType.trailing_stop):
+            price = last_price
+        if order_type in (OrderType.stop_market, OrderType.stop_limit,
+                          OrderType.take_profit_limit, OrderType.take_profit_market, OrderType.trailing_stop):
+            stop_price = get_order_stop_price(last_price, side, order_type)
+            default_order_data.update({'stop_price': stop_price})
             expect['stop_price'] = stop_price
-        order = rest.create_order(symbol, schema, side, order_data.DEFAULT_ORDER_VOLUME[schema], order_type, price,
-                                  options, PositionSide.both, order_id)
-        assert Schema(fields.ORDER_FIELDS).validate(order) == order
-        clear_stock_order_data(order)
 
-        if order_type in (OrderType.market, OrderType.stop_market):
+        expect['price'] = price
+        order = rest.create_order(symbol, schema, side, order_data.DEFAULT_ORDER_VOLUME[schema], order_type, price,
+                                  default_order_data, PositionSide.both)
+
+        if order_type == OrderType.trailing_stop:
+            expect['stop_price'] = order['stop_price']
+
+        if order_type in (OrderType.market, OrderType.stop_market, OrderType.trailing_stop,
+                          OrderType.take_profit_limit, OrderType.take_profit_market, OrderType.trailing_stop):
             expect['price'] = order['price']
+
         if order_type == OrderType.stop_market and schema in (
                 OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin_isolated):
             expect['stop_price'] = order['stop_price']
 
+        assert Schema(fields.ORDER_FIELDS).validate(order) == order
+        clear_stock_order_data(order)
         assert order == expect
         rest.cancel_all_orders(schema)
 
@@ -1089,12 +1331,8 @@ class TestOrderBinanceRestApi:
     def test_get_order(self, rest: BinanceRestApi, schema):
         default_order = create_default_order(rest, schema)
         expect = deepcopy(order_data.DEFAULT_ORDER[schema])
-        order_id = default_order['order_id']
-        expect.update({
-            'price': default_order['price'],
-            'order_id': order_id
-        })
-        order = rest.get_order(default_order['symbol'], schema, order_id)
+        expect['price'] = default_order['price']
+        order = rest.get_order(default_order['exchange_order_id'], default_order['symbol'], schema)
         assert Schema(fields.ORDER_FIELDS).validate(order) == order
         clear_stock_order_data(order)
         assert order == expect
@@ -1172,18 +1410,15 @@ class TestOrderBinanceRestApi:
     )
     def test_update_order(self, rest: BinanceRestApi, schema: str, expect):
         default_order = create_default_order(rest, schema)
-        symbol = default_order['symbol']
-        new_order_id = str(uuid4())
-        expect['order_id'] = new_order_id
-        order = rest.update_order(symbol, schema,
+        symbol = get_symbol(schema)
+        price, _ = get_order_price(rest, schema, symbol, default_order['side'])
+        order = rest.update_order(default_order['exchange_order_id'], symbol, schema,
                                   side=order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
                                   volume=default_order['volume'] * 2,
                                   order_type=OrderType.limit,
-                                  price=get_order_price(rest, schema, symbol, default_order['side']),
+                                  price=price,
                                   options=order_data.DEFAULT_ORDER_OPTIONS,
-                                  position_side=PositionSide.both,
-                                  order_id=default_order['order_id'],
-                                  new_order_id=new_order_id)
+                                  position_side=PositionSide.both)
         assert Schema(fields.ORDER_FIELDS).validate(order) == order
         clear_stock_order_data(order)
         order.pop('price')
@@ -1248,12 +1483,8 @@ class TestOrderBinanceRestApi:
     )
     def test_cancel_order(self, rest: BinanceRestApi, schema: str, expect: dict):
         default_order = create_default_order(rest, schema)
-        order_id = default_order['order_id']
-        expect.update({
-            'price': default_order['price'],
-            'order_id': order_id
-        })
-        order = rest.cancel_order(default_order['symbol'], schema, order_id)
+        expect['price'] = default_order['price']
+        order = rest.cancel_order(default_order['exchange_order_id'], default_order['symbol'], schema)
         assert Schema(fields.ORDER_FIELDS).validate(order) == order
         clear_stock_order_data(order)
         assert order == expect
