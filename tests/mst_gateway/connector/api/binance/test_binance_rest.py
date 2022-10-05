@@ -74,7 +74,7 @@ def create_default_order(rest: BinanceRestApi, schema):
         order_type=OrderType.limit,
         price=price,
         options=order_data.DEFAULT_ORDER_OPTIONS,
-        order_id=f"mst{ulid.ULID()}"
+        order_id=f"mst-{ulid.ULID()}"
     )
 
 
