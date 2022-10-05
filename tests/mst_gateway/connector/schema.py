@@ -406,6 +406,7 @@ WS_MESSAGE_DATA_FIELDS = {
     'wallet_extra': {
         'cur': str,
         'bor': float,
-        'ist': float
+        'ist': float,
+        'nb': float
     }
 }

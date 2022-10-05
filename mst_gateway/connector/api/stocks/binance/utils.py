@@ -556,8 +556,6 @@ def ws_margin_cross_wallet(raw_data: dict, state_data: dict) -> list:
     """
     BinanceWalletSerializer
     """
-    balances = state_data['bls']
-    extra_balances = state_data['ex']['bls']
     for b in raw_data.get('B', []):
         _currency = b['a'].lower()
         _free = to_float(b['f'])
@@ -1483,7 +1481,7 @@ def symbol2pair(symbol: str) -> str:
     return symbol.split('_')[0]
 
 
-def load_spot_wallet_state(raw_data: dict) -> dict:
+def load_ws_spot_wallet_state(raw_data: dict) -> dict:
     state = {}
     for b in raw_data.get('balances', []):
         free = to_float(b.get('free'))
@@ -1503,7 +1501,7 @@ def load_spot_wallet_state(raw_data: dict) -> dict:
     return state
 
 
-def load_margin_cross_wallet_state(raw_data: dict) -> dict:
+def load_ws_margin_cross_wallet_state(raw_data: dict) -> dict:
     state = {}
     for b in raw_data.get('userAssets', []):
         free = to_float(b.get('free'))
@@ -1528,18 +1526,19 @@ def load_margin_cross_wallet_state(raw_data: dict) -> dict:
     return state
 
 
-def load_margin_cross_wallet_extra_state(raw_data: dict) -> dict:
+def load_ws_margin_cross_wallet_extra_state(raw_data: dict) -> dict:
     state = {}
     for b in raw_data.get('userAssets', []):
         state[b.get('asset', '').lower()] = {
             'cur': b.get('asset'),
             'bor': to_float(b.get('borrowed')),
-            'ist': to_float(b.get('interest'))
+            'ist': to_float(b.get('interest')),
+            'nb': to_float(b.get('netAsset'))
         }
     return state
 
 
-def load_futures_wallet_state(raw_data: dict) -> dict:
+def load_ws_futures_wallet_state(raw_data: dict) -> dict:
     state = {}
     for b in raw_data.get('assets', []):
         state[b.get('asset', '').lower()] = {
@@ -1556,18 +1555,5 @@ def load_futures_wallet_state(raw_data: dict) -> dict:
     return state
 
 
-def load_futures_coin_wallet_state(raw_data: dict) -> dict:
-    state = {}
-    for b in raw_data.get('assets', []):
-        state[b.get('asset', '').lower()] = {
-            'cur': b.get('asset'),
-            'bl': to_float(b.get('walletBalance')),
-            'wbl': to_float(b.get('maxWithdrawAmount')),
-            'upnl': to_float(b.get('unrealizedProfit')),
-            'mbl': to_float(b.get('marginBalance')),
-            'mm': to_float(b.get('maintMargin')),
-            'im': to_float(b.get('initialMargin')),
-            'am': to_float(b.get('maxWithdrawAmount')),
-            't': to_wallet_state_type(to_float(b.get('maintMargin')))
-        }
-    return state
+def load_ws_futures_coin_wallet_state(raw_data: dict) -> dict:
+    return load_ws_futures_wallet_state(raw_data)

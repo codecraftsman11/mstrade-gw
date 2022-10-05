@@ -76,7 +76,6 @@ class BinanceMarginWssRouter(BinanceWssRouter):
         'quote_bin': serializers.BinanceQuoteBinSerializer,
         'symbol': serializers.BinanceMarginSymbolSerializer,
         'wallet': serializers.BinanceMarginWalletSerializer,
-        'wallet_extra': serializers.BinanceMarginWalletExtraSerializer,
         'order': serializers.BinanceOrderSerializer,
         'position': serializers.BinanceMarginPositionSerializer,
     }

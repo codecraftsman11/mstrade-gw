@@ -27,6 +27,7 @@ class BinanceWssApi(StockWssApi):
 
     auth_subscribers = {
         'wallet': subscr_class.BinanceWalletSubscriber(),
+        'wallet_extra': subscr_class.BinanceWalletExtraSubscriber(),
         'order': subscr_class.BinanceOrderSubscriber(),
         'position': subscr_class.BinancePositionSubscriber(),
     }
@@ -177,16 +178,6 @@ class BinanceWssApi(StockWssApi):
         return 'update'
 
 
-class BinanceMarginCrossWssApi(BinanceWssApi):
-
-    auth_subscribers = {
-        'wallet': subscr_class.BinanceWalletSubscriber(),
-        'wallet_extra': subscr_class.BinanceWalletExtraSubscriber(),
-        'order': subscr_class.BinanceOrderSubscriber(),
-        'position': subscr_class.BinancePositionSubscriber(),
-    }
-
-
 class BinanceMarginWssApi(BinanceWssApi):
     BASE_URL = 'wss://fstream.binance.com/ws'
     TEST_URL = 'wss://stream.binancefuture.com/ws'
@@ -199,6 +190,7 @@ class BinanceMarginWssApi(BinanceWssApi):
     }
     auth_subscribers = {
         'wallet': subscr_class.BinanceWalletSubscriber(),
+        'wallet_extra': subscr_class.BinanceWalletExtraSubscriber(),
         'order': subscr_class.BinanceOrderSubscriber(),
         'position': subscr_class.BinanceMarginPositionSubscriber(),
     }
