@@ -306,8 +306,6 @@ class StockWssApi(Connector):
             try:
                 data = await self.get_data(message)
             except Exception as exc:
-                import traceback
-                traceback.print_exc()
                 self._error = errors.ERROR_INVALID_DATA
                 self._logger.error("Error validating incoming message %s; Details: %s", message, exc)
                 continue

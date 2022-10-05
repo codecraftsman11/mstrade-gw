@@ -16,7 +16,7 @@ class BinanceWalletExtraSerializer(BinanceSerializer):
         return self._get_data_action(message), []
 
 
-class BinanceMarginCrossWalletExtraSubscriber(BinanceWalletSerializer):
+class BinanceMarginCrossWalletExtraSerializer(BinanceWalletSerializer):
     subscription = "wallet_extra"
 
     def _wallet_list(self, item: dict):
