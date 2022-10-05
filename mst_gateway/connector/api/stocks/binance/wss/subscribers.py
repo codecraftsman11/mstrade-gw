@@ -189,6 +189,7 @@ class BinanceWalletSubscriber(BinanceSubscriber):
     async def init_partial_state(self, api: BinanceWssApi) -> dict:
         self.rest_client = rest.BinanceRestApi(auth=api.auth, test=api.test, ratelimit=api.ratelimit)
         self.rest_client.open()
+        api.tasks.append(asyncio.create_task(self.subscribe_wallet_state(api, self.rest_client)))
         return {}
 
 

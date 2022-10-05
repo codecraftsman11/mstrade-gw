@@ -30,7 +30,7 @@ class BitmexWalletSerializer(BitmexSerializer):
         }
         return _map.get(key)
 
-    def _check_balances_data(self, balance: dict, item: dict):
+    def _check_balances_data(self, balance, item):
         for k, v in balance.items():
             _mapped_key = self._key_map(k)
             if _mapped_key not in item:
