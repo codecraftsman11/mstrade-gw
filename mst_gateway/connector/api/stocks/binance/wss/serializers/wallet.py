@@ -40,7 +40,6 @@ class BinanceWalletSerializer(BinanceSerializer):
 
 
 class BinanceMarginWalletSerializer(BinanceWalletSerializer):
-    table = 'ACCOUNT_UPDATE'
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
         return bool(self._initialized and message['table'] == 'ACCOUNT_UPDATE')
