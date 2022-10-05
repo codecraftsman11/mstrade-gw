@@ -10,7 +10,6 @@ if TYPE_CHECKING:
 
 class BinanceWalletSerializer(BinanceSerializer):
     subscription = "wallet"
-    table = 'outboundAccountPosition'
 
     def __init__(self, wss_api: BinanceWssApi):
         super().__init__(wss_api)
@@ -21,7 +20,7 @@ class BinanceWalletSerializer(BinanceSerializer):
         return bool(self.subscription in self._wss_api.subscriptions)
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
-        return bool(self._initialized and message['table'] == self.table)
+        return bool(self._initialized and message['table'] == 'outboundAccountPosition')
 
     async def _load_data(self, message: dict, item: dict) -> Optional[list]:
         if not self.is_item_valid(message, item):
@@ -40,20 +39,11 @@ class BinanceWalletSerializer(BinanceSerializer):
         self._update_data(data, valid_item)
 
 
-class BinanceWalletExtraSerializer(BinanceWalletSerializer):
-    subscription = "wallet_extra"
-
-    def _wallet_list(self, item: dict):
-        return list(self.state_data.values())
-
-
 class BinanceMarginWalletSerializer(BinanceWalletSerializer):
     table = 'ACCOUNT_UPDATE'
 
+    def is_item_valid(self, message: dict, item: dict) -> bool:
+        return bool(self._initialized and message['table'] == 'ACCOUNT_UPDATE')
+
     def _wallet_list(self, item: dict):
         return utils.ws_futures_wallet(item, self.state_data)
-
-
-class BinanceMarginWalletExtraSerializer(BinanceWalletExtraSerializer):
-    table = 'ACCOUNT_UPDATE'
-
