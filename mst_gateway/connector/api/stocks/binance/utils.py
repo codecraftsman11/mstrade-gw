@@ -517,13 +517,13 @@ def load_futures_coin_asset_balance(raw_data: list) -> dict:
     return load_futures_asset_balance(raw_data)
 
 
-def _update_state_ws_spot_balances(balances: list, state_data: dict) -> list:
+def _update_state_ws_spot_balances(balances: list, state_balances: dict) -> list:
     """
     Update wallet state data by incoming message
     """
     for asset in balances:
-        state_data[asset['cur'].lower()] = asset
-    return list(state_data.values())
+        state_balances[asset['cur'].lower()] = asset
+    return list(state_balances.values())
 
 
 def ws_spot_wallet(raw_data: dict, state_data: dict) -> list:
