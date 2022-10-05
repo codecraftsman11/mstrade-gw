@@ -129,7 +129,7 @@ def create_default_order(rest: BitmexRestApi,
         order_type=order_type,
         price=price,
         options=options,
-        order_id=f"mst{ulid.ULID()}"
+        order_id=f"mst-{ulid.ULID()}"
     )
     return order
 

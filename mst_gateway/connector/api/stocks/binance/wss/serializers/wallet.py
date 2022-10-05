@@ -13,7 +13,7 @@ class BinanceWalletSerializer(BinanceSerializer):
 
     def __init__(self, wss_api: BinanceWssApi):
         super().__init__(wss_api)
-        self.wallet_state = wss_api.partial_state_data.get(self.subscription, {}).get('wallet_state', {})
+        self.wallet_state = wss_api.partial_state_data.get(self.subscription, {}).get(f"{self.subscription}_state", {})
 
     @property
     def _initialized(self) -> bool:
