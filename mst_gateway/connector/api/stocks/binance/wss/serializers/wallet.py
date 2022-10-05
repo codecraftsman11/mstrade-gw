@@ -13,7 +13,7 @@ class BinanceWalletSerializer(BinanceSerializer):
 
     def __init__(self, wss_api: BinanceWssApi):
         super().__init__(wss_api)
-        self.state_data = wss_api.partial_state_data.get(self.subscription, {}).get(f"{self.subscription}_state", {})
+        self.wallet_state = wss_api.partial_state_data.get(self.subscription, {}).get('wallet_state', {})
 
     @property
     def _initialized(self) -> bool:
@@ -29,8 +29,8 @@ class BinanceWalletSerializer(BinanceSerializer):
 
     def _wallet_list(self, item: dict):
         if self._wss_api.schema == OrderSchema.exchange:
-            return utils.ws_spot_wallet(item, self.state_data)
-        return utils.ws_margin_cross_wallet(item, self.state_data)
+            return utils.ws_spot_wallet(item, self.wallet_state)
+        return utils.ws_margin_cross_wallet(item, self.wallet_state)
 
     async def _append_item(self, data: list, message: dict, item: dict):
         valid_item = await self._load_data(message, item)
@@ -45,4 +45,4 @@ class BinanceMarginWalletSerializer(BinanceWalletSerializer):
         return bool(self._initialized and message['table'] == 'ACCOUNT_UPDATE')
 
     def _wallet_list(self, item: dict):
-        return utils.ws_futures_wallet(item, self.state_data)
+        return utils.ws_futures_wallet(item, self.wallet_state)

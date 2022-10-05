@@ -20,4 +20,4 @@ class BinanceMarginCrossWalletExtraSerializer(BinanceWalletSerializer):
     subscription = "wallet_extra"
 
     def _wallet_list(self, item: dict):
-        return list(self.state_data.values())
+        return list(self.wallet_state.values())
