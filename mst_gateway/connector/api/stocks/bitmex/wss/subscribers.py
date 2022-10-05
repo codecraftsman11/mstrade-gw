@@ -68,6 +68,14 @@ class BitmexWalletSubscriber(BitmexSubscriber):
         return await super()._subscribe(api)
 
 
+class BitmexWalletExtraSubscriber(BitmexWalletSubscriber):
+    subscription = "wallet_extra"
+    subscriptions = ()
+
+    async def _subscribe(self, api: BitmexWssApi, symbol=None):
+        return
+
+
 class BitmexOrderSubscriber(BitmexSubscriber):
     subscription = "order"
     subscriptions = ("execution",)
