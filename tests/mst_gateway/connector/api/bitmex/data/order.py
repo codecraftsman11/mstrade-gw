@@ -28,7 +28,7 @@ DEFAULT_ORDER_DATA = {
                     "act": "insert",
                     "d": [
                         {
-                            "oid": "a651bf3c-4410-bee5-adc3-323d87781bbb",
+                            "oid": "mst-01GEM0QGEGYJ00NS88TK85BC57",
                             "eoid": "cf8a2c91-464a-4618-a05f-fb7a57f9a67d",
                             "sd": 0,
                             "ps": PositionSide.both,
@@ -47,7 +47,7 @@ DEFAULT_ORDER_DATA = {
                             "ss": "btcusd",
                         },
                         {
-                            'oid': 'eec99810-7a4f-e4b7-9669-e0b5b4189b00',
+                            'oid': 'mst-01GEM0QGEGYJ00NS88TK85BC57',
                             "eoid": "cf8a2c91-464a-4618-a05f-fb7a57f9a67d",
                             "sd": 0,
                             "ps": PositionSide.both,
@@ -79,7 +79,7 @@ DEFAULT_ORDER_DATA = {
                     "act": "insert",
                     "d": [
                         {
-                            "oid": "e1db2355-1376-e22a-5454-b9e6ae7211ca",
+                            "oid": "mst-01GEM0QGEGYJ00NS88TK85BC57",
                             "eoid": "b46c1aa9-992a-48c5-a953-fd6ef1bff1d0",
                             "sd": 1,
                             "ps": PositionSide.both,
@@ -98,7 +98,7 @@ DEFAULT_ORDER_DATA = {
                             "ss": "btcusd",
                         },
                         {
-                            "oid": "89811ff3-4f10-b399-44d6-9043ba91c40c",
+                            "oid": "mst-01GEM0QGEGYJ00NS88TK85BC57",
                             "eoid": "b46c1aa9-992a-48c5-a953-fd6ef1bff1d0",
                             "sd": 1,
                             "ps": PositionSide.both,
