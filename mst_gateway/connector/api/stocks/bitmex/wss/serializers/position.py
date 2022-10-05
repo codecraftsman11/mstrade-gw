@@ -9,8 +9,6 @@ class BitmexPositionSerializer(BitmexSerializer):
     subscription = "position"
 
     def is_item_valid(self, message: dict, item: dict) -> bool:
-        if item.get('side') is None:
-            return False
         return True
 
     async def _load_data(self, message: dict, item: dict) -> Optional[dict]:
