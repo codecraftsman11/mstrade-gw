@@ -482,18 +482,10 @@ def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
 
 def load_wallet_data(raw_data: dict, is_for_ws=False) -> dict:
     if is_for_ws:
-        bls_key = 'bls'
-        balances = [load_ws_wallet_detail_data(raw_data)]
-        ex_key = 'ex'
-        extra_data = None
-    else:
-        bls_key = 'balances'
-        balances = [load_wallet_detail_data(raw_data)]
-        ex_key = 'extra_data'
-        extra_data = None
+        return load_ws_wallet_detail_data(raw_data)
     return {
-        bls_key: balances,
-        ex_key: extra_data
+        'balances': [load_wallet_detail_data(raw_data)],
+        'extra_data': None
     }
 
 

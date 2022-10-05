@@ -307,26 +307,6 @@ WS_MESSAGE_HEADER_FIELDS = {
     'act': str,
     'd': list,
 }
-WS_WALLET_MESSAGE_HEADER_FIELDS = {
-    'acc': str,
-    'tb': str,
-    'sch': Use(schema_valid),
-    'act': str,
-    'd': dict,
-    'ex': Or(None, dict),
-}
-
-WS_WALLET_BALANCE_FIELDS = {
-    'cur': str,
-    'bl': Use(float_valid),
-    'wbl': Use(float_valid),
-    'upnl': Use(float_valid),
-    'mbl': Use(float_valid),
-    'mm': Use(float_valid),
-    'im': Use(float_valid),
-    'am': Use(float_valid),
-    't': str
-}
 
 WS_MESSAGE_DATA_FIELDS = {
     'order': {
@@ -415,30 +395,20 @@ WS_MESSAGE_DATA_FIELDS = {
         'p': Use(float_valid)
     },
     'wallet': {
-        'bls': [
-            WS_WALLET_BALANCE_FIELDS
-        ]
-    }
-}
-
-WS_WALLET_EXTRA_FIELDS = {
-    OrderSchema.margin_cross: {
-        'bls': [
-            {
-                'cur': str,
-                'bor': Use(float_valid),
-                'ist': Use(float_valid)
-            }
-        ],
-        'tre': bool,
-        'trse': bool,
-        'bore': bool,
-        'mlvl': Use(float_valid)
+        'cur': str,
+        'bl': Use(float_valid),
+        'wbl': Use(float_valid),
+        'upnl': Use(float_valid),
+        'mbl': Use(float_valid),
+        'mm': Use(float_valid),
+        'im': Use(float_valid),
+        'am': Use(float_valid),
+        't': str
     },
-    OrderSchema.margin: {
-        'tre': bool
-    },
-    OrderSchema.margin_coin: {
-        'tre': bool
+    'wallet_extra': {
+        'cur': str,
+        'bor': float,
+        'ist': float,
+        'nb': float
     }
 }
