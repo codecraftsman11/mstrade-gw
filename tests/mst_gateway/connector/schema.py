@@ -61,6 +61,7 @@ SYMBOL_FIELDS = {
 }
 
 ORDER_FIELDS = {
+    'order_id': Or(None, str),
     'exchange_order_id': str,
     'symbol': str,
     'volume': Or(int, float),
@@ -309,6 +310,7 @@ WS_MESSAGE_HEADER_FIELDS = {
 
 WS_MESSAGE_DATA_FIELDS = {
     'order': {
+        'oid': Or(None, str),
         'eoid': str,
         'sd': Use(side_valid),
         'tv': Or(None, float),

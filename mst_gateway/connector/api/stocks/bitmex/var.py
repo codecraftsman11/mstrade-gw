@@ -65,6 +65,7 @@ PARAMETER_NAMES_MAP = {
 
 DEFAULT_PARAMETERS = [
     'clOrdID',
+    'orderID',
     'symbol',
     'ordType',
     'side',
