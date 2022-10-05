@@ -5,5 +5,5 @@ from .quote import BinanceQuoteBinSerializer
 from .symbol import BinanceSymbolSerializer, BinanceMarginSymbolSerializer
 from .trade import BinanceTradeSerializer
 from .wallet import BinanceWalletSerializer, BinanceMarginWalletSerializer
-from .wallet_extra import BinanceWalletExtraSerializer
+from .wallet_extra import BinanceWalletExtraSerializer, BinanceMarginCrossWalletExtraSubscriber
 from .position import BinancePositionSerializer, BinanceMarginPositionSerializer, BinanceMarginCoinPositionSerializer

@@ -4,7 +4,7 @@ from typing import Optional, Union
 from mst_gateway.exceptions import ConnectorError
 from websockets import client
 from . import subscribers as subscr_class
-from .router import BinanceWssRouter, BinanceMarginWssRouter, BinanceMarginCoinWssRouter
+from .router import BinanceWssRouter, BinanceMarginCrossWssRouter, BinanceMarginWssRouter, BinanceMarginCoinWssRouter
 from .utils import is_auth_ok, make_cmd
 from .. import rest
 from ....wss import StockWssApi, ThrottleWss
@@ -178,6 +178,18 @@ class BinanceWssApi(StockWssApi):
         return 'update'
 
 
+class BinanceMarginCrossWssApi(BinanceWssApi):
+
+    auth_subscribers = {
+        'wallet': subscr_class.BinanceWalletSubscriber(),
+        'wallet_extra': subscr_class.BinanceMarginCrossWalletExtraSubscriber(),
+        'order': subscr_class.BinanceOrderSubscriber(),
+        'position': subscr_class.BinancePositionSubscriber(),
+    }
+
+    router_class = BinanceMarginCrossWssRouter
+
+
 class BinanceMarginWssApi(BinanceWssApi):
     BASE_URL = 'wss://fstream.binance.com/ws'
     TEST_URL = 'wss://stream.binancefuture.com/ws'
@@ -272,6 +284,7 @@ class BinanceMarginCoinWssApi(BinanceMarginWssApi):
     }
     auth_subscribers = {
         'wallet': subscr_class.BinanceWalletSubscriber(),
+        'wallet_extra': subscr_class.BinanceWalletExtraSubscriber(),
         'order': subscr_class.BinanceOrderSubscriber(),
         'position': subscr_class.BinanceMarginCoinPositionSubscriber(),
     }

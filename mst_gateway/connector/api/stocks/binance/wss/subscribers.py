@@ -167,7 +167,7 @@ class BinanceWalletSubscriber(BinanceSubscriber):
         }
         try:
             data = client.handler.handle_response(schema_handlers[api.schema][0]())
-        except (GatewayError, BinanceAPIException):
+        except (KeyError, GatewayError, BinanceAPIException):
             return {}
         return schema_handlers[api.schema][1](data)
 
@@ -193,7 +193,12 @@ class BinanceWalletSubscriber(BinanceSubscriber):
         return {}
 
 
-class BinanceWalletExtraSubscriber(BinanceWalletSubscriber):
+class BinanceWalletExtraSubscriber(BinanceSubscriber):
+    subscription = "wallet_extra"
+    subscriptions = ()
+
+
+class BinanceMarginCrossWalletExtraSubscriber(BinanceWalletSubscriber):
     subscription = "wallet_extra"
 
     async def get_wallet_state(self, api: BinanceWssApi, client: rest.BinanceRestApi):
@@ -202,7 +207,7 @@ class BinanceWalletExtraSubscriber(BinanceWalletSubscriber):
         }
         try:
             data = client.handler.handle_response(schema_handlers[api.schema][0]())
-        except (GatewayError, BinanceAPIException):
+        except (KeyError, GatewayError, BinanceAPIException):
             return {}
         return schema_handlers[api.schema][1](data)
 
