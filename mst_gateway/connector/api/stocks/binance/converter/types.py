@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Optional
 from mst_gateway.connector.api import (
     BaseOrderTypeConverter,
@@ -12,8 +13,12 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
     Order type converter for Binance
 
     """
-    BASE_PARAMETER_NAMES_MAP = {
+    CREATE_PARAMETER_NAMES_MAP = {
         'order_id': 'newClientOrderId',
+    }
+
+    BASE_PARAMETER_NAMES_MAP = {
+        'order_id': 'origClientOrderId',
         'exchange_order_id': 'orderId',
         'order_type': 'type',
         'volume': 'quantity',
@@ -514,17 +519,19 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
         return item
 
     @classmethod
-    def map_api_parameter_names(cls, schema: str, params: dict) -> Optional[dict]:
+    def map_api_parameter_names(cls, schema: str, params: dict, create_params: bool = False) -> Optional[dict]:
         """
         Changes the name (key) of any parameters that have a different name in the Binance API.
         Example: 'ttl' becomes 'timeInForce'
 
         """
         if schema in [OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin_isolated]:
-            _param_names_map = cls.SPOT_PARAMETER_NAMES_MAP
+            _param_names_map = deepcopy(cls.SPOT_PARAMETER_NAMES_MAP)
         else:
-            _param_names_map = cls.FUTURES_PARAMETER_NAMES_MAP
+            _param_names_map = deepcopy(cls.FUTURES_PARAMETER_NAMES_MAP)
         tmp_params = {}
+        if create_params:
+            _param_names_map.update(cls.CREATE_PARAMETER_NAMES_MAP)
         for param, value in params.items():
             if value is None:
                 continue

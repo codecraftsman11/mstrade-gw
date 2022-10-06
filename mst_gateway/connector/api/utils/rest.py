@@ -1,9 +1,4 @@
-from mst_gateway.exceptions import ConnectorError, NotFoundError
-
-
-def validate_exchange_order_id(exchange_order_id):
-    if not exchange_order_id:
-        raise NotFoundError('Exchange order ID was not provided.')
+from mst_gateway.exceptions import ConnectorError
 
 
 def validate_schema(schema: str, schema_handlers: iter):

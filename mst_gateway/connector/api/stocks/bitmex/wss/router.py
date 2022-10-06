@@ -24,7 +24,8 @@ class BitmexWssRouter(Router):
         'order': serializers.BitmexOrderSerializer,
         'trade': serializers.BitmexTradeSerializer,
         'position': serializers.BitmexPositionSerializer,
-        'wallet': serializers.BitmexWalletSerializer
+        'wallet': serializers.BitmexWalletSerializer,
+        'wallet_extra': serializers.BitmexWalletExtraSerializer
     }
 
     def _get_serializers(self, message: dict) -> Dict[str, Serializer]:

@@ -1,5 +1,6 @@
 import logging
 import pytest
+import ulid
 from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import Optional
@@ -73,6 +74,7 @@ def create_default_order(rest: BinanceRestApi, schema):
         order_type=OrderType.limit,
         price=price,
         options=order_data.DEFAULT_ORDER_OPTIONS,
+        order_id=f"mst-{ulid.ULID()}"
     )
 
 
@@ -83,10 +85,10 @@ def clear_stock_order_data(order):
 
 def get_liquidation_kwargs(schema, hedge_mode=False):
     if hedge_mode:
-        return symbol_data.DEFAULT_LEVERAGE_BRACKETS.get(schema, {}), \
-               position_data.HEDGE_MODE_POSITIONS_STATE.get(schema, {})
-    return symbol_data.DEFAULT_LEVERAGE_BRACKETS.get(schema, {}), \
-        position_data.DEFAULT_POSITIONS_STATE.get(schema, {})
+        return deepcopy(symbol_data.DEFAULT_LEVERAGE_BRACKETS.get(schema, {})), \
+               deepcopy(position_data.HEDGE_MODE_POSITIONS_STATE.get(schema, {}))
+    return deepcopy(symbol_data.DEFAULT_LEVERAGE_BRACKETS.get(schema, {})), \
+        deepcopy(position_data.DEFAULT_POSITIONS_STATE.get(schema, {}))
 
 
 class TestBinanceRestApi:
@@ -744,40 +746,6 @@ class TestOrderBinanceRestApi:
                 'is_passive': False,
                 'comments': None
             }),
-            ('tbinance_spot', OrderSchema.exchange, BUY, OrderType.stop_market, {
-                'active': True,
-                'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
-                'schema': OrderSchema.exchange,
-                'side': BUY,
-                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                'stop_price': 0.0,
-                'symbol': 'BTCUSDT',
-                'system_symbol': 'btcusdt',
-                'type': OrderType.market,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
-                'ttl': OrderTTL.GTC,
-                'is_iceberg': False,
-                'iceberg_volume': 0.0,
-                'is_passive': False,
-                'comments': None
-            }),
-            ('tbinance_spot', OrderSchema.exchange, SELL, OrderType.stop_market, {
-                'active': True,
-                'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
-                'schema': OrderSchema.exchange,
-                'side': SELL,
-                'position_side': order_data.DEFAULT_ORDER_POSITION_SIDE,
-                'stop_price': 0.0,
-                'symbol': 'BTCUSDT',
-                'system_symbol': 'btcusdt',
-                'type': OrderType.market,
-                'volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.exchange],
-                'ttl': OrderTTL.GTC,
-                'is_iceberg': False,
-                'iceberg_volume': 0.0,
-                'is_passive': False,
-                'comments': None
-            }),
             ('tbinance_margin', OrderSchema.margin, BUY, OrderType.market, {
                 'active': True,
                 'filled_volume': order_data.DEFAULT_ORDER_VOLUME[OrderSchema.margin],
@@ -1293,19 +1261,23 @@ class TestOrderBinanceRestApi:
     )
     def test_create_order(self, rest: BinanceRestApi, schema, side, order_type, expect):
         symbol = get_symbol(schema)
-        default_order_data = deepcopy(order_data.DEFAULT_ORDER_OPTIONS)
+        options = deepcopy(order_data.DEFAULT_ORDER_OPTIONS)
         price, last_price = get_order_price(rest, schema, symbol, side)
         if order_type in (OrderType.stop_market, OrderType.take_profit_market, OrderType.trailing_stop):
             price = last_price
         if order_type in (OrderType.stop_market, OrderType.stop_limit,
                           OrderType.take_profit_limit, OrderType.take_profit_market, OrderType.trailing_stop):
             stop_price = get_order_stop_price(last_price, side, order_type)
-            default_order_data.update({'stop_price': stop_price})
+            options.update({'stop_price': stop_price})
             expect['stop_price'] = stop_price
 
-        expect['price'] = price
+        order_id = f"mst{ulid.ULID()}"
+        expect.update({
+            'price': price,
+            'order_id': order_id
+        })
         order = rest.create_order(symbol, schema, side, order_data.DEFAULT_ORDER_VOLUME[schema], order_type, price,
-                                  default_order_data, PositionSide.both)
+                                  options, PositionSide.both, order_id)
 
         if order_type == OrderType.trailing_stop:
             expect['stop_price'] = order['stop_price']
@@ -1331,8 +1303,12 @@ class TestOrderBinanceRestApi:
     def test_get_order(self, rest: BinanceRestApi, schema):
         default_order = create_default_order(rest, schema)
         expect = deepcopy(order_data.DEFAULT_ORDER[schema])
-        expect['price'] = default_order['price']
-        order = rest.get_order(default_order['exchange_order_id'], default_order['symbol'], schema)
+        order_id = default_order['order_id']
+        expect.update({
+            'price': default_order['price'],
+            'order_id': order_id
+        })
+        order = rest.get_order(default_order['symbol'], schema, order_id)
         assert Schema(fields.ORDER_FIELDS).validate(order) == order
         clear_stock_order_data(order)
         assert order == expect
@@ -1411,14 +1387,18 @@ class TestOrderBinanceRestApi:
     def test_update_order(self, rest: BinanceRestApi, schema: str, expect):
         default_order = create_default_order(rest, schema)
         symbol = get_symbol(schema)
+        new_order_id = f"mst{ulid.ULID()}"
+        expect['order_id'] = new_order_id
         price, _ = get_order_price(rest, schema, symbol, default_order['side'])
-        order = rest.update_order(default_order['exchange_order_id'], symbol, schema,
+        order = rest.update_order(symbol, schema,
                                   side=order_data.DEFAULT_ORDER_OPPOSITE_SIDE,
                                   volume=default_order['volume'] * 2,
                                   order_type=OrderType.limit,
                                   price=price,
                                   options=order_data.DEFAULT_ORDER_OPTIONS,
-                                  position_side=PositionSide.both)
+                                  position_side=PositionSide.both,
+                                  order_id=default_order['order_id'],
+                                  new_order_id=new_order_id)
         assert Schema(fields.ORDER_FIELDS).validate(order) == order
         clear_stock_order_data(order)
         order.pop('price')
@@ -1483,8 +1463,12 @@ class TestOrderBinanceRestApi:
     )
     def test_cancel_order(self, rest: BinanceRestApi, schema: str, expect: dict):
         default_order = create_default_order(rest, schema)
-        expect['price'] = default_order['price']
-        order = rest.cancel_order(default_order['exchange_order_id'], default_order['symbol'], schema)
+        order_id = default_order['order_id']
+        expect.update({
+            'price': default_order['price'],
+            'order_id': order_id
+        })
+        order = rest.cancel_order(default_order['symbol'], schema, order_id)
         assert Schema(fields.ORDER_FIELDS).validate(order) == order
         clear_stock_order_data(order)
         assert order == expect

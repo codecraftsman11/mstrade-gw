@@ -94,26 +94,26 @@ class StockRestApi(Connector):
 
     @abstractmethod
     def create_order(self, symbol: str, schema: str, side: int, volume: float, order_type: str = OrderType.market,
-                     price: float = None, options: dict = None, position_side: str = PositionSide.both) -> dict:
+                     price: float = None, options: dict = None, position_side: str = PositionSide.both,
+                     order_id: str = None) -> dict:
         raise NotImplementedError
 
     @abstractmethod
-    def update_order(self, exchange_order_id: str, symbol: str, schema: str, side: int, volume: float,
-                     order_type: str = OrderType.market, price: float = None, options: dict = None,
-                     position_side: str = PositionSide.both) -> dict:
+    def update_order(self, symbol: str, schema: str, side: int, volume: float, order_type: str = OrderType.market,
+                     price: float = None, options: dict = None, position_side: str = PositionSide.both,
+                     order_id: str = None, new_order_id: str = None, exchange_order_id: str = None) -> dict:
         raise NotImplementedError
 
     @abstractmethod
-    def cancel_order(self, exchange_order_id: str, symbol: str,
-                     schema: str) -> dict:
+    def cancel_order(self, symbol: str, schema: str, order_id: str = None, exchange_order_id: str = None) -> dict:
         """
         Cancel active order (limit, etc...)
         """
         raise NotImplementedError
 
     @abstractmethod
-    def get_order(self, exchange_order_id: str, symbol: str,
-                  schema: str) -> Optional[dict]:
+    def get_order(self, symbol: str, schema: str, order_id: str = None,
+                  exchange_order_id: str = None) -> Optional[dict]:
         raise NotImplementedError
 
     @abstractmethod
@@ -129,7 +129,7 @@ class StockRestApi(Connector):
         raise NotImplementedError
 
     @abstractmethod
-    def close_order(self, exchange_order_id: str, symbol: str, schema: str) -> bool:
+    def close_order(self, symbol: str, schema: str, order_id: str = None, exchange_order_id: str = None) -> bool:
         """
         Close position
         """

@@ -11,7 +11,7 @@ class BinanceWssRouter(Router):
         'depthUpdate': 'order_book',
         'kline': 'quote_bin',
         '24hrTicker': ['symbol', 'position'],
-        'outboundAccountPosition': 'wallet',
+        'outboundAccountPosition': ['wallet', 'wallet_extra'],
         'executionReport': 'order'
     }
 
@@ -21,6 +21,7 @@ class BinanceWssRouter(Router):
         'quote_bin': serializers.BinanceQuoteBinSerializer,
         'symbol': serializers.BinanceSymbolSerializer,
         'wallet': serializers.BinanceWalletSerializer,
+        'wallet_extra': serializers.BinanceWalletExtraSerializer,
         'order': serializers.BinanceOrderSerializer,
         'position': serializers.BinancePositionSerializer,
     }
@@ -56,6 +57,19 @@ class BinanceWssRouter(Router):
         return None
 
 
+class BinanceMarginCrossWssRouter(BinanceWssRouter):
+    serializer_classes = {
+        'trade': serializers.BinanceTradeSerializer,
+        'order_book': serializers.BinanceOrderBookSerializer,
+        'quote_bin': serializers.BinanceQuoteBinSerializer,
+        'symbol': serializers.BinanceSymbolSerializer,
+        'wallet': serializers.BinanceWalletSerializer,
+        'wallet_extra': serializers.BinanceMarginCrossWalletExtraSerializer,
+        'order': serializers.BinanceOrderSerializer,
+        'position': serializers.BinancePositionSerializer,
+    }
+
+
 class BinanceMarginWssRouter(BinanceWssRouter):
     table_route_map = {
         'trade': 'trade',
@@ -75,6 +89,7 @@ class BinanceMarginWssRouter(BinanceWssRouter):
         'quote_bin': serializers.BinanceQuoteBinSerializer,
         'symbol': serializers.BinanceMarginSymbolSerializer,
         'wallet': serializers.BinanceMarginWalletSerializer,
+        'wallet_extra': serializers.BinanceMarginWalletSerializer,
         'order': serializers.BinanceOrderSerializer,
         'position': serializers.BinanceMarginPositionSerializer,
     }
@@ -99,6 +114,7 @@ class BinanceMarginCoinWssRouter(BinanceWssRouter):
         'trade': serializers.BinanceTradeSerializer,
         'order_book': serializers.BinanceOrderBookSerializer,
         'wallet': serializers.BinanceMarginWalletSerializer,
+        'wallet_extra': serializers.BinanceWalletExtraSerializer,
         'order': serializers.BinanceOrderSerializer,
         'position': serializers.BinanceMarginCoinPositionSerializer
     }

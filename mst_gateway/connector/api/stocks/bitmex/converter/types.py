@@ -35,6 +35,7 @@ class BitmexOrderTypeConverter(BaseOrderTypeConverter):
 
     DEFAULT_PARAMETERS = [
         'clOrdID',
+        'orderID',
         'symbol',
         'ordType',
         'side',
@@ -163,7 +164,7 @@ class BitmexOrderTypeConverter(BaseOrderTypeConverter):
         return item
 
     @classmethod
-    def map_api_parameter_names(cls, schema: str, params: dict) -> Optional[dict]:
+    def map_api_parameter_names(cls, schema: str, params: dict, create_params: bool = False) -> Optional[dict]:
         """
         Changes the name (key) of any parameters that have a different name in the Bitmex API.
         Example: 'ttl' becomes 'timeInForce'

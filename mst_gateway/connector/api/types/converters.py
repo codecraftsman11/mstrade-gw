@@ -52,6 +52,7 @@ class BaseOrderTypeConverter:
 
         """
         order_type = main_params.pop('order_type', None)
+        create_params = main_params.pop('create_params', False)
         exchange_order_type = cls.store_type(schema, order_type)
         prefetched_parameters = cls.prefetch_request_data(schema,
                                                           {'order_type': exchange_order_type, **main_params, **options})
@@ -59,7 +60,8 @@ class BaseOrderTypeConverter:
         params = cls._assign_custom_parameter_values(schema, prefetched_parameters)
         all_params = cls.map_api_parameter_names(
             schema,
-            {'order_type': exchange_order_type, **params}
+            {'order_type': exchange_order_type, **params},
+            create_params=create_params
         )
         new_params = {}
         for param_name in mapping_parameters:
@@ -83,7 +85,7 @@ class BaseOrderTypeConverter:
 
     @classmethod
     @abc.abstractmethod
-    def map_api_parameter_names(cls, schema: str, params: dict) -> Optional[dict]:
+    def map_api_parameter_names(cls, schema: str, params: dict, create_params: bool = False) -> Optional[dict]:
         raise NotImplementedError
 
     @classmethod

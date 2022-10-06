@@ -211,9 +211,14 @@ def load_order_side(order_side: str) -> int:
     return api.BUY
 
 
+def load_order_id(raw_data: dict) -> Optional[str]:
+    return raw_data.get('clOrdID') or None
+
+
 def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
     iceberg_volume = to_float(raw_data.get('displayQty'))
     data = {
+        'order_id': load_order_id(raw_data),
         'exchange_order_id': raw_data.get('orderID'),
         'symbol': raw_data.get('symbol'),
         'schema': schema,
@@ -241,6 +246,7 @@ def load_order_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> 
 
 def load_order_ws_data(schema: str, raw_data: dict, state_data: Optional[dict]) -> dict:
     data = {
+        'oid': load_order_id(raw_data),
         'eoid': raw_data.get('orderID'),
         'sd': load_order_side(raw_data.get('side')),
         'ps': PositionSide.both,
@@ -476,18 +482,10 @@ def update_quote_bin(quote_bin: dict, quote: dict) -> dict:
 
 def load_wallet_data(raw_data: dict, is_for_ws=False) -> dict:
     if is_for_ws:
-        bls_key = 'bls'
-        balances = [load_ws_wallet_detail_data(raw_data)]
-        ex_key = 'ex'
-        extra_data = None
-    else:
-        bls_key = 'balances'
-        balances = [load_wallet_detail_data(raw_data)]
-        ex_key = 'extra_data'
-        extra_data = None
+        return load_ws_wallet_detail_data(raw_data)
     return {
-        bls_key: balances,
-        ex_key: extra_data
+        'balances': [load_wallet_detail_data(raw_data)],
+        'extra_data': None
     }
 
 

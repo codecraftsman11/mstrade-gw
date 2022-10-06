@@ -10,22 +10,30 @@ DEFAULT_WALLET_DATA = {
                     "tb": "wallet",
                     "sch": OrderSchema.margin,
                     "act": "partial",
-                    "d": {
-                        "bls": [
-                            {
-                                "cur": "XBT",
-                                "bl": 0.01418963,
-                                "wbl": 0.01418963,
-                                "upnl": 0.0,
-                                "mbl": 0.01418963,
-                                "mm": 0.0,
-                                "im": 0.0,
-                                "am": 0.01418963,
-                                "t": "hold",
-                            }
-                        ]
-                    },
-                    "ex": None,
+                    "d": [
+                        {
+                            "cur": "XBT",
+                            "bl": 0.01418963,
+                            "wbl": 0.01418963,
+                            "upnl": 0.0,
+                            "mbl": 0.01418963,
+                            "mm": 0.0,
+                            "im": 0.0,
+                            "am": 0.01418963,
+                            "t": "hold",
+                        },
+                        {
+                            "am": 999.99981385,
+                            "bl": 999.99981385,
+                            "cur": "USDT",
+                            "im": 0.0,
+                            "mbl": 999.99981385,
+                            "mm": 0.0,
+                            "t": "hold",
+                            "upnl": 0.0,
+                            "wbl": 999.99981385
+                        }
+                    ]
                 }
             }
         },
@@ -37,22 +45,19 @@ DEFAULT_WALLET_DATA = {
                     "tb": "wallet",
                     "sch": OrderSchema.margin,
                     "act": "update",
-                    "d": {
-                        "bls": [
-                            {
-                                "cur": "XBT",
-                                "bl": 0.01418963,
-                                "wbl": 0.01416612,
-                                "upnl": -7e-08,
-                                "mbl": 0.0141885,
-                                "mm": 2.238e-05,
-                                "im": 0.0,
-                                "am": 0.01416612,
-                                "t": "trade",
-                            }
-                        ]
-                    },
-                    "ex": None,
+                    "d": [
+                        {
+                            "cur": "XBT",
+                            "bl": 0.01418963,
+                            "wbl": 0.01416612,
+                            "upnl": -7e-08,
+                            "mbl": 0.0141885,
+                            "mm": 2.238e-05,
+                            "im": 0.0,
+                            "am": 0.01416612,
+                            "t": "trade",
+                        }
+                    ]
                 }
             }
         },
@@ -64,22 +69,19 @@ DEFAULT_WALLET_DATA = {
                     "tb": "wallet",
                     "sch": OrderSchema.margin,
                     "act": "update",
-                    "d": {
-                        "bls": [
-                            {
-                                "cur": "XBT",
-                                "bl": 0.01418826,
-                                "wbl": 0.01418826,
-                                "upnl": 0.0,
-                                "mbl": 0.01418826,
-                                "mm": 0.0,
-                                "im": 0.0,
-                                "am": 0.01418826,
-                                "t": "hold",
-                            }
-                        ]
-                    },
-                    "ex": None,
+                    "d": [
+                        {
+                            "cur": "XBT",
+                            "bl": 0.01418826,
+                            "wbl": 0.01418826,
+                            "upnl": 0.0,
+                            "mbl": 0.01418826,
+                            "mm": 0.0,
+                            "im": 0.0,
+                            "am": 0.01418826,
+                            "t": "hold",
+                        }
+                    ]
                 }
             }
         },
@@ -91,22 +93,19 @@ DEFAULT_WALLET_DATA = {
                     "tb": "wallet",
                     "sch": OrderSchema.margin,
                     "act": "update",
-                    "d": {
-                        "bls": [
-                            {
-                                "cur": "XBT",
-                                "bl": 0.01418826,
-                                "wbl": 0.01418826,
-                                "upnl": 0.0,
-                                "mbl": 0.01418826,
-                                "mm": 0.0,
-                                "im": 0.0,
-                                "am": 0.01418826,
-                                "t": "hold",
-                            }
-                        ]
-                    },
-                    "ex": None,
+                    "d": [
+                        {
+                            "cur": "XBT",
+                            "bl": 0.01418826,
+                            "wbl": 0.01418826,
+                            "upnl": 0.0,
+                            "mbl": 0.01418826,
+                            "mm": 0.0,
+                            "im": 0.0,
+                            "am": 0.01418826,
+                            "t": "hold",
+                        }
+                    ]
                 }
             }
 
