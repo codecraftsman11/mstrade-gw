@@ -1171,97 +1171,10 @@ def get_mapping_for_schema(schema: str) -> Optional[dict]:
     Retrieves order type parameter mapping data for the specified schema.
 
     """
-    mapping_data = var.PARAMETERS_BY_ORDER_TYPE_MAP.get(schema)
+    mapping_data = BinanceOrderTypeConverter.PARAMETERS_BY_ORDER_TYPE_MAP.get(schema)
     if not mapping_data:
         raise ConnectorError(f"Invalid schema parameter: {schema}")
     return mapping_data
-
-
-def store_order_mapping_parameters(exchange_order_type: str, schema: str) -> list:
-    data_for_schema = get_mapping_for_schema(schema)
-    data = data_for_schema.get(exchange_order_type)
-    if data:
-        return data['params']
-    return data_for_schema['LIMIT']['params']
-
-
-def store_order_additional_parameters(exchange_order_type: str, schema: str) -> dict:
-    data_for_schema = get_mapping_for_schema(schema)
-    data = data_for_schema.get(exchange_order_type)
-    if data:
-        return data['additional_params']
-    return data_for_schema['LIMIT']['additional_params']
-
-
-def generate_parameters_by_order_type(main_params: dict, options: dict, schema: str) -> dict:
-    """
-    Fetches specific order parameters based on the order_type value and adds them
-    to the main parameters.
-
-    """
-    order_type = main_params.pop('order_type', None)
-    exchange_order_type = BinanceOrderTypeConverter.store_type(schema, order_type)
-    mapping_parameters = store_order_mapping_parameters(exchange_order_type, schema)
-    options = assign_custom_parameter_values(schema, options)
-    all_params = map_api_parameter_names(
-        schema,
-        {'order_type': exchange_order_type, **main_params, **options},
-        create_params=True
-    )
-    new_params = {}
-    for param_name in mapping_parameters:
-        value = all_params.get(param_name)
-        if value:
-            new_params[param_name] = value
-    new_params.update(
-        store_order_additional_parameters(exchange_order_type, schema)
-    )
-    return new_params
-
-
-def assign_custom_parameter_values(schema: str, options: Optional[dict]) -> dict:
-    """
-    Changes the value of certain parameters according to Binance's specification.
-
-    """
-    new_options = {'new_order_resp_type': 'RESULT'}
-
-    if schema in [OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin_isolated]:
-        _param_names_map = var.SPOT_PARAMETER_NAMES_MAP
-    else:
-        _param_names_map = var.FUTURES_PARAMETER_NAMES_MAP
-    for k, v in options.items():
-        if k == 'is_passive' and v:
-            new_options['ttl'] = _param_names_map.get('GTX')
-        elif k == 'ttl':
-            new_options['ttl'] = _param_names_map.get(v)
-        elif k == 'is_iceberg' and v:
-            new_options['iceberg_volume'] = options['iceberg_volume'] or 0
-        else:
-            new_options[k] = v
-    return new_options
-
-
-def map_api_parameter_names(schema: str, params: dict, create_params: bool = False) -> Optional[dict]:
-    """
-    Changes the name (key) of any parameters that have a different name in the Binance API.
-    Example: 'ttl' becomes 'timeInForce'
-
-    """
-    if schema in [OrderSchema.exchange, OrderSchema.margin_cross, OrderSchema.margin_isolated]:
-        _param_names_map = deepcopy(var.SPOT_PARAMETER_NAMES_MAP)
-    else:
-        _param_names_map = deepcopy(var.FUTURES_PARAMETER_NAMES_MAP)
-    if create_params:
-        _param_names_map.update(var.CREATE_PARAMETER_NAMES_MAP)
-    tmp_params = {}
-    params = BinanceOrderTypeConverter.prefetch_request_data(schema, params)
-    for param, value in params.items():
-        if value is None:
-            continue
-        _param = _param_names_map.get(param) or param
-        tmp_params[_param] = value
-    return tmp_params
 
 
 def load_leverage(raw_data: list) -> tuple:

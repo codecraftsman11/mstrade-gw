@@ -1,3 +1,4 @@
+import abc
 from typing import Optional
 from .order import OrderType
 
@@ -20,7 +21,7 @@ class BaseOrderTypeConverter:
         return None
 
     @classmethod
-    def store_type(cls, schema: str, order_type: str) -> str:
+    def store_type(cls, schema: str, order_type: Optional[str]) -> str:
         """
         Returns exchange order type based on MST order type
         (market and limit only).
@@ -42,3 +43,52 @@ class BaseOrderTypeConverter:
     @classmethod
     def prefetch_message_data(cls, schema: str, item: dict) -> dict:
         return item
+
+    @classmethod
+    def generate_parameters_by_order_type(cls, main_params: dict, options: dict, schema: str) -> dict:
+        """
+        Fetches specific order parameters based on the order_type value and adds them
+        to the main parameters.
+
+        """
+        order_type = main_params.pop('order_type', None)
+        create_params = main_params.pop('create_params', False)
+        exchange_order_type = cls.store_type(schema, order_type)
+        prefetched_parameters = cls.prefetch_request_data(
+            schema, {'order_type': exchange_order_type, **main_params, **options})
+        mapping_parameters = cls._store_order_mapping_parameters(exchange_order_type, schema)
+        params = cls._assign_custom_parameter_values(schema, prefetched_parameters)
+        all_params = cls.map_api_parameter_names(
+            schema,
+            {'order_type': exchange_order_type, **params},
+            create_params=create_params
+        )
+        new_params = {}
+        for param_name in mapping_parameters:
+            value = all_params.get(param_name)
+            if value:
+                new_params[param_name] = value
+        new_params.update(
+            cls._store_order_additional_parameters(exchange_order_type, schema)
+        )
+        return new_params
+
+    @classmethod
+    @abc.abstractmethod
+    def _store_order_mapping_parameters(cls, exchange_order_type: str, schema: str) -> list:
+        raise NotImplementedError
+
+    @classmethod
+    @abc.abstractmethod
+    def _assign_custom_parameter_values(cls, schema: str, options: Optional[dict]) -> dict:
+        raise NotImplementedError
+
+    @classmethod
+    @abc.abstractmethod
+    def map_api_parameter_names(cls, schema: str, params: dict, create_params: bool = False) -> Optional[dict]:
+        raise NotImplementedError
+
+    @classmethod
+    @abc.abstractmethod
+    def _store_order_additional_parameters(cls, exchange_order_type: str, schema: str) -> dict:
+        raise NotImplementedError
