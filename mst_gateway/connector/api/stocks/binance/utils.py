@@ -1176,6 +1176,7 @@ def get_mapping_for_schema(schema: str) -> Optional[dict]:
         raise ConnectorError(f"Invalid schema parameter: {schema}")
     return mapping_data
 
+
 def load_leverage(raw_data: list) -> tuple:
     try:
         return raw_data[0]['marginType'], to_float(raw_data[0]['leverage'])

@@ -23,6 +23,7 @@ class BinanceRestApi(StockRestApi):
     fin_factory = BinanceFinFactory()
     throttle = ThrottleRest(rest_limit=var.BINANCE_THROTTLE_LIMITS.get('rest'),
                             order_limit=var.BINANCE_THROTTLE_LIMITS.get('order'))
+    order_converter = BinanceOrderTypeConverter()
 
     def throttle_hash_name(self, url=httpx.URL, **kwargs):
         return sha256(f"{url.host}".lower().encode('utf-8')).hexdigest()
@@ -293,8 +294,8 @@ class BinanceRestApi(StockRestApi):
             'price': str(price) if price else None,
             'create_params': True
         }
-        params = BinanceOrderTypeConverter.generate_parameters_by_order_type(main_params, options, schema)
-        data = BinanceOrderTypeConverter.prefetch_response_data(
+        params = self.order_converter.generate_parameters_by_order_type(main_params, options, schema)
+        data = self.order_converter.prefetch_response_data(
             schema, self._binance_api(schema_handlers[schema.lower()], **params))
         state_data = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}").get(symbol.lower(), {})
         return utils.load_order_data(schema, data, state_data)
@@ -329,12 +330,12 @@ class BinanceRestApi(StockRestApi):
         validate_schema(schema, schema_handlers)
         if exchange_order_id:
             exchange_order_id = int(exchange_order_id)
-        params = BinanceOrderTypeConverter.map_api_parameter_names(schema, {
+        params = self.order_converter.map_api_parameter_names(schema, {
             'order_id': order_id,
             'exchange_order_id': exchange_order_id,
             'symbol': utils.symbol2stock(symbol),
         })
-        data = BinanceOrderTypeConverter.prefetch_response_data(
+        data = self.order_converter.prefetch_response_data(
             schema, self._binance_api(schema_handlers[schema.lower()], **params))
         state_data = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}").get(symbol.lower(), {})
         return utils.load_order_data(schema, data, state_data)
@@ -351,14 +352,14 @@ class BinanceRestApi(StockRestApi):
         validate_schema(schema, schema_handlers)
         if exchange_order_id:
             exchange_order_id = int(exchange_order_id)
-        params = BinanceOrderTypeConverter.map_api_parameter_names(schema, {
+        params = self.order_converter.map_api_parameter_names(schema, {
             'order_id': order_id,
             'exchange_order_id': exchange_order_id,
             'symbol': utils.symbol2stock(symbol),
         })
         if not (data := self._binance_api(schema_handlers[schema.lower()], **params)):
             return None
-        data = BinanceOrderTypeConverter.prefetch_response_data(schema, data)
+        data = self.order_converter.prefetch_response_data(schema, data)
         state_data = self.storage.get(f"{StateStorageKey.symbol}.{self.name}.{schema}").get(symbol.lower(), {})
         return utils.load_order_data(schema, data, state_data)
 
@@ -387,13 +388,13 @@ class BinanceRestApi(StockRestApi):
             data = self._binance_api(schema_handlers[schema][0], **options)
             _orders = []
             for order in reversed(data):
-                order = BinanceOrderTypeConverter.prefetch_response_data(schema, order)
+                order = self.order_converter.prefetch_response_data(schema, order)
                 _orders.append(utils.load_order_data(schema, order, state_data))
             return _orders
         data = self._binance_api(schema_handlers[schema][1], **options)
         _orders = []
         for order in reversed(data):
-            order = BinanceOrderTypeConverter.prefetch_response_data(schema, order)
+            order = self.order_converter.prefetch_response_data(schema, order)
             _orders.append(utils.load_order_data(schema, order, state_data))
         return _orders[offset:count]
 

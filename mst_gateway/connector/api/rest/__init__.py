@@ -7,17 +7,18 @@ from ...base import Connector
 from mst_gateway.storage import StateStorage
 from mst_gateway.calculator import FinFactory
 from ..errors import ERROR_OK
-from .. import OrderType, BUY, SELL, PositionSide
+from .. import OrderType, BUY, SELL, PositionSide, BaseOrderTypeConverter
 from .throttle import ThrottleRest
 from mst_gateway.exceptions import RecoverableError
 
 
 class StockRestApi(Connector):
     driver = 'base'
+    name = 'Base'
     throttle = ThrottleRest()
     storage = StateStorage()
     fin_factory = FinFactory()
-    name = 'Base'
+    order_converter = BaseOrderTypeConverter()
 
     def __init__(self, name: str = None, auth: dict = None, test: bool = True, logger: Logger = None,
                  state_storage=None, ratelimit=None):
