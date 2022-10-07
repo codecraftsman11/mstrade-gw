@@ -24,9 +24,6 @@ class BitmexOrderTypeConverter(BaseOrderTypeConverter):
         'display_value': 'displayQty',
         'order_type': 'ordType',
         'iceberg_volume': 'displayQty',
-        'H1': 'GoodTillCancel',
-        'H4': 'GoodTillCancel',
-        'D1': 'GoodTillCancel',
         'GTC': 'GoodTillCancel',
         'FOK': 'FillOrKill',
         'IOC': 'ImmediateOrCancel',
@@ -210,4 +207,3 @@ class BitmexOrderTypeConverter(BaseOrderTypeConverter):
         if data:
             return data['additional_params']
         return cls.PARAMETERS_BY_ORDER_TYPE_MAP['Limit']['additional_params']
-

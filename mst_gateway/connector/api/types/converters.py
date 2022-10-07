@@ -54,8 +54,8 @@ class BaseOrderTypeConverter:
         order_type = main_params.pop('order_type', None)
         create_params = main_params.pop('create_params', False)
         exchange_order_type = cls.store_type(schema, order_type)
-        prefetched_parameters = cls.prefetch_request_data(schema,
-                                                          {'order_type': exchange_order_type, **main_params, **options})
+        prefetched_parameters = cls.prefetch_request_data(
+            schema, {'order_type': exchange_order_type, **main_params, **options})
         mapping_parameters = cls._store_order_mapping_parameters(exchange_order_type, schema)
         params = cls._assign_custom_parameter_values(schema, prefetched_parameters)
         all_params = cls.map_api_parameter_names(

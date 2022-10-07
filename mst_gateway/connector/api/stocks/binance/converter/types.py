@@ -17,7 +17,7 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
         'order_id': 'newClientOrderId',
     }
 
-    BASE_PARAMETER_NAMES_MAP = {
+    PARAMETER_NAMES_MAP = {
         'order_id': 'origClientOrderId',
         'exchange_order_id': 'orderId',
         'order_type': 'type',
@@ -28,9 +28,6 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
         'new_order_resp_type': 'newOrderRespType',
         'position_side': 'positionSide',
         'ttl': 'timeInForce',
-        'H1': 'GTC',
-        'H4': 'GTC',
-        'D1': 'GTC',
         'GTC': 'GTC',
         'FOK': 'FOK',
         'IOC': 'IOC',
@@ -38,12 +35,12 @@ class BinanceOrderTypeConverter(BaseOrderTypeConverter):
     }
 
     SPOT_PARAMETER_NAMES_MAP = {
-        **BASE_PARAMETER_NAMES_MAP,
+        **PARAMETER_NAMES_MAP,
         'step': 'trailingDelta',
     }
 
     FUTURES_PARAMETER_NAMES_MAP = {
-        **BASE_PARAMETER_NAMES_MAP,
+        **PARAMETER_NAMES_MAP,
         'step': 'callbackRate'
     }
 
